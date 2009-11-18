@@ -4,6 +4,8 @@ import sys
 import time
 from signal import SIGTERM
 
+import util
+
 
 class Daemon:
     """
@@ -72,8 +74,9 @@ class Daemon:
 
         # write pidfile
         atexit.register(self.delpid)
-        pid = str(os.getpid())
-        file(self.pidfile, 'w+').write("%s\n" % pid)
+
+
+        util.createPidFile(self.pidfile)
 
     def delpid(self):
 
@@ -94,7 +97,7 @@ class Daemon:
 
             pid = None
 
-        if pid:
+        if pid and util.isProcessAlive(self.pidfile):
 
             message = "pidfile %s already exist. Daemon already running?\n"
             sys.stderr.write(message % self.pidfile)
