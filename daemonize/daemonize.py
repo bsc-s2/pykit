@@ -4,7 +4,10 @@ import sys
 import time
 from signal import SIGTERM
 
+import genlog
 import util
+
+logger = genlog.logger
 
 
 class Daemon:
