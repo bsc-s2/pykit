@@ -80,7 +80,7 @@ class Daemon:
         atexit.register(self.delpid)
 
 
-        util.createPidFile(self.pidfile)
+        util.create_pid_file(self.pidfile)
 
     def delpid(self):
 
@@ -101,7 +101,7 @@ class Daemon:
 
             pid = None
 
-        if pid and util.isProcessAlive(self.pidfile):
+        if pid and util.is_process_alive(self.pidfile):
 
             message = "pidfile %s already exist. Daemon already running?\n"
             sys.stderr.write(message % self.pidfile)
