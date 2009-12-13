@@ -4,6 +4,7 @@ import sys
 import time
 from signal import SIGTERM
 
+import conf
 import genlog
 import util
 
@@ -171,3 +172,40 @@ class Daemon:
         self._run()
 
         return
+
+
+def standard_daemonize(run_func, pidFile):
+    import inspect
+    frame = inspect.currentframe(1)
+    info = inspect.getframeinfo(frame)
+
+    logger.debug('----%s runs----' % (info.filename))
+    logger.debug(str(sys.argv))
+
+    try:
+        if len(sys.argv) == 1:
+            run_func()
+
+        if len(sys.argv) == 2:
+            if 'start' == sys.argv[1]:
+                logger.debug('start')
+                Daemon(pidFile, run_func).start()
+
+            elif 'stop' == sys.argv[1]:
+                Daemon(pidFile, run_func).stop()
+
+            elif 'restart' == sys.argv[1]:
+                Daemon(pidFile, run_func).restart()
+
+            else:
+                logger.debug("Unknown command : " % (sys.argv[1]))
+                print "Unknown command"
+                sys.exit(2)
+
+            sys.exit(0)
+        else:
+            print "usage: %s start|stop|restart" % sys.argv[0]
+            sys.exit(2)
+
+    except Exception as e:
+        logger.warn(traceback.format_exc())
