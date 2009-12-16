@@ -1,7 +1,7 @@
-import atexit
 import os
 import sys
 import time
+import traceback
 from signal import SIGTERM
 
 import conf
@@ -77,10 +77,7 @@ class Daemon:
         os.dup2(se.fileno(), sys.stderr.fileno())
 
         # write pidfile
-        atexit.register(self.delpid)
 
-
-        util.create_pid_file(self.pidfile)
 
     def delpid(self):
 
@@ -91,27 +88,84 @@ class Daemon:
         Start the daemon
         """
         # Check for a pidfile to see if the daemon already runs
-        try:
-
-            pf = file(self.pidfile, 'r')
-            pid = int(pf.read().strip())
-            pf.close()
-
-        except IOError:
-
-            pid = None
-
-        if pid and util.is_process_alive(self.pidfile):
-
-            message = "pidfile %s already exist. Daemon already running?\n"
-            sys.stderr.write(message % self.pidfile)
-            sys.exit(1)
 
         # Start the daemon
         self.daemonize()
+
+        try:
+            pf = util.open_lock_file(self.pidfile)
+        except util.FileLockError:
+            message = "pidfile %s locked. Daemon already running?\n"
+            logger.debug(message % self.pidfile)
+            sys.exit(1)
+        except Exception as e:
+            logger.debug('open_lock_file failed.' + str(e))
+            sys.exit(0)
+
+        try:
+            pid = os.getpid()
+            logger.debug('write pid:' + str(pid))
+            pf.truncate(0)
+            pf.write(str(pid))
+            pf.flush()
+        except Exception as e:
+            logger.debug('write pid failed.' + str(e))
+            sys.exit(0)
+
         self.run()
 
+    # added by Novey.
     def stop(self):
+
+        pid = None
+        if not os.path.exists(self.pidfile):
+
+            # pidfile not exist, just return
+            return
+
+        while 1:
+            try:
+                pf = util.open_lock_file(self.pidfile)
+            except util.FileLockError:
+                logger.debug('file locked, daemon is running.')
+                pf = None
+            except Exception as e:
+                logger.debug('open_lock_file failed.')
+                sys.exit(0)
+
+            # daemon runing, do kill
+            if pf == None:
+                logger.debug('kill pid:' + str(pid))
+                if pid == None:
+                    try:
+                        pid = util.read_file(self.pidfile)
+                        pid = int(pid)
+                    except OSError, err:
+                        err = str(err)
+                        if err.find("No such process") > 0:
+                            # process killed already?
+                            break
+                        else:
+                            logger.debug(str(err))
+                            sys.exit(1)
+
+                    except Exception as e:
+                        logger.debug('get pid failed.' + str(e) + str(pid))
+                        # file been deleted?
+                        break
+
+                os.kill(pid, SIGTERM)
+                time.sleep(0.1)
+                continue
+            else:
+                # locked, Daemon should been killed.
+                pf.close()
+                break
+
+        return
+
+    # modifyed by Novey.
+    def _stop(self):
         """
         Stop the daemon
         """
