@@ -76,9 +76,6 @@ class Daemon:
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
 
-        # write pidfile
-
-
     def delpid(self):
 
         os.remove(self.pidfile)
@@ -87,11 +84,9 @@ class Daemon:
         """
         Start the daemon
         """
-        # Check for a pidfile to see if the daemon already runs
-
-        # Start the daemon
         self.daemonize()
 
+        # Check for a pidfile to see if the daemon already runs
         try:
             pf = util.open_lock_file(self.pidfile)
         except util.FileLockError:
@@ -114,7 +109,6 @@ class Daemon:
 
         self.run()
 
-    # added by Novey.
     def stop(self):
 
         pid = None
@@ -163,50 +157,6 @@ class Daemon:
                 break
 
         return
-
-    # modifyed by Novey.
-    def _stop(self):
-        """
-        Stop the daemon
-        """
-
-        # Get the pid from the pidfile
-        try:
-
-            pf = file(self.pidfile, 'r')
-            pid = int(pf.read().strip())
-            pf.close()
-
-        except IOError:
-
-            pid = None
-
-        if not pid:
-
-            message = "pidfile %s does not exist. Daemon not running?\n"
-            sys.stderr.write(message % self.pidfile)
-            return  # not an error in a restart
-        # Try killing the daemon process
-        try:
-
-            while 1:
-
-                os.kill(pid, SIGTERM)
-                time.sleep(0.1)
-
-        except OSError, err:
-
-            err = str(err)
-
-            if err.find("No such process") > 0:
-
-                if os.path.exists(self.pidfile):
-                    os.remove(self.pidfile)
-
-            else:
-
-                print str(err)
-                sys.exit(1)
 
     def restart(self):
         """
