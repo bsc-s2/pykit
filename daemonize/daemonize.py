@@ -1,4 +1,3 @@
-import atexit
 import os
 import sys
 import time
@@ -108,7 +107,6 @@ class Daemon:
             logger.debug('write pid failed.' + str(e))
             sys.exit(0)
 
-        atexit.register(self.delpid)
         self.run()
 
     def stop(self):
