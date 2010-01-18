@@ -88,7 +88,7 @@ class Daemon:
 
         # Check for a pidfile to see if the daemon already runs
         try:
-            pf = util.open_lock_file(self.pidfile)
+            self.pf = util.open_lock_file(self.pidfile)
         except util.FileLockError:
             message = "pidfile %s locked. Daemon already running?\n"
             logger.debug(message % self.pidfile)
@@ -96,6 +96,8 @@ class Daemon:
         except Exception as e:
             logger.debug('open_lock_file failed.' + str(e))
             sys.exit(0)
+
+        pf = self.pf
 
         try:
             pid = os.getpid()
@@ -114,41 +116,46 @@ class Daemon:
         pid = None
         if not os.path.exists(self.pidfile):
 
-            # pidfile not exist, just return
+            logger.debug('pidfile not exist:' + self.pidfile)
             return
 
         while 1:
             try:
-                pf = util.open_lock_file(self.pidfile)
+                self.pf = util.open_lock_file(self.pidfile)
             except util.FileLockError:
                 logger.debug('file locked, daemon is running.')
-                pf = None
+                self.pf = None
             except Exception as e:
                 logger.debug('open_lock_file failed.')
                 sys.exit(0)
 
+            pf = self.pf
+
             # daemon runing, do kill
             if pf == None:
-                logger.debug('kill pid:' + str(pid))
                 if pid == None:
                     try:
                         pid = util.read_file(self.pidfile)
                         pid = int(pid)
-                    except OSError, err:
-                        err = str(err)
-                        if err.find("No such process") > 0:
-                            # process killed already?
-                            break
-                        else:
-                            logger.debug(str(err))
-                            sys.exit(1)
 
                     except Exception as e:
                         logger.debug('get pid failed.' + str(e) + str(pid))
                         # file been deleted?
                         break
 
-                os.kill(pid, SIGTERM)
+                logger.debug('kill pid:' + str(pid))
+
+                try:
+                    os.kill(pid, SIGTERM)
+                except OSError, err:
+                    err = str(err)
+                    if err.find("No such process") > 0:
+                        # process killed already?
+                        break
+                    else:
+                        logger.debug(str(err))
+                        sys.exit(1)
+
                 time.sleep(0.1)
                 continue
             else:
