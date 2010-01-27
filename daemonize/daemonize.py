@@ -19,13 +19,14 @@ class Daemon:
     """
 
     def __init__(self, pidfile, run=lambda: None,
-                 stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
+                 stdin='/dev/null', stdout='/dev/null', stderr='/dev/null', foreground=False):
 
         self._run = run
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
         self.pidfile = pidfile
+        self.foreground = foreground
 
     def daemonize(self):
         """
@@ -33,6 +34,9 @@ class Daemon:
         Programming in the UNIX Environment" for details (ISBN 0201563177)
         http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
         """
+
+        if self.foreground:
+            return
 
         try:
 
@@ -195,7 +199,8 @@ def standard_daemonize(run_func, pidFile):
 
     try:
         if len(sys.argv) == 1:
-            run_func()
+
+            Daemon(pidFile, run_func, foreground=True).start()
 
         if len(sys.argv) == 2:
             if 'start' == sys.argv[1]:
