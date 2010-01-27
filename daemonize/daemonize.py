@@ -113,6 +113,7 @@ class Daemon:
             logger.debug('write pid failed.' + str(e))
             sys.exit(0)
 
+
         self.run()
 
     def stop(self):
