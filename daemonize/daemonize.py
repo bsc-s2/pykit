@@ -202,7 +202,7 @@ def standard_daemonize(run_func, pidFile):
 
             Daemon(pidFile, run_func, foreground=True).start()
 
-        if len(sys.argv) == 2:
+        elif len(sys.argv) == 2:
             if 'start' == sys.argv[1]:
                 logger.debug('start')
                 Daemon(pidFile, run_func).start()
