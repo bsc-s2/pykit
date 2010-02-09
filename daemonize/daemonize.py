@@ -195,17 +195,16 @@ def standard_daemonize(run_func, pidFile):
     frame = inspect.currentframe(1)
     info = inspect.getframeinfo(frame)
 
-    logger.debug('----%s runs----' % (info.filename))
-    logger.debug(str(sys.argv))
-
     try:
         if len(sys.argv) == 1:
+            logger.debug('---- foreground running %s ----' % (info.filename))
 
             Daemon(pidFile, run_func, foreground=True).start()
 
         elif len(sys.argv) == 2:
+            logger.debug('---- %sing %s ----' % (sys.argv[1], info.filename))
+
             if 'start' == sys.argv[1]:
-                logger.debug('start')
                 Daemon(pidFile, run_func).start()
 
             elif 'stop' == sys.argv[1]:
