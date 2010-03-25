@@ -8,8 +8,6 @@ import conf
 import genlog
 import util
 
-logger = genlog.logger
-
 
 class Daemon:
     """
@@ -95,22 +93,22 @@ class Daemon:
             self.pf = util.open_lock_file(self.pidfile)
         except util.FileLockError:
             message = "pidfile %s locked. Daemon already running?\n"
-            logger.debug(message % self.pidfile)
+            genlog.logger.debug(message % self.pidfile)
             sys.exit(1)
         except Exception as e:
-            logger.debug('open_lock_file failed.' + str(e))
+            genlog.logger.debug('open_lock_file failed.' + str(e))
             sys.exit(0)
 
         pf = self.pf
 
         try:
             pid = os.getpid()
-            logger.debug('write pid:' + str(pid))
+            genlog.logger.debug('write pid:' + str(pid))
             pf.truncate(0)
             pf.write(str(pid))
             pf.flush()
         except Exception as e:
-            logger.debug('write pid failed.' + str(e))
+            genlog.logger.debug('write pid failed.' + str(e))
             sys.exit(0)
 
 
@@ -121,17 +119,17 @@ class Daemon:
         pid = None
         if not os.path.exists(self.pidfile):
 
-            logger.debug('pidfile not exist:' + self.pidfile)
+            genlog.logger.debug('pidfile not exist:' + self.pidfile)
             return
 
         while 1:
             try:
                 self.pf = util.open_lock_file(self.pidfile)
             except util.FileLockError:
-                logger.debug('file locked, daemon is running.')
+                genlog.logger.debug('file locked, daemon is running.')
                 self.pf = None
             except Exception as e:
-                logger.debug('open_lock_file failed.')
+                genlog.logger.debug('open_lock_file failed.')
                 sys.exit(0)
 
             pf = self.pf
@@ -144,11 +142,12 @@ class Daemon:
                         pid = int(pid)
 
                     except Exception as e:
-                        logger.debug('get pid failed.' + str(e) + str(pid))
+                        genlog.logger.debug(
+                            'get pid failed.' + str(e) + str(pid))
                         # file been deleted?
                         break
 
-                logger.debug('kill pid:' + str(pid))
+                genlog.logger.debug('kill pid:' + str(pid))
 
                 try:
                     os.kill(pid, SIGTERM)
@@ -158,7 +157,7 @@ class Daemon:
                         # process killed already?
                         break
                     else:
-                        logger.debug(str(err))
+                        genlog.logger.debug(str(err))
                         sys.exit(1)
 
                 time.sleep(0.1)
@@ -197,12 +196,14 @@ def standard_daemonize(run_func, pidFile):
 
     try:
         if len(sys.argv) == 1:
-            logger.debug('---- foreground running %s ----' % (info.filename))
+            genlog.logger.debug(
+                '---- foreground running %s ----' % (info.filename))
 
             Daemon(pidFile, run_func, foreground=True).start()
 
         elif len(sys.argv) == 2:
-            logger.debug('---- %sing %s ----' % (sys.argv[1], info.filename))
+            genlog.logger.debug('---- %sing %s ----' %
+                                (sys.argv[1], info.filename))
 
             if 'start' == sys.argv[1]:
                 Daemon(pidFile, run_func).start()
@@ -214,7 +215,7 @@ def standard_daemonize(run_func, pidFile):
                 Daemon(pidFile, run_func).restart()
 
             else:
-                logger.debug("Unknown command : " % (sys.argv[1]))
+                genlog.logger.debug("Unknown command : " % (sys.argv[1]))
                 print "Unknown command"
                 sys.exit(2)
 
@@ -224,4 +225,4 @@ def standard_daemonize(run_func, pidFile):
             sys.exit(2)
 
     except Exception as e:
-        logger.warn(traceback.format_exc())
+        genlog.logger.warn(traceback.format_exc())
