@@ -24,6 +24,18 @@ class Daemon:
         self.stdout = stdout
         self.stderr = stderr
         self.pidfile = pidfile
+        # NOTE: We need to open another separate file to avoid the file
+        #       reopened # again. Which case, process lose file lock.
+        #
+        # From "man fcntl":
+        # As well as being removed by an explicit F_UNLCK, record locks are
+        # automatically released when the process terminates  or  if  it
+        # closes  any  file descriptor  referring  to  a  file  on which locks
+        # are held.  This is bad: it means that a process can lose the locks
+        # on a file like /etc/passwd or /etc/mtab when for some reason a
+        # library function decides to open, read and close it.
+        self.lockfile = pidfile + ".lock"
+        self.lockfp = None
         self.foreground = foreground
 
     def daemonize(self):
@@ -90,7 +102,7 @@ class Daemon:
 
         # Check for a pidfile to see if the daemon already runs
         try:
-            self.pf = util.open_lock_file(self.pidfile)
+            self.lockfp = util.open_lock_file(self.lockfile)
         except util.FileLockError:
             message = "pidfile %s locked. Daemon already running?\n"
             genlog.logger.debug(message % self.pidfile)
@@ -99,6 +111,7 @@ class Daemon:
             genlog.logger.debug('open_lock_file failed.' + str(e))
             sys.exit(0)
 
+        self.pf = open(self.pidfile, 'w+r')
         pf = self.pf
 
         try:
@@ -108,7 +121,7 @@ class Daemon:
             pf.write(str(pid))
             pf.flush()
         except Exception as e:
-            genlog.logger.debug('write pid failed.' + str(e))
+            genlog.logger.debug('write pid failed.' + repr(e))
             sys.exit(0)
 
 
