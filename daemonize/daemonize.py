@@ -136,51 +136,19 @@ class Daemon:
             return
 
         while 1:
+
             try:
-                self.pf = util.open_lock_file(self.pidfile)
-            except util.FileLockError:
-                genlog.logger.debug('file locked, daemon is running.')
-                self.pf = None
+                pid = util.read_file(self.pidfile)
+                pid = int(pid)
+                os.kill(pid, SIGTERM)
+                return
+
             except Exception as e:
-                genlog.logger.debug('open_lock_file failed.')
-                sys.exit(0)
-
-            pf = self.pf
-
-            # daemon runing, do kill
-            if pf == None:
-                if pid == None:
-                    try:
-                        pid = util.read_file(self.pidfile)
-                        pid = int(pid)
-
-                    except Exception as e:
-                        genlog.logger.debug(
-                            'get pid failed.' + str(e) + str(pid))
-                        # file been deleted?
-                        break
-
-                genlog.logger.debug('kill pid:' + str(pid))
-
-                try:
-                    os.kill(pid, SIGTERM)
-                except OSError, err:
-                    err = str(err)
-                    if err.find("No such process") > 0:
-                        # process killed already?
-                        break
-                    else:
-                        genlog.logger.debug(str(err))
-                        sys.exit(1)
-
-                time.sleep(0.1)
-                continue
-            else:
-                # locked, Daemon should been killed.
-                pf.close()
+                genlog.logger.debug('get pid failed.' + str(e) + str(pid))
+                # file been deleted?
                 break
 
-        return
+            time.sleep(0.1)
 
     def restart(self):
         """
