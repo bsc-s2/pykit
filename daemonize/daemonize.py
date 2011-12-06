@@ -108,7 +108,7 @@ class Daemon:
             genlog.logger.debug(message % self.pidfile)
             sys.exit(1)
         except Exception as e:
-            genlog.logger.debug('open_lock_file failed.' + str(e))
+            genlog.logger.error('open_lock_file failed.' + str(e))
             sys.exit(0)
 
         self.pf = open(self.pidfile, 'w+r')
@@ -121,7 +121,7 @@ class Daemon:
             pf.write(str(pid))
             pf.flush()
         except Exception as e:
-            genlog.logger.debug('write pid failed.' + repr(e))
+            genlog.logger.error('write pid failed.' + repr(e))
             sys.exit(0)
 
 
@@ -196,7 +196,7 @@ def standard_daemonize(run_func, pidFile):
                 Daemon(pidFile, run_func).restart()
 
             else:
-                genlog.logger.debug("Unknown command : " % (sys.argv[1]))
+                genlog.logger.error("Unknown command : " % (sys.argv[1]))
                 print "Unknown command"
                 sys.exit(2)
 
