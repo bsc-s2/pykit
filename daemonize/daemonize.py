@@ -206,5 +206,5 @@ def standard_daemonize(run_func, pidFile):
             sys.exit(2)
 
     except Exception as e:
-        genlog.logger.debug(traceback.format_exc())
+        genlog.logger.error(traceback.format_exc())
         genlog.logger.error(repr(e))
