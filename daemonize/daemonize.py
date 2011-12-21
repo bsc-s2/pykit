@@ -111,6 +111,7 @@ class Daemon:
 
         else:
             genlog.logger.info("Failure acquiring lock %s" % (self.lockfile, ))
+            sys.exit(1)
 
         self.pf = open(self.pidfile, 'w+r')
         pf = self.pf
