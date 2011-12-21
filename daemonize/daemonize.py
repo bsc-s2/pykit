@@ -95,21 +95,22 @@ class Daemon:
         os.remove(self.pidfile)
 
     def start(self):
-        """
-        Start the daemon
-        """
+
         self.daemonize()
 
-        # Check for a pidfile to see if the daemon already runs
-        try:
-            self.lockfp = util.open_lock_file(self.lockfile)
-        except util.FileLockError:
-            message = "pidfile %s locked. Daemon already running?\n"
-            genlog.logger.debug(message % self.pidfile)
-            sys.exit(1)
-        except Exception as e:
-            genlog.logger.error('open_lock_file failed.' + str(e))
-            sys.exit(0)
+        for ii in range(30):
+
+            try:
+                self.lockfp = util.open_lock_file(self.lockfile)
+                break
+
+            except util.FileLockError:
+                genlog.logger.info("Failure acquiring lock %s" %
+                                   (self.lockfile, ))
+                time.sleep(0.1)
+
+        else:
+            genlog.logger.info("Failure acquiring lock %s" % (self.lockfile, ))
 
         self.pf = open(self.pidfile, 'w+r')
         pf = self.pf
@@ -117,6 +118,7 @@ class Daemon:
         try:
             pid = os.getpid()
             genlog.logger.debug('write pid:' + str(pid))
+
             pf.truncate(0)
             pf.write(str(pid))
             pf.flush()
