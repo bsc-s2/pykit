@@ -105,8 +105,6 @@ class Daemon:
                 break
 
             except util.FileLockError:
-                genlog.logger.info("Failure acquiring lock %s" %
-                                   (self.lockfile, ))
                 time.sleep(0.1)
 
         else:
