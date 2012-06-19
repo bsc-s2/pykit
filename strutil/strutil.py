@@ -17,6 +17,16 @@ DOUBLE_LINE_MAP = [
     ["⡇", "⣇", "⣧", "⣷", "⣿", ],
 ]
 
+x = DOUBLE_LINE_MAP
+DOT_COUNTER_BOTTOM = [
+    x[0][0],
+    x[1][0], x[1][1],
+    x[2][1], x[2][2],
+    x[3][2], x[3][3],
+    x[4][3], x[4][4],
+]
+del x
+
 DOT_COUNTER = [ x[0] for x in DOUBLE_LINE_MAP ] \
     + [x for x in DOUBLE_LINE_MAP[4][1:]]
 
