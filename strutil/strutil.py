@@ -63,10 +63,10 @@ def format_line(items, sep=' ', aligns=''):
               for y in x]
              for x in items]
 
-    maxHeight = max([len(x) for x in items])
+    maxHeight = max([len(x) for x in items] + [0])
 
     max_width = lambda x: max([y.__len__()
-                               for y in x])
+                               for y in x] + [0])
 
     widths = [max_width(x) for x in items]
 
