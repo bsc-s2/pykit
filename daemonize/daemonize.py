@@ -1,4 +1,7 @@
+import errno
+import fcntl
 import os
+import signal
 import sys
 import time
 import traceback
@@ -6,7 +9,10 @@ from signal import SIGTERM
 
 import conf
 import genlog
+import sockinherit
 import util
+
+logger = genlog.logger
 
 
 class Daemon:
@@ -90,29 +96,74 @@ class Daemon:
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
 
+        logger.info("OK daemonized")
+
     def delpid(self):
 
         os.remove(self.pidfile)
 
-    def start(self):
+    def trylock_or_exit(self, timeout=10):
 
-        self.daemonize()
+        interval = 0.1
+        n = int(timeout / interval) + 1
+        flag = fcntl.LOCK_EX | fcntl.LOCK_NB
 
-        for ii in range(30):
+        for ii in range(n):
+
+            fd = os.open(self.lockfile, os.O_RDWR | os.O_CREAT)
+
+            fcntl.fcntl(fd, fcntl.F_SETFD,
+                        fcntl.fcntl(fd, fcntl.F_GETFD, 0)
+                        | fcntl.FD_CLOEXEC)
 
             try:
-                self.lockfp = util.open_lock_file(self.lockfile)
+                fcntl.lockf(fd, flag)
+
+                self.lockfp = os.fdopen(fd, 'w+r')
                 break
 
-            except util.FileLockError:
-                time.sleep(0.1)
+            except IOError as e:
+                os.close(fd)
+                if e[0] == errno.EAGAIN:
+                    time.sleep(interval)
+                else:
+                    raise
 
         else:
             genlog.logger.info("Failure acquiring lock %s" % (self.lockfile, ))
             sys.exit(1)
 
+        genlog.logger.info("OK acquired lock %s" % (self.lockfile))
+
+    def unlock(self):
+
+        if self.lockfp is None:
+            return
+
+        fd = self.lockfp.fileno()
+        fcntl.lockf(fd, fcntl.LOCK_UN)
+        self.lockfp.close()
+        self.lockfp = None
+
+    def start(self):
+
+        self.daemonize()
+        self.init_proc()
+        self.run()
+
+    def init_proc(self):
+        self.trylock_or_exit()
+        self.write_pid_or_exit()
+
+    def write_pid_or_exit(self):
+
         self.pf = open(self.pidfile, 'w+r')
         pf = self.pf
+
+        fd = pf.fileno()
+        fcntl.fcntl(fd, fcntl.F_SETFD,
+                    fcntl.fcntl(fd, fcntl.F_GETFD, 0)
+                    | fcntl.FD_CLOEXEC)
 
         try:
             pid = os.getpid()
@@ -125,8 +176,8 @@ class Daemon:
             genlog.logger.error('write pid failed.' + repr(e))
             sys.exit(0)
 
-
-        self.run()
+    def stop_pid(self):
+        return self.stop()
 
     def stop(self):
 
@@ -171,33 +222,55 @@ class Daemon:
         return
 
 
-def standard_daemonize(run_func, pidFile):
-    import inspect
-    frame = inspect.currentframe(1)
-    info = inspect.getframeinfo(frame)
+def standard_daemonize(run_func, pidfn,
+                       inheritable=None,
+                       upgrade_arg=None,
+                       cleanup=None):
+
+    d = Daemon(pidfn, None)
+
+    logger.info("sys.argv: " + repr(sys.argv))
 
     try:
         if len(sys.argv) == 1:
-            genlog.logger.debug(
-                '---- foreground running %s ----' % (info.filename))
-
-            Daemon(pidFile, run_func, foreground=True).start()
+            d.init_proc()
+            run_func()
 
         elif len(sys.argv) == 2:
-            genlog.logger.debug('---- %sing %s ----' %
-                                (sys.argv[1], info.filename))
 
             if 'start' == sys.argv[1]:
-                Daemon(pidFile, run_func).start()
+                d.daemonize()
+                if inheritable is not None:
+                    sockinherit.init_inheritable(inheritable)
+                    install_upgrade_sig(d, inheritable, upgrade_arg, cleanup)
+
+                d.init_proc()
+                run_func()
 
             elif 'stop' == sys.argv[1]:
-                Daemon(pidFile, run_func).stop()
+                d.stop_pid()
 
             elif 'restart' == sys.argv[1]:
-                Daemon(pidFile, run_func).restart()
+                if inheritable is None:
+                    d.stop_pid()
+                    d.daemonize()
+                    d.init_proc()
+                else:
+                    signal_to_upgrade(pidfn)
+                    # if it returns, upgrade failed. fall back to normal
+                    # restart.
+
+                    d.stop_pid()
+
+                    d.daemonize()
+                    sockinherit.init_inheritable(inheritable)
+                    install_upgrade_sig(d, inheritable, upgrade_arg, cleanup)
+                    d.init_proc()
+
+                run_func()
 
             else:
-                genlog.logger.error("Unknown command : " % (sys.argv[1]))
+                logger.error("Unknown command: %s" % (sys.argv[1]))
                 print "Unknown command"
                 sys.exit(2)
 
@@ -207,5 +280,88 @@ def standard_daemonize(run_func, pidFile):
             sys.exit(2)
 
     except Exception as e:
-        genlog.logger.error(traceback.format_exc())
-        genlog.logger.error(repr(e))
+        logger.error(traceback.format_exc())
+        logger.error(repr(e))
+
+
+def signal_to_upgrade(pidFile):
+
+    pid = _get_pid(pidFile)
+    logger.info("old pid: " + repr(pid))
+
+    if pid is not None:
+
+        try:
+            os.kill(pid, signal.SIGUSR2)
+        except OSError, e:
+            # no such process
+            return
+
+        logger.info("SIGUSR2 sent to: " + repr(pid))
+
+        for ii in range(30):
+            time.sleep(0.1)
+            pid2 = _get_pid(pidFile)
+            if pid2 is not None and pid != pid2:
+                logger.info("new pid generated, upgrade succeed: "
+                            + repr(pid2))
+                sys.exit(0)
+
+
+def _get_pid(fn):
+
+    try:
+        with open(fn, 'r') as f:
+            cont = f.read()
+    except OSError, e:
+        return None
+
+    try:
+        return int(cont)
+    except ValueError, e:
+        return None
+
+
+def no_downtime(pidfn, inheritable, upgrade_arg, cleanup=None):
+
+    # NOTE: fork based upgrade might cause dead lock in multithread
+    # environment.  we need to ensure that no lock being held during fork.
+    # which in our case, the logging module in threads.
+    #
+    # Thus, do not invoke logging in master process.
+
+    d = Daemon(pidfn, None)
+    d.daemonize()
+
+    sockinherit.init_inheritable(inheritable)
+
+    install_upgrade_sig(d, inheritable, upgrade_arg, cleanup)
+
+    d.trylock_or_exit(timeout=30)
+    d.write_pid_or_exit()
+
+
+def install_upgrade_sig(d, inheritable, upgrade_arg, cleanup):
+
+    heir = {}
+    for name, val in inheritable.items():
+        heir[name] = val['sock'].fileno()
+
+    def sig_up(*args, **argkv):
+        if callable(upgrade_arg):
+            exe, args, cwd = upgrade_arg()
+        else:
+            exe, args, cwd = upgrade_arg
+
+        sockinherit.upgrade(exe, args, cwd, heir)
+
+        logger.info("parent spwaned new process")
+        logger.info("parent sleep 1 second")
+        time.sleep(1)
+
+        d.unlock()
+        logger.info("parent released lock, about to exit")
+
+        (cleanup or sys.exit)()
+
+    signal.signal(signal.SIGUSR2, sig_up)
