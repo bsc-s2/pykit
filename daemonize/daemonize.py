@@ -322,25 +322,6 @@ def _get_pid(fn):
         return None
 
 
-def no_downtime(pidfn, inheritable, upgrade_arg, cleanup=None):
-
-    # NOTE: fork based upgrade might cause dead lock in multithread
-    # environment.  we need to ensure that no lock being held during fork.
-    # which in our case, the logging module in threads.
-    #
-    # Thus, do not invoke logging in master process.
-
-    d = Daemon(pidfn, None)
-    d.daemonize()
-
-    sockinherit.init_inheritable(inheritable)
-
-    install_upgrade_sig(d, inheritable, upgrade_arg, cleanup)
-
-    d.trylock_or_exit(timeout=30)
-    d.write_pid_or_exit()
-
-
 def install_upgrade_sig(d, inheritable, upgrade_arg, cleanup):
 
     heir = {}
