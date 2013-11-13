@@ -98,10 +98,6 @@ class Daemon:
 
         logger.info("OK daemonized")
 
-    def delpid(self):
-
-        os.remove(self.pidfile)
-
     def trylock_or_exit(self, timeout=10):
 
         interval = 0.1
