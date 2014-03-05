@@ -109,17 +109,40 @@ def colorize(v, total, ptn='{0}'):
 
 class ColoredString(object):
 
-    def __init__(self, v, color):
-        self.v = v
+    def __init__(self, v, color=None):
         if type(color) == type(''):
             color = _named_colors[color]
-        self.color = color
+
+        if isinstance(v, ColoredString):
+            vs = ''.join([x[0] for x in v.elts])
+            self.elts = [(vs, color)]
+        else:
+            self.elts = [(str(v), color)]
 
     def __str__(self):
-        return '\033[38;5;' + str(self.color) + 'm' + str(self.v) + '\033[0m'
+        rst = []
+        for e in self.elts:
+            if e[1] is None:
+                val = e[0]
+            else:
+                val = '\033[38;5;' + str(e[1]) + 'm' + str(e[0]) + '\033[0m'
+            rst.append(val)
+        return ''.join(rst)
 
     def __len__(self):
-        return len(str(self.v))
+        return sum([len(x[0])
+                    for x in self.elts])
+
+    def __add__(self, other):
+        if isinstance(other, ColoredString):
+            self.elts.extend(other.elts)
+        else:
+            self.elts.extend([(str(other), None)])
+        return self
+
+    def __mul__(self, num):
+        self.elts *= num
+        return self
 
 
 def fading_color(v, total):
@@ -146,5 +169,32 @@ _named_colors = {
 
 
 if __name__ == "__main__":
+
+    cc = ColoredString
+
+    # list all fading color
     for i in range(len(_clrs)):
-        print colorize(i, len(_clrs))
+        print colorize(i, len(_clrs)),
+    print
+
+    # concat colored string with '+', like normal string
+    s = cc(10, 'danger') + cc('ab', 'warn')
+    print s, len(s)
+    print s + 'jfksdl'
+
+    # list all colors
+    for c in range(256):
+        print cc(c, c),
+    print
+
+    # colored string can be duplicated with '*', like normal string
+    p = (cc('a', 'danger')
+         + cc('b', 'warn')
+         + cc(' d')) * 3
+    print p
+
+    # re-render ColoredString
+    print cc(p, 'warn')
+
+    # no-color
+    print cc(p)
