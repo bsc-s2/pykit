@@ -194,10 +194,10 @@ _named_colors = {
     # for human
     'blue': 67,
     'cyan': 37,
-    'green': 36,
+    'green': 46,
     'yellow': 226,
-    'red': 220,
-    'purple': 225,
+    'red': 196,
+    'purple': 128,
     'white': 255,
 }
 
