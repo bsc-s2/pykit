@@ -147,6 +147,27 @@ class ColoredString(object):
         return c
 
 
+def blue(v): return ColoredString(v, 'blue')
+
+
+def cyan(v): return ColoredString(v, 'cyan')
+
+
+def green(v): return ColoredString(v, 'green')
+
+
+def yellow(v): return ColoredString(v, 'yellow')
+
+
+def red(v): return ColoredString(v, 'red')
+
+
+def purple(v): return ColoredString(v, 'purple')
+
+
+def white(v): return ColoredString(v, 'white')
+
+
 def fading_color(v, total):
     return _clrs[fading_idx(v, total)]
 
@@ -162,11 +183,22 @@ def fading_idx(v, total=100):
 _clrs = [63, 67, 37, 36, 41, 46, 82, 118,
          154, 190, 226, 220, 214, 208, 202, 196]
 _named_colors = {
+    # by emergence levels
     'danger': _clrs[fading_idx(100)],
     'warn': _clrs[fading_idx(60)],
     'loaded': _clrs[fading_idx(30)],
     'optimal': _clrs[fading_idx(0)],
+
     'dark': _clrs[1],
+
+    # for human
+    'blue': 67,
+    'cyan': 37,
+    'green': 36,
+    'yellow': 226,
+    'red': 220,
+    'purple': 225,
+    'white': 255,
 }
 
 
@@ -177,6 +209,10 @@ if __name__ == "__main__":
     # list all fading color
     for i in range(len(_clrs)):
         print colorize(i, len(_clrs)),
+    print
+
+    for c in _clrs:
+        print ColoredString(c, c),
     print
 
     # concat colored string with '+', like normal string
@@ -202,3 +238,12 @@ if __name__ == "__main__":
 
     # no-color
     print cc(p)
+
+    # named color shortcuts
+    print blue('this is blue')
+    print cyan('this is cyan')
+    print green('this is green')
+    print yellow('this is yellow')
+    print red('this is red')
+    print purple('this is purple')
+    print white('this is white')
