@@ -134,15 +134,17 @@ class ColoredString(object):
                     for x in self.elts])
 
     def __add__(self, other):
+        c = ColoredString(0)
         if isinstance(other, ColoredString):
-            self.elts.extend(other.elts)
+            c.elts = self.elts + other.elts
         else:
-            self.elts.extend([(str(other), None)])
-        return self
+            c.elts = self.elts[:] + [(str(other), None)]
+        return c
 
     def __mul__(self, num):
-        self.elts *= num
-        return self
+        c = ColoredString(0)
+        c.elts = self.elts * num
+        return c
 
 
 def fading_color(v, total):
@@ -194,7 +196,9 @@ if __name__ == "__main__":
     print p
 
     # re-render ColoredString
-    print cc(p, 'warn')
+    c = cc(p, 'warn')
+    print '*2:', c * 2
+    print 'original is no changed:', c
 
     # no-color
     print cc(p)
