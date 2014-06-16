@@ -59,7 +59,7 @@ def format_line(items, sep=' ', aligns=''):
     items = [(x if type(x) in listtype else [x])
              for x in items]
 
-    items = [[y if isinstance(y, ColoredString) else str(y)
+    items = [[y if isinstance(y, ColoredString) else escape(y)
               for y in x]
              for x in items]
 
@@ -81,7 +81,12 @@ def format_line(items, sep=' ', aligns=''):
             elt = items[j][i]
 
             actualWidth = elt.__len__()
-            elt = str(elt)
+            elt = escape(elt)
+
+            if type(elt) == type(u''):
+                elt = elt.encode('utf-8')
+            else:
+                elt = str(elt)
 
             if actualWidth < width:
                 padding = ' ' * (width - actualWidth)
@@ -247,3 +252,11 @@ if __name__ == "__main__":
     print red('this is red')
     print purple('this is purple')
     print white('this is white')
+
+
+def escape(s):
+
+    if type(s) != type(u''):
+        s = str(s)
+
+    return s
