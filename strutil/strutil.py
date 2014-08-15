@@ -59,7 +59,7 @@ def format_line(items, sep=' ', aligns=''):
     items = [(x if type(x) in listtype else [x])
              for x in items]
 
-    items = [[y if isinstance(y, ColoredString) else y
+    items = [[to_str(y)
               for y in x]
              for x in items]
 
@@ -97,6 +97,17 @@ def format_line(items, sep=' ', aligns=''):
         lines.append(line)
 
     return "\n".join(lines)
+
+
+def to_str(y):
+    if isinstance(y, ColoredString):
+        pass
+    elif type(y) in (type(0), type(0L)):
+        y = str(y)
+    elif type(y) in (type([]), type(()), type({})):
+        y = str(y)
+
+    return y
 
 
 def colorize(v, total, ptn='{0}'):
