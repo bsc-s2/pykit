@@ -33,6 +33,31 @@ DOT_COUNTER = [ x[0] for x in DOUBLE_LINE_MAP ] \
 DOT_COUNTER_2 = sum(DOUBLE_LINE_MAP, [])
 
 
+def tokenize(line):
+    # double quoted segment is preseverd
+
+    tokens = line.split(' ')
+
+    stck = [[]]
+
+    for t in tokens:
+
+        sp = t.split('"')
+        n = len(sp)
+
+        if n % 2 == 0:
+            if len(stck) == 1:
+                stck.append([t])
+            else:
+                stck[-1].append(t)
+                sss = stck.pop()
+                stck[-1].append(' '.join(sss))
+        else:
+            stck[-1].append(t)
+
+    return stck[0]
+
+
 def line_pad(linestr, padding=''):
 
     lines = linestr.split("\n")
