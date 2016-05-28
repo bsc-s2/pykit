@@ -7,7 +7,6 @@ import time
 import traceback
 from signal import SIGTERM
 
-import conf
 import genlog
 import sockinherit
 import util
