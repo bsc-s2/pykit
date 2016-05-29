@@ -60,7 +60,7 @@ class Daemon:
                 # exit first parent
                 sys.exit(0)
 
-        except OSError, e:
+        except OSError as e:
 
             sys.stderr.write("fork #1 failed: %d (%s)\n"
                              % (e.errno, e.strerror))
@@ -79,7 +79,7 @@ class Daemon:
                 # exit from second parent
                 sys.exit(0)
 
-        except OSError, e:
+        except OSError as e:
 
             sys.stderr.write("fork #2 failed: %d (%s)\n"
                              % (e.errno, e.strerror))
@@ -288,7 +288,7 @@ def signal_to_upgrade(pidFile):
 
         try:
             os.kill(pid, signal.SIGUSR2)
-        except OSError, e:
+        except OSError as e:
             # no such process
             return
 
@@ -308,12 +308,12 @@ def _get_pid(fn):
     try:
         with open(fn, 'r') as f:
             cont = f.read()
-    except OSError, e:
+    except OSError as e:
         return None
 
     try:
         return int(cont)
-    except ValueError, e:
+    except ValueError as e:
         return None
 
 
