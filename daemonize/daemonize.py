@@ -45,7 +45,7 @@ class Daemon:
 
     def daemonize(self):
         """
-        do the UNIX double-fork magic, see Stevens' "Advanced 
+        do the UNIX double-fork magic, see Stevens' "Advanced
         Programming in the UNIX Environment" for details (ISBN 0201563177)
         http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
         """
@@ -207,7 +207,7 @@ class Daemon:
 
     def run(self):
         """
-        You should override this method when you subclass Daemon. 
+        You should override this method when you subclass Daemon.
         It will be called after the process has been
         daemonized by start() or restart().
         """
