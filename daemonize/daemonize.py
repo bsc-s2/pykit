@@ -5,11 +5,10 @@ import signal
 import sys
 import time
 import traceback
-from signal import SIGTERM
 
+import fs
 import genlog
 import sockinherit
-import util
 
 logger = genlog.logger
 
@@ -185,9 +184,9 @@ class Daemon:
         while 1:
 
             try:
-                pid = util.read_file(self.pidfile)
+                pid = fs.read_file(self.pidfile)
                 pid = int(pid)
-                os.kill(pid, SIGTERM)
+                os.kill(pid, signal.SIGTERM)
                 return
 
             except Exception as e:
