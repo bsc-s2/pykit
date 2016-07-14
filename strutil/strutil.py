@@ -74,6 +74,31 @@ def line_pad(linestr, padding=''):
 
 
 def format_line(items, sep=' ', aligns=''):
+    '''
+    format a line with multi-row columns.
+
+        items = [ 'name:',
+                  [ 'John',
+                    'j is my nick'
+                  ],
+                  [ 'age:' ],
+                  [ 26, ],
+                  [ 'experience:' ],
+                  [ '2000 THU',
+                    '2006 sina',
+                    '2010 other'
+                  ],
+        ]
+
+        format_line(items, sep=' | ', aligns = 'llllll')
+
+    outputs:
+
+        name: | John         | age: | 26 | experience: | 2000 THU
+              | j is my nick |      |    |             | 2006 sina
+              |              |      |    |             | 2010 other
+
+    '''
 
     listtype = (type([]), type(()))
 
@@ -249,6 +274,8 @@ def to_output_format(s):
 
 if __name__ == "__main__":
 
+    print '--- colorized string ---'
+
     cc = ColoredString
 
     # list all fading color
@@ -271,18 +298,20 @@ if __name__ == "__main__":
     print
 
     # colored string can be duplicated with '*', like normal string
-    p = (cc('a', 'danger')
-         + cc('b', 'warn')
-         + cc(' d')) * 3
-    print p
+    p = (cc('danger', 'danger')
+         + cc('warn', 'warn')
+         + cc(' normal')) * 3
+    print 'p:', p
+    print 'p*2:', p * 2
 
     # re-render ColoredString
     c = cc(p, 'warn')
-    print '*2:', c * 2
+    print 'colorize with "warn":', c
+    print 'c*2:', c * 2
     print 'original is no changed:', c
 
     # no-color
-    print cc(p)
+    print 'de-colored:', cc(p)
 
     # named color shortcuts
     print blue('this is blue')
@@ -292,3 +321,20 @@ if __name__ == "__main__":
     print red('this is red')
     print purple('this is purple')
     print white('this is white')
+
+    print '--- format_line ---'
+
+    items = ['name:',
+             ['John',
+              'j is my nick'
+              ],
+             ['age:'],
+             [26, ],
+             ['experience:'],
+             ['2000 THU',
+              '2006 sina',
+              '2010 other'
+              ],
+             ]
+    print items
+    print format_line(items, sep=' | ', aligns='llllll')
