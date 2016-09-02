@@ -273,6 +273,8 @@ def to_output_format(s):
     return s
 
 if __name__ == "__main__":
+    import genlog
+    genlog.init_root_logger()
 
     print '--- colorized string ---'
 
