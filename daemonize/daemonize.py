@@ -10,7 +10,7 @@ import fs
 import genlog
 import sockinherit
 
-logger = genlog.logger
+logger = logging.getLogger(__name__)
 
 
 class Daemon:
