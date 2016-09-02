@@ -8,7 +8,6 @@ import time
 import traceback
 
 import fs
-import genlog
 import sockinherit
 
 logger = logging.getLogger(__name__)
