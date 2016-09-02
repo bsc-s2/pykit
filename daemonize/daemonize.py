@@ -124,10 +124,10 @@ class Daemon:
                     raise
 
         else:
-            genlog.logger.info("Failure acquiring lock %s" % (self.lockfile, ))
+            logger.info("Failure acquiring lock %s" % (self.lockfile, ))
             sys.exit(1)
 
-        genlog.logger.info("OK acquired lock %s" % (self.lockfile))
+        logger.info("OK acquired lock %s" % (self.lockfile))
 
     def unlock(self):
 
@@ -161,13 +161,13 @@ class Daemon:
 
         try:
             pid = os.getpid()
-            genlog.logger.debug('write pid:' + str(pid))
+            logger.debug('write pid:' + str(pid))
 
             pf.truncate(0)
             pf.write(str(pid))
             pf.flush()
         except Exception as e:
-            genlog.logger.error('write pid failed.' + repr(e))
+            logger.error('write pid failed.' + repr(e))
             sys.exit(0)
 
     def stop_pid(self):
@@ -178,7 +178,7 @@ class Daemon:
         pid = None
         if not os.path.exists(self.pidfile):
 
-            genlog.logger.debug('pidfile not exist:' + self.pidfile)
+            logger.debug('pidfile not exist:' + self.pidfile)
             return
 
         while 1:
@@ -190,7 +190,7 @@ class Daemon:
                 return
 
             except Exception as e:
-                genlog.logger.debug('get pid failed.' + str(e) + str(pid))
+                logger.debug('get pid failed.' + str(e) + str(pid))
                 # file been deleted?
                 break
 
@@ -287,7 +287,7 @@ def signal_to_upgrade(pidFile):
 
         try:
             os.kill(pid, signal.SIGUSR2)
-        except OSError as e:
+        except OSError:
             # no such process
             return
 
@@ -307,12 +307,12 @@ def _get_pid(fn):
     try:
         with open(fn, 'r') as f:
             cont = f.read()
-    except OSError as e:
+    except OSError:
         return None
 
     try:
         return int(cont)
-    except ValueError as e:
+    except ValueError:
         return None
 
 
