@@ -1,0 +1,9 @@
+[ remote: https://github.com/ ]
+[ base: script ]
+
+git-subrepo             baishancloud/                           master
+
+[ base: ]
+
+jobq                    baishancloud/                           master
+mysqlconnpool           baishancloud/                           master
