@@ -1,1 +1,6 @@
-from .jobq import (EmptyRst, Finish, run, stat)
+from .jobq import (
+        EmptyRst,
+        Finish,
+        run,
+        stat,
+)
