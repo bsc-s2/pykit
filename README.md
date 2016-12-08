@@ -8,6 +8,7 @@
   - [Module List](#module-list)
 - [Install](#install)
 - [Usage](#usage)
+  - [Update sub repo](#update-sub-repo)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -70,6 +71,23 @@ jobq.run([0, 1, 2], [add1, printarg])
 # > 2
 # > 3
 ```
+
+##  Update sub repo
+
+>   You do not need to read this chapter if you are not a maintainer.
+
+First update sub repo config file `.gitsubrepo`
+and run `git-subrepo`.
+
+`git-subrepo` will fetch new changes from all sub repos and merge them into
+current branch `mater`:
+
+```
+./script/git-subrepo/git-subrepo
+```
+
+`git-subrepo` is a tool in shell script.
+It merges sub git repo into the parent git working dir with `git-submerge`.
 
 #   Author
 
