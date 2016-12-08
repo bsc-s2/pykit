@@ -1,0 +1,82 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+#   Table of Content
+
+- [Name](#name)
+- [Status](#status)
+- [Description](#description)
+  - [Module List](#module-list)
+- [Install](#install)
+- [Usage](#usage)
+- [Author](#author)
+- [Copyright and License](#copyright-and-license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+#   Name
+
+pykit:
+A collection of python libs those are used in project s2: Storage-Service at
+baishancloud.com
+
+#   Status
+
+This library is in beta phase.
+
+It has been used heavily in our object storage service, as a foundamental
+library of our devops platform.
+
+#   Description
+
+There are several native modules like `utfjson`,
+along with several external modules like `jobq`, which are imported with
+`script/git-subrepo`(`git-subrepo` is also maintained by itself).
+
+##  Module List
+
+There is a `README.md` for each module.
+
+| name               | description                                                                           |
+| :--                | :--                                                                                   |
+| script/git-subrepo | A shell script maintaining sub module                                                 |
+| jobq               | Process serial of input elements with several functions concurrently and sequentially |
+| mysqlconnpool      | Mysql connection pool with MySQLdb in python                                          |
+| utfjson            | force `json.dump` and `json.load` in `utf-8` encoding                                 |
+
+#   Install
+
+This package does not support installation.
+
+Just clone it and copy it into your project source folder.
+
+```
+cd your_project_folder
+git clone https://github.com/baishancloud/pykit.git
+```
+
+#   Usage
+
+```
+from pykit import jobq
+
+def add1(args):
+    return args + 1
+
+def printarg(args):
+    print args
+
+jobq.run([0, 1, 2], [add1, printarg])
+# > 1
+# > 2
+# > 3
+```
+
+#   Author
+
+Zhang Yanpo (张炎泼) <drdr.xp@gmail.com>
+
+#   Copyright and License
+
+The MIT License (MIT)
+
+Copyright (c) 2015 Zhang Yanpo (张炎泼) <drdr.xp@gmail.com>
