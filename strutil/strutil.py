@@ -4,29 +4,6 @@
 
 import types
 
-DOUBLE_LINE_MAP = [
-    ["⠀", "⢀", "⢠", "⢰", "⢸", ],
-    ["⡀", "⣀", "⣠", "⣰", "⣸", ],
-    ["⡄", "⣄", "⣤", "⣴", "⣼", ],
-    ["⡆", "⣆", "⣦", "⣶", "⣾", ],
-    ["⡇", "⣇", "⣧", "⣷", "⣿", ],
-]
-
-x = DOUBLE_LINE_MAP
-DOT_COUNTER_BOTTOM = [
-    x[0][0],
-    x[1][0], x[1][1],
-    x[2][1], x[2][2],
-    x[3][2], x[3][3],
-    x[4][3], x[4][4],
-]
-del x
-
-DOT_COUNTER = [ x[0] for x in DOUBLE_LINE_MAP ] \
-    + [x for x in DOUBLE_LINE_MAP[4][1:]]
-
-DOT_COUNTER_2 = sum(DOUBLE_LINE_MAP, [])
-
 
 def tokenize(line):
     # double quoted segment is preseverd
@@ -104,7 +81,7 @@ def format_line(items, sep=' ', aligns=''):
     items = [(x if type(x) in listtype else [x])
              for x in items]
 
-    items = [[to_str(y)
+    items = [[_to_str(y)
               for y in x]
              for x in items]
 
@@ -144,7 +121,7 @@ def format_line(items, sep=' ', aligns=''):
     return "\n".join(lines)
 
 
-def to_str(y):
+def _to_str(y):
     if isinstance(y, ColoredString):
         pass
     elif type(y) in (type(0), type(0L)):
@@ -225,10 +202,10 @@ def white(v): return ColoredString(v, 'white')
 
 
 def fading_color(v, total):
-    return _clrs[fading_idx(v, total)]
+    return _clrs[_fading_idx(v, total)]
 
 
-def fading_idx(v, total=100):
+def _fading_idx(v, total=100):
     l = len(_clrs)
     pos = int(v * l / total + 0.5)
     pos = min(pos, l - 1)
@@ -240,10 +217,10 @@ _clrs = [63, 67, 37, 36, 41, 46, 82, 118,
          154, 190, 226, 220, 214, 208, 202, 196]
 _named_colors = {
     # by emergence levels
-    'danger': _clrs[fading_idx(100)],
-    'warn': _clrs[fading_idx(60)],
-    'loaded': _clrs[fading_idx(30)],
-    'optimal': _clrs[fading_idx(0)],
+    'danger': _clrs[_fading_idx(100)],
+    'warn': _clrs[_fading_idx(60)],
+    'loaded': _clrs[_fading_idx(30)],
+    'optimal': _clrs[_fading_idx(0)],
 
     'dark': _clrs[1],
 
