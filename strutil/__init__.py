@@ -16,5 +16,11 @@ from .strutil import (
     white,
     yellow,
 
+    optimal,
+    normal,
+    loaded,
+    warn,
+    danger,
+
     fading_color,
 )

@@ -201,6 +201,21 @@ def purple(v): return ColoredString(v, 'purple')
 def white(v): return ColoredString(v, 'white')
 
 
+def optimal(v): return ColoredString(v, 'optimal')
+
+
+def normal(v): return ColoredString(v, 'normal')
+
+
+def loaded(v): return ColoredString(v, 'loaded')
+
+
+def warn(v): return ColoredString(v, 'warn')
+
+
+def danger(v): return ColoredString(v, 'danger')
+
+
 def fading_color(v, total):
     return _clrs[_fading_idx(v, total)]
 
@@ -215,11 +230,13 @@ def _fading_idx(v, total=100):
 
 _clrs = [63, 67, 37, 36, 41, 46, 82, 118,
          154, 190, 226, 220, 214, 208, 202, 196]
+
 _named_colors = {
     # by emergence levels
     'danger': _clrs[_fading_idx(100)],
-    'warn': _clrs[_fading_idx(60)],
+    'warn': 3,
     'loaded': _clrs[_fading_idx(30)],
+    'normal': 7,
     'optimal': _clrs[_fading_idx(0)],
 
     'dark': _clrs[1],
@@ -243,70 +260,3 @@ def to_output_format(s):
         s = str(s)
 
     return s
-
-if __name__ == "__main__":
-
-    print '--- colorized string ---'
-
-    cc = ColoredString
-
-    # list all fading color
-    for i in range(len(_clrs)):
-        print colorize(i, len(_clrs)),
-    print
-
-    for c in _clrs:
-        print ColoredString(c, c),
-    print
-
-    # concat colored string with '+', like normal string
-    s = cc(10, 'danger') + cc('ab', 'warn')
-    print s, len(s)
-    print s + 'jfksdl'
-
-    # list all colors
-    for c in range(256):
-        print cc(c, c),
-    print
-
-    # colored string can be duplicated with '*', like normal string
-    p = (cc('danger', 'danger')
-         + cc('warn', 'warn')
-         + cc(' normal')) * 3
-    print 'p:', p
-    print 'p*2:', p * 2
-
-    # re-render ColoredString
-    c = cc(p, 'warn')
-    print 'colorize with "warn":', c
-    print 'c*2:', c * 2
-    print 'original is no changed:', c
-
-    # no-color
-    print 'de-colored:', cc(p)
-
-    # named color shortcuts
-    print blue('this is blue')
-    print cyan('this is cyan')
-    print green('this is green')
-    print yellow('this is yellow')
-    print red('this is red')
-    print purple('this is purple')
-    print white('this is white')
-
-    print '--- format_line ---'
-
-    items = ['name:',
-             ['John',
-              'j is my nick'
-              ],
-             ['age:'],
-             [26, ],
-             ['experience:'],
-             ['2000 THU',
-              '2006 sina',
-              '2010 other'
-              ],
-             ]
-    print items
-    print format_line(items, sep=' | ', aligns='llllll')
