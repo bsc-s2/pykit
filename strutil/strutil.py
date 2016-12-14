@@ -4,11 +4,6 @@
 
 import types
 
-# DOUBLE_LINE_MAP = [ u'\u2800\u2880\u28a0\u28b0\u28b8',
-#                     u'\u2840\u28C0\u28E0\u28F0\u28F8',
-#                     u'\u2844\u28C4\u28E4\u28F4\u28FC',
-#                     u'\u2846\u28C6\u28E6\u28F6\u28FE',
-#                     u'\u2847\u28C7\u28E7\u28F7\u28FF', ]
 DOUBLE_LINE_MAP = [
     ["⠀", "⢀", "⢠", "⢰", "⢸", ],
     ["⡀", "⣀", "⣠", "⣰", "⣸", ],
@@ -273,8 +268,6 @@ def to_output_format(s):
     return s
 
 if __name__ == "__main__":
-    import genlog
-    genlog.init_root_logger()
 
     print '--- colorized string ---'
 
