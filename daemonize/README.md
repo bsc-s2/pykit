@@ -26,6 +26,8 @@ This library is considered production ready.
 
 #   Synopsis
 
+`foo.py`:
+
 ```python
 # foo.py
 import time
@@ -40,6 +42,8 @@ if __name__ == '__main__':
     # that can run.
     daemonize.daemonize_cli(run, '/var/run/pid')
 ```
+
+To control foo.py from command line:
 
 ```
 python2 foo.py start
