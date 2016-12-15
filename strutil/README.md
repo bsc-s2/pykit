@@ -1,3 +1,21 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+#   Table of Content
+
+- [Name](#name)
+- [Status](#status)
+- [Synopsis](#synopsis)
+  - [colored string:](#colored-string)
+- [Description](#description)
+- [Methods](#methods)
+  - [strutil.line_pad](#strutilline_pad)
+  - [strutil.format_line](#strutilformat_line)
+  - [strutil.color](#strutilcolor)
+- [Author](#author)
+- [Copyright and License](#copyright-and-license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 #   Name
 
 strutil
