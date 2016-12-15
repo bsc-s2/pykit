@@ -124,7 +124,7 @@ strutil.format_line([["name:", "age:"], ["drdrxp", "18"], "wow"], sep=" | ", ali
 **return**:
 formatted string.
 
-##  strutil.<color>
+##  strutil.color
 
 Create colored string for use in terminal.
 
