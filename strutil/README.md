@@ -143,16 +143,6 @@ t * 3
 len(t)
 ```
 
-```python
-strutil.blue("blue") + " and " + strutil.green("green")
-```
-
-results in:
-
-<span style="color:blue">blue</span>
-and
-<span style="color:green">green</span>
-
 Supported color names:
 
 -   `blue`
