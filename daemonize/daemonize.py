@@ -178,12 +178,12 @@ def _read_file(fn):
         return f.read()
 
 
-def standard_daemonize(run_func, pidfn):
+def daemonize_cli(run_func, pidfn):
 
     logging.basicConfig(stream=sys.stderr)
     logging.getLogger(__name__).setLevel(logging.DEBUG)
 
-    d = Daemon(pidfn, None)
+    d = Daemon(pidfn)
 
     logger.info("sys.argv: " + repr(sys.argv))
 
@@ -218,3 +218,6 @@ def standard_daemonize(run_func, pidfn):
 
     except Exception as e:
         logger.exception(repr(e))
+
+
+standard_daemonize = daemonize_cli
