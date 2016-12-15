@@ -42,6 +42,7 @@ There is a `README.md` for each module.
 | script/git-subrepo | A shell script maintaining sub module                                                 |
 | jobq               | Process serial of input elements with several functions concurrently and sequentially |
 | mysqlconnpool      | Mysql connection pool with MySQLdb in python                                          |
+| strutil            | a collection functions operating string                                               |
 | utfjson            | force `json.dump` and `json.load` in `utf-8` encoding                                 |
 
 #   Install
