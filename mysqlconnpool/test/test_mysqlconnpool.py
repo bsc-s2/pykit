@@ -1,9 +1,9 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import time
 import socket
 import subprocess
+import time
 import unittest
 
 import docker
@@ -147,7 +147,6 @@ class Testmysqlconnpool(unittest.TestCase):
         self.assertEqual(0, pool('stat')['pool_get'])
         self.assertEqual(0, pool('stat')['pool_put'])
 
-
     def test_conn_query(self):
 
         pool = self.pool
@@ -160,7 +159,6 @@ class Testmysqlconnpool(unittest.TestCase):
         databases = [x['Database'] for x in rst]
         self.assertTrue('mysql' in databases)
 
-
     def test_query(self):
 
         pool = self.pool
@@ -171,7 +169,6 @@ class Testmysqlconnpool(unittest.TestCase):
 
         databases = [x['Database'] for x in rst]
         self.assertTrue('mysql' in databases)
-
 
     def test_query_array_result(self):
 
@@ -194,11 +191,11 @@ def start_mysql_server():
         dd('create container: ' + mysql_test_name)
         dcli = _docker_cli()
         dcli.create_container(name=mysql_test_name,
-                             environment={
-                                 'MYSQL_ROOT_PASSWORD': mysql_test_password,
-                             },
-                             image=mysql_test_tag,
-                             )
+                              environment={
+                                  'MYSQL_ROOT_PASSWORD': mysql_test_password,
+                              },
+                              image=mysql_test_tag,
+                              )
         time.sleep(2)
 
     dd('start mysql: ' + mysql_test_name)
@@ -266,11 +263,10 @@ def run_shell(*args, **argkv):
     return rst
 
 
-
-def dd( *msg ):
+def dd(*msg):
     if not _DEBUG_:
         return
 
     for m in msg:
-        print str( m ),
+        print str(m),
     print

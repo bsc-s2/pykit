@@ -2,10 +2,10 @@
 # coding: utf-8
 
 import copy
-import MySQLdb
-import Queue
 import logging
+import Queue
 
+import MySQLdb
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +103,7 @@ def conn_query(conn, sql, use_dict=True):
     else:
         cur = conn.cursor()
 
-    cur.execute( sql )
+    cur.execute(sql)
     rst = cur.fetchall()
     cur.close()
 
