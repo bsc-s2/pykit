@@ -51,14 +51,12 @@ strutil.format_line(items, sep=' | ', aligns = 'llllll')
 
 ```python
 from pykit.strutil import blue, green, yellow
-print blue("blue"), green("green"), yellow("yellow")
+blue("blue") + " and " + green("green")
 ```
 
 The above snippet will output colored text on a terminal:
 
-<span style="color:blue">blue</span>
-<span style="color:green">green</span>
-<span style="color:yellow">yellow</span>
+![](res/colored-string.png)
 
 #   Description
 
