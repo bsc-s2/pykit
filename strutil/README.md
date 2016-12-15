@@ -173,7 +173,6 @@ Supported color names:
 -   `red`
 -   `purple`
 -   `white`
-
 -   `optimal` same as `blue`
 -   `normal` no color
 -   `loaded` same as `green`
