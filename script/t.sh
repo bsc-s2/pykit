@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ $# -eq 0 ]; then
-    python2 -m unittest discover -v
+    python2 -m unittest discover -v --failfast
 else
-    python2 -m unittest discover -v -s "$1"
+    python2 -m unittest discover -v --failfast -s "$1"
 fi
