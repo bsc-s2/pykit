@@ -5,25 +5,18 @@ import os
 import signal
 import sys
 import time
-import traceback
-
-import fs
-import sockinherit
 
 logger = logging.getLogger(__name__)
 
 
-class Daemon:
-    """
-    A generic daemon class.
+class Daemon(object):
 
-    Usage: subclass the Daemon class and override the run() method
-    """
+    def __init__(self,
+                 pidfile,
+                 stdin='/dev/null',
+                 stdout='/dev/null',
+                 stderr='/dev/null'):
 
-    def __init__(self, pidfile, run=lambda: None,
-                 stdin='/dev/null', stdout='/dev/null', stderr='/dev/null', foreground=False):
-
-        self._run = run
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
@@ -40,7 +33,6 @@ class Daemon:
         # library function decides to open, read and close it.
         self.lockfile = pidfile + ".lock"
         self.lockfp = None
-        self.foreground = foreground
 
     def daemonize(self):
         """
@@ -48,9 +40,6 @@ class Daemon:
         Programming in the UNIX Environment" for details (ISBN 0201563177)
         http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
         """
-
-        if self.foreground:
-            return
 
         try:
 
@@ -60,13 +49,10 @@ class Daemon:
                 sys.exit(0)
 
         except OSError as e:
-
-            sys.stderr.write("fork #1 failed: %d (%s)\n"
-                             % (e.errno, e.strerror))
+            logger.error("fork #1 failed: " + repr(e))
             sys.exit(1)
 
         # decouple from parent environment
-        # os.chdir("/")
         os.setsid()
         os.umask(0)
 
@@ -79,9 +65,7 @@ class Daemon:
                 sys.exit(0)
 
         except OSError as e:
-
-            sys.stderr.write("fork #2 failed: %d (%s)\n"
-                             % (e.errno, e.strerror))
+            logger.error("fork #2 failed: " + repr(e))
             sys.exit(1)
 
         # redirect standard file descriptors
@@ -143,7 +127,6 @@ class Daemon:
 
         self.daemonize()
         self.init_proc()
-        self.run()
 
     def init_proc(self):
         self.trylock_or_exit()
@@ -167,59 +150,38 @@ class Daemon:
             pf.write(str(pid))
             pf.flush()
         except Exception as e:
-            logger.error('write pid failed.' + repr(e))
+            logger.exception('write pid failed.' + repr(e))
             sys.exit(0)
-
-    def stop_pid(self):
-        return self.stop()
 
     def stop(self):
 
         pid = None
+
         if not os.path.exists(self.pidfile):
 
             logger.debug('pidfile not exist:' + self.pidfile)
             return
 
-        while 1:
+        try:
+            pid = _read_file(self.pidfile)
+            pid = int(pid)
+            os.kill(pid, signal.SIGTERM)
+            return
 
-            try:
-                pid = fs.read_file(self.pidfile)
-                pid = int(pid)
-                os.kill(pid, signal.SIGTERM)
-                return
-
-            except Exception as e:
-                logger.debug('get pid failed.' + str(e) + str(pid))
-                # file been deleted?
-                break
-
-            time.sleep(0.1)
-
-    def restart(self):
-        """
-        Restart the daemon
-        """
-
-        self.stop()
-        self.start()
-
-    def run(self):
-        """
-        You should override this method when you subclass Daemon.
-        It will be called after the process has been
-        daemonized by start() or restart().
-        """
-
-        self._run()
-
-        return
+        except Exception as e:
+            logger.warn('{e} while get and kill pid={pid}'.format(
+                e=repr(e), pid=pid))
 
 
-def standard_daemonize(run_func, pidfn,
-                       inheritable=None,
-                       upgrade_arg=None,
-                       cleanup=None):
+def _read_file(fn):
+    with open(fn, 'r') as f:
+        return f.read()
+
+
+def standard_daemonize(run_func, pidfn):
+
+    logging.basicConfig(stream=sys.stderr)
+    logging.getLogger(__name__).setLevel(logging.DEBUG)
 
     d = Daemon(pidfn, None)
 
@@ -233,34 +195,15 @@ def standard_daemonize(run_func, pidfn,
         elif len(sys.argv) == 2:
 
             if 'start' == sys.argv[1]:
-                d.daemonize()
-                if inheritable is not None:
-                    sockinherit.init_inheritable(inheritable)
-                    install_upgrade_sig(d, inheritable, upgrade_arg, cleanup)
-
-                d.init_proc()
+                d.start()
                 run_func()
 
             elif 'stop' == sys.argv[1]:
-                d.stop_pid()
+                d.stop()
 
             elif 'restart' == sys.argv[1]:
-                if inheritable is None:
-                    d.stop_pid()
-                    d.daemonize()
-                    d.init_proc()
-                else:
-                    signal_to_upgrade(pidfn)
-                    # if it returns, upgrade failed. fall back to normal
-                    # restart.
-
-                    d.stop_pid()
-
-                    d.daemonize()
-                    sockinherit.init_inheritable(inheritable)
-                    install_upgrade_sig(d, inheritable, upgrade_arg, cleanup)
-                    d.init_proc()
-
+                d.stop()
+                d.start()
                 run_func()
 
             else:
@@ -274,69 +217,4 @@ def standard_daemonize(run_func, pidfn,
             sys.exit(2)
 
     except Exception as e:
-        logger.error(traceback.format_exc())
-        logger.error(repr(e))
-
-
-def signal_to_upgrade(pidFile):
-
-    pid = _get_pid(pidFile)
-    logger.info("old pid: " + repr(pid))
-
-    if pid is not None:
-
-        try:
-            os.kill(pid, signal.SIGUSR2)
-        except OSError:
-            # no such process
-            return
-
-        logger.info("SIGUSR2 sent to: " + repr(pid))
-
-        for ii in range(30):
-            time.sleep(0.1)
-            pid2 = _get_pid(pidFile)
-            if pid2 is not None and pid != pid2:
-                logger.info("new pid generated, upgrade succeed: "
-                            + repr(pid2))
-                sys.exit(0)
-
-
-def _get_pid(fn):
-
-    try:
-        with open(fn, 'r') as f:
-            cont = f.read()
-    except OSError:
-        return None
-
-    try:
-        return int(cont)
-    except ValueError:
-        return None
-
-
-def install_upgrade_sig(d, inheritable, upgrade_arg, cleanup):
-
-    heir = {}
-    for name, val in inheritable.items():
-        heir[name] = val['sock'].fileno()
-
-    def sig_up(*args, **argkv):
-        if callable(upgrade_arg):
-            exe, args, cwd = upgrade_arg()
-        else:
-            exe, args, cwd = upgrade_arg
-
-        sockinherit.upgrade(exe, args, cwd, heir)
-
-        logger.info("parent spwaned new process")
-        logger.info("parent sleep 1 second")
-        time.sleep(1)
-
-        d.unlock()
-        logger.info("parent released lock, about to exit")
-
-        (cleanup or sys.exit)()
-
-    signal.signal(signal.SIGUSR2, sig_up)
+        logger.exception(repr(e))
