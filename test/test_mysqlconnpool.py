@@ -7,7 +7,6 @@ import time
 import unittest
 
 import docker
-
 import mysqlconnpool
 
 _DEBUG_ = True
