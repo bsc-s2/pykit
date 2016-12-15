@@ -142,6 +142,9 @@ formatted string.
 
 ##  strutil.color
 
+**syntax**:
+`strutil.<color>(str)`
+
 Create colored string for use in terminal.
 
 ```python
