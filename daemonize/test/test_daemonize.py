@@ -41,7 +41,7 @@ class TestDaemonize(unittest.TestCase):
     bar_fn = '/tmp/bar'
     pidfn = '/tmp/test_daemonize.pid'
 
-    def setUp(self):
+    def _clean(self):
 
         # kill foo.py and kill bar.py
         # bar.py might be waiting for foo.py to release lock-file.
@@ -53,7 +53,7 @@ class TestDaemonize(unittest.TestCase):
         time.sleep(0.1)
 
         try:
-            subproc('python2 {b}/foo.py stop'.format(b=this_base))
+            subproc('python2 {b}/bar.py stop'.format(b=this_base))
         except Exception as e:
             print repr(e)
 
@@ -69,8 +69,11 @@ class TestDaemonize(unittest.TestCase):
         except EnvironmentError as e:
             pass
 
+    def setUp(self):
+        self.clean()
+
     def tearDown(self):
-        self.setUp()
+        self.clean()
 
     def test_start(self):
 
