@@ -70,10 +70,10 @@ class TestDaemonize(unittest.TestCase):
             pass
 
     def setUp(self):
-        self.clean()
+        self._clean()
 
     def tearDown(self):
-        self.clean()
+        self._clean()
 
     def test_start(self):
 
