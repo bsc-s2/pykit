@@ -56,8 +56,8 @@ python2 foo.py restart
 Help to create daemon process.
 It supplies a command line interface API to start/stop/restart a daemon.
 
-`daemonize` identify a daemon with the `pid` file.
-Thus two processes those are with the same `pid` file
+`daemonize` identifies a daemon by the `pid` file.
+Thus two processes those are set up with the same `pid` file
 can not run at the same time.
 
 #   Methods
@@ -71,7 +71,7 @@ Read command line arguments and then start, stop or restart a daemon process.
 
 **arguments**:
 -   `callable`:
-    a callable object such as a `function` or `lambda` to run after daemon
+    a callable object such as a `function` or `lambda` to run after the daemon
     process is created.
 
 -   `pid_path`:
