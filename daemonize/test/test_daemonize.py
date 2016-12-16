@@ -29,7 +29,6 @@ def read_file(fn):
     try:
         with open(fn, 'r') as f:
             cont = f.read()
-            print cont
             return cont
     except EnvironmentError as e:
         return None
