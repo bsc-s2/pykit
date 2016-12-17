@@ -37,14 +37,15 @@ along with several external modules like `jobq`, which are imported with
 
 There is a `README.md` for each module.
 
-| name               | description                                                                           |
-| :--                | :--                                                                                   |
-| script/git-subrepo | A shell script maintaining sub module                                                 |
-| daemonize          | start, stop or restart a daemon process                                               |
-| jobq               | Process serial of input elements with several functions concurrently and sequentially |
-| mysqlconnpool      | Mysql connection pool with MySQLdb in python                                          |
-| strutil            | a collection functions operating string                                               |
-| utfjson            | force `json.dump` and `json.load` in `utf-8` encoding                                 |
+| name                           | description                                                                           |
+| :--                            | :--                                                                                   |
+| script/git-subrepo             | A shell script maintaining sub module                                                 |
+| [daemonize](daemonize)         | start, stop or restart a daemon process                                               |
+| [humannum](humannum)           | convert number to human readable number string                                        |
+| [jobq](jobq)                   | Process serial of input elements with several functions concurrently and sequentially |
+| [mysqlconnpool](mysqlconnpool) | Mysql connection pool with MySQLdb in python                                          |
+| [strutil](strutil)             | a collection functions operating string                                               |
+| [utfjson](utfjson)             | force `json.dump` and `json.load` in `utf-8` encoding                                 |
 
 #   Install
 
