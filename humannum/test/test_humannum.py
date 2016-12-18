@@ -8,14 +8,14 @@ import humannum
 
 class TestHumannum(unittest.TestCase):
 
-    def test_number(self):
+    def test_humanize_number(self):
 
         cases = (
                 (0,                        '0',    ''),
                 (1,                        '1',    ''),
-                (1.0,                    '1.00',   ''),
-                (1.01,                   '1.01',   ''),
-                (1.001,                  '1.00',   ''),
+                (1.0,                   '1.00',    ''),
+                (1.01,                  '1.01',    ''),
+                (1.001,                 '1.00',    ''),
                 (1023,                  '1023',    ''),
                 (1024,                    '1K',    ''),
                 (1024 + 1,             '1.00K',    ''),
@@ -35,21 +35,69 @@ class TestHumannum(unittest.TestCase):
 
                 (1048996,              '1.00M',    ''),
 
-                (True,              True,          ''),
+                (True,                    True,    ''),
         )
 
         for _in, _out, _mes in cases:
 
             rst = humannum.humannum(_in)
 
-            mes = 'in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
-                _in=_in,
-                _out=_out,
+            mes = 'humanize: in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
+                _in=repr(_in),
+                _out=repr(_out),
                 rst=rst,
                 _mes=_mes
             )
 
             self.assertEqual(_out, rst, mes)
+
+    def test_parse_number(self):
+
+        cases = (
+                ('0',         0,             ''),
+                ('1',         1,             ''),
+                ('1.00',      1.0,           ''),
+                ('1.01',      1.01,          ''),
+                ('1.00',      1,             ''),
+                ('1023',      1023,          ''),
+                ('1K',        1024,          ''),
+                ('1.00K',     1024,          ''),
+                ('1.01K',     1024 + 10.24,  ''),
+                ('1000.1K',   1024102.4,     ''),
+                ('1M',        1024 ** 2,     ''),
+                ('1.01M',     1059061.76,    ''),
+                ('1G',        1024 ** 3,     ''),
+                ('1T',        1024 ** 4,     ''),
+                ('1P',        1024 ** 5,     ''),
+                ('1E',        1024 ** 6,     ''),
+                ('1Z',        1024 ** 7,     ''),
+                ('1Y',        1024 ** 8,     ''),
+                ('1024Y',     1024 ** 9,     ''),
+                ('1048576Y',  1024 ** 10,    ''),
+                ('1.00M',     1048576,       ''),
+        )
+
+        for _in, _out, _mes in cases:
+
+            rst = humannum.parsenum(_in)
+
+            mes = 'parse: in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
+                _in=repr(_in),
+                _out=repr(_out),
+                rst=rst,
+                _mes=_mes
+            )
+
+            self.assertEqual(_out, rst, mes)
+
+            self.assertEqual(int(_out), humannum.parseint(_in),
+                             mes + '; parseint')
+
+            self.assertEqual(int(_out), humannum.parseint(_in + 'B'),
+                             mes + '; parseint and suffix "B"')
+
+            self.assertEqual(int(_out), humannum.parseint(_in + 'i'),
+                             mes + '; parseint and suffix "i"')
 
     def test_specified_unit(self):
 
@@ -63,8 +111,8 @@ class TestHumannum(unittest.TestCase):
             rst = humannum.humannum(_in[0], **_in[1])
 
             mes = 'in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
-                _in=_in,
-                _out=_out,
+                _in=repr(_in),
+                _out=repr(_out),
                 rst=rst,
                 _mes=_mes
             )
@@ -84,8 +132,8 @@ class TestHumannum(unittest.TestCase):
             rst = humannum.humannum(_in)
 
             mes = 'in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
-                _in=_in,
-                _out=_out,
+                _in=repr(_in),
+                _out=repr(_out),
                 rst=rst,
                 _mes=_mes
             )
@@ -111,8 +159,8 @@ class TestHumannum(unittest.TestCase):
             rst = humannum.humannum(_in[0], **_in[1])
 
             mes = 'in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
-                _in=_in,
-                _out=_out,
+                _in=repr(_in),
+                _out=repr(_out),
                 rst=rst,
                 _mes=_mes
             )

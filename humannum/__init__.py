@@ -8,4 +8,6 @@ from .humannum import (
     Z,
     Y,
     humannum,
+    parsenum,
+    parseint,
 )

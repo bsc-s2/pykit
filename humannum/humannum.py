@@ -1,6 +1,8 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
+import types
+
 K = 1024 ** 1
 M = 1024 ** 2
 G = 1024 ** 3
@@ -10,7 +12,7 @@ E = 1024 ** 6
 Z = 1024 ** 7
 Y = 1024 ** 8
 
-unit_names = {
+unit_to_name = {
     1: '',
     K: 'K',
     M: 'M',
@@ -22,10 +24,10 @@ unit_names = {
     Y: 'Y',
 }
 
-unit_values = dict([(v, k)
-                    for (k, v) in unit_names.items()
-                    if v != ''
-                    ])
+unit_to_value = dict([(v, k)
+                      for (k, v) in unit_to_name.items()
+                      if v != ''
+                      ])
 
 
 def humannum_int(i, unit=None):
@@ -42,13 +44,13 @@ def humannum_int(i, unit=None):
 
         unit /= K
 
-        while unit not in unit_names:
+        while unit not in unit_to_name:
             unit /= K
 
     v = i * 1.0 / unit
 
     if v == int(v):
-        return '%d%s' % (v, unit_names[unit])
+        return '%d%s' % (v, unit_to_name[unit])
 
     if v > 10:
         vlen = 1
@@ -57,7 +59,7 @@ def humannum_int(i, unit=None):
     else:
         vlen = 3
 
-    return ('%.' + str(vlen) + 'f%s') % (v, unit_names[unit])
+    return ('%.' + str(vlen) + 'f%s') % (v, unit_to_name[unit])
 
 
 def humannum(data, unit=None, include=None, exclude=None):
@@ -97,3 +99,33 @@ def humannum(data, unit=None, include=None, exclude=None):
 
     else:
         return data
+
+
+def parseint(data):
+    return int(parsenum(data))
+
+
+def parsenum(data):
+
+    if type(data) in (type(0), type(0L)):
+        return data
+
+    if type(data) not in types.StringTypes:
+        return data
+
+    if data == '':
+        return 0
+
+    data = data.upper().rstrip('B').rstrip('I')
+
+    unit_name = data[-1]
+
+    if unit_name in unit_to_value:
+        val = float(data[:-1]) * unit_to_value[unit_name]
+    else:
+        val = float(data)
+
+    if val == int(val):
+        val = int(val)
+
+    return val

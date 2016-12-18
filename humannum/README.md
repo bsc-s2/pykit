@@ -83,6 +83,38 @@ string.
     number fields.
     It leaves the original `data` intact.
 
+##  humannum.parsenum
+
+**syntax**:
+`humannum.parsenum(data)`
+
+Parse humanized number string like `10.5K` to `int` or `fload`.
+
+```python
+print humannum.parsenum('1.01k')
+# 10342.4
+```
+
+**arguments**:
+-   `data`:
+    number string.
+
+    Valid units are:
+    `k`, `m`, `g`, `t`, `p`, `e`, `z` and `y`.
+    Suffix `b` and `i` will be ignored.
+    For example: `10.1K`, `10.1k`, `10.1Kb` and `10.1Ki` are all the same.
+
+**return**:
+a `int` number or `float` number.
+
+## humannum.parseint
+
+**syntax**:
+`humannum.parseint(data)`
+
+Same as `humannum.parsenum` but it always casts result to a `int` number.
+
+
 #   Author
 
 Zhang Yanpo (张炎泼) <drdr.xp@gmail.com>
