@@ -90,7 +90,7 @@ string.
 **syntax**:
 `humannum.parsenum(data)`
 
-Parse humanized number string like `10.5K` to `int` or `fload`.
+Parse humanized number string like `10.5K` to `int` or `float`.
 
 ```python
 print humannum.parsenum('1.01k')
