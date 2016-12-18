@@ -8,6 +8,8 @@
 - [Description](#description)
 - [Methods](#methods)
   - [humannum.humannum](#humannumhumannum)
+  - [humannum.parsenum](#humannumparsenum)
+  - [humannum.parseint](#humannumparseint)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
