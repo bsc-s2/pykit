@@ -1,11 +1,13 @@
-#!/usr/bin/env python2
-# coding: utf-8
-
 import logging
-import Queue
+import sys
 import threading
 import time
 import types
+
+if sys.version_info[0] == 2:
+    import Queue
+else:
+    import queue as Queue
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +22,7 @@ class Finish(object):
 
 def run(input_it, workers, keep_order=False, timeout=None, probe=None):
 
-    endtime = time.time() + (timeout or 86400 * 102400)
+    endtime = time.time() + (timeout or 86400 * 365)
     if probe is None:
         probe = {}
     sessions = []
