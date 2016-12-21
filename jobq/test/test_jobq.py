@@ -1,6 +1,3 @@
-#!/usr/bin/env python2
-# coding: utf-8
-
 import time
 import unittest
 
@@ -59,7 +56,7 @@ class TestJobQ(unittest.TestCase):
 
         def err_on_even(args):
             if args % 2 == 0:
-                raise Exception()
+                raise Exception('even number')
             else:
                 return args
 
@@ -68,7 +65,7 @@ class TestJobQ(unittest.TestCase):
 
         rst = []
         jobq.run(range(10), [err_on_even, collect])
-        self.assertEqual(range(1, 10, 2), rst)
+        self.assertEqual(list(range(1, 10, 2)), rst)
 
     def test_sequential(self):
 
@@ -77,9 +74,9 @@ class TestJobQ(unittest.TestCase):
                 ([0, 1, 2], [add1, multi2], [2, 4, 6]),
                 (range(3), [add1, (multi2, 1)], [2, 4, 6]),
                 (range(100), [add1, (multi2, 1), discard_even], []),
-                (range(100), [add1, discard_even], range(1, 101, 2)),
+                (range(100), [add1, discard_even], list(range(1, 101, 2))),
                 (range(1024 * 10), [add1, multi2],
-                 range(2, 1024 * 10 * 2 + 2, 2)),
+                 list(range(2, 1024 * 10 * 2 + 2, 2))),
         )
 
         def collect(args):
@@ -93,10 +90,15 @@ class TestJobQ(unittest.TestCase):
     def test_concurrent(self):
 
         cases = (
-                (range(100), [add1, (multi2_sleep, 10)], range(2, 202, 2)),
-                (xrange(100), [add1, (multi2_sleep, 10)], range(2, 202, 2)),
+                (list(range(100)), [add1, (multi2_sleep, 10)],
+                 list(range(2, 202, 2))
+                 ),
+                (range(100), [add1, (multi2_sleep, 10)],
+                 list(range(2, 202, 2))
+                 ),
                 (range(1024 * 10), [add1, (multi2, 4)],
-                 range(2, 1024 * 10 * 2 + 2, 2)),
+                 list(range(2, 1024 * 10 * 2 + 2, 2))
+                 ),
         )
 
         def collect(args):
@@ -132,6 +134,19 @@ class TestJobQ(unittest.TestCase):
                          "generator should get all")
 
         self.assertEqual(9, len(rst), 'nr of elts')
+
+
+class TestDefaultTimeout(unittest.TestCase):
+
+    def test_default_timeout_is_not_too_large(self):
+
+        # Issue: threading.Thread.join does not accept a very large timeout
+        # value
+
+        def _sleep_1(args):
+            time.sleep(1)
+
+        jobq.run(range(1), [_sleep_1])
 
 if __name__ == "__main__":
     unittest.main()
