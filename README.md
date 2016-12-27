@@ -44,6 +44,7 @@ There is a `README.md` for each module.
 | [humannum](humannum)           | convert number to human readable number string                                        |
 | [jobq](jobq)                   | Process serial of input elements with several functions concurrently and sequentially |
 | [mysqlconnpool](mysqlconnpool) | Mysql connection pool with MySQLdb in python                                          |
+| [net](net)                     | network utility                                                                       |
 | [strutil](strutil)             | a collection functions operating string                                               |
 | [utfjson](utfjson)             | force `json.dump` and `json.load` in `utf-8` encoding                                 |
 
