@@ -154,11 +154,11 @@ class TestNet(unittest.TestCase):
 
     def test_get_host_ip4(self):
         # TODO can not test
-        ips = net.get_host_ip4()
+        ips = net.get_host_ip4(iface_prefix='')
 
     def test_get_host_devices(self):
         # TODO can not test
-        devices = net.get_host_devices()
+        devices = net.get_host_devices(iface_prefix='')
 
     def test_parse_ip_regex_str(self):
 

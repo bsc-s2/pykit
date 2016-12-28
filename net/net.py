@@ -84,19 +84,19 @@ def choose_inn(ips):
     return [x for x in ips if ip_class(x) == INN]
 
 
-def get_host_ip4(tp=None):
+def get_host_ip4(iface_prefix=None):
 
-    if tp is None:
-        tp = ['']
+    if iface_prefix is None:
+        iface_prefix = ['']
 
-    if type(tp) in (type(''), type(u'')):
-        tp = [tp]
+    if type(iface_prefix) in (type(''), type(u'')):
+        iface_prefix = [iface_prefix]
 
     ips = []
 
     for ifaceName in netifaces.interfaces():
 
-        for t in tp:
+        for t in iface_prefix:
             if ifaceName.startswith(t):
                 matched = True
                 break
@@ -125,12 +125,12 @@ def choose_by_idc(dest_idc, local_idc, ips):
     return pref_ips
 
 
-def get_host_devices(tp=''):
+def get_host_devices(iface_prefix=''):
 
     rst = {}
 
     names = netifaces.interfaces()
-    names = [x for x in names if x.startswith(tp)]
+    names = [x for x in names if x.startswith(iface_prefix)]
 
     for name in names:
 
