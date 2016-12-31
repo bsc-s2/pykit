@@ -6,8 +6,6 @@ import subprocess
 import time
 import unittest
 
-import daemonize
-
 this_base = os.path.dirname(__file__)
 
 
@@ -30,7 +28,7 @@ def read_file(fn):
         with open(fn, 'r') as f:
             cont = f.read()
             return cont
-    except EnvironmentError as e:
+    except EnvironmentError:
         return None
 
 

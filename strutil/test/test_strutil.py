@@ -85,7 +85,8 @@ class TestStrutil(unittest.TestCase):
 
     def test_format_line(self):
 
-        logger = logging.getLogger(__name__ + '.' + self.__class__.__name__ + '.' + inspect.stack()[0][3])
+        logger = logging.getLogger(
+            __name__ + '.' + self.__class__.__name__ + '.' + inspect.stack()[0][3])
 
         cases = (
                 (([], '', ''),

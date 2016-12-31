@@ -2,8 +2,9 @@ import logging
 import re
 import sys
 
-import netifaces
 import yaml
+
+import netifaces
 
 PUB = 'PUB'
 INN = 'INN'

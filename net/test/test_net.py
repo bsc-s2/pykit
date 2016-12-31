@@ -10,7 +10,7 @@ class TestNet(unittest.TestCase):
         self.assertEqual('INN', net.INN)
 
     def test_exception(self):
-        _ = [net.NetworkError, net.IPUnreachable]
+        [net.NetworkError, net.IPUnreachable]
 
     def test_is_ip4_false(self):
 
@@ -154,11 +154,11 @@ class TestNet(unittest.TestCase):
 
     def test_get_host_ip4(self):
         # TODO can not test
-        ips = net.get_host_ip4(iface_prefix='')
+        net.get_host_ip4(iface_prefix='')
 
     def test_get_host_devices(self):
         # TODO can not test
-        devices = net.get_host_devices(iface_prefix='')
+        net.get_host_devices(iface_prefix='')
 
     def test_parse_ip_regex_str(self):
 
@@ -181,7 +181,7 @@ class TestNet(unittest.TestCase):
             try:
                 net.parse_ip_regex_str(inp)
                 self.fail('should fail with ' + repr(inp))
-            except ValueError as e:
+            except ValueError:
                 pass
 
     def test_choose_ips_regex(self):
