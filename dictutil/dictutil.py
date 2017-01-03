@@ -2,23 +2,24 @@
 # coding: utf-8
 
 
-def dict_depth_iter(mydict, ks=None, maxdepth=10240, get_mid=False):
+def depth_iter(mydict, ks=None, maxdepth=10240, get_mid=False):
 
     ks = ks or []
 
     for k, v in mydict.items():
+
         ks.append(k)
+
         if len(ks) >= maxdepth:
             yield ks, v
-
         else:
-            if type(v) == type({}):
+            if isinstance(v, dict):
 
                 if get_mid:
                     yield ks, v
 
-                for _ks, v in dict_depth_iter(v, ks, maxdepth=maxdepth,
-                                              get_mid=get_mid):
+                for _ks, v in depth_iter(v, ks, maxdepth=maxdepth,
+                                         get_mid=get_mid):
                     yield _ks, v
             else:
                 yield ks, v
@@ -26,7 +27,7 @@ def dict_depth_iter(mydict, ks=None, maxdepth=10240, get_mid=False):
         ks.pop(-1)
 
 
-def dict_breadth_iter(mydict):
+def breadth_iter(mydict):
 
     q = [([], mydict)]
 
@@ -40,5 +41,5 @@ def dict_breadth_iter(mydict):
             ks.append(k)
             yield ks, v
 
-            if type(v) == type({}):
+            if isinstance(v, dict):
                 q.append((ks, v))
