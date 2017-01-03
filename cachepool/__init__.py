@@ -8,3 +8,13 @@ from .cachepool import (
     CachePoolError,
     CachePoolGeneratorError,
 )
+
+__all__ = [
+    "make_wrapper",
+
+    "CachePool",
+    "CacheWrapper",
+
+    "CachePoolError",
+    "CachePoolGeneratorError",
+]

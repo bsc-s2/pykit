@@ -1,7 +1,7 @@
 import unittest
 
 from cachepool import (CachePool, CachePoolError, CachePoolGeneratorError,
-                       CacheWrapper, make_wrapper)
+                       make_wrapper)
 
 _DEBUG_ = True
 
@@ -23,7 +23,7 @@ class TestCachePool(unittest.TestCase):
     def test_generator_is_not_callable(self):
 
         try:
-            pool = CachePool(
+            CachePool(
                 generator(),
             )
         except CachePoolGeneratorError as e:
