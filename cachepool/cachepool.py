@@ -1,5 +1,5 @@
-import sys
 import logging
+import sys
 
 if sys.version_info > (3,):
     import queue as Queue
@@ -8,17 +8,23 @@ else:
 
 logger = logging.getLogger(__name__)
 
-class CachePoolError(Exception): pass
-class CachePoolGeneratorError(CachePoolError): pass
+
+class CachePoolError(Exception):
+    pass
+
+
+class CachePoolGeneratorError(CachePoolError):
+    pass
+
 
 class CachePool(object):
 
     def __init__(self,
-                    generator,
-                    generator_args=None,
-                    generator_argkw=None,
-                    close_callback=None,
-                    pool_size=1024):
+                 generator,
+                 generator_args=None,
+                 generator_argkw=None,
+                 close_callback=None,
+                 pool_size=1024):
 
         self._generator = generator
         self._generator_args = [] if generator_args is None else generator_args
@@ -32,7 +38,7 @@ class CachePool(object):
         self.stat = {'new': 0,
                      'get': 0,
                      'put': 0,
-                    }
+                     }
 
         if not callable(self._generator):
             raise CachePoolGeneratorError('generator is not callable')
@@ -50,7 +56,8 @@ class CachePool(object):
 
         except Queue.Empty:
 
-            element = self._generator(*self._generator_args, **self._generator_argkw)
+            element = self._generator(
+                *self._generator_args, **self._generator_argkw)
 
             self.stat['new'] += 1
             self.stat['get'] += 1
@@ -75,7 +82,8 @@ class CachePool(object):
 
         if ((self._close_callback is not None)
                 and callable(self._close_callback)):
-                self._close_callback(element)
+            self._close_callback(element)
+
 
 class CacheWrapper(object):
 
@@ -105,10 +113,10 @@ class CacheWrapper(object):
 
         self.element = None
 
+
 def make_wrapper(pool, reuse_decider=None):
 
     def _wrapper():
         return CacheWrapper(pool, reuse_decider=reuse_decider)
 
     return _wrapper
-

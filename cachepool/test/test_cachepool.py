@@ -1,24 +1,18 @@
 import unittest
 
-from cachepool import (
-    make_wrapper,
-
-    CachePool,
-    CacheWrapper,
-
-    CachePoolError,
-    CachePoolGeneratorError,
-)
+from cachepool import (CachePool, CachePoolError, CachePoolGeneratorError,
+                       CacheWrapper, make_wrapper)
 
 _DEBUG_ = True
+
 
 class TestCachePool(unittest.TestCase):
 
     def test_initial_stat(self):
 
         pool = CachePool(
-                generator,
-                )
+            generator,
+        )
 
         dd('pool stat: {0}'.format(pool.stat))
 
@@ -30,8 +24,8 @@ class TestCachePool(unittest.TestCase):
 
         try:
             pool = CachePool(
-                    generator(),
-                    )
+                generator(),
+            )
         except CachePoolGeneratorError as e:
             self.assertEqual(str(e), 'generator is not callable')
 
@@ -42,8 +36,8 @@ class TestCachePool(unittest.TestCase):
 
         try:
             pool = CachePool(
-                    lambda x, y: (x, y),
-                    )
+                lambda x, y: (x, y),
+            )
             pool.get()
 
         except TypeError as e:
@@ -56,10 +50,10 @@ class TestCachePool(unittest.TestCase):
 
         try:
             pool = CachePool(
-                    lambda x, y: (x, y),
-                    generator_args=[1,2],
-                    generator_argkw={'k': 'v'},
-                    )
+                lambda x, y: (x, y),
+                generator_args=[1, 2],
+                generator_argkw={'k': 'v'},
+            )
             pool.get()
 
         except TypeError as e:
@@ -72,9 +66,9 @@ class TestCachePool(unittest.TestCase):
 
         try:
             pool = CachePool(
-                    lambda x, y: (x, y),
-                    generator_argkw=[1, 2],
-                    )
+                lambda x, y: (x, y),
+                generator_argkw=[1, 2],
+            )
             pool.get()
 
         except TypeError as e:
@@ -87,9 +81,9 @@ class TestCachePool(unittest.TestCase):
 
         try:
             pool = CachePool(
-                    generator,
-                    close_callback=close_callback_error,
-                    )
+                generator,
+                close_callback=close_callback_error,
+            )
             element = pool.get()
             pool.close(element)
 
@@ -102,9 +96,9 @@ class TestCachePool(unittest.TestCase):
     def test_close_callback(self):
 
         pool = CachePool(
-                generator,
-                close_callback=close_callback,
-                )
+            generator,
+            close_callback=close_callback,
+        )
         element = pool.get()
 
         self.assertFalse(element.closed)
@@ -114,10 +108,10 @@ class TestCachePool(unittest.TestCase):
     def test_close_callback_when_queue_full(self):
 
         pool = CachePool(
-                generator,
-                pool_size=1,
-                close_callback=close_callback,
-                )
+            generator,
+            pool_size=1,
+            close_callback=close_callback,
+        )
 
         dd('pool qsize: {0}'.format(pool.queue.qsize()))
         element1 = pool.get()
@@ -133,10 +127,10 @@ class TestCachePool(unittest.TestCase):
     def test_pool_size(self):
 
         pool = CachePool(
-                generator,
-                pool_size=1,
-                close_callback=close_callback,
-                )
+            generator,
+            pool_size=1,
+            close_callback=close_callback,
+        )
 
         element1 = pool.get()
         element2 = pool.get()
@@ -150,8 +144,8 @@ class TestCachePool(unittest.TestCase):
     def test_get_element(self):
 
         pool = CachePool(
-                generator,
-                )
+            generator,
+        )
 
         element = pool.get()
 
@@ -167,8 +161,8 @@ class TestCachePool(unittest.TestCase):
     def test_get_element_twice(self):
 
         pool = CachePool(
-                generator,
-                )
+            generator,
+        )
 
         element1 = pool.get()
         pool.put(element1)
@@ -189,10 +183,10 @@ class TestCachePool(unittest.TestCase):
         argkw = {'key': 'value'}
 
         pool = CachePool(
-                generator,
-                generator_args=args,
-                generator_argkw=argkw,
-                )
+            generator,
+            generator_args=args,
+            generator_argkw=argkw,
+        )
 
         element = pool.get()
 
@@ -200,16 +194,17 @@ class TestCachePool(unittest.TestCase):
         self.assertEqual(element.args[1], args[1])
         self.assertEqual(element.argkw, argkw)
 
+
 class TestWrapper(unittest.TestCase):
 
     def test_new(self):
 
         pool = CachePool(
-                generator,
-                )
+            generator,
+        )
         wrapper = make_wrapper(
-                pool,
-                )
+            pool,
+        )
 
         element1 = element2 = None
         with wrapper() as ele:
@@ -228,11 +223,11 @@ class TestWrapper(unittest.TestCase):
     def test_reuse(self):
 
         pool = CachePool(
-                generator,
-                )
+            generator,
+        )
         wrapper = make_wrapper(
-                pool,
-                )
+            pool,
+        )
 
         element1 = element2 = None
         with wrapper() as ele:
@@ -252,12 +247,12 @@ class TestWrapper(unittest.TestCase):
     def test_reuse_decider_error(self):
 
         pool = CachePool(
-                generator,
-                )
+            generator,
+        )
         wrapper = make_wrapper(
-                pool,
-                reuse_decider=reuse_decider_error,
-                )
+            pool,
+            reuse_decider=reuse_decider_error,
+        )
 
         with wrapper() as ele:
             element1 = ele
@@ -278,13 +273,13 @@ class TestWrapper(unittest.TestCase):
     def test_reuse_decider_reuse(self):
 
         pool = CachePool(
-                generator,
-                close_callback=close_callback,
-                )
+            generator,
+            close_callback=close_callback,
+        )
         wrapper = make_wrapper(
-                pool,
-                reuse_decider=reuse_decider,
-                )
+            pool,
+            reuse_decider=reuse_decider,
+        )
 
         element1 = element2 = None
 
@@ -304,13 +299,13 @@ class TestWrapper(unittest.TestCase):
     def test_reuse_decider_drop(self):
 
         pool = CachePool(
-                generator,
-                close_callback=close_callback,
-                )
+            generator,
+            close_callback=close_callback,
+        )
         wrapper = make_wrapper(
-                pool,
-                reuse_decider=reuse_decider,
-                )
+            pool,
+            reuse_decider=reuse_decider,
+        )
 
         element1 = element2 = None
 
@@ -328,6 +323,7 @@ class TestWrapper(unittest.TestCase):
         self.assertTrue(element1.closed)
         self.assertFalse(element2.closed)
 
+
 class Element(object):
 
     def __init__(self, *args, **argkw):
@@ -343,14 +339,18 @@ class Element(object):
         print self.args
         print self.argkw
 
+
 def generator(*args, **argkw):
     return Element(*args, **argkw)
+
 
 def close_callback(element):
     element.close()
 
+
 def close_callback_error(element):
     element._close()
+
 
 def reuse_decider(errtype, errval, _traceback):
 
@@ -358,6 +358,7 @@ def reuse_decider(errtype, errval, _traceback):
         return True
 
     return False
+
 
 def reuse_decider_error(errtype, errval, _traceback):
     raise CachePoolError()
