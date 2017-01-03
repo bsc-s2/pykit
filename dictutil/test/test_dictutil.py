@@ -36,7 +36,6 @@ class TestDictIter(unittest.TestCase):
 
                 idx = idx + 1
 
-
     def test_depth_iter_ks(self):
 
         idx = 0
@@ -60,7 +59,6 @@ class TestDictIter(unittest.TestCase):
             )
 
             idx = idx + 1
-
 
     def test_depth_iter_maxdepth(self):
 
@@ -87,7 +85,6 @@ class TestDictIter(unittest.TestCase):
 
             idx = idx + 1
 
-
     def test_depth_iter_get_mid(self):
 
         idx = 0
@@ -105,7 +102,6 @@ class TestDictIter(unittest.TestCase):
                 rst)
 
             idx = idx + 1
-
 
     def test_breadth_iter_default(self):
 
