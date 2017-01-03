@@ -8,7 +8,7 @@ import dictutil
 
 class TestDictIter(unittest.TestCase):
 
-    def test_depth_iter(self):
+    def test_depth_iter_default(self):
 
         cases = (
             ({}, []),
@@ -20,8 +20,10 @@ class TestDictIter(unittest.TestCase):
         )
 
         for _in, _out in cases:
+
             idx = 0
-            for rst in dictutil.dict_depth_iter(_in):
+
+            for rst in dictutil.depth_iter(_in):
                 self.assertEqual(
                     _out[idx],
                     rst,
@@ -31,9 +33,12 @@ class TestDictIter(unittest.TestCase):
                         rst=repr(_out[idx])
                     )
                 )
+
                 idx = idx + 1
 
-        # test argument ks
+
+    def test_depth_iter_ks(self):
+
         idx = 0
         ks = ['mykey']
 
@@ -41,7 +46,7 @@ class TestDictIter(unittest.TestCase):
         _out = [(['mykey', 'k2'], 'v2'), (['mykey', 'k1', 'k11'], 'v11')]
         _mes = 'test argument ks in dictutil.dict_depth_iter()'
 
-        for rst in dictutil.dict_depth_iter(_in, ks=ks):
+        for rst in dictutil.depth_iter(_in, ks=ks):
             self.assertEqual(
                 _out[idx],
                 rst,
@@ -53,23 +58,23 @@ class TestDictIter(unittest.TestCase):
                      _mes=_mes
                 )
             )
+
             idx = idx + 1
 
-        #  test argument  maxdepth
+
+    def test_depth_iter_maxdepth(self):
+
         idx = 0
 
         _in = {'k1': {'k11': {'k111': {'k1111': 'v1111'}}}}
-
         _out = [(['k1'], {'k11': {'k111': {'k1111': 'v1111'}}}),
                 (['k1', 'k11'], {'k111': {'k1111': 'v1111'}}),
                 (['k1', 'k11', 'k111'], {'k1111': 'v1111'}),
                 (['k1', 'k11', 'k111', 'k1111'], 'v1111')
                 ]
 
-        _mes = 'test argument maxdepth in dictutil.dict_depth_iter()'
-
         for depth in range(1, 5):
-            for rst in dictutil.dict_depth_iter(_in, maxdepth=depth):
+            for rst in dictutil.depth_iter(_in, maxdepth=depth):
                 self.assertEqual(
                     _out[idx],
                     rst,
@@ -82,26 +87,27 @@ class TestDictIter(unittest.TestCase):
 
             idx = idx + 1
 
-        # test get_mid == True
-        idx = 0
-        _in = {'k1': {'k11': {'k111': {'k1111': 'v1111'}}}}
 
+    def test_depth_iter_get_mid(self):
+
+        idx = 0
+
+        _in = {'k1': {'k11': {'k111': {'k1111': 'v1111'}}}}
         _out = [(['k1'], {'k11': {'k111': {'k1111': 'v1111'}}}),
                 (['k1', 'k11'], {'k111': {'k1111': 'v1111'}}),
                 (['k1', 'k11', 'k111'], {'k1111': 'v1111'}),
                 (['k1', 'k11', 'k111', 'k1111'], 'v1111')
                 ]
 
-        _mes = 'test argument get_mid in dictutil.dict_depth_iter()'
-
-        for rst in dictutil.dict_depth_iter(_in, get_mid=True):
+        for rst in dictutil.depth_iter(_in, get_mid=True):
             self.assertEqual(
                 _out[idx],
                 rst)
+
             idx = idx + 1
 
 
-    def test_breadth_iter(self):
+    def test_breadth_iter_default(self):
 
         cases = (
             ({}, []),
@@ -116,8 +122,10 @@ class TestDictIter(unittest.TestCase):
         )
 
         for _in, _out in cases:
+
             idx = 0
-            for rst in dictutil.dict_breadth_iter(_in):
+
+            for rst in dictutil.breadth_iter(_in):
                 self.assertEqual(
                     _out[idx],
                     rst,
@@ -127,4 +135,5 @@ class TestDictIter(unittest.TestCase):
                         rst=repr(_out[idx]),
                     )
                 )
+
                 idx = idx + 1
