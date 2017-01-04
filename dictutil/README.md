@@ -75,7 +75,10 @@ for rst in dictutil.breadth_iter(mydict):
 -   `ks`: the argument could be a `list`,  it would be seted ahead of key's list in results of iteration
 
     ```python
+<<<<<<< HEAD
 
+=======
+>>>>>>> update README.md
     for rst in dictutil.depth_iter(mydict, ks=['mykey1','mykey2']):
         print rst
 
@@ -89,7 +92,10 @@ for rst in dictutil.breadth_iter(mydict):
 -   `maxdepth`: specifies the max depth of iteration
 
     ```python
+<<<<<<< HEAD
 
+=======
+>>>>>>> update README.md
     for rst in dictutil.depth_iter(mydict, maxdepth=2):
         print rst
 
@@ -102,7 +108,10 @@ for rst in dictutil.breadth_iter(mydict):
 -   `git_mid`: if set `True`, the method will show the middle results that can be iteraived, by default it is `False`
 
    ```python
+<<<<<<< HEAD
 
+=======
+>>>>>>> update README.md
    for rst in dictutil.depth_iter(mydict, get_mid=True):
        print rst
 
