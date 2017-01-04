@@ -6,8 +6,8 @@
 - [Status](#status)
 - [Synopsis](#synopsis)
 - [Methods](#methods)
-  - [dictutil.dict\_depth\_iter](#dictutildict%5C_depth%5C_iter)
-  - [dictutil.dict\_breadth\_iter](#dictutildict%5C_breadth%5C_iter)
+  - [dictutil.depth_iter](#dictutildepth_iter)
+  - [dictutil.breadth_iter](#dictutilbreadth_iter)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -36,7 +36,7 @@ mydict = {'k1':
          }
 
 # depth-first iterative the dict
-for rst in dictutil.dict_depth_iter(mydict):
+for rst in dictutil.depth_iter(mydict):
     print rst
 
 # output:
@@ -44,8 +44,9 @@ for rst in dictutil.dict_depth_iter(mydict):
 #     (['k1', 'k12', 'k121'], 'v121')
 #     (['k1', 'k11'], 'v11')
 
+
 # breadth-first iterative the dict
-for rst in dictutil.dict_depth_iter(mydict):
+for rst in dictutil.depth_iter(mydict):
     print rst
 
 # output:
@@ -61,10 +62,10 @@ for rst in dictutil.dict_depth_iter(mydict):
 
 #   Methods
 
-## dictutil.dict\_depth\_iter
+## dictutil.depth_iter
 
 **syntax**:
-`dictutil.dict_depth_iter(mydict, ks=None, maxdepth=10240, get_mid=False)`
+`dictutil.depth_iter(mydict, ks=None, maxdepth=10240, get_mid=False)`
 
 **arguments**:
 
@@ -73,7 +74,7 @@ for rst in dictutil.dict_depth_iter(mydict):
 -   `ks`: the argument could be a `list`,  it would be seted ahead of key's list in results of iteration
 
     ```python
-    for rst in dict_depth_iter(mydict, ks=['mykey1','mykey2']):
+    for rst in dictutil.depth_iter(mydict, ks=['mykey1','mykey2']):
         print rst
 
     # output:
@@ -86,7 +87,7 @@ for rst in dictutil.dict_depth_iter(mydict):
 -   `maxdepth`: specifies the max depth of iteration
 
     ```python
-    for rst in dict_depth_iter(mydict, maxdepth=2):
+    for rst in dictutil.depth_iter(mydict, maxdepth=2):
         print rst
 
     # output
@@ -98,7 +99,7 @@ for rst in dictutil.dict_depth_iter(mydict):
 -   `git_mid`: if set `True`, the method will show the middle results that can be iteraived, by default it is `False`
 
    ```python
-   for rst in dict_depth_iter(mydict, get_mid=True):
+   for rst in dictutil.depth_iter(mydict, get_mid=True):
        print rst
 
    # output
@@ -116,10 +117,10 @@ for rst in dictutil.dict_depth_iter(mydict):
 
 return iterative object, each element is a tuple object contains  keys and value
 
-## dictutil.dict\_breadth\_iter
+## dictutil.breadth_iter
 
 **syntax**:
-`dictutil.dict_breadth_iter(mydict)`
+`dictutil.breadth_iter(mydict)`
 
 **arguments**:
 
