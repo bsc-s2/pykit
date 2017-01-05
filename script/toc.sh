@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# npm install doctoc
+
 doctoc --title '#   Table of Content' $(
 if [ "$#" -gt 0 ]; then
     for ptn in "$@"; do
