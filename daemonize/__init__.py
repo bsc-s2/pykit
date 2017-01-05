@@ -1,4 +1,4 @@
-from daemonize import (
+from .daemonize import (
     Daemon,
     daemonize_cli,
 )
