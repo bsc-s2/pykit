@@ -43,3 +43,31 @@ def breadth_iter(mydict):
 
             if isinstance(v, dict):
                 q.append((ks, v))
+
+
+def make_getter_str(code, default=0):
+
+    s = 'lambda dic, vars={}: dic'
+
+    entries = code.split('.')
+    if entries == ['']:
+        return s
+
+    for e in entries:
+
+        if e.startswith('$'):
+
+            dynamic_key = 'str(vars.get("%s", "_"))' % (e[1:], )
+
+            s += '.get(%s, {})' % (dynamic_key, )
+
+        else:
+            s += '.get("%s", {})' % (e, )
+
+    s = s[:-3] + 'vars.get("_default", ' + repr(default) + '))'
+
+    return s
+
+
+def make_getter(code, default=0):
+    return eval(make_getter_str(code, default=default))

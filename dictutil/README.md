@@ -8,6 +8,7 @@
 - [Methods](#methods)
   - [dictutil.depth_iter](#dictutildepth_iter)
   - [dictutil.breadth_iter](#dictutilbreadth_iter)
+  - [dictutil.make_getter](#dictutilmake_getter)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -25,8 +26,9 @@ This library is considered production ready.
 
 #   Synopsis
 
-```python
+Depth first search a dictionary
 
+```python
 from pykit import dictutil
 
 mydict = {'k1':
@@ -44,9 +46,11 @@ for rst in dictutil.depth_iter(mydict):
 #     (['k1', 'k13', 'k131', 'k1311'], 'v1311')
 #     (['k1', 'k12', 'k121'], 'v121')
 #     (['k1', 'k11'], 'v11')
+```
 
+Breadth first search a dictionary
 
-# breadth-first iterative the dict
+```python
 for rst in dictutil.breadth_iter(mydict):
     print rst
 
@@ -59,6 +63,44 @@ for rst in dictutil.breadth_iter(mydict):
 #     (['k1', 'k12', 'k121'], 'v121')
 #     (['k1', 'k13', 'k131', 'k1311'], 'v1311')
 
+#
+```
+
+Make a predefined dictionary item getter.
+
+```python
+import dictutil
+
+records = [
+    {"event": 'log in',
+     "time": {"hour": 10, "minute": 30, }, },
+
+    {"event": 'post a blog',
+     "time": {"hour": 10, "minute": 40, }, },
+
+    {"time": {"hour": 11, "minute": 20, }, },
+
+    {"event": 'log out',
+     "time": {"hour": 11, "minute": 20, }, },
+]
+
+get_event = dictutil.make_getter('event', default="NOTHING DONE")
+get_time = dictutil.make_getter('time.$field')
+
+for record in records:
+
+    ev = get_event(record)
+
+    tm = "%d:%d" % (get_time(record, {"field": "hour"}),
+                    get_time(record, {"field": "minute"}))
+
+    print "{ev:<12}   at {tm}".format(ev=ev, tm=tm)
+
+# output:
+# log in         at 10:30
+# post a blog    at 10:40
+# NOTHING DONE   at 11:20
+# log out        at 11:20
 ```
 
 #   Methods
@@ -75,10 +117,6 @@ for rst in dictutil.breadth_iter(mydict):
 -   `ks`: the argument could be a `list`,  it would be seted ahead of key's list in results of iteration
 
     ```python
-<<<<<<< HEAD
-
-=======
->>>>>>> update README.md
     for rst in dictutil.depth_iter(mydict, ks=['mykey1','mykey2']):
         print rst
 
@@ -92,10 +130,6 @@ for rst in dictutil.breadth_iter(mydict):
 -   `maxdepth`: specifies the max depth of iteration
 
     ```python
-<<<<<<< HEAD
-
-=======
->>>>>>> update README.md
     for rst in dictutil.depth_iter(mydict, maxdepth=2):
         print rst
 
@@ -108,10 +142,6 @@ for rst in dictutil.breadth_iter(mydict):
 -   `git_mid`: if set `True`, the method will show the middle results that can be iteraived, by default it is `False`
 
    ```python
-<<<<<<< HEAD
-
-=======
->>>>>>> update README.md
    for rst in dictutil.depth_iter(mydict, get_mid=True):
        print rst
 
@@ -142,6 +172,29 @@ return iterative object, each element is a tuple object contains  keys and value
 **return**:
 
 return iterative object, each element is a tuple object contains  keys and value
+
+##  dictutil.make_getter
+
+**syntax**:
+`dictutil.make_getter(key_path, default=0)`
+
+It creates a lambda that returns the value of the item specified by
+`key_path`.
+
+**arguments**:
+-   `key_path`:
+    is a dot separated path string of key hierarchy to get an item from a dictionary.
+
+    Example: `foo.bar` is same as `some_dict["foo"]["bar"]`.
+
+-   `default`:
+    is the default value if the item is not found.
+    For example when `foo.bar` is used on a dictionary `{"foo":{}}`.
+
+    It must be a primitive value such as `int`, `float`, `bool`, `string` or `None`.
+
+**return**:
+the item value found by key_path, or the default value if not found.
 
 #   Author
 
