@@ -181,6 +181,21 @@ return iterative object, each element is a tuple object contains  keys and value
 It creates a lambda that returns the value of the item specified by
 `key_path`.
 
+```python
+get_hour = dictutil.make_getter('time.hour')
+print get_hour({"time": {"hour": 11, "minute": 20}})
+# 11
+
+get_minute = dictutil.make_getter('time.minute')
+print get_minute({"time": {"hour": 11, "minute": 20}})
+# 20
+
+get_second = dictutil.make_getter('time.second', default=0)
+print get_second({"time": {"hour": 11, "minute": 20}})
+# 0
+```
+
+
 **arguments**:
 -   `key_path`:
     is a dot separated path string of key hierarchy to get an item from a dictionary.
