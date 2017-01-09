@@ -73,6 +73,8 @@ class TestNet(unittest.TestCase):
             '255.255.0.0',
             '171.0.0.0',
             '173.0.0.0',
+            '172.15.0.0',
+            '172.32.0.0',
             '9.0.0.0',
             '11.0.0.0',
             '192.167.0.0',
@@ -95,7 +97,11 @@ class TestNet(unittest.TestCase):
         cases_inn = (
             '127.0.0.1',
             '127.0.0.255',
-            '172.0.0.0',
+            '172.16.0.0',
+            '172.17.0.0',
+            '172.21.0.0',
+            '172.30.0.0',
+            '172.31.0.0',
             '10.0.0.0',
             '192.168.0.0',
         )
@@ -153,8 +159,18 @@ class TestNet(unittest.TestCase):
             self.assertEqual(outp, net.choose_by_idc(idc_a, idc_b, ips))
 
     def test_get_host_ip4(self):
-        # TODO can not test
-        net.get_host_ip4(iface_prefix='')
+
+        ips = net.get_host_ip4(iface_prefix='')
+        self.assertNotEqual([], ips)
+
+        ips2 = net.get_host_ip4(exclude_prefix='')
+        self.assertEqual([], ips2, 'exclude any')
+
+        self.assertEqual(ips, net.get_host_ip4(
+            exclude_prefix=[]), 'exclude nothing')
+
+        self.assertEqual(ips, net.get_host_ip4(
+            exclude_prefix=None), 'exclude nothing')
 
     def test_get_host_devices(self):
         # TODO can not test

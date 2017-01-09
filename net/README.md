@@ -201,20 +201,30 @@ a dictionary of iface and its address information.
 ##  net.get_host_ip4
 
 **syntax**:
-`net.get_host_ip4(iface_prefix='')`
+`net.get_host_ip4(iface_prefix='', exclude_prefix=None)`
 
 Get ipv4 addresses on local host.
+
 If `iface_prefix` is specified, it returns only those whose iface name
 starts with `iface_prefix`.
+
+If `exclude_prefix` is specified, it does not return those whose iface name
+starts with `exclude_prefix`.
 
 `127.0.0.1` will not be returned.
 
 **arguments**:
 -   `iface_prefix`:
-    is a string or `''` to specify what iface should be chosen.
+    is a string or a list of string to specify what iface should be chosen.
+    By default it is `""` thus it returns ips of all iface.
 
     `net.get_host_ip4(iface_prefix="eth0")` returns only ipv4 addresses those
     are binded to `eth0`.
+
+-   `exclude_prefix`:
+    is a string or a list of string to specify what iface should not be
+    chosen.
+    By default it is `None` thus no iface is excluded.
 
 **return**:
 a list of ipv4 addresses.

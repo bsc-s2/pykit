@@ -1,15 +1,21 @@
 import logging
 import re
 import sys
-
-import yaml
+import types
 
 import netifaces
+import yaml
 
 PUB = 'PUB'
 INN = 'INN'
 
 logger = logging.getLogger(__name__)
+
+_intra_patterns = (
+        '172\.(1[6-9]|2[0-9]|3[0-1]).*',
+        '10\..*',
+        '192\.168\..*',
+)
 
 
 class NetworkError(Exception):
@@ -44,12 +50,7 @@ def ip_class(ip):
     if ip.startswith('127.0.0.'):
         return INN
 
-    intraPatterns = ['172\..*',
-                     '10\..*',
-                     '192\.168\..*',
-                     ]
-
-    for ptn in intraPatterns:
+    for ptn in _intra_patterns:
 
         if re.match(ptn, ip):
             return INN
@@ -85,22 +86,34 @@ def choose_inn(ips):
     return [x for x in ips if ip_class(x) == INN]
 
 
-def get_host_ip4(iface_prefix=None):
+def get_host_ip4(iface_prefix=None, exclude_prefix=None):
 
     if iface_prefix is None:
         iface_prefix = ['']
 
-    if type(iface_prefix) in (type(''), type(u'')):
+    if type(iface_prefix) in types.StringTypes:
         iface_prefix = [iface_prefix]
+
+    if exclude_prefix is not None:
+        if type(exclude_prefix) in types.StringTypes:
+            exclude_prefix = [exclude_prefix]
 
     ips = []
 
     for ifaceName in netifaces.interfaces():
 
+        matched = False
+
         for t in iface_prefix:
             if ifaceName.startswith(t):
                 matched = True
                 break
+
+        if exclude_prefix is not None:
+            for ex in exclude_prefix:
+                if ifaceName.startswith(ex):
+                    matched = False
+                    break
 
         if not matched:
             continue
