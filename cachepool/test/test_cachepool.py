@@ -259,8 +259,8 @@ class TestWrapper(unittest.TestCase):
 
         try:
             with wrapper() as ele:
-                raise Exception()
                 element1 = ele
+                raise Exception()
         except CachePoolError:
             pass
 
