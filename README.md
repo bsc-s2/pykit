@@ -41,14 +41,14 @@ There is a `README.md` for each module.
 | :--                            | :--                                                                                   |
 | script/git-subrepo             | A shell script maintaining sub module                                                 |
 | [cachepool](cachepool)         | Reusable object cache in process                                                      |
-| [daemonize](daemonize)         | start, stop or restart a daemon process                                               |
-| [dictutil](dictutil)           | dictionary helper utility                                                             |
-| [humannum](humannum)           | convert number to human readable number string                                        |
+| [daemonize](daemonize)         | Start, stop or restart a daemon process                                               |
+| [dictutil](dictutil)           | Dictionary helper utility                                                             |
+| [humannum](humannum)           | Convert number to human readable number string                                        |
 | [jobq](jobq)                   | Process serial of input elements with several functions concurrently and sequentially |
 | [mysqlconnpool](mysqlconnpool) | Mysql connection pool with MySQLdb in python                                          |
-| [net](net)                     | network utility                                                                       |
-| [strutil](strutil)             | a collection of functions operating string                                            |
-| [utfjson](utfjson)             | force `json.dump` and `json.load` in `utf-8` encoding                                 |
+| [net](net)                     | Network utility                                                                       |
+| [strutil](strutil)             | A collection of helper functions used to manipulate string                            |
+| [utfjson](utfjson)             | Force `json.dump` and `json.load` in `utf-8` encoding                                 |
 
 #   Install
 

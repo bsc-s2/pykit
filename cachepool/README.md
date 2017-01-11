@@ -20,7 +20,7 @@
 
 cachepool.
 
-Reusable object cache in process.
+Reusable in-process object cache in process.
 
 #   Status
 
@@ -64,7 +64,7 @@ def generator(*args, **argkw):
 def close_callback(element):
     element.close()
 
-# decide the element can be reused or not when error occurs
+# decide whether the element can be reused or not when error occurs
 def reuse_decider(errtype, errval, _traceback):
     if errtype in (CachePoolError, CachePoolGeneratorError):
         return True
@@ -164,21 +164,29 @@ Reusable elements are maintained in pool.
     ```
 
 **return**:
-an instance of cachepool.CachePool(), that can get an element.
-new an element by generator if the `pool` is empty,
-otherwise return a cached element
+an instance of `cachepool.CachePool()`, that can be used to get an element
+by calling the `get()` method of the `cachepool.CachePool()` instance.
+
+New element will be created by `generator` if the `pool` is empty,
+otherwise we just use a cached element.
 
 ##  cachepool.make_wrapper
 
 **syntax**:
+`cachepool.make_wrapper(pool, reuse_decider=None)`
+
+Create a wrapper function that return a `cachepool.CacheWrapper` instance.
+Example:
+
 ```
 wrapper = cachepool.make_wrapper(
     pool,
     reuse_decider=reuse_decider,
 )
-```
 
-Create a wrapper function: `wrapper()` which return a `cachepool.CacheWrapper`
+with wrapper() as elt:
+    print elt
+```
 
 **arguments**:
 -   `pool`:
@@ -190,7 +198,8 @@ Create a wrapper function: `wrapper()` which return a `cachepool.CacheWrapper`
     pass to cachepool.CacheWrapper
 
 **return**:
-funciton: return `cachepool.CacheWrapper` which support access with `with` when be called
+a function whose return value is a `cachepool.CacheWrapper` instance, which
+can be executed with the `with` statement.
 
 ##  cachepool.CacheWrapper
 
@@ -202,7 +211,7 @@ wrapper = cachepool.CacheWrapper(
 )
 ```
 
-Create a wrapper: `wrapper` which support access with `with`
+Create a wrapper: `wrapper` which can be executed with the `with` statement.
 
 **arguments**:
 -   `pool`:
@@ -224,7 +233,8 @@ Create a wrapper: `wrapper` which support access with `with`
     ```
 
 **return**:
-instance: `cachepool.CacheWrapper`, which support access with `with`
+an instance of `cachepool.CacheWrapper`, which can be executed with the `with`
+statement.
 
 
 #   Author
