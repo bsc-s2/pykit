@@ -108,7 +108,7 @@ for record in records:
 ## dictutil.depth_iter
 
 **syntax**:
-`dictutil.depth_iter(mydict, ks=None, maxdepth=10240, get_mid=False)`
+`dictutil.depth_iter(mydict, ks=None, maxdepth=10240, intermediate=False)`
 
 **arguments**:
 
@@ -139,20 +139,29 @@ for record in records:
     #     (['k1', 'k11'], 'v11')
     ```
 
--   `git_mid`: if set `True`, the method will show the middle results that can be iteraived, by default it is `False`
+-   `intermediate`:
+    if it is `True`, the method will show the intermediate key path those
+    points to a non-leaf descendent.
+    By default it is `False`.
 
    ```python
-   for rst in dictutil.depth_iter(mydict, get_mid=True):
-       print rst
+    mydict = {'a':
+                 {'a.a': 'v11',
+                  'a.b': {'a.b.a': 'v121'},
+                  'a.c': {'a.c.a': {'a.c.a.a': 'v1311'}}
+                 }
+             }
+   for keys, vals in dictutil.depth_iter(mydict, intermediate=True):
+       print keys
 
-   # output
-   #     (['k1'], {'k13': {'k131': {'k1311': 'v1311'}}, 'k12': {'k121': 'v121'}, 'k11': 'v11'})
-   #     (['k1', 'k13'], {'k131': {'k1311': 'v1311'}})
-   #     (['k1', 'k13', 'k131'], {'k1311': 'v1311'})
-   #     (['k1', 'k13', 'k131', 'k1311'], 'v1311')
-   #     (['k1', 'k12'], {'k121': 'v121'})
-   #     (['k1', 'k12', 'k121'], 'v121')
-   #     (['k1', 'k11'], 'v11')
+   # output:
+   #     ['a']                              # intermediate
+   #     ['a', 'a.a']
+   #     ['a', 'a.b']                       # intermediate
+   #     ['a', 'a.b', 'a.b.a']
+   #     ['a', 'a.c']                       # intermediate
+   #     ['a', 'a.c', 'a.c.a']              # intermediate
+   #     ['a', 'a.c', 'a.c.a', 'a.c.a.a']
 
    ```
 

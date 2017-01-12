@@ -2,7 +2,7 @@
 # coding: utf-8
 
 
-def depth_iter(mydict, ks=None, maxdepth=10240, get_mid=False):
+def depth_iter(mydict, ks=None, maxdepth=10240, intermediate=False):
 
     ks = ks or []
 
@@ -15,11 +15,11 @@ def depth_iter(mydict, ks=None, maxdepth=10240, get_mid=False):
         else:
             if isinstance(v, dict):
 
-                if get_mid:
+                if intermediate:
                     yield ks, v
 
                 for _ks, v in depth_iter(v, ks, maxdepth=maxdepth,
-                                         get_mid=get_mid):
+                                         intermediate=intermediate):
                     yield _ks, v
             else:
                 yield ks, v

@@ -85,7 +85,7 @@ class TestDictDeepIter(unittest.TestCase):
 
             idx = idx + 1
 
-    def test_depth_iter_get_mid(self):
+    def test_depth_iter_intermediate(self):
 
         idx = 0
 
@@ -96,7 +96,7 @@ class TestDictDeepIter(unittest.TestCase):
                 (['k1', 'k11', 'k111', 'k1111'], 'v1111')
                 ]
 
-        for rst in dictutil.depth_iter(_in, get_mid=True):
+        for rst in dictutil.depth_iter(_in, intermediate=True):
             self.assertEqual(
                 _out[idx],
                 rst)
