@@ -1,9 +1,19 @@
 import unittest
 
-from cachepool import (CachePool, CachePoolError, CachePoolGeneratorError,
-                       make_wrapper)
+from cachepool import CachePool
+from cachepool import CachePoolGeneratorError
+from cachepool import make_wrapper
 
 _DEBUG_ = True
+
+
+# Exception that is used for test.
+class ErrorInReuse(Exception):
+    pass
+
+
+class StillAllowToReuse(Exception):
+    pass
 
 
 class TestCachePool(unittest.TestCase):
@@ -24,7 +34,7 @@ class TestCachePool(unittest.TestCase):
 
         try:
             CachePool(
-                generator(),
+                1,
             )
         except CachePoolGeneratorError as e:
             self.assertEqual(str(e), 'generator is not callable')
@@ -255,13 +265,12 @@ class TestWrapper(unittest.TestCase):
         )
 
         with wrapper() as ele:
-            element1 = ele
+            (ele)
 
         try:
             with wrapper() as ele:
-                element1 = ele
                 raise Exception()
-        except CachePoolError:
+        except ErrorInReuse:
             pass
 
         except:
@@ -278,7 +287,7 @@ class TestWrapper(unittest.TestCase):
         )
         wrapper = make_wrapper(
             pool,
-            reuse_decider=reuse_decider,
+            reuse_decider=reuse_for_acceptable_errors,
         )
 
         element1 = element2 = None
@@ -286,7 +295,7 @@ class TestWrapper(unittest.TestCase):
         try:
             with wrapper() as ele:
                 element1 = ele
-                raise CachePoolError()
+                raise StillAllowToReuse()
         except:
             pass
 
@@ -304,7 +313,7 @@ class TestWrapper(unittest.TestCase):
         )
         wrapper = make_wrapper(
             pool,
-            reuse_decider=reuse_decider,
+            reuse_decider=reuse_for_acceptable_errors,
         )
 
         element1 = element2 = None
@@ -352,16 +361,12 @@ def close_callback_error(element):
     element._close()
 
 
-def reuse_decider(errtype, errval, _traceback):
-
-    if errtype in (CachePoolError, CachePoolGeneratorError):
-        return True
-
-    return False
+def reuse_for_acceptable_errors(errtype, errval, _traceback):
+    return errtype in (StillAllowToReuse, )
 
 
 def reuse_decider_error(errtype, errval, _traceback):
-    raise CachePoolError()
+    raise ErrorInReuse()
 
 
 def dd(*msgs):
