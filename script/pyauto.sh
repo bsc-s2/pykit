@@ -2,11 +2,9 @@
 
 # pip install pyflakes autopep8 autoflake isort
 
-path="${1-.}"
+fns="$(find "$path" -name "*.py" -exec echo '"{}"' \;)"
 
-find "$path" -name "*.py" | while read fn; do
-    pyflakes                              "$fn"
-    autopep8  -i                          "$fn"
-    autoflake -i                          "$fn"
-    isort     --force-single-line-imports "$fn"
-done
+eval pyflakes                              $fns
+eval autopep8  -i                          $fns
+eval autoflake -i                          $fns
+eval isort     --force-single-line-imports $fns
