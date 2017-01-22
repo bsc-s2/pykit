@@ -222,7 +222,7 @@ def fading_color(v, total):
 
 def _fading_idx(v, total=100):
     l = len(_clrs)
-    pos = int(v * l / total + 0.5)
+    pos = int(v * l / (total + 0.0001) + 0.5)
     pos = min(pos, l - 1)
     pos = max(pos, 0)
     return pos

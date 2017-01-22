@@ -145,6 +145,27 @@ class TestStrutil(unittest.TestCase):
 
 class TestColoredString(unittest.TestCase):
 
+    def test_colorize_input(self):
+
+        cases = (
+                (0, 0),
+
+                (0, 1),
+                (0, 100),
+                (1, 100),
+                (50, 100),
+                (100, 100),
+
+                (0, -1),
+                (0, -100),
+                (1, -100),
+                (50, -100),
+                (100, -100),
+        )
+
+        for v, total in cases:
+            print strutil.colorize(v, total, str(v) + '/' + str(total))
+
     def test_all(self):
 
         print '--- colorized string ---'

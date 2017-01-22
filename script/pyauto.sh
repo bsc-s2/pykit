@@ -2,6 +2,8 @@
 
 # pip install pyflakes autopep8 autoflake isort
 
+path="${1-.}"
+
 fns="$(find "$path" -name "*.py" -exec echo '"{}"' \;)"
 
 eval pyflakes                              $fns
