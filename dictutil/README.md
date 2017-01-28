@@ -31,10 +31,10 @@ Depth first search a dictionary
 ```python
 from pykit import dictutil
 
-mydict = {'k1':
-             {'k11': 'v11',
-              'k12': {'k121': 'v121'},
-              'k13': {'k131': {'k1311': 'v1311'}}
+mydict = {'a':
+             {'a.a': 'v-a.a',
+              'a.b': {'a.b.a': 'v-a.b.a'},
+              'a.c': {'a.c.a': {'a.c.a.a': 'v-a.c.a.a'}}
              }
          }
 
@@ -43,9 +43,9 @@ for rst in dictutil.depth_iter(mydict):
     print rst
 
 # output:
-#     (['k1', 'k13', 'k131', 'k1311'], 'v1311')
-#     (['k1', 'k12', 'k121'], 'v121')
-#     (['k1', 'k11'], 'v11')
+#     (['a', 'a.c', 'a.c.a', 'a.c.a.a'], 'v-a.c.a.a')
+#     (['a', 'a.b', 'a.b.a'], 'v-a.b.a')
+#     (['a', 'a.a'], 'v-a.a')
 ```
 
 Breadth first search a dictionary
@@ -55,13 +55,13 @@ for rst in dictutil.breadth_iter(mydict):
     print rst
 
 # output:
-#     (['k1'], {'k13': {'k131': {'k1311': 'v1311'}}, 'k12': {'k121': 'v121'}, 'k11': 'v11'})
-#     (['k1', 'k13'], {'k131': {'k1311': 'v1311'}})
-#     (['k1', 'k12'], {'k121': 'v121'})
-#     (['k1', 'k11'], 'v11')
-#     (['k1', 'k13', 'k131'], {'k1311': 'v1311'})
-#     (['k1', 'k12', 'k121'], 'v121')
-#     (['k1', 'k13', 'k131', 'k1311'], 'v1311')
+#     (['a'],                            {'a.c': {'a.c.a': {'a.c.a.a': 'v-a.c.a.a'}}, 'a.b': {'a.b.a': 'v-a.b.a'}, 'a.a': 'v-a.a'})
+#     (['a', 'a.a'],                     'v-a.a')
+#     (['a', 'a.b'],                     {'a.b.a': 'v-a.b.a'})
+#     (['a', 'a.b', 'a.b.a'],            'v-a.b.a')
+#     (['a', 'a.c'],                     {'a.c.a': {'a.c.a.a': 'v-a.c.a.a'}})
+#     (['a', 'a.c', 'a.c.a'],            {'a.c.a.a': 'v-a.c.a.a'})
+#     (['a', 'a.c', 'a.c.a', 'a.c.a.a'], 'v-a.c.a.a')
 
 #
 ```
@@ -112,31 +112,35 @@ for record in records:
 
 **arguments**:
 
--   `mydict`: the dict that you want to iterative
+-   `mydict`:
+    the dict that you want to iterate on.
 
--   `ks`: the argument could be a `list`,  it would be seted ahead of key's list in results of iteration
+-   `ks`:
+    the argument could be a `list`,  it would be seted ahead of key's list in
+    results of iteration
 
     ```python
     for rst in dictutil.depth_iter(mydict, ks=['mykey1','mykey2']):
         print rst
 
     # output:
-    #     (['mykey1', 'mykey2', 'k1', 'k13', 'k131', 'k1311'], 'v1311')
-    #     (['mykey1', 'mykey2', 'k1', 'k12', 'k121'], 'v121')
-    #     (['mykey1', 'mykey2', 'k1', 'k11'], 'v11')
+    #     (['mykey1', 'mykey2', 'k1', 'k13', 'k131', 'k1311'], 'v-a.c.a.a')
+    #     (['mykey1', 'mykey2', 'k1', 'k12', 'k121'], 'v-a.b.a')
+    #     (['mykey1', 'mykey2', 'k1', 'k11'], 'v-a.a')
 
    ```
 
--   `maxdepth`: specifies the max depth of iteration
+-   `maxdepth`:
+    specifies the max depth of iteration.
 
     ```python
     for rst in dictutil.depth_iter(mydict, maxdepth=2):
         print rst
 
     # output
-    #     (['k1', 'k13'], {'k131': {'k1311': 'v1311'}})
-    #     (['k1', 'k12'], {'k121': 'v121'})
-    #     (['k1', 'k11'], 'v11')
+    #     (['k1', 'k13'], {'k131': {'k1311': 'v-a.c.a.a'}})
+    #     (['k1', 'k12'], {'k121': 'v-a.b.a'})
+    #     (['k1', 'k11'], 'v-a.a')
     ```
 
 -   `intermediate`:
@@ -146,9 +150,9 @@ for record in records:
 
    ```python
     mydict = {'a':
-                 {'a.a': 'v11',
-                  'a.b': {'a.b.a': 'v121'},
-                  'a.c': {'a.c.a': {'a.c.a.a': 'v1311'}}
+                 {'a.a': 'v-a.a',
+                  'a.b': {'a.b.a': 'v-a.b.a'},
+                  'a.c': {'a.c.a': {'a.c.a.a': 'v-a.c.a.a'}}
                  }
              }
    for keys, vals in dictutil.depth_iter(mydict, intermediate=True):
@@ -166,8 +170,7 @@ for record in records:
    ```
 
 **return**:
-
-return iterative object, each element is a tuple object contains  keys and value
+an iterator. Each element it yields is a tuple of keys and value.
 
 ## dictutil.breadth_iter
 
@@ -176,11 +179,11 @@ return iterative object, each element is a tuple object contains  keys and value
 
 **arguments**:
 
--   `mydict`: the dict you want to iterative
+-   `mydict`:
+    the dict you want to iterative
 
 **return**:
-
-return iterative object, each element is a tuple object contains  keys and value
+an iterator, each element it yields is a tuple that contains keys and value.
 
 ##  dictutil.make_getter
 
