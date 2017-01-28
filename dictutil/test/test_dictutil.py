@@ -291,3 +291,233 @@ class TestGetter(unittest.TestCase):
                                  rst=repr(rst),
                              )
                              )
+
+
+class TestSetter(unittest.TestCase):
+
+    def test_empty_key_path(self):
+        try:
+            dictutil.make_setter('')
+        except KeyError:
+            pass
+        else:
+            self.fail('expect ValueError')
+
+    def test_setter(self):
+
+        cases = (
+
+                ('a', {},
+                 3,
+                 {'a': 3},
+                 ),
+
+                ('a', {'exist': 44},
+                 3,
+                 {'a': 3, 'exist': 44},
+                 ),
+
+                ('a.b.c', {'exist': 44},
+                 3,
+                 {'a': {'b': {'c': 3}}, 'exist': 44},
+                 ),
+
+                ('a.b.c', {'a': {'exist': 44}},
+                 3,
+                 {'a': {'b': {'c': 3}, 'exist': 44}},
+                 ),
+
+        )
+
+        for _key_path, _dic, _value, _expect in cases:
+
+            _set = dictutil.make_setter(_key_path)
+            rst = _set(_dic, _value)
+
+            self.assertEqual(_value, rst,
+                             'input: {_key_path}, {_dic}; expected return value: {_value}, actual: {rst}'.format(
+                                 _key_path=repr(_key_path),
+                                 _dic=repr(_dic),
+                                 _value=repr(_value),
+                                 rst=repr(rst),
+                             )
+                             )
+
+            self.assertEqual(_expect, _dic,
+                             'input: {_key_path}, {_dic}; expected dict: {_expect}, actual: {rst}'.format(
+                                 _key_path=repr(_key_path),
+                                 _dic=repr(_dic),
+                                 _expect=repr(_expect),
+                                 rst=repr(rst),
+                             )
+                             )
+
+    def test_setter_default(self):
+
+        cases = (
+
+                ('a', 'value', {},
+                 {'a': 'value'},
+                 ),
+
+                ('exist', 'value', {'exist': 44},
+                 {'exist': 'value'},
+                 ),
+
+                ('a.exist', 'value', {'a': {'exist': 44}},
+                 {'a': {'exist': 'value'}},
+                 ),
+
+                ('a.exist', lambda *x: '_def', {'a': {'exist': 44}},
+                 {'a': {'exist': '_def'}},
+                 ),
+
+                ('a.exist', lambda vars: vars.get('foo'), {'a': {'exist': 44}},
+                 {'a': {'exist': 'foo'}},
+                 ),
+        )
+
+        _vars = {'foo': 'foo'}
+
+        for _key_path, _default, _dic, _expect in cases:
+
+            _set = dictutil.make_setter(_key_path, value=_default)
+            rst = _set(_dic, vars=_vars)
+
+            if callable(_default):
+                _def = _default(_vars)
+            else:
+                _def = _default
+
+            self.assertEqual(_def, rst,
+                             'input: {_key_path}, {_dic}; expected return value: {_def}, actual: {rst}'.format(
+                                 _key_path=repr(_key_path),
+                                 _dic=repr(_dic),
+                                 _def=repr(_def),
+                                 rst=repr(rst),
+                             )
+                             )
+
+            self.assertEqual(_expect, _dic,
+                             'input: {_key_path}, {_dic}; expected dict: {_expect}, actual: {rst}'.format(
+                                 _key_path=repr(_key_path),
+                                 _dic=repr(_dic),
+                                 _expect=repr(_expect),
+                                 rst=repr(rst),
+                             )
+                             )
+
+            rst = _set(_dic, 'specified', vars=_vars)
+            self.assertEqual('specified', rst)
+
+    def test_setter_vars_inexistent(self):
+
+        _set = dictutil.make_setter('$a')
+
+        try:
+            _set({}, vars={})
+        except KeyError:
+            pass
+        else:
+            self.fail('inexistent key should raise key error')
+
+    def test_setter_vars(self):
+
+        cases = (
+
+                ('$a', 1,  {},
+                 {'aa': 1},
+                 ),
+
+                ('$a.$foo', 1,  {},
+                 {'aa': {'bar': 1}},
+                 ),
+
+        )
+
+        _vars = {'foo': 'bar',
+                 'a': 'aa',
+                 }
+
+        for _key_path, _default, _dic, _expect in cases:
+
+            _set = dictutil.make_setter(_key_path, value=_default)
+            rst = _set(_dic, vars=_vars)
+
+            if callable(_default):
+                _def = _default(_vars)
+            else:
+                _def = _default
+
+            self.assertEqual(_def, rst,
+                             'input: {_key_path}, {_dic}; expected return value: {_def}, actual: {rst}'.format(
+                                 _key_path=repr(_key_path),
+                                 _dic=repr(_dic),
+                                 _def=repr(_def),
+                                 rst=repr(rst),
+                             )
+                             )
+
+            self.assertEqual(_expect, _dic,
+                             'input: {_key_path}, {_dic}; expected dict: {_expect}, actual: {rst}'.format(
+                                 _key_path=repr(_key_path),
+                                 _dic=repr(_dic),
+                                 _expect=repr(_expect),
+                                 rst=repr(rst),
+                             )
+                             )
+
+            rst = _set(_dic, 'specified', vars=_vars)
+            self.assertEqual('specified', rst)
+
+    def test_setter_incr(self):
+
+        cases = (
+
+                ('a', 1,  {'a': 1},
+                 {'a': 2},
+                 ),
+
+                ('$a.$foo', 1,  {},
+                 {'aa': {'bar': 1}},
+                 ),
+
+                ('$a.$foo', 1.1,  {},
+                 {'aa': {'bar': 1.1}},
+                 ),
+
+                ('$a.$foo', 'suffix',  {'aa': {'bar': 'prefix-'}},
+                 {'aa': {'bar': 'prefix-suffix'}},
+                 ),
+
+                ('$a.$foo', ('b', ),  {'aa': {}},
+                 {'aa': {'bar': ('b',)}},
+                 ),
+
+                ('$a.$foo', ('b', ),  {'aa': {'bar': ('a',)}},
+                 {'aa': {'bar': ('a', 'b',)}},
+                 ),
+
+                ('$a.$foo', ['b', ],  {'aa': {'bar': ['a', ]}},
+                 {'aa': {'bar': ['a', 'b', ]}},
+                 ),
+
+        )
+
+        _vars = {'foo': 'bar',
+                 'a': 'aa',
+                 }
+
+        for _key_path, _default, _dic, _expect in cases:
+
+            _set = dictutil.make_setter(_key_path, value=_default, incr=True)
+            rst = _set(_dic, vars=_vars)
+
+            self.assertEqual(_expect, _dic,
+                             'input: {_key_path}, {_dic}; expected dict: {_expect}, actual: {rst}'.format(
+                                 _key_path=repr(_key_path),
+                                 _dic=repr(_dic),
+                                 _expect=repr(_expect),
+                                 rst=repr(rst),
+                             )
+                             )
