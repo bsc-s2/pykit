@@ -45,29 +45,29 @@ def breadth_iter(mydict):
                 q.append((ks, v))
 
 
-def make_getter_str(code, default=0):
+def make_getter_str(key_path, default=0):
 
     s = 'lambda dic, vars={}: dic'
 
-    entries = code.split('.')
-    if entries == ['']:
+    _keys = key_path.split('.')
+    if _keys == ['']:
         return s
 
-    for e in entries:
+    for k in _keys:
 
-        if e.startswith('$'):
+        if k.startswith('$'):
 
-            dynamic_key = 'str(vars.get("%s", "_"))' % (e[1:], )
+            dynamic_key = 'str(vars.get("%s", "_"))' % (k[1:], )
 
             s += '.get(%s, {})' % (dynamic_key, )
 
         else:
-            s += '.get("%s", {})' % (e, )
+            s += '.get("%s", {})' % (k, )
 
     s = s[:-3] + 'vars.get("_default", ' + repr(default) + '))'
 
     return s
 
 
-def make_getter(code, default=0):
-    return eval(make_getter_str(code, default=default))
+def make_getter(key_path, default=0):
+    return eval(make_getter_str(key_path, default=default))
