@@ -138,7 +138,7 @@ class TestDictBreadthIter(unittest.TestCase):
                 idx = idx + 1
 
 
-class TestAccessor(unittest.TestCase):
+class TestGetter(unittest.TestCase):
 
     def test_getter_str(self):
 
