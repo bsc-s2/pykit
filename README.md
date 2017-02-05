@@ -49,6 +49,7 @@ There is a `README.md` for each module.
 | [net](net)                     | Network utility                                                                       |
 | [strutil](strutil)             | A collection of helper functions used to manipulate string                            |
 | [utfjson](utfjson)             | Force `json.dump` and `json.load` in `utf-8` encoding                                 |
+| [timeutil](timeutil)           | Support specify time format output and get current ts, ms, us api etc                 |
 
 #   Install
 
