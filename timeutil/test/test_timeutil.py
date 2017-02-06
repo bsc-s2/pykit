@@ -74,14 +74,13 @@ class TestTimeutil(unittest.TestCase):
     def test_timestamp(self):
 
         cases = [
-            ('ts', 10, 1, 2),
-            ('ms', 13, 0.001, 3),
-            ('us', 16, 0.000001, 30),
+            (timeutil.ts, 10, 1, 2),
+            (timeutil.ms, 13, 0.001, 3),
+            (timeutil.us, 16, 0.000001, 30),
         ]
 
         for case in cases:
-            func_name, length, unit_ts, tolerance_ts = case
-            timestamp_func = getattr(timeutil, func_name)
+            timestamp_func, length, unit_ts, tolerance_ts = case
 
             ts1 = timestamp_func()
 
