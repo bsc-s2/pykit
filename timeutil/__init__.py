@@ -1,4 +1,5 @@
 from .timeutil import (
+    formats,
     parse,
     format,
     format_ts,
@@ -12,6 +13,7 @@ from .timeutil import (
 )
 
 __all__ = [
+    'formats',
     'parse',
     'format',
     'format_ts',
