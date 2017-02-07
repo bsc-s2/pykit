@@ -34,7 +34,7 @@ class TestTimeutil(unittest.TestCase):
         for fmt_key, tm_str in test_case['format'].items():
 
             dt = timeutil.parse(tm_str, fmt_key)
-            ts = timeutil.datetime_to_ts(dt)
+            ts = timeutil.utc_datetime_to_ts(dt)
 
             if fmt_key == 'archive':
                 self.assertEqual(test_case['ts']['hour_accuracy'], ts)
@@ -67,7 +67,7 @@ class TestTimeutil(unittest.TestCase):
         ts = timeutil.ts()
 
         dt = timeutil.ts_to_datetime(ts)
-        converted_ts = timeutil.datetime_to_ts(dt)
+        converted_ts = timeutil.utc_datetime_to_ts(dt)
 
         self.assertEqual(ts, converted_ts)
 

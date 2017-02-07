@@ -10,7 +10,7 @@
   - [timeutil.parse](#timeutilparse)
   - [timeutil.format](#timeutilformat)
   - [timeutil.format_ts](#timeutilformatts)
-  - [timeutil.datetime_to_ts](#timeutildatetime_to_ts)
+  - [timeutil.utc_datetime_to_ts](#timeutilutcdatetime_to_ts)
   - [timeutil.ts_to_datetime](#timeutilts_to_datetime)
   - [timeutil.ts](#timeutilts)
   - [timeutil.ms](#timeutilms)
@@ -42,7 +42,7 @@ dt = timeutil.parse('2017-01-24T07:51:59.000Z', 'iso')
 
 time_str = timeutil.format(dt, 'utc')
 
-ts = timeutil.datetime_to_ts(dt)
+ts = timeutil.utc_datetime_to_ts(dt)
 
 print ts, time_str
 
@@ -117,11 +117,11 @@ convert timestamp to specify format time string
 **return**:
     specify format time string
 
-##  timeutil.datetime_to_ts
+##  timeutil.utc_datetime_to_ts
 
 **syntax**:
 
-`datetime_to_ts(dt)`
+`utc_datetime_to_ts(dt)`
 
 convert datetime instance to timestamp in second
 

@@ -35,7 +35,7 @@ def format_ts(ts, fmt_key):
     return format(dt, fmt_key)
 
 
-def datetime_to_ts(dt):
+def utc_datetime_to_ts(dt):
     return calendar.timegm(dt.timetuple())
 
 
