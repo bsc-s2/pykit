@@ -3,6 +3,7 @@ import errno
 import hashlib
 import socket
 import time
+import threading
 
 port_n = 3
 port_range = (40000, 60000)
@@ -28,6 +29,8 @@ class Portlock(object):
         self.sleep_time = sleep_time or default_sleep_time
         self.socks = [None] * port_n
 
+        self.thread_lock = threading.RLock()
+
     def try_lock(self):
 
         self._lock()
@@ -45,29 +48,33 @@ class Portlock(object):
 
     def acquire(self):
 
-        t0 = time.time()
+        with self.thread_lock:
 
-        while True:
+            t0 = time.time()
 
-            if self.try_lock():
-                return
+            while True:
 
-            now = time.time()
-            left = t0 + self.timeout - now
-            if left > 0:
-                slp = min([self.sleep_time, left + 0.001])
-                time.sleep(slp)
-            else:
-                raise PortlockTimeout(
-                    'portlock timeout: ' + repr(self.key), self.key)
+                if self.try_lock():
+                    return
+
+                now = time.time()
+                left = t0 + self.timeout - now
+                if left > 0:
+                    slp = min([self.sleep_time, left + 0.001])
+                    time.sleep(slp)
+                else:
+                    raise PortlockTimeout(
+                        'portlock timeout: ' + repr(self.key), self.key)
 
     def release(self):
 
-        for sock in self.socks:
-            if sock is not None:
-                sock.close()
+        with self.thread_lock:
 
-        self.socks = [None] * port_n
+            for sock in self.socks:
+                if sock is not None:
+                    sock.close()
+
+            self.socks = [None] * port_n
 
     def _lock(self):
 

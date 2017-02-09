@@ -55,7 +55,7 @@ class TestPortlock(unittest.TestCase):
         sess = {'n': 0}
 
         def worker(l, ident):
-            for ii in range(100):
+            for ii in range(1000):
                 l.acquire()
                 dd('{0}-{1} start'.format(ident, ii))
                 sess['n'] += 1
@@ -82,7 +82,7 @@ class TestPortlock(unittest.TestCase):
         sess = {'n': 0}
 
         def worker(l):
-            for ii in range(100):
+            for ii in range(1000):
                 l.acquire()
                 sess['n'] += 1
                 self.assertEqual(
@@ -93,7 +93,7 @@ class TestPortlock(unittest.TestCase):
         lock = portlock.Portlock('x', timeout=100)
         ts = [threading.Thread(target=worker,
                                args=(lock, ))
-              for x in range(1)]
+              for x in range(3)]
 
         for t in ts:
             t.daemon = True
