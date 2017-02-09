@@ -64,10 +64,10 @@ It is string "INN" that represents a internal ip.
 It is string "PUB" that represents a public ip.
 
 
-#   Exceptions
+# Exceptions
 
 
-##  net.NetworkError
+## net.NetworkError
 
 **syntax**:
 `net.NetworkError`
