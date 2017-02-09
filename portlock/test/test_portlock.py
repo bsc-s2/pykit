@@ -58,6 +58,9 @@ class TestPortlock(unittest.TestCase):
             for ii in range(1000):
                 l.acquire()
                 dd('{0}-{1} start'.format(ident, ii))
+
+                self.assertEqual(0, sess['n'], 'n is 0 just after lock is acquired')
+
                 sess['n'] += 1
                 self.assertEqual(
                     1, sess['n'], "no more than 2 thread holding lock")
@@ -84,6 +87,9 @@ class TestPortlock(unittest.TestCase):
         def worker(l):
             for ii in range(1000):
                 l.acquire()
+
+                self.assertEqual(0, sess['n'], 'n is 0 just after lock is acquired')
+
                 sess['n'] += 1
                 self.assertEqual(
                     1,  sess['n'], "no more than 2 thread holding lock")
