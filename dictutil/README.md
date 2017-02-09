@@ -10,6 +10,7 @@
   - [dictutil.breadth_iter](#dictutilbreadth_iter)
   - [dictutil.make_getter](#dictutilmake_getter)
   - [dictutil.make_setter](#dictutilmake_setter)
+    - [Synopsis](#synopsis-1)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
