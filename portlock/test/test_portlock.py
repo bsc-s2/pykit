@@ -59,7 +59,8 @@ class TestPortlock(unittest.TestCase):
                 l.acquire()
                 dd('{0}-{1} start'.format(ident, ii))
 
-                self.assertEqual(0, sess['n'], 'n is 0 just after lock is acquired')
+                self.assertEqual(
+                    0, sess['n'], 'n is 0 just after lock is acquired')
 
                 sess['n'] += 1
                 self.assertEqual(
@@ -88,7 +89,8 @@ class TestPortlock(unittest.TestCase):
             for ii in range(1000):
                 l.acquire()
 
-                self.assertEqual(0, sess['n'], 'n is 0 just after lock is acquired')
+                self.assertEqual(
+                    0, sess['n'], 'n is 0 just after lock is acquired')
 
                 sess['n'] += 1
                 self.assertEqual(

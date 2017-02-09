@@ -2,13 +2,13 @@
 import errno
 import hashlib
 import socket
-import time
 import threading
+import time
 
-port_n = 3
-port_range = (40000, 60000)
+PORT_N = 3
+PORT_RANGE = (40000, 60000)
 
-default_sleep_time = 0.01  # sec
+DEFAULT_SLEEP_TIME = 0.01  # sec
 
 
 class PortlockError(Exception):
@@ -26,8 +26,8 @@ class Portlock(object):
         self.key = key
         self.addr = str_to_addr(key)
         self.timeout = timeout
-        self.sleep_time = sleep_time or default_sleep_time
-        self.socks = [None] * port_n
+        self.sleep_time = sleep_time or DEFAULT_SLEEP_TIME
+        self.socks = [None] * PORT_N
 
         self.thread_lock = threading.RLock()
 
@@ -38,7 +38,7 @@ class Portlock(object):
         if self.has_locked():
             return True
         else:
-            self.socks = [None] * port_n
+            self.socks = [None] * PORT_N
             return False
 
     def has_locked(self):
@@ -74,7 +74,7 @@ class Portlock(object):
                 if sock is not None:
                     sock.close()
 
-            self.socks = [None] * port_n
+            self.socks = [None] * PORT_N
 
     def _lock(self):
 
@@ -115,7 +115,7 @@ def str_to_addr(x):
 
     r = hashlib.sha1(str(x)).hexdigest()
     r = int(r, 16)
-    p = r % (port_range[1] - port_range[0]) + port_range[0]
+    p = r % (PORT_RANGE[1] - PORT_RANGE[0]) + PORT_RANGE[0]
 
     return ("127.0.0.1", p)
 
