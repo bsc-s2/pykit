@@ -68,6 +68,9 @@ Timeout when waiting to acquire the lock.
 
 A lock instance.
 
+Portlock is thread safe.
+It is OK to create just one lock in a process for all threads.
+
 **arguments**:
 
 -   `key`:
@@ -142,4 +145,3 @@ Zhang Yanpo (张炎泼) <drdr.xp@gmail.com>
 The MIT License (MIT)
 
 Copyright (c) 2015 Zhang Yanpo (张炎泼) <drdr.xp@gmail.com>
-
