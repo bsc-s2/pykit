@@ -70,6 +70,7 @@ can not run at the same time.
 Read command line arguments and then start, stop or restart a daemon process.
 
 **arguments**:
+
 -   `callable`:
     a callable object such as a `function` or `lambda` to run after the daemon
     process is created.

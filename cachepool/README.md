@@ -118,6 +118,7 @@ Create a pool: `pool`.
 Reusable elements are maintained in pool.
 
 **arguments**:
+
 -   `generator`:
 
     function to generate new element:
@@ -189,6 +190,7 @@ with wrapper() as elt:
 ```
 
 **arguments**:
+
 -   `pool`:
 
     pass to cachepool.CacheWrapper
@@ -214,6 +216,7 @@ wrapper = cachepool.CacheWrapper(
 Create a wrapper: `wrapper` which can be executed with the `with` statement.
 
 **arguments**:
+
 -   `pool`:
 
     an instance of cachepool.CachePool

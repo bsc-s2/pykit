@@ -211,6 +211,7 @@ print get_second({"time": {"hour": 11, "minute": 20}})
 
 
 **arguments**:
+
 -   `key_path`:
     is a dot separated path string of key hierarchy to get an item from a
     dictionary.
@@ -255,6 +256,7 @@ print tm
 ```
 
 **arguments**:
+
 -   `key_path`:
     is a dot separated key path to locate an item in a dictionary.
 

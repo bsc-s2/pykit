@@ -98,6 +98,7 @@ Return a new list with all internal ips in `ip_list`, if `dest_idc` is
 `my_idc`.
 
 **arguments**:
+
 -   `dest_idc`:
     is a string representing an IDC where the ips in `ip_list` is.
 
@@ -121,6 +122,7 @@ Each ip in the result list matches at least one of the regex-es from
 `regex_list`.
 
 **arguments**:
+
 -   `ip_list`:
     is a list of ipv4 addresses.
     See `net.parse_ip_regex_str`.
@@ -141,6 +143,7 @@ a list of ipv4 addresses, in which every ip matches at least one regex from
 Return a list of all internal ip from `ip_list`.
 
 **arguments**:
+
 -   `ip_list`:
     is a list of ipv4 addresses.
 
@@ -156,6 +159,7 @@ a list of internal ipv4 addresses.
 Return a list of all public ip from `ip_list`.
 
 **arguments**:
+
 -   `ip_list`:
     is a list of ipv4 addresses.
 
@@ -189,6 +193,7 @@ it.
 ```
 
 **arguments**:
+
 -   `iface_prefix`:
     is a string or `''` to specify what iface should be chosen.
 
@@ -214,6 +219,7 @@ starts with `exclude_prefix`.
 `127.0.0.1` will not be returned.
 
 **arguments**:
+
 -   `iface_prefix`:
     is a string or a list of string to specify what iface should be chosen.
     By default it is `""` thus it returns ips of all iface.
@@ -253,6 +259,7 @@ Reorder `ip_list` according to `preference`.
     before public ips.
 
 **arguments**:
+
 -   `ip_list`:
     list of ip strings.
 
@@ -272,6 +279,7 @@ a new list of ips in `ip_list` reordered according to `preference`.
 Check if `ip` is an internal ipv4 address.
 
 **arguments**:
+
 -   `ip`:
     string of ipv4 address
 
@@ -287,6 +295,7 @@ Check if `ip` is an internal ipv4 address.
 Check if `ip` is a public ipv4 address.
 
 **arguments**:
+
 -   `ip`:
     string of ipv4 address
 
@@ -302,6 +311,7 @@ Check if `ip` is a public ipv4 address.
 It checks if `ip` is a valid ipv4 string.
 
 **arguments**:
+
 -   `ip`:
     string or other type data.
 
@@ -318,6 +328,7 @@ It splits a comma separated string into a list.
 Each one in the result list should be a regex string.
 
 **arguments**:
+
 -   `regexs`:
     is a comma separated string, such as: `192[.]168[.],172[.]16[.]`.
     With this argument, it returns: `['192[.]168[.]', '172[.]16[.]']`.

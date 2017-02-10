@@ -45,6 +45,7 @@ force `json.dump` and `json.load` in `utf-8` encoding.
 Load json string.
 
 **arguments**:
+
 -   `json_string`:
     a valid json string or `None`. If it is None, `utfjson.load` does not
     raise error, but returns None instead.
@@ -62,6 +63,7 @@ It dumps `val` to a json string the same way `json.dumps` does, except it
 force string in `val` to be encoded in `utf-8`.
 
 **arguments**:
+
 -   `val`:
     a `number`, `string`, `list`, `dictionary` or `None`.
 

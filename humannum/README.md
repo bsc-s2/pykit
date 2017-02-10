@@ -49,6 +49,7 @@ string.
 `humannum.humannum(data, unit=None, include=None, exclude=None)`
 
 **arguments**:
+
 -   `data`:
     could be a primitive type: `int` or `float`,
     or a non-primitive type object `list` or `dict`.
@@ -98,6 +99,7 @@ print humannum.parsenum('1.01k')
 ```
 
 **arguments**:
+
 -   `data`:
     number string.
 

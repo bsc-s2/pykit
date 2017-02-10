@@ -88,6 +88,7 @@ It provides with several string operation functions.
 `strutil.line_pad(linestr, padding)`
 
 **arguments**:
+
 -   `linestr`:
     multiple line string with `\n` as line separator.
 
@@ -119,6 +120,7 @@ strutil.format_line([["name:", "age:"], ["drdrxp", "18"], "wow"], sep=" | ", ali
 ```
 
 **arguments**:
+
 -   `elts`:
     elements in a line.
     Each element could be a `string` or a `list` of `string`.
