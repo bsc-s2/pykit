@@ -28,7 +28,7 @@ class IPUnreachable(NetworkError):
 
 def is_ip4(ip):
 
-    if type(ip) not in (type(''), type(u'')):
+    if type(ip) not in types.StringTypes:
         return False
 
     ip = ip.split('.')
