@@ -9,6 +9,8 @@ import yaml
 PUB = 'PUB'
 INN = 'INN'
 
+LOCALHOST = '127.0.0.1'
+
 logger = logging.getLogger(__name__)
 
 _intra_patterns = (
@@ -100,31 +102,34 @@ def get_host_ip4(iface_prefix=None, exclude_prefix=None):
 
     ips = []
 
-    for ifaceName in netifaces.interfaces():
+    for ifacename in netifaces.interfaces():
 
         matched = False
 
         for t in iface_prefix:
-            if ifaceName.startswith(t):
+            if ifacename.startswith(t):
                 matched = True
                 break
 
         if exclude_prefix is not None:
             for ex in exclude_prefix:
-                if ifaceName.startswith(ex):
+                if ifacename.startswith(ex):
                     matched = False
                     break
 
         if not matched:
             continue
 
-        ifo = netifaces.ifaddresses(ifaceName)
+        addrs = netifaces.ifaddresses(ifacename)
 
-        if ifo.has_key(netifaces.AF_INET) and ifo.has_key(netifaces.AF_LINK):
+        if addrs.has_key(netifaces.AF_INET) and addrs.has_key(netifaces.AF_LINK):
 
-            ip = ifo[netifaces.AF_INET][0]['addr']
-            if ip != '127.0.0.1':
-                ips += [ip]
+            for addr in addrs[netifaces.AF_INET]:
+
+                ip = addr['addr']
+
+                if ip != LOCALHOST:
+                    ips.append(ip)
 
     return ips
 
@@ -143,22 +148,22 @@ def get_host_devices(iface_prefix=''):
 
     rst = {}
 
-    names = netifaces.interfaces()
-    names = [x for x in names if x.startswith(iface_prefix)]
+    for ifacename in netifaces.interfaces():
 
-    for name in names:
+        if not ifacename.startswith(iface_prefix):
+            continue
 
-        ifo = netifaces.ifaddresses(name)
+        addrs = netifaces.ifaddresses(ifacename)
 
-        if ifo.has_key(netifaces.AF_INET) and ifo.has_key(netifaces.AF_LINK):
+        if addrs.has_key(netifaces.AF_INET) and addrs.has_key(netifaces.AF_LINK):
 
-            ip = ifo[netifaces.AF_INET][0]['addr']
+            ips = [addr['addr'] for addr in addrs[netifaces.AF_INET]]
 
-            if ip == '127.0.0.1':
+            if LOCALHOST in ips:
                 continue
 
-            rst[name] = {'INET': ifo[netifaces.AF_INET],
-                         'LINK': ifo[netifaces.AF_LINK]}
+            rst[ifacename] = {'INET': addrs[netifaces.AF_INET],
+                              'LINK': addrs[netifaces.AF_LINK]}
 
     return rst
 

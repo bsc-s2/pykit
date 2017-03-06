@@ -9,6 +9,8 @@ class TestNet(unittest.TestCase):
         self.assertEqual('PUB', net.PUB)
         self.assertEqual('INN', net.INN)
 
+        self.assertEqual('127.0.0.1', net.LOCALHOST)
+
     def test_exception(self):
         [net.NetworkError, net.IPUnreachable]
 
