@@ -60,9 +60,11 @@ def ip_class(ip):
     else:
         return PUB
 
+
 def is_ip4_loopback(ip):
 
     return is_ip4(ip) and ip.startswith('127.')
+
 
 def ips_prefer(ips, preference):
 
@@ -125,7 +127,7 @@ def get_host_ip4(iface_prefix=None, exclude_prefix=None):
 
         addrs = netifaces.ifaddresses(ifacename)
 
-        if addrs.has_key(netifaces.AF_INET) and addrs.has_key(netifaces.AF_LINK):
+        if netifaces.AF_INET in addrs and netifaces.AF_LINK in addrs:
 
             for addr in addrs[netifaces.AF_INET]:
 
@@ -158,7 +160,7 @@ def get_host_devices(iface_prefix=''):
 
         addrs = netifaces.ifaddresses(ifacename)
 
-        if addrs.has_key(netifaces.AF_INET) and addrs.has_key(netifaces.AF_LINK):
+        if netifaces.AF_INET in addrs and netifaces.AF_LINK in addrs:
 
             ips = [addr['addr'] for addr in addrs[netifaces.AF_INET]]
 

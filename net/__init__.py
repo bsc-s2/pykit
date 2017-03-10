@@ -3,6 +3,8 @@ from .net import (
     INN,
     PUB,
 
+    LOCALHOST,
+
     NetworkError,
     IPUnreachable,
 
@@ -17,12 +19,15 @@ from .net import (
     is_inn,
     is_pub,
     is_ip4,
+    is_ip4_loopback,
     parse_ip_regex_str,
 )
 
 __all__ = [
     'INN',
     'PUB',
+
+    'LOCALHOST',
 
     'NetworkError',
     'IPUnreachable',
@@ -38,5 +43,6 @@ __all__ = [
     'is_inn',
     'is_pub',
     'is_ip4',
+    'is_ip4_loopback',
     'parse_ip_regex_str',
 ]
