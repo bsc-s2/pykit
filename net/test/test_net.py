@@ -76,6 +76,41 @@ class TestNet(unittest.TestCase):
         for inp in cases_ip4:
             self.assertEqual(True, net.is_ip4(inp), inp)
 
+    def test_is_ip4_loopback_false(self):
+
+        cases_ip4 = (
+            '0.0.0.0',
+            '1.1.1.1',
+            '126.0.1.0',
+            '15.1.0.0',
+            '255.0.0.255',
+
+            '126.0.0.1',
+            '128.0.0.1',
+
+            '255.255.255.255',
+        )
+
+        for ip in cases_ip4:
+            self.assertEqual(False, net.is_ip4_loopback(ip), ip)
+
+    def test_is_ip4_loopback_true(self):
+
+        cases_ip4 = (
+            '127.0.0.0',
+            '127.1.1.1',
+            '127.0.1.0',
+            '127.1.0.0',
+            '127.0.0.255',
+
+            '127.0.0.1',
+
+            '127.255.255.255',
+        )
+
+        for ip in cases_ip4:
+            self.assertEqual(True, net.is_ip4_loopback(ip), ip)
+
     def test_ip_class_and_is_xxx(self):
         cases_pub = (
             '1.2.3.4',
