@@ -9,6 +9,8 @@ class TestNet(unittest.TestCase):
         self.assertEqual('PUB', net.PUB)
         self.assertEqual('INN', net.INN)
 
+        self.assertEqual('127.0.0.1', net.LOCALHOST)
+
     def test_exception(self):
         [net.NetworkError, net.IPUnreachable]
 
@@ -40,11 +42,18 @@ class TestNet(unittest.TestCase):
 
             '1.1.1.1.',
             '.1.1.1.1',
+            '1:1.1.1',
+            '1:1:1.1',
 
             '256.1.1.1',
             '1.256.1.1',
             '1.1.256.1',
             '1.1.1.256',
+
+            '1.1.1.1.',
+            '1.1.1.1.1',
+            '1.1.1.1.1.',
+            '1.1.1.1.1.1',
         )
 
         for inp in cases_not_ip4:
@@ -66,6 +75,41 @@ class TestNet(unittest.TestCase):
 
         for inp in cases_ip4:
             self.assertEqual(True, net.is_ip4(inp), inp)
+
+    def test_is_ip4_loopback_false(self):
+
+        cases_ip4 = (
+            '0.0.0.0',
+            '1.1.1.1',
+            '126.0.1.0',
+            '15.1.0.0',
+            '255.0.0.255',
+
+            '126.0.0.1',
+            '128.0.0.1',
+
+            '255.255.255.255',
+        )
+
+        for ip in cases_ip4:
+            self.assertEqual(False, net.is_ip4_loopback(ip), ip)
+
+    def test_is_ip4_loopback_true(self):
+
+        cases_ip4 = (
+            '127.0.0.0',
+            '127.1.1.1',
+            '127.0.1.0',
+            '127.1.0.0',
+            '127.0.0.255',
+
+            '127.0.0.1',
+
+            '127.255.255.255',
+        )
+
+        for ip in cases_ip4:
+            self.assertEqual(True, net.is_ip4_loopback(ip), ip)
 
     def test_ip_class_and_is_xxx(self):
         cases_pub = (
