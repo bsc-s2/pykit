@@ -51,6 +51,7 @@ There is a `README.md` for each module.
 | [utfjson](utfjson)             | Force `json.dump` and `json.load` in `utf-8` encoding                                 |
 | [timeutil](timeutil)           | Support specify time format output and get current ts, ms, us api etc                 |
 | [portlock](portlock)           | cross process lock                                                                    |
+| [cacheable](cacheable)         | Cache data which access frequently                                                    |
 
 #   Install
 
