@@ -31,10 +31,10 @@ class LRU(object):
             item = self.items[key]
 
             if now > item['tm'] + self.timeout:
-                self.del_item(item)
+                self._del_item(item)
                 raise KeyError
 
-            self.move_to_tail(item)
+            self._move_to_tail(item)
 
             return (item['obj'], (now > item['tm'] + self.item_old_time))
 
@@ -46,7 +46,7 @@ class LRU(object):
                 item['obj'] = val
                 item['tm'] = int(time.time())
 
-                self.move_to_tail(item)
+                self._move_to_tail(item)
 
             else:
                 self.items[key] = {'key': key,
@@ -55,12 +55,12 @@ class LRU(object):
                                    'next': None,
                                    'tm': int(time.time())}
 
-                self.move_to_tail(self.items[key])
+                self._move_to_tail(self.items[key])
 
                 self.size += 1
 
                 if self.size > self.cleanup_threshold:
-                    self.cleanup()
+                    self._cleanup()
 
     def _remove_item(self, item):
 
@@ -70,7 +70,7 @@ class LRU(object):
         else:
             self.tail = item['pre']
 
-    def move_to_tail(self, item):
+    def _move_to_tail(self, item):
 
         with self.lock:
             if item['pre'] is not None:
@@ -81,19 +81,19 @@ class LRU(object):
             item['next'] = None
             self.tail = item
 
-    def del_item(self, item):
+    def _del_item(self, item):
 
         with self.lock:
             del self.items[item['key']]
             self._remove_item(item)
             self.size -= 1
 
-    def cleanup(self):
+    def _cleanup(self):
 
         with self.lock:
             while self.size > self.capacity:
                 item = self.head['next']
-                self.del_item(item)
+                self._del_item(item)
 
 
 class Cacheable(object):

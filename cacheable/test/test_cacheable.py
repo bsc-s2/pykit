@@ -9,7 +9,7 @@ from pykit import cacheable
 
 class TestLRU(unittest.TestCase):
 
-    def assure_lru_list(self, lc):
+    def _assure_lru_list(self, lc):
 
         size = lc.size
         item_head = lc.head
@@ -20,7 +20,7 @@ class TestLRU(unittest.TestCase):
 
         self.assertTrue(item_head == lc.tail and item_tail == lc.head)
 
-    def cmp_lru_with_expect_orderkeys(self, lc, keys):
+    def _cmp_lru_with_expect_orderkeys(self, lc, keys):
 
         item = lc.head['next']
         lru_keys = []
@@ -50,7 +50,7 @@ class TestLRU(unittest.TestCase):
                 self.assertFalse(is_timeout)
 
             except KeyError:
-                self.assure_lru_list(lc)
+                self._assure_lru_list(lc)
                 self.assertTrue(is_timeout)
 
     def test_lru_getitem(self):
@@ -92,7 +92,7 @@ class TestLRU(unittest.TestCase):
                     self.assertTrue(i in case['expect_exist_items'])
 
                 except KeyError:
-                    self.assure_lru_list(lc)
+                    self._assure_lru_list(lc)
                     self.assertTrue(i in case['expect_cleanup_items'])
 
     def test_lru_setitem(self):
@@ -120,7 +120,7 @@ class TestLRU(unittest.TestCase):
             for i in xrange(case['insert_count']):
                 lc[i] = 'val'
 
-            self.cmp_lru_with_expect_orderkeys(lc, case['expect_order_keys'])
+            self._cmp_lru_with_expect_orderkeys(lc, case['expect_order_keys'])
 
     def test_lru_capacity(self):
 
