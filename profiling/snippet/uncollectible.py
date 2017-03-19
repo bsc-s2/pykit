@@ -6,6 +6,30 @@ This snippet shows how to create a uncollectible object:
 It is an object in a cycle reference chain, in which there is an object
 with __del__ defined.
 The simpliest is an object that refers to itself and with a __del__ defined.
+
+    > python uncollectible.py
+
+    ======= collectible object =======
+
+    *** init,     nr of referrers: 4
+                  garbage:         []
+                  created:         collectible: <__main__.One object at 0x102c01090>
+                  nr of referrers: 5
+                  delete:
+    *** __del__ called
+    *** after gc, nr of referrers: 4
+                  garbage:         []
+
+    ======= uncollectible object =======
+
+    *** init,     nr of referrers: 4
+                  garbage:         []
+                  created:         uncollectible: <__main__.One object at 0x102c01110>
+                  nr of referrers: 5
+                  delete:
+    *** after gc, nr of referrers: 5
+                  garbage:         [<__main__.One object at 0x102c01110>]
+
 '''
 
 def dd(*mes):
