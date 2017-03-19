@@ -9,6 +9,17 @@ import time
 
 import objgraph
 import psutil
+import gc
+import json
+import logging
+import os
+import sys
+import sys
+import json
+import copy
+import Queue
+
+import psutil
 
 
 def start_mem_check_thread(threshold=1024 * 1024 * 1024,
@@ -78,6 +89,9 @@ def _memory_dump(opts):
     for typ, n in objgraph.most_common_types():
         logging.info('{typ:30} {n:>10}'.format(typ=typ, n=n))
 
+
+def mem_refs():
+
     objects = []
     rng = opts['size_range']
 
@@ -136,6 +150,222 @@ def _memory_dump(opts):
     logging.info('memory-dump summary: ' + json.dumps(summ))
 
 
+def mem_check2(ii):
+
+    tbl = {}
+    ref = {}
+    refby = {}
+
+    def add_to_table(obj):
+
+        i = id(obj)
+
+        if i in tbl:
+            return
+
+        size = sys.getsizeof(obj, 0)
+        cls = _get_class(obj)
+        tbl[i] = dict(cls=cls, size=size, obj=obj)
+
+    def add_to_ref(src, dst):
+
+        if src not in ref:
+            ref[src] = {}
+
+        ref[src][dst] = True
+
+        if dst not in refby:
+            refby[dst] = {}
+
+        refby[dst][src] = True
+
+    for obj in gc.get_objects():
+
+        if not hasattr(obj, '__class__'):
+            continue
+
+        add_to_table(obj)
+        i = id(obj)
+
+        for sub in gc.get_referents(obj):
+
+            add_to_table(sub)
+
+            subi = id(sub)
+
+            add_to_ref(i, subi)
+
+    # find circle
+
+    reduced = copy.deepcopy(ref)
+    circles = []
+
+    while len(reduced) > 0:
+
+        cir = {}
+        q = Queue.Queue(1024*1024)
+        src = reduced.keys()[0]
+        q.put(src)
+
+        while not q.empty():
+
+            src = q.get()
+
+            if src not in reduced:
+                continue
+
+            cir[src] = reduced[src]
+            del reduced[src]
+
+            for dst in ref[src]:
+                if dst not in reduced:
+                    continue
+                q.put(dst)
+
+            # if src in refby:
+            #     for parent in refby[k]:
+            #         if parent not in reduced:
+            #             continue
+            #         q.put(parent)
+
+        circle = {'roots':{}, 'ref': cir}
+        circles.append(circle)
+
+        roots = circle['roots']
+        for k in cir:
+            if k not in refby:
+                roots[k] = tbl[k]
+
+        # if ii in cir:
+        if len(roots) == 0:
+            graph_cycle(circle, tbl)
+
+    # print len(circles)
+
+
+def make_refby(ref):
+
+    refby = {}
+
+    for src, v in ref.items():
+        for dst in v.keys():
+            if dst not in refby:
+                refby[dst] = {}
+
+            refby[dst][src] = True
+
+    return refby
+
+
+def find_cycles(ref):
+
+    ref = copy.deepcopy(ref)
+    refby = make_refby(ref)
+
+    circles = []
+
+    while len(ref) > 0:
+
+        cir = {}
+        q = Queue.Queue(1024*1024)
+        k = refby.keys()[0]
+        q.put(k)
+
+        while not q.empty():
+
+            k = q.get()
+
+            # k refers to no one
+            if k not in ref:
+                for i in refby[k]:
+                    del ref[i][k]
+                    if not ref[i]:
+                        del ref[i]
+
+                del refby[k]
+
+            cir[src] = ref[src]
+            del ref[src]
+
+            for dst in ref[src]:
+                if dst not in ref:
+                    continue
+                q.put(dst)
+
+            # if src in refby:
+            #     for parent in refby[k]:
+            #         if parent not in ref:
+            #             continue
+            #         q.put(parent)
+
+        circle = {'roots':{}, 'ref': cir}
+        circles.append(circle)
+
+        roots = circle['roots']
+        for k in cir:
+            if k not in refby:
+                roots[k] = tbl[k]
+
+    return circles
+
+
+def graph_cycle(circle, tbl):
+
+    cir = remove_leaves(circle['ref'])
+    if not cir:
+        return
+
+    print '```'
+    has = {}
+    for v in cir.values():
+        for i in v.keys():
+            if i not in has:
+                print i, tbl[i]['cls'], tbl[i]['size']
+                has[i] = True
+    print '```'
+
+    print '```graphLR'
+    has = {}
+    for v in cir.values():
+        for i in v.keys():
+            if i not in has:
+                o = tbl[i]
+                rp = o['cls']
+                print '{i}("{rp} {i}")'.format(i=i,rp=rp)
+                has[i] = True
+
+    for src, refs in cir.items():
+        for dst in refs.keys():
+            print '{src} --> {dst}'.format(src=src, dst=dst)
+    print '```'
+
+
+def remove_leaves(ref):
+
+    ref = copy.deepcopy(ref)
+
+    running = True
+    while running:
+
+        running = False
+
+        for src, v in ref.items():
+            for dst in v.keys():
+                if dst not in ref:
+                    del v[dst]
+                    running = True
+
+            if not v:
+                del ref[src]
+
+    return ref
+
+
+
+def _get_repr(obj):
+    return type(obj).__name__
+
+
 def _get_class(obj):
 
     if hasattr(obj, '__class__') and hasattr(obj.__class__, '__name__'):
@@ -145,7 +375,35 @@ def _get_class(obj):
 
     return cls
 
+
+
 if __name__ == "__main__":
+
+    class One(object):
+
+        def __init__(self, collectible):
+            if collectible:
+                self.typ = 'collectible'
+            else:
+                self.typ = 'uncollectible'
+
+                # Make a reference to it self, to form a reference cycle.
+                # A reference cycle with __del__, makes it uncollectible.
+                self.me = self
+
+
+        def __del__(self):
+            dd('*** __del__ called')
+
+    one = One(False)
+    i = id(one)
+    del one
+
+    # gc.collect()
+    # print gc.garbage
+    mem_check2(i)
+
+    sys.exit(0)
 
     logging.basicConfig(level='DEBUG',
                         format='%(asctime)s,%(name)s,%(levelname)s %(message)s',
