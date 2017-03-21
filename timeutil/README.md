@@ -15,8 +15,10 @@
   - [timeutil.ts](#timeutilts)
   - [timeutil.ms](#timeutilms)
   - [timeutil.us](#timeutilus)
+  - [timeutil.ns](#timeutilns)
   - [timeutil.ms_to_ts](#timeutilms_to_ts)
   - [timeutil.us_to_ts](#timeutilus_to_ts)
+  - [timeutil.ns_to_ts](#timeutilns_to_ts)
 
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
@@ -46,7 +48,7 @@ ts = timeutil.utc_datetime_to_ts(dt)
 
 print ts, time_str
 
-print timeutil.ts(), timeutil.ms(), timeutil.us()
+print timeutil.ts(), timeutil.ms(), timeutil.us(), timeutil.ns()
 
 ```
 
@@ -183,6 +185,17 @@ get now timestamp in microsecond
 **return**:
     timestamp in microsecond
 
+##  timeutil.ns
+
+**syntax**:
+
+`ns()`
+
+get now timestamp in nanosecond
+
+**return**:
+    timestamp in nanosecond
+
 ##  timeutil.ms_to_ts
 
 **syntax**:
@@ -211,6 +224,22 @@ convert timestamp from microsecond to second
 
 -   `us`:
     timestamp in microsecond
+
+**return**:
+    timestamp in second
+
+##  timeutil.ns_to_ts
+
+**syntax**:
+
+`ns_to_ts(ns)`
+
+convert timestamp from nanosecond to second
+
+**arguments**:
+
+-   `ns`:
+    timestamp in nanosecond
 
 **return**:
     timestamp in second

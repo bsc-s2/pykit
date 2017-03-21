@@ -8,8 +8,10 @@ from .timeutil import (
     ts,
     ms,
     us,
+    ns,
     ms_to_ts,
     us_to_ts,
+    ns_to_ts,
 )
 
 __all__ = [
@@ -22,6 +24,8 @@ __all__ = [
     'ts',
     'ms',
     'us',
+    'ns',
     'ms_to_ts',
     'us_to_ts',
+    'ns_to_ts',
 ]

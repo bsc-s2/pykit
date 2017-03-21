@@ -76,7 +76,8 @@ class TestTimeutil(unittest.TestCase):
         cases = [
             (timeutil.ts, 10, 1, 2),
             (timeutil.ms, 13, 0.001, 3),
-            (timeutil.us, 16, 0.000001, 30),
+            (timeutil.us, 16, 0.000001, 300),
+            (timeutil.ns, 19, 0.000000001, 30000),
         ]
 
         for case in cases:
@@ -98,6 +99,8 @@ class TestTimeutil(unittest.TestCase):
 
         ms = ts * 1000
         us = ts * 1000000
+        ns = ts * 1000000000
 
         self.assertEqual(ts, timeutil.ms_to_ts(ms))
         self.assertEqual(ts, timeutil.us_to_ts(us))
+        self.assertEqual(ts, timeutil.ns_to_ts(ns))
