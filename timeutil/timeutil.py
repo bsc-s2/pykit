@@ -52,7 +52,11 @@ def ms():
 
 
 def us():
-    return int(time.time() * 1000 * 1000)
+    return int(time.time() * (1000 ** 2))
+
+
+def ns():
+    return int(time.time() * (1000 ** 3))
 
 
 def ms_to_ts(ms):
@@ -60,4 +64,8 @@ def ms_to_ts(ms):
 
 
 def us_to_ts(us):
-    return us / 1000 / 1000
+    return us / (1000 ** 2)
+
+
+def ns_to_ts(ns):
+    return ns / (1000 ** 3)
