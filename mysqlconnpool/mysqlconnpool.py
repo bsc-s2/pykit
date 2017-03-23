@@ -110,10 +110,20 @@ def conn_query(conn, sql, use_dict=True):
     return rst
 
 
-def query(pool, sql, use_dict=True):
+def query(pool, sql, use_dict=True, retry=3):
 
-    with pool() as conn:
-        return conn_query(conn, sql, use_dict=use_dict)
+    for i in xrange(0, retry):
+
+        try:
+            with pool() as conn:
+                return conn_query(conn, sql, use_dict=use_dict)
+        except MySQLdb.OperationalError as e:
+            logger.warn(repr(e) + "conn_query error {sql}".format(sql=sql))
+            continue
+        else:
+            raise
+    else:
+        raise
 
 
 def new_connection(conn_argkw, conv=None, options=None):
