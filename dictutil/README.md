@@ -111,9 +111,19 @@ for record in records:
 ## dictutil.attrdict
 
 **syntax**:
-`dictutil.attrdict([{...}], [<key>=<value>...])`
+`dictutil.attrdict()`
 
-Make an object and let it can be accessed with attribute.
+**syntax**:
+`dictutil.attrdict(mapping, **kwargs)`:<br/>
+new dictionary initialized from a mapping object's (key, value) pairs, with additional name=value pairs.
+
+**syntax**:
+`dictutil.attrdict(iterable, **kwargs)`:<br/>
+new dictionary initialized as if via: `d = {}; for k, v in iterable: d[k] = v`
+
+Make a dict-like object whose keys can also be accessed with attribute.
+
+Argument is exactly the same as `dict()`.
 
 ```
 a = dictutil.attrdict(x=3, y={'z':4})
