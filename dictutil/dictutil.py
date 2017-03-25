@@ -189,7 +189,7 @@ def _attrdict(d, ref):
     if id(d) in ref:
         return ref[id(d)]
 
-    # id is memory address
+    # id() is the memory address of an object, thus it is unique.
     ad = AttrDict(d)
     ref[id(d)] = ad
 
