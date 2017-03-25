@@ -6,6 +6,7 @@
 - [Status](#status)
 - [Synopsis](#synopsis)
 - [Methods](#methods)
+  - [dictutil.attrdict](#dictutilattrdict)
   - [dictutil.depth_iter](#dictutildepth_iter)
   - [dictutil.breadth_iter](#dictutilbreadth_iter)
   - [dictutil.make_getter](#dictutilmake_getter)
@@ -106,6 +107,71 @@ for record in records:
 ```
 
 #   Methods
+
+## dictutil.attrdict
+
+**syntax**:
+`dictutil.attrdict()`
+
+**syntax**:
+`dictutil.attrdict(mapping, **kwargs)`:<br/>
+new dictionary initialized from a mapping object's (key, value) pairs, with additional name=value pairs.
+
+**syntax**:
+`dictutil.attrdict(iterable, **kwargs)`:<br/>
+new dictionary initialized as if via: `d = {}; for k, v in iterable: d[k] = v`
+
+Make a dict-like object whose keys can also be accessed with attribute.
+
+Argument is exactly the same as `dict()`.
+
+```
+a = dictutil.attrdict(x=3, y={'z':4})
+a['x']  # 3
+a.x     # 3
+a.y     # {'z':4}
+a.y.z   # 4
+```
+
+This funciton also works well with circular references.
+
+```
+x = {}
+x['x'] = x
+ad = dictutil.attrdict(x)
+
+print(ad.x is ad) # True: circular references are kept
+```
+
+Pros:
+
+- It actually works!
+- No dictionary class methods are shadowed (e.g. .keys() work just fine)
+- Attributes and items are always in sync
+- Trying to access non-existent key as an attribute correctly raises AttributeError instead of KeyError
+
+Cons:
+
+- Methods like .keys() will not work just fine if they get overwritten by incoming data
+- Causes a memory leak in `Python < 2.7.4 / Python3 < 3.2.3`
+- Pylint goes bananas with E1123(unexpected-keyword-arg) and E1103(maybe-no-member)
+- For the uninitiated it seems like pure magic.
+
+Issues:
+
+- Dictionary key overrides dictionary methods:
+
+  ```
+  d = AttrDict()
+  d.update({'items':["a", "b"]})
+  d.items() # TypeError: 'list' object is not callable
+  ```
+
+**arguments**:
+are same as `dict()`, a dictionary or kwargs are both acceptable.
+
+**return**:
+an object provides with dictionary item access with attribute.
 
 ## dictutil.depth_iter
 

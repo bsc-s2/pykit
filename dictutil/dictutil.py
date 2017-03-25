@@ -127,6 +127,76 @@ def make_setter(key_path, value=None, incr=False):
     return _set_dict
 
 
+class AttrDict(dict):
+
+    '''
+    a = AttrDict({1:2}) # {1:2}
+    a = AttrDict(x=3)   # {"x":3}
+    a.x                 # 3
+    a['x']              # 3
+
+    Some pros:
+
+    - It actually works!
+    - No dictionary class methods are shadowed (e.g. .keys() work just fine)
+    - Attributes and items are always in sync
+    - Trying to access non-existent key as an attribute correctly raises AttributeError instead of KeyError
+
+    Cons:
+
+    - Methods like .keys() will not work just fine if they get overwritten by incoming data
+    - Causes a memory leak in Python < 2.7.4 / Python3 < 3.2.3
+    - Pylint goes bananas with E1123(unexpected-keyword-arg) and E1103(maybe-no-member)
+    - For the uninitiated it seems like pure magic.
+
+    Issues:
+
+    - Dictionary key overrides dictionary methods:
+
+      d = AttrDict()
+      d.update({'items':["a", "b"]})
+      d.items() # TypeError: 'list' object is not callable
+
+    '''
+
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+
+def attrdict(*args, **kwargs):
+    """
+    Make a dict-like object whose keys can also be accessed with attribute.
+    You can use an AttrDict instance just like using a dict instance.
+    """
+
+    d = dict(*args, **kwargs)
+    ref = {}
+
+    return _attrdict(d, ref)
+
+
+def _attrdict(d, ref):
+
+    if not isinstance(d, dict):
+        return d
+
+    if isinstance(d, AttrDict):
+        return d
+
+    if id(d) in ref:
+        return ref[id(d)]
+
+    # id() is the memory address of an object, thus it is unique.
+    ad = AttrDict(d)
+    ref[id(d)] = ad
+
+    for k in d.keys():
+        ad[k] = _attrdict(d[k], ref)
+
+    return ad
+
+
 def _get_zero_value_of(val):
 
     if type(val) in types.StringTypes:
