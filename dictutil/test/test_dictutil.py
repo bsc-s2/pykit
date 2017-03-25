@@ -591,5 +591,8 @@ class TestAttrDict(unittest.TestCase):
 
         self.assertTrue(isinstance(ad, dictutil.AttrDict))
         self.assertTrue(isinstance(ad.x, dictutil.AttrDict))
-        self.assertTrue(ad.x is ad)
-        self.assertTrue(ad.x.x is ad)
+        self.assertTrue(ad.x is not ad, 'attrdict does create a new dict')
+        self.assertTrue(
+            ad.x.x is ad.x, 'circular references work for all dict items.')
+        self.assertTrue(ad.x.x.x is ad.x.x,
+                        'circular references work for all dict items.(2)')

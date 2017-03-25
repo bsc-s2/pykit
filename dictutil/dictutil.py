@@ -165,14 +165,12 @@ class AttrDict(dict):
 
 
 def attrdict(*args, **kwargs):
+    """
+    Make a dict-like object whose keys can also be accessed with attribute.
+    You can use an AttrDict instance just like using a dict instance.
+    """
 
-    # try not to create a new dictionary. let referencing to itself works
-    if len(args) == 1 and isinstance(args[0], dict):
-        d = args[0]
-        d.update(kwargs)
-    else:
-        d = dict(*args, **kwargs)
-
+    d = dict(*args, **kwargs)
     ref = {}
 
     return _attrdict(d, ref)
