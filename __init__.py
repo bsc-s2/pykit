@@ -3,6 +3,7 @@ from .jobq import (
     Finish,
     run,
     stat,
+    JobManager,
 )
 
 __all__ = [
@@ -10,4 +11,5 @@ __all__ = [
     'Finish',
     'run',
     'stat',
+    'JobManager',
 ]
