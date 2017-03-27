@@ -49,7 +49,7 @@ debug()
 {
     if [ ".$_git_xp_verbose" = ".1" ]; then
         local LightCyan="$(tput bold ; tput setaf 6)"
-        log "$LightCyan" "$@"
+        log "$LightCyan" "$@" >&2
     fi
 }
 info()
@@ -164,6 +164,55 @@ git_head_branch()
 {
     git symbolic-ref --short HEAD
 }
+
+git_copy_commit()
+{
+    # We're going to set some environment vars here, so
+    # do it in a subshell to get rid of them safely later
+    dd copy_commit "{$1}" "{$2}" "{$3}"
+    git log -1 --pretty=format:'%an%n%ae%n%ad%n%cn%n%ce%n%cd%n%s%n%n%b' "$1" |
+    (
+    read GIT_AUTHOR_NAME
+    read GIT_AUTHOR_EMAIL
+    read GIT_AUTHOR_DATE
+    read GIT_COMMITTER_NAME
+    read GIT_COMMITTER_EMAIL
+    read GIT_COMMITTER_DATE
+    export  GIT_AUTHOR_NAME \
+        GIT_AUTHOR_EMAIL \
+        GIT_AUTHOR_DATE \
+        GIT_COMMITTER_NAME \
+        GIT_COMMITTER_EMAIL \
+        GIT_COMMITTER_DATE
+
+    # (echo -n "$annotate"; cat ) |
+
+    git commit-tree "$2" $3  # reads the rest of stdin
+    ) || die "Can't copy commit $1"
+}
+
+git_diff_ln_new()
+{
+    # output is changed line number: <from> <end>; inclusive:
+    # 27 7
+    # 307 7
+    # 316 5
+    # 325 10
+    # 350 1
+
+    git diff -U0 "$@" \
+        | grep '^@@' \
+        | awk '{
+    l=$3
+    gsub("^+", "", l)
+    split(l",1", x, ",")
+    
+    # inclusive
+    x[2]=x[1]+x[2]-1
+
+    print x[1] " " x[2]
+}'
+}
 #include '_git_xp_lib.sh' end
 
 main()
@@ -263,20 +312,63 @@ main()
     done<"$conf_fn"
     wait
 
-    while read prefix url ref localtag
-    do
+    while read prefix url ref localtag; do
+
         if [ -d "$prefix" ]; then
-            git subtree merge --squash \
-                --message="Merge squashed $url $ref" \
-                --prefix "$prefix" "$localtag" || die merge
+
+            local tag_hash=$(git_hash "$localtag") || die get hash of $localtag
+            local head_hash=$(git_hash HEAD)
+
+            dd "tag_hash:   $tag_hash"
+            dd "head_hash:  $head_hash"
+
+            # clear old $prefix
+            if [ -d "$prefix" ]; then
+                git rm -r "$prefix" >/dev/null || die rm "$prefix"
+            fi
+
+            # load files into index at $prefix
+            git read-tree --prefix="$prefix" "$localtag" || die "read-tree $prefix $localtag"
+
+            # remove not in index files
+            git checkout -- "$prefix" || die "checkout $prefix"
+
+            # get tree object
+            local tree=$(git write-tree) || die git write-tree
+            dd "tree:       $tree"
+
+            if [ "$tree" = "$(git_tree_hash HEAD)" ]; then
+                info "Nothing changed: $prefix"
+                continue
+            fi
+
+            local commit=$(
+            {
+                cat <<-END
+		Squashed $prefix from $url $ref, local tag: $localtag hash: $tag_hash
+		
+		git-subrepo-dir: $prefix
+		git-subrepo-hash: $tag_hash
+		END
+            } | git commit-tree $tree -p $head_hash
+            ) || die commit
+            dd "commit:     $commit"
+
+            git merge --ff-only --no-edit --commit $commit
+
+            # git subtree merge --squash \
+            #     --message="Merge squashed $url $ref" \
+            #     --prefix "$prefix" "$localtag" || die merge
         else
             git subtree add --squash \
                 --message="Add squashed $url $ref" \
                 --prefix "$prefix" "$localtag" || die add
         fi
 
-        # git update-ref -d $localtag
+    done<".gitsubrepo_refs"
 
+    while read a b c localtag; do
+        git update-ref -d $localtag
     done<".gitsubrepo_refs"
 
     rm .gitsubrepo_refs
