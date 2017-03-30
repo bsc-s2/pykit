@@ -1,13 +1,24 @@
 #!/bin/sh
 
-if [ $# -eq 0 ]; then
-    python2 -m unittest discover -v --failfast
-else
-    if [ -d "$1" ]; then
-        # find test from a subdir
-        python2 -m unittest discover -v --failfast -s "$1"
-    else
-        # find test by module[.Class[.function]]
-        python2 -m unittest -v --failfast "$1"
-    fi
-fi
+# usage:
+#     script/t.sh
+#     script/t.sh zkutil
+#     script/t.sh zkutil.test
+#     script/t.sh zkutil.test_zkutil
+#     script/t.sh zkutil.test_zkutil.TestZKUtil
+#     script/t.sh zkutil.test_zkutil.TestZKUtil.test_lock_data
+
+pkg="${1%/}"
+
+while [ ! -d pykit ]; do
+    pkg="$(basename $(pwd)).$pkg"
+    cd ..
+done
+
+pkg="${pkg%.}"
+
+# Find test from a subdir or a module.
+# Add evn variable PYTHONPATH to let all modules in sub folder can find the
+# root package.
+
+PYTHONPATH="$(pwd)" python2 -m unittest discover -c -v --failfast -s "$pkg"
