@@ -13,6 +13,9 @@ def subproc(script):
 
     subproc = subprocess.Popen(['sh'],
                                close_fds=True,
+                               env=dict(
+                                       PYTHONPATH=this_base + '/../..',
+                               ),
                                stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
@@ -20,6 +23,11 @@ def subproc(script):
     out, err = subproc.communicate(script)
 
     subproc.wait()
+
+    if subproc.returncode != 0:
+        print out
+        print err
+
     return (subproc.returncode, out, err)
 
 
