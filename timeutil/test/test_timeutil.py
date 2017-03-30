@@ -4,7 +4,7 @@
 import time
 import unittest
 
-import timeutil
+from pykit import timeutil
 
 test_case = {
     'ts': {

@@ -1,8 +1,8 @@
 import unittest
 
-from cachepool import CachePool
-from cachepool import CachePoolGeneratorError
-from cachepool import make_wrapper
+from pykit.cachepool import CachePool
+from pykit.cachepool import CachePoolGeneratorError
+from pykit.cachepool import make_wrapper
 
 _DEBUG_ = True
 
