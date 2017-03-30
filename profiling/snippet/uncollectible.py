@@ -1,5 +1,7 @@
 from __future__ import print_function
+
 import gc
+
 
 '''
 This snippet shows how to create a uncollectible object:
@@ -32,10 +34,12 @@ The simpliest is an object that refers to itself and with a __del__ defined.
 
 '''
 
+
 def dd(*mes):
     for m in mes:
         print(m, end='')
     print()
+
 
 class One(object):
 
@@ -49,9 +53,9 @@ class One(object):
             # A reference cycle with __del__, makes it uncollectible.
             self.me = self
 
-
     def __del__(self):
         dd('*** __del__ called')
+
 
 def test_it(collectible):
 

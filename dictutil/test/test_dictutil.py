@@ -3,7 +3,7 @@
 
 import unittest
 
-import dictutil
+from pykit import dictutil
 
 
 class TestDictDeepIter(unittest.TestCase):

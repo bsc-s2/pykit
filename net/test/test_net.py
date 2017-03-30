@@ -1,6 +1,6 @@
 import unittest
 
-import net
+from pykit import net
 
 
 class TestNet(unittest.TestCase):

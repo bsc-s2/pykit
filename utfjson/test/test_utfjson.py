@@ -3,7 +3,7 @@
 
 import unittest
 
-import utfjson
+from pykit import utfjson
 
 
 class TestUTFJson(unittest.TestCase):

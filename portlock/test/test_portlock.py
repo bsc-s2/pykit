@@ -2,7 +2,7 @@ import threading
 import time
 import unittest
 
-import portlock
+from pykit import portlock
 
 
 def dd(*msg):

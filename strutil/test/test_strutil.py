@@ -5,7 +5,7 @@ import inspect
 import logging
 import unittest
 
-import strutil
+from pykit import strutil
 
 
 class TestStrutil(unittest.TestCase):

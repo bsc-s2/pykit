@@ -1,9 +1,6 @@
-#!/usr/bin/env python2
-# coding: utf-8
-
 import unittest
 
-import humannum
+from pykit import humannum
 
 
 class TestHumannum(unittest.TestCase):
