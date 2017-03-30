@@ -90,7 +90,8 @@ jobq.run(range(10), [drop_even_number, printarg])
 
 #   Description
 
-Process series of input elements with several functions concurrently.
+Process series of input elements with several functions concurrently and
+return once all threads are done.
 
 #   Methods
 
@@ -104,8 +105,8 @@ Process element from input one by one with functions in workers.
 **arguments**:
 
 -   `input`:
-    could be an `list`, `tuple`, `dict`, `iterator` or any data type that can
-    be used in a for-loop.
+    could be an `list`, `tuple`, `dict`, `iterator` or any iterable type that
+    can be used in a for-loop.
 
 -   `workers`:
     list of functions, or `tuple` of `(function, nr_of_thread)`.
@@ -133,7 +134,11 @@ Process element from input one by one with functions in workers.
     Keeping them in order affects performance.
 
 -   `timeout`:
-    specifies the max time to run. `None` means wait jobq for ever to finish.
+    specifies the max time to run. `None` means to wait until all jobs are
+    done.
+
+    If jobq exceeds `timeout` before finishing, it returns and a worker
+    quits after it finishs its current job.
 
 -   `probe`:
     a dictionary for stats collecting.
