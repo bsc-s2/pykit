@@ -30,22 +30,18 @@ library of our devops platform.
 
 #   Description
 
-There are several native modules like `utfjson`,
-along with several external modules like `jobq`, which are imported with
-`script/git-subrepo`(`git-subrepo` is also maintained by itself).
-
 ##  Module List
 
 There is a `README.md` for each module.
 
 | name                           | description                                                                           |
 | :--                            | :--                                                                                   |
-| script/git-subrepo             | A shell script maintaining sub module                                                 |
 | [cachepool](cachepool)         | Reusable object cache in process                                                      |
 | [daemonize](daemonize)         | Start, stop or restart a daemon process                                               |
 | [dictutil](dictutil)           | Dictionary helper utility                                                             |
 | [humannum](humannum)           | Convert number to human readable number string                                        |
 | [jobq](jobq)                   | Process serial of input elements with several functions concurrently and sequentially |
+| [logutil](logutil)             | Unitility functions to create logger or make log message                              |
 | [mysqlconnpool](mysqlconnpool) | Mysql connection pool with MySQLdb in python                                          |
 | [net](net)                     | Network utility                                                                       |
 | [portlock](portlock)           | cross process lock                                                                    |
@@ -94,23 +90,6 @@ Run one of following to test a all, a module, a TestCase or a function.
 ./script/t.sh zkutil.test_zkutil.TestZKUtil
 ./script/t.sh zkutil.test_zkutil.TestZKUtil.test_lock_data
 ```
-
-##  Update sub repo
-
->   You do not need to read this chapter if you are not a maintainer.
-
-First update sub repo config file `.gitsubrepo`
-and run `git-subrepo`.
-
-`git-subrepo` will fetch new changes from all sub repos and merge them into
-current branch `mater`:
-
-```
-./script/git-subrepo/git-subrepo
-```
-
-`git-subrepo` is a tool in shell script.
-It merges sub git repo into the parent git working dir with `git-submerge`.
 
 #   Author
 
