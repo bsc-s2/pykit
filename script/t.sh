@@ -18,7 +18,7 @@ done
 pkg="${pkg%.}"
 
 # Find test from a subdir or a module.
-# Add evn variable PYTHONPATH to let all modules in sub folder can find the
+# Add env variable PYTHONPATH to let all modules in sub folder can find the
 # root package.
 
 PYTHONPATH="$(pwd)" python2 -m unittest discover -c -v --failfast -s "$pkg"
