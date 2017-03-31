@@ -10,6 +10,9 @@ import MySQLdb
 logger = logging.getLogger(__name__)
 
 
+retriable_err = (2006, 2013)
+
+
 class MysqlConnectionPool(object):
 
     def __init__(self, conn_argkw, options=None):
@@ -110,10 +113,29 @@ def conn_query(conn, sql, use_dict=True):
     return rst
 
 
-def query(pool, sql, use_dict=True):
+def query(pool, sql, use_dict=True, retry=0):
 
-    with pool() as conn:
-        return conn_query(conn, sql, use_dict=use_dict)
+    if retry < 0:
+        retry = 0
+
+    retry = int(retry)
+
+    # the first attempt does not count as 'retry'
+    for i in range(retry + 1):
+
+        try:
+            with pool() as conn:
+                return conn_query(conn, sql, use_dict=use_dict)
+
+        except MySQLdb.OperationalError as e:
+            if len(e.args) > 0 and e[0] in retriable_err:
+                logger.info(
+                    repr(e) + " conn_query error {sql}".format(sql=sql))
+                continue
+            else:
+                raise
+    else:
+        raise
 
 
 def new_connection(conn_argkw, conv=None, options=None):

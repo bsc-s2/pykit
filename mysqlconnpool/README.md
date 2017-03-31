@@ -79,6 +79,7 @@ Create a connection pool: `pool`.
 Reusable connections are maintained in pool.
 
 **arguments**:
+
 -   `addr`:
 
     -   To connect with ip and port, `addr` is dictionary that contains:
@@ -110,9 +111,10 @@ instance: `ConnectionWrapper`, which support access with `with`
 ### pool
 
 **syntax**:
-`pool([action])`
+`pool(action=None)`
 
 **arguments**:
+
 -   `action` = `"get_conn"` or no action is provided:
 
     get a `ConnectionWrapper` instance or create a new one if pool is empty.
@@ -148,12 +150,13 @@ instance: `ConnectionWrapper`, which support access with `with`
 ### pool.query
 
 **syntax**:
-`rst = pool.query(sql, [use_dict=True])`
+`rst = pool.query(sql, use_dict=True, retry=0)`
 
 Get a connection from pool and send `sql` on this connection.
 By default it returns query result in dictionary form.
 
 **arguments**:
+
 -   `sql`:
     string sql to query.
 
@@ -161,8 +164,13 @@ By default it returns query result in dictionary form.
     if specified and is False, `pool.query()` return query result in list
     form.
 
+-   `retry`:
+    try to send query for another N times if connection lost:
+    when `MySQLdb.OperationalError` is raised and error code is (2006 or 2013).
+    default: 0
+
 **return**:
-query result in form of list of dictionary,  or list of list(`use_dict`=False).
+query result in a list of dictionary,  or list of list(if `use_dict`=False).
 
 
 #   Author
