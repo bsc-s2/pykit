@@ -1,12 +1,22 @@
 #!/bin/sh
 
 # usage:
-#     script/t.sh
-#     script/t.sh zkutil
-#     script/t.sh zkutil.test
-#     script/t.sh zkutil.test_zkutil
-#     script/t.sh zkutil.test_zkutil.TestZKUtil
-#     script/t.sh zkutil.test_zkutil.TestZKUtil.test_lock_data
+#     script/t.sh [-v]
+#     script/t.sh [-v] zkutil
+#     script/t.sh [-v] zkutil.test
+#     script/t.sh [-v] zkutil.test_zkutil
+#     script/t.sh [-v] zkutil.test_zkutil.TestZKUtil
+#     script/t.sh [-v] zkutil.test_zkutil.TestZKUtil.test_lock_data
+
+flag=
+while getopts v opname; do
+    case $opname in
+        v)
+            flag="-v"
+            shift
+            ;;
+    esac
+done
 
 pkg="${1%/}"
 
@@ -23,8 +33,8 @@ pkg="${pkg%.}"
 
 if python -c 'import '$pkg 2>/dev/null; then
     # it is a module
-    PYTHONPATH="$(pwd)" python2 -m unittest discover -c -v --failfast -s "$pkg"
+    PYTHONPATH="$(pwd)" python2 -m unittest discover -c $flag --failfast -s "$pkg"
 else
     # it is a class or function: pykit.zkutil.test.test_zkutil.TestXXX
-    PYTHONPATH="$(pwd)" python2 -m unittest -c -v --failfast "$pkg"
+    PYTHONPATH="$(pwd)" python2 -m unittest -c $flag --failfast "$pkg"
 fi
