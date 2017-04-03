@@ -6,12 +6,11 @@ import subprocess
 import time
 import unittest
 
-import docker
 import MySQLdb
 
+import docker
 from pykit import mysqlconnpool
-
-_DEBUG_ = True
+from pykit.ututil import dd
 
 mysql_test_password = '123qwe'
 mysql_test_port = 3306
@@ -176,8 +175,8 @@ class Testmysqlconnpool(unittest.TestCase):
         pool = self.pool
 
         sql = (
-               'set session wait_timeout=1;'
-               )
+            'set session wait_timeout=1;'
+        )
         pool.query(sql)
         pool.query('show variables like "%timeout%";')
 
@@ -186,7 +185,8 @@ class Testmysqlconnpool(unittest.TestCase):
             with self.assertRaises(MySQLdb.OperationalError):
                 print conn.query('show databases')
 
-        # no error raise from above, thus a timed out conn has been left in pool
+        # no error raise from above, thus a timed out conn has been left in
+        # pool
         stat = pool('stat')
         dd('stat after timeout', stat)
         self.assertEqual(1, stat['create'], 'created 1 conn')
@@ -289,12 +289,3 @@ def run_shell(*args, **argkv):
     rst = [subproc.returncode, out, err]
 
     return rst
-
-
-def dd(*msg):
-    if not _DEBUG_:
-        return
-
-    for m in msg:
-        print str(m),
-    print
