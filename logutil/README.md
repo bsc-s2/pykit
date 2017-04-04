@@ -109,17 +109,17 @@ the `logger` argument.
 ##  logutil.deprecate
 
 **syntax**:
-`logutil.deprecate(mes=None, fmt=None, sep=None)`
+`logutil.deprecate(msg=None, fmt=None, sep=None)`
 
 Print a `deprecate` message with root logger, at warning level.
 The printed message includes:
 
--   User defined message `mes`,
+-   User defined message `msg`,
 -   And calling stack of where this warning occurs.
     `<frame-n>` is where `logutil.deprecate` is called.
 
 ```
-<mes> Deprecated: <frame-1> --- <frame-2> --- ... --- <frame-n>
+<msg> Deprecated: <frame-1> --- <frame-2> --- ... --- <frame-n>
 ```
 
 The default frame format is `{fn}:{ln} in {func} {statement}`.
@@ -152,7 +152,7 @@ test_logutil.py:82 in test_deprecate
 
 **arguments**:
 
--   `mes`:
+-   `msg`:
     is description of the `deprecated` statement.
     It could be `None`.
 

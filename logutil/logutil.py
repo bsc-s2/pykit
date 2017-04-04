@@ -1,5 +1,4 @@
 import errno
-import fcntl
 import logging
 import logging.handlers
 import os
@@ -75,8 +74,8 @@ class FixedWatchedFileHandler(logging.FileHandler):
         try:
             # stat the file by path, checking for existence
             sres = os.stat(self.baseFilename)
-        except OSError as err:
-            if err.errno == errno.ENOENT:
+        except OSError as e:
+            if e.errno == errno.ENOENT:
                 sres = None
             else:
                 raise
@@ -89,7 +88,7 @@ class FixedWatchedFileHandler(logging.FileHandler):
             #     Thus we keep on trying this close/open/stat loop until no OSError
             #     raises.
 
-            for ii in range(1024):
+            for ii in range(16):
                 try:
                     if self.stream is not None:
                         # we have an open file handle, clean it up
@@ -103,7 +102,7 @@ class FixedWatchedFileHandler(logging.FileHandler):
                         self._statstream()
                         break
                 except OSError as e:
-                    if err.errno == errno.ENOENT:
+                    if e.errno == errno.ENOENT:
                         continue
                     else:
                         raise
@@ -233,12 +232,12 @@ def stack_str(offset=0, fmt=None, sep=None):
     return stack_format(stack_list(offset), fmt=fmt, sep=sep)
 
 
-def deprecate(mes=None, fmt=None, sep=None):
+def deprecate(msg=None, fmt=None, sep=None):
 
     d = 'Deprecated:'
 
-    if mes is not None:
-        d += ' ' + str(mes)
+    if msg is not None:
+        d += ' ' + str(msg)
 
     logger.warn(d + (sep or default_stack_sep)
                 + stack_str(offset=1, fmt=fmt, sep=sep))

@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 import subprocess
 import threading
 import unittest
@@ -109,12 +108,12 @@ class TestLogutil(unittest.TestCase):
 
         cont = read_file('/tmp/t.out')
 
-        t = re.findall('^Deprecated: foo', cont)
-        self.assertTrue(len(t) == 1)
-
-        t = re.findall(
-            'test_logutil.py::\d+ in test_deprecate\n  logutil.deprecate', cont)
-        self.assertEqual(1, len(t))
+        self.assertRegexpMatches(
+            cont,
+            '^Deprecated: foo')
+        self.assertRegexpMatches(
+            cont,
+            'test_logutil.py::\d+ in test_deprecate\n  logutil.deprecate')
 
     def test_stack_list(self):
 
@@ -124,7 +123,7 @@ class TestLogutil(unittest.TestCase):
         self.assertEqual('test_logutil.py', os.path.basename(last[0]))
         self.assertTrue(isinstance(last[1], int))
         self.assertEqual('test_stack_list', last[2])
-        self.assertTrue(re.match('^ *stack = ', last[3]))
+        self.assertRegexpMatches(last[3], '^ *stack = ')
 
     def test_format_stack(self):
 
@@ -143,8 +142,9 @@ class TestLogutil(unittest.TestCase):
     def test_stack_str(self):
 
         rst = logutil.stack_str(fmt='{fn}-{ln}-{func}-{statement}', sep=' ')
-        self.assertEqual(
-            1, len(re.findall(' test_logutil.py-\d+-test_stack_str- *rst = ', rst)))
+        self.assertRegexpMatches(
+            rst,
+            ' test_logutil.py-\d+-test_stack_str- *rst = ')
 
     def test_get_datefmt(self):
 
@@ -190,7 +190,7 @@ class TestLogutil(unittest.TestCase):
 
         cont = read_file('/tmp/tt').strip()
 
-        self.assertTrue(re.match('\d\d\d\d\d\d-info', cont))
+        self.assertRegexpMatches(cont, '\d\d\d\d\d\d-info')
 
     def test_make_formatter(self):
         # how to test logging.Formatter?
