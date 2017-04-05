@@ -53,6 +53,7 @@ There is a `README.md` for each module.
 | [timeutil](timeutil)           | Support specify time format output and get current ts, ms, us api etc                 |
 | [utfjson](utfjson)             | Force `json.dump` and `json.load` in `utf-8` encoding                                 |
 | [zkutil](zkutil)               | Unitility functions for zookeeper                                                     |
+| [cacheable](cacheable)         | Cache data which access frequently                                                    |
 
 #   Install
 
