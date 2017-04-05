@@ -6,11 +6,13 @@ import subprocess
 import time
 import unittest
 
+import docker
 import MySQLdb
 
-import docker
 from pykit import mysqlconnpool
-from pykit.ututil import dd
+from pykit import ututil
+
+dd = ututil.dd
 
 mysql_test_password = '123qwe'
 mysql_test_port = 3306
