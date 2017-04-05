@@ -83,10 +83,10 @@ class FixedWatchedFileHandler(logging.FileHandler):
         if not sres or sres[ST_DEV] != self.dev or sres[ST_INO] != self.ino:
 
             # Fixed by xp 2017 Apr 03:
-            #     os.fstat still gets OSError(errno=2), although it operates directly on fd instead of path.
-            #     The same for stream.flush().
-            #     Thus we keep on trying this close/open/stat loop until no OSError
-            #     raises.
+            #     os.fstat still gets OSError(errno=2), although it operates
+            #     directly on fd instead of path.  The same for stream.flush().
+            #     Thus we keep on trying this close/open/stat loop until no
+            #     OSError raises.
 
             for ii in range(16):
                 try:
@@ -149,7 +149,6 @@ def make_file_handler(base_dir, log_fn, fmt=None, datefmt=None):
     file_path = os.path.join(base_dir, log_fn)
 
     handler = FixedWatchedFileHandler(file_path)
-    # handler = logging.handlers.WatchedFileHandler(file_path)
     handler.setFormatter(make_formatter(fmt=fmt, datefmt=datefmt))
 
     return handler
