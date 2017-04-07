@@ -1,11 +1,13 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import inspect
 import logging
 import unittest
 
 from pykit import strutil
+from pykit import ututil
+
+dd = ututil.dd
 
 
 class TestStrutil(unittest.TestCase):
@@ -85,9 +87,6 @@ class TestStrutil(unittest.TestCase):
 
     def test_format_line(self):
 
-        logger = logging.getLogger(
-            __name__ + '.' + self.__class__.__name__ + '.' + inspect.stack()[0][3])
-
         cases = (
                 (([], '', ''),
                  '',
@@ -130,8 +129,8 @@ class TestStrutil(unittest.TestCase):
 
             rst = strutil.format_line(*_in)
 
-            logger.debug("in: " + str(_in))
-            logger.debug("rst:\n" + rst)
+            dd("_in: " + str(_in))
+            dd("rst:\n" + rst)
 
             self.assertEqual(_out, rst,
                              ('input: {_in}, output: {_out}, expected: {rst},'
@@ -224,7 +223,3 @@ class TestColoredString(unittest.TestCase):
         print strutil.normal('normal'),
         print strutil.optimal('optimal'),
         print
-
-
-# logging.basicConfig( stream=sys.stderr )
-# logging.getLogger( __name__ + '.TestStrutil.test_format_line' ).setLevel( logging.DEBUG )

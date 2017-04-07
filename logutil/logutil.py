@@ -15,6 +15,9 @@ log_formats = {
     'default': '[%(asctime)s,%(process)d-%(thread)d,%(filename)s,%(lineno)d,%(levelname)s] %(message)s',
     'time_level': "[%(asctime)s,%(levelname)s] %(message)s",
     'message': '%(message)s',
+
+    # more info: but it is too long.
+    # 'full': '[%(asctime)s,%(process)d-%(thread)d,%(name)s, %(filename)s,%(lineno)d,%(funcName)s %(levelname)s] %(message)s',
 }
 
 date_formats = {
