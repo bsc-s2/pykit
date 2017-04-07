@@ -11,6 +11,8 @@ _glb = {
     'unittest_logger': None,
 }
 
+debug_to_stdout = os.environ.get('UT_DEBUG') == '1'
+
 
 class ContextFilter(logging.Filter):
 
@@ -88,7 +90,7 @@ def dd(*msg):
     if l:
         l.debug(s)
 
-    if get_ut_verbosity() < 2:
+    if not debug_to_stdout:
         return
 
     print s
