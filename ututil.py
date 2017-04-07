@@ -8,7 +8,7 @@ import os
 import unittest
 
 _glb = {
-    'inited': False,
+    'unittest_logger': None,
 }
 
 
@@ -48,14 +48,15 @@ class ContextFilter(logging.Filter):
 
 def _init():
 
-    if _glb['inited']:
+    if _glb['unittest_logger'] is not None:
         return
 
     # test_logutil might require this module and logutil is still under test!
     try:
         from pykit import logutil
-        logutil.make_logger(
+        logger = logutil.make_logger(
             '/tmp',
+            log_name='unittest',
             level='DEBUG',
             fmt=('[%(asctime)s'
                  ' %(_fn)s:%(_ln)d'
@@ -63,11 +64,12 @@ def _init():
                  ' %(message)s'
                  )
         )
+        logger.addFilter(ContextFilter())
+
+        _glb['unittest_logger'] = logger
 
     except Exception as e:
         print repr(e) + ' while init root logger'
-
-    _glb['inited'] = True
 
 
 def dd(*msg):
@@ -82,8 +84,9 @@ def dd(*msg):
 
     _init()
 
-    l = get_case_logger()
-    l.debug(s)
+    l = _glb['unittest_logger']
+    if l:
+        l.debug(s)
 
     if get_ut_verbosity() < 2:
         return
