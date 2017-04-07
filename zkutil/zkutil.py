@@ -2,7 +2,7 @@
 import os
 import types
 
-from .. import net
+from pykit import net
 
 # We assumes that ip does not change during process running.
 # Display intra ip if presents, or display pub ip.
