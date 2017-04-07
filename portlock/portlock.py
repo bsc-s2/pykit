@@ -33,13 +33,21 @@ class Portlock(object):
 
     def try_lock(self):
 
-        self._lock()
+        self.thread_lock.acquire()
 
-        if self.has_locked():
-            return True
-        else:
-            self.socks = [None] * PORT_N
-            return False
+        try:
+            self._lock()
+
+            if self.has_locked():
+                return True
+            else:
+                self.socks = [None] * PORT_N
+                self.thread_lock.release()
+                return False
+
+        except Exception:
+            self.thread_lock.release()
+            raise
 
     def has_locked(self):
 
@@ -48,33 +56,37 @@ class Portlock(object):
 
     def acquire(self):
 
-        with self.thread_lock:
+        t0 = time.time()
 
-            t0 = time.time()
+        while True:
 
-            while True:
+            if self.try_lock():
+                return
 
-                if self.try_lock():
-                    return
-
-                now = time.time()
-                left = t0 + self.timeout - now
-                if left > 0:
-                    slp = min([self.sleep_time, left + 0.001])
-                    time.sleep(slp)
-                else:
-                    raise PortlockTimeout(
-                        'portlock timeout: ' + repr(self.key), self.key)
+            now = time.time()
+            left = t0 + self.timeout - now
+            if left > 0:
+                slp = min([self.sleep_time, left + 0.001])
+                time.sleep(slp)
+            else:
+                raise PortlockTimeout(
+                    'portlock timeout: ' + repr(self.key), self.key)
 
     def release(self):
 
-        with self.thread_lock:
+        if not self.has_locked():
+            return
 
-            for sock in self.socks:
-                if sock is not None:
+        for sock in self.socks:
+            if sock is not None:
+                try:
                     sock.close()
+                except Exception:
+                    pass
 
-            self.socks = [None] * PORT_N
+        self.socks = [None] * PORT_N
+
+        self.thread_lock.release()
 
     def _lock(self):
 
