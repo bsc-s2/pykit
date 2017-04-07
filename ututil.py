@@ -19,7 +19,7 @@ class ContextFilter(logging.Filter):
 
     To fix the issue that when test case function use dd() instead of
     logger.debug(), logging alwasy print context info of dd(), but not the
-    calling function test_xxx.
+    caller test_xxx.
     """
 
     def filter(self, record):
@@ -82,7 +82,7 @@ def dd(*msg):
 
     _init()
 
-    l = case_logger()
+    l = get_case_logger()
     l.debug(s)
 
     if get_ut_verbosity() < 2:
@@ -106,7 +106,7 @@ def get_ut_verbosity():
     return self.verbosity
 
 
-def case_logger():
+def get_case_logger():
     """
     Get a case specific logger.
     The logger name is: `<module>.<class>.<function>`,
