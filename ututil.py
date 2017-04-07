@@ -3,19 +3,92 @@ unittest utility
 """
 
 import inspect
+import logging
+import os
 import unittest
+
+_glb = {
+    'inited': False,
+}
+
+
+class ContextFilter(logging.Filter):
+
+    """
+    Add correct func, line number, line info to log record.
+
+    To fix the issue that when test case function use dd() instead of
+    logger.debug(), logging alwasy print context info of dd(), but not the
+    calling function test_xxx.
+    """
+
+    def filter(self, record):
+
+        # skip this function
+        stack = inspect.stack()[1:]
+
+        for i, (frame, path, ln, func, line, xx) in enumerate(stack):
+
+            if (frame.f_globals.get('__name__') == 'pykit.ututil'
+                    and func == 'dd'):
+
+                # this frame is dd(), find the caller
+                _, path, ln, func, line, xx = stack[i + 1]
+
+                record._fn = os.path.basename(path)
+                record._ln = ln
+                record._func = func
+                return True
+
+        record._fn = record.filename
+        record._ln = record.lineno
+        record._func = record.funcName
+        return True
+
+
+def _init():
+
+    if _glb['inited']:
+        return
+
+    # test_logutil might require this module and logutil is still under test!
+    try:
+        from pykit import logutil
+        logutil.make_logger(
+            '/tmp',
+            level='DEBUG',
+            fmt=('[%(asctime)s'
+                 ' %(_fn)s:%(_ln)d'
+                 ' %(levelname)s]'
+                 ' %(message)s'
+                 )
+        )
+
+    except Exception as e:
+        print repr(e) + ' while init root logger'
+
+    _glb['inited'] = True
 
 
 def dd(*msg):
+    """
+    debug level logging in a test case function test_xx.
 
-    verbosity = get_ut_verbosity()
+    dd() write log to stdout if unittest verbosity is 2.
+    And dd always write log to log file in /tmp dir.
+    """
 
-    if verbosity < 2:
+    s = ' '.join([str(x) for x in msg])
+
+    _init()
+
+    l = case_logger()
+    l.debug(s)
+
+    if get_ut_verbosity() < 2:
         return
 
-    for m in msg:
-        print str(m),
-    print
+    print s
 
 
 def get_ut_verbosity():
@@ -24,13 +97,58 @@ def get_ut_verbosity():
     program, or 0 if none is running.
     """
 
+    frame = _find_frame_by_self(unittest.TestProgram)
+    if frame is None:
+        return 0
+
+    self = frame.f_locals.get('self')
+
+    return self.verbosity
+
+
+def case_logger():
+    """
+    Get a case specific logger.
+    The logger name is: `<module>.<class>.<function>`,
+    such as: `pykit.strutil.test.test_strutil.TestStrutil.test_format_line`
+
+    It must be called inside a test_* function of unittest.TestCase, or no
+    correct module/class/function name can be found.
+    """
+
+    frame = _find_frame_by_self(unittest.TestCase)
+
+    self = frame.f_locals.get('self')
+
+    module_name = frame.f_globals.get('__name__')
+    class_name = self.__class__.__name__
+    func_name = frame.f_code.co_name
+
+    nm = module_name + '.' + class_name + '.' + func_name
+
+    logger = logging.getLogger(nm)
+    for f in logger.filters:
+        if isinstance(f, ContextFilter):
+            break
+    else:
+        logger.addFilter(ContextFilter())
+
+    return logger
+
+
+def _find_frame_by_self(clz):
+    """
+    Find the first frame on stack in which there is local variable 'self' of
+    type clz.
+    """
+
     frame = inspect.currentframe()
 
     while frame:
         self = frame.f_locals.get('self')
-        if isinstance(self, unittest.TestProgram):
-            return self.verbosity
+        if isinstance(self, clz):
+            return frame
 
         frame = frame.f_back
 
-    return 0
+    return None
