@@ -1,8 +1,9 @@
+import logging
 import threading
 import time
 import unittest
 
-import jobq
+from pykit import jobq
 
 
 def add1(args):
@@ -233,6 +234,11 @@ class TestJobQ(unittest.TestCase):
 
     def test_exception(self):
 
+        # Add a handler, or python complains "no handler assigned
+        # to...."
+        jl = logging.getLogger('pykit.jobq')
+        jl.addHandler(logging.NullHandler())
+
         def err_on_even(args):
             if args % 2 == 0:
                 raise Exception('even number')
@@ -245,6 +251,9 @@ class TestJobQ(unittest.TestCase):
         rst = []
         jobq.run(range(10), [err_on_even, collect])
         self.assertEqual(list(range(1, 10, 2)), rst)
+
+        # remove NullHandler
+        jl.handlers = []
 
     def test_sequential(self):
 
@@ -323,10 +332,6 @@ class TestDefaultTimeout(unittest.TestCase):
         # value
 
         def _sleep_1(args):
-            time.sleep(1)
+            time.sleep(0.02)
 
         jobq.run(range(1), [_sleep_1])
-
-
-if __name__ == "__main__":
-    unittest.main()
