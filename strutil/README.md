@@ -6,6 +6,7 @@
 - [Status](#status)
 - [Synopsis](#synopsis)
   - [colored string:](#colored-string)
+  - [colored command prompt:](#colored-command-prompt)
 - [Description](#description)
 - [Methods](#methods)
   - [strutil.line_pad](#strutilline_pad)
@@ -75,6 +76,43 @@ blue("blue") + " and " + green("green")
 The above snippet will output colored text on a terminal:
 
 ![](res/colored-string.png)
+
+## colored command prompt:
+
+If you are going to use colored string as terminal prompt,
+the terminal prompt is not wrapping correctly with very long commands.
+You'd better tell **ColoredString** that is a prompt color string.
+
+```python
+from pykit.strutil import ColoredString
+prompt = ColoredString('colored prompt# ', color='red', prompt=True)
+```
+
+Those screenshots show this issue, the cursor is box.
+
+`prompt=False` long command:
+
+![](res/colored-false-prompt.png)
+
+`prompt=False` long command after **Home Key**:
+
+![](res/colored-false-prompt-home-key.png)
+
+`prompt=False` long command after **End Key**:
+
+![](res/colored-false-prompt-end-key.png)
+
+`prompt=True` long command:
+
+![](res/colored-true-prompt.png)
+
+`prompt=True` long command after **Home Key**:
+
+![](res/colored-true-prompt-home-key.png)
+
+`prompt=True` long command after **End Key**:
+
+![](res/colored-true-prompt-end-key.png)
 
 #   Description
 
