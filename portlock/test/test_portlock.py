@@ -3,11 +3,9 @@ import time
 import unittest
 
 from pykit import portlock
+from pykit import ututil
 
-
-def dd(*msg):
-    pass
-    # print msg
+dd = ututil.dd
 
 
 class TestPortlock(unittest.TestCase):
