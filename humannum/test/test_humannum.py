@@ -35,15 +35,15 @@ class TestHumannum(unittest.TestCase):
                 (True,                    True,    ''),
         )
 
-        for _in, _out, _mes in cases:
+        for _in, _out, _msg in cases:
 
             rst = humannum.humannum(_in)
 
-            msg = 'humanize: in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
+            msg = 'humanize: in: {_in} expect: {_out}, rst: {rst}; {_msg}'.format(
                 _in=repr(_in),
                 _out=repr(_out),
                 rst=rst,
-                _mes=_mes
+                _msg=_msg
             )
 
             self.assertEqual(_out, rst, msg)
@@ -74,15 +74,15 @@ class TestHumannum(unittest.TestCase):
                 ('1.00M',     1048576,       ''),
         )
 
-        for _in, _out, _mes in cases:
+        for _in, _out, _msg in cases:
 
             rst = humannum.parsenum(_in)
 
-            msg = 'parse: in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
+            msg = 'parse: in: {_in} expect: {_out}, rst: {rst}; {_msg}'.format(
                 _in=repr(_in),
                 _out=repr(_out),
                 rst=rst,
-                _mes=_mes
+                _msg=_msg
             )
 
             self.assertEqual(_out, rst, msg)
@@ -103,15 +103,15 @@ class TestHumannum(unittest.TestCase):
                 ((1024 ** 2, {'unit': 1024**3}),   '0.001G',  ''),
         )
 
-        for _in, _out, _mes in cases:
+        for _in, _out, _msg in cases:
 
             rst = humannum.humannum(_in[0], **_in[1])
 
-            msg = 'in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
+            msg = 'in: {_in} expect: {_out}, rst: {rst}; {_msg}'.format(
                 _in=repr(_in),
                 _out=repr(_out),
                 rst=rst,
-                _mes=_mes
+                _msg=_msg
             )
 
             self.assertEqual(_out, rst, msg)
@@ -124,15 +124,15 @@ class TestHumannum(unittest.TestCase):
                 ([{'a': 'xp'},  1024432],   [{'a': 'xp'}, '1000.4K'], ''),
         )
 
-        for _in, _out, _mes in cases:
+        for _in, _out, _msg in cases:
 
             rst = humannum.humannum(_in)
 
-            msg = 'in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
+            msg = 'in: {_in} expect: {_out}, rst: {rst}; {_msg}'.format(
                 _in=repr(_in),
                 _out=repr(_out),
                 rst=rst,
-                _mes=_mes
+                _msg=_msg
             )
 
             self.assertEqual(_out, rst, msg)
@@ -151,15 +151,15 @@ class TestHumannum(unittest.TestCase):
                  ),
         )
 
-        for _in, _out, _mes in cases:
+        for _in, _out, _msg in cases:
 
             rst = humannum.humannum(_in[0], **_in[1])
 
-            msg = 'in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
+            msg = 'in: {_in} expect: {_out}, rst: {rst}; {_msg}'.format(
                 _in=repr(_in),
                 _out=repr(_out),
                 rst=rst,
-                _mes=_mes
+                _msg=_msg
             )
 
             self.assertEqual(_out, rst, msg)
