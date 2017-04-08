@@ -142,7 +142,7 @@ def colorize(v, total, ptn='{0}'):
 
 class ColoredString(object):
 
-    def __init__(self, v, color=None):
+    def __init__(self, v, color=None, prompt=False):
         if type(color) == type(''):
             color = _named_colors[color]
 
@@ -152,13 +152,19 @@ class ColoredString(object):
         else:
             self.elts = [(str(v), color)]
 
+        self._prompt = prompt
+
     def __str__(self):
         rst = []
         for e in self.elts:
             if e[1] is None:
                 val = e[0]
             else:
-                val = '\033[38;5;' + str(e[1]) + 'm' + str(e[0]) + '\033[0m'
+                if self._prompt:
+                    val = ('\001\033[38;5;' + str(e[1]) + 'm\002'
+                            + str(e[0]) + '\001\033[0m\002')
+                else:
+                    val = '\033[38;5;' + str(e[1]) + 'm' + str(e[0]) + '\033[0m'
             rst.append(val)
         return ''.join(rst)
 
