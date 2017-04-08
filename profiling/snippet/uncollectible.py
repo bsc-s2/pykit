@@ -35,8 +35,8 @@ The simpliest is an object that refers to itself and with a __del__ defined.
 '''
 
 
-def dd(*mes):
-    for m in mes:
+def dd(*msg):
+    for m in msg:
         print(m, end='')
     print()
 

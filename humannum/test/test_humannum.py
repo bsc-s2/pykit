@@ -39,14 +39,14 @@ class TestHumannum(unittest.TestCase):
 
             rst = humannum.humannum(_in)
 
-            mes = 'humanize: in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
+            msg = 'humanize: in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
                 _in=repr(_in),
                 _out=repr(_out),
                 rst=rst,
                 _mes=_mes
             )
 
-            self.assertEqual(_out, rst, mes)
+            self.assertEqual(_out, rst, msg)
 
     def test_parse_number(self):
 
@@ -78,23 +78,23 @@ class TestHumannum(unittest.TestCase):
 
             rst = humannum.parsenum(_in)
 
-            mes = 'parse: in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
+            msg = 'parse: in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
                 _in=repr(_in),
                 _out=repr(_out),
                 rst=rst,
                 _mes=_mes
             )
 
-            self.assertEqual(_out, rst, mes)
+            self.assertEqual(_out, rst, msg)
 
             self.assertEqual(int(_out), humannum.parseint(_in),
-                             mes + '; parseint')
+                             msg + '; parseint')
 
             self.assertEqual(int(_out), humannum.parseint(_in + 'B'),
-                             mes + '; parseint and suffix "B"')
+                             msg + '; parseint and suffix "B"')
 
             self.assertEqual(int(_out), humannum.parseint(_in + 'i'),
-                             mes + '; parseint and suffix "i"')
+                             msg + '; parseint and suffix "i"')
 
     def test_specified_unit(self):
 
@@ -107,14 +107,14 @@ class TestHumannum(unittest.TestCase):
 
             rst = humannum.humannum(_in[0], **_in[1])
 
-            mes = 'in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
+            msg = 'in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
                 _in=repr(_in),
                 _out=repr(_out),
                 rst=rst,
                 _mes=_mes
             )
 
-            self.assertEqual(_out, rst, mes)
+            self.assertEqual(_out, rst, msg)
 
     def test_non_primitive(self):
 
@@ -128,14 +128,14 @@ class TestHumannum(unittest.TestCase):
 
             rst = humannum.humannum(_in)
 
-            mes = 'in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
+            msg = 'in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
                 _in=repr(_in),
                 _out=repr(_out),
                 rst=rst,
                 _mes=_mes
             )
 
-            self.assertEqual(_out, rst, mes)
+            self.assertEqual(_out, rst, msg)
             self.assertTrue(_in is not rst, 'result must not be input')
 
     def test_limit_keys(self):
@@ -155,12 +155,12 @@ class TestHumannum(unittest.TestCase):
 
             rst = humannum.humannum(_in[0], **_in[1])
 
-            mes = 'in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
+            msg = 'in: {_in} expect: {_out}, rst: {rst}; {_mes}'.format(
                 _in=repr(_in),
                 _out=repr(_out),
                 rst=rst,
                 _mes=_mes
             )
 
-            self.assertEqual(_out, rst, mes)
+            self.assertEqual(_out, rst, msg)
             self.assertTrue(_in is not rst, 'result must not be input')
