@@ -1,10 +1,11 @@
 import unittest
 
+from pykit import ututil
 from pykit.cachepool import CachePool
 from pykit.cachepool import CachePoolGeneratorError
 from pykit.cachepool import make_wrapper
 
-_DEBUG_ = True
+dd = ututil.dd
 
 
 # Exception that is used for test.
@@ -367,11 +368,3 @@ def reuse_for_acceptable_errors(errtype, errval, _traceback):
 
 def reuse_decider_error(errtype, errval, _traceback):
     raise ErrorInReuse()
-
-
-def dd(*msgs):
-    if not _DEBUG_:
-        return
-
-    for msg in msgs:
-        print str(msg)
