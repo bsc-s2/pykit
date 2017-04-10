@@ -12,6 +12,7 @@ from .timeutil import (
     ms_to_ts,
     us_to_ts,
     ns_to_ts,
+    to_ts,
 )
 
 __all__ = [
@@ -28,4 +29,5 @@ __all__ = [
     'ms_to_ts',
     'us_to_ts',
     'ns_to_ts',
+    'to_ts',
 ]

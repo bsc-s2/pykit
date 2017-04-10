@@ -9,8 +9,8 @@
 - [Methods](#methods)
   - [timeutil.parse](#timeutilparse)
   - [timeutil.format](#timeutilformat)
-  - [timeutil.format_ts](#timeutilformatts)
-  - [timeutil.utc_datetime_to_ts](#timeutilutcdatetime_to_ts)
+  - [timeutil.format_ts](#timeutilformat_ts)
+  - [timeutil.utc_datetime_to_ts](#timeutilutc_datetime_to_ts)
   - [timeutil.ts_to_datetime](#timeutilts_to_datetime)
   - [timeutil.ts](#timeutilts)
   - [timeutil.ms](#timeutilms)
@@ -19,7 +19,7 @@
   - [timeutil.ms_to_ts](#timeutilms_to_ts)
   - [timeutil.us_to_ts](#timeutilus_to_ts)
   - [timeutil.ns_to_ts](#timeutilns_to_ts)
-
+  - [timeutil.to_ts](#timeutilto_ts)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -243,6 +243,23 @@ convert timestamp from nanosecond to second
 
 **return**:
     timestamp in second
+
+##  timeutil.to_ts
+
+**syntax**:
+`timeutil.to_ts(val)`
+
+Convert timestamp in second, ms, us or ns to second.
+If `val` is not a valid timestamp, it raises `ValueError`.
+
+**arguments**:
+
+-   `val`: timestamp in int, long or float.
+    It can be a timestamp in second, millisecond(10e-3), microsecond(10e-6) or
+    nanosecond(10e-9).
+
+**return**:
+timestamp in second
 
 # Author
 

@@ -69,3 +69,27 @@ def us_to_ts(us):
 
 def ns_to_ts(ns):
     return ns / (1000 ** 3)
+
+
+def to_ts(v):
+    """
+    convert millisecond, microsecond or nanosecond to second
+    """
+
+    if (type(v) not in (type(1), type(1L), type(0.1))
+            or v < 0):
+        raise ValueError('invalid time to convert to second: {v}'.format(v=v))
+
+    l = len(str(int(v)))
+
+    if l == 10:
+        return int(v)
+    elif l == 13:
+        return int(v / 1000)
+    elif l == 16:
+        return int(v / (1000**2))
+    elif l == 19:
+        return int(v / (1000**3))
+    else:
+        raise ValueError(
+            'invalid time length, not 10, 13, 16 or 19: {v}'.format(v=v))

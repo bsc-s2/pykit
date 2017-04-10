@@ -1,10 +1,14 @@
 #!/usr/bin/env python2.6
 # coding: utf-8
 
+import datetime
 import time
 import unittest
 
 from pykit import timeutil
+from pykit import ututil
+
+dd = ututil.dd
 
 test_case = {
     'ts': {
@@ -104,3 +108,47 @@ class TestTimeutil(unittest.TestCase):
         self.assertEqual(ts, timeutil.ms_to_ts(ms))
         self.assertEqual(ts, timeutil.us_to_ts(us))
         self.assertEqual(ts, timeutil.ns_to_ts(ns))
+
+    def test_to_ts(self):
+
+        ts = timeutil.ts()
+
+        cases = (
+            ts,
+            ts + 0.1,
+            ts * 1000,
+            ts * 1000 + 1,
+            ts * 1000 + 0.1,
+
+            ts * 1000 * 1000,
+            ts * 1000 * 1000 + 1,
+            ts * 1000 * 1000 + 0.1,
+
+            ts * 1000 * 1000 * 1000,
+            ts * 1000 * 1000 * 1000 + 1,
+            ts * 1000 * 1000 * 1000 + 0.1,
+        )
+
+        for inp in cases:
+            dd(inp, ts)
+            self.assertEqual(ts, timeutil.to_ts(inp),
+                             'convert {inp} to second'.format(inp=repr(inp)))
+
+    def test_to_ts_invalid_input(self):
+
+        cases = (
+            'a',
+            '1',
+            '1.1',
+            -123456789,
+            {},
+            [],
+            (),
+            True,
+            datetime.datetime.now(),
+        )
+
+        for inp in cases:
+
+            with self.assertRaises(ValueError):
+                timeutil.to_ts(inp)
