@@ -4,6 +4,7 @@
 import calendar
 import datetime
 import time
+import types
 
 formats = {
     'default': '%a, %d %b %Y %H:%M:%S UTC',
@@ -71,12 +72,17 @@ def ns_to_ts(ns):
     return ns / (1000 ** 3)
 
 
-def to_ts(v):
+def to_sec(v):
+
     """
-    convert millisecond, microsecond or nanosecond to second
+    Convert millisecond, microsecond or nanosecond to second.
+
+    ms_to_ts, us_to_ts, ns_to_ts are then deprecated.
     """
 
-    if (type(v) not in (type(1), type(1L), type(0.1))
+    v = float(str(v))
+
+    if (type(v) != types.FloatType
             or v < 0):
         raise ValueError('invalid time to convert to second: {v}'.format(v=v))
 

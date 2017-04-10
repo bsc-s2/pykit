@@ -131,7 +131,11 @@ class TestTimeutil(unittest.TestCase):
 
         for inp in cases:
             dd(inp, ts)
-            self.assertEqual(ts, timeutil.to_ts(inp),
+
+            self.assertEqual(ts, timeutil.to_sec(inp),
+                             'convert {inp} to second'.format(inp=repr(inp)))
+
+            self.assertEqual(ts, timeutil.to_sec(str(inp)),
                              'convert {inp} to second'.format(inp=repr(inp)))
 
     def test_to_ts_invalid_input(self):
@@ -151,4 +155,4 @@ class TestTimeutil(unittest.TestCase):
         for inp in cases:
 
             with self.assertRaises(ValueError):
-                timeutil.to_ts(inp)
+                timeutil.to_sec(inp)

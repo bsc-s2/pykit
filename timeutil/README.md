@@ -19,7 +19,7 @@
   - [timeutil.ms_to_ts](#timeutilms_to_ts)
   - [timeutil.us_to_ts](#timeutilus_to_ts)
   - [timeutil.ns_to_ts](#timeutilns_to_ts)
-  - [timeutil.to_ts](#timeutilto_ts)
+  - [timeutil.to_sec](#timeutilto_sec)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -244,17 +244,17 @@ convert timestamp from nanosecond to second
 **return**:
     timestamp in second
 
-##  timeutil.to_ts
+##  timeutil.to_sec
 
 **syntax**:
-`timeutil.to_ts(val)`
+`timeutil.to_sec(val)`
 
 Convert timestamp in second, ms, us or ns to second.
 If `val` is not a valid timestamp, it raises `ValueError`.
 
 **arguments**:
 
--   `val`: timestamp in int, long or float.
+-   `val`: timestamp in int, long, float or string.
     It can be a timestamp in second, millisecond(10e-3), microsecond(10e-6) or
     nanosecond(10e-9).
 
