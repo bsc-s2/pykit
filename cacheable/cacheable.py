@@ -32,25 +32,25 @@ class LRU(object):
 
             if now > item['tm'] + self.timeout:
                 self._del_item(item)
-                raise KeyError
+                raise KeyError('{k} is timeout'.format(k=key))
 
             self._move_to_tail(item)
 
-            return (item['obj'], (now > item['tm'] + self.item_old_time))
+            return (item['val'], (now > item['tm'] + self.item_old_time))
 
     def __setitem__(self, key, val):
 
         with self.lock:
-            if self.items.has_key(key):
+            if key in self.items:
                 item = self.items[key]
-                item['obj'] = val
+                item['val'] = val
                 item['tm'] = int(time.time())
 
                 self._move_to_tail(item)
 
             else:
                 self.items[key] = {'key': key,
-                                   'obj': val,
+                                   'val': val,
                                    'pre': None,
                                    'next': None,
                                    'tm': int(time.time())}
@@ -102,7 +102,7 @@ class Cacheable(object):
 
     def __init__(self, capacity=1024 * 4, timeout=60, is_deepcopy=True, key_extractor=None):
 
-        self.lru_obj = LRU(capacity, timeout)
+        self.lru = LRU(capacity, timeout)
         self.is_deepcopy = is_deepcopy
         self.key_extractor = key_extractor or Cacheable.arg_str
         self.name = '-no-name-'
@@ -113,7 +113,7 @@ class Cacheable(object):
     def cache(clz, name, capacity=1024 * 4, timeout=60, is_deepcopy=True, key_extractor=None):
 
         cacher = clz.cachers.get(name, clz(capacity, timeout,
-                                      is_deepcopy, key_extractor))
+                                           is_deepcopy, key_extractor))
         clz.cachers[name] = cacher
         cacher.name = name
 
@@ -145,19 +145,15 @@ class ProcessWiseCache(Cacheable):
             val = None
 
             try:
-                (val, is_old) = cself.lru_obj[arg_str]
+                (val, is_old) = cself.lru[arg_str]
                 cself.cache_hit += 1
             except KeyError as e:
                 val = fun(*args, **argkv)
-                cself.lru_obj[arg_str] = val
+                cself.lru[arg_str] = val
                 cself.cache_missed += 1
 
                 logger.info(repr(e)
                             + ' while getitem from LRU, the  key: {s}'.format(s=arg_str))
-            except Exception as e:
-                logger.exception(repr(e)
-                                 + ' while getitem from LRU, the key: {s}'.format(s=arg_str))
-                raise
 
             if cself.is_deepcopy:
                 return copy.deepcopy(val)
