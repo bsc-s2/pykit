@@ -1,6 +1,9 @@
 import unittest
 
 from pykit import humannum
+from pykit import ututil
+
+dd = ututil.dd
 
 
 class TestHumannum(unittest.TestCase):
@@ -74,6 +77,12 @@ class TestHumannum(unittest.TestCase):
                 ('1.00M',     1048576,       ''),
         )
 
+        suffixes = (
+            '',
+            'b', 'i', 'ib',
+            'B', 'I', 'iB',
+        )
+
         for _in, _out, _msg in cases:
 
             rst = humannum.parsenum(_in)
@@ -87,14 +96,11 @@ class TestHumannum(unittest.TestCase):
 
             self.assertEqual(_out, rst, msg)
 
-            self.assertEqual(int(_out), humannum.parseint(_in),
-                             msg + '; parseint')
+            for suff in suffixes:
 
-            self.assertEqual(int(_out), humannum.parseint(_in + 'B'),
-                             msg + '; parseint and suffix "B"')
-
-            self.assertEqual(int(_out), humannum.parseint(_in + 'i'),
-                             msg + '; parseint and suffix "i"')
+                dd('parseint:', _in, ' suffix: ', suff)
+                self.assertEqual(int(_out), humannum.parseint(_in + suff),
+                                 msg + '; parseint with suffix: ' + repr(suff))
 
     def test_specified_unit(self):
 
