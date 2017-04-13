@@ -4,9 +4,7 @@
 import time
 import unittest
 
-from pykit.cacheable import LRU
-from pykit.cacheable import Cacheable
-from pykit.cacheable import make_wrapper
+from pykit import cacheable
 
 
 class TestLRU(unittest.TestCase):
@@ -40,7 +38,7 @@ class TestLRU(unittest.TestCase):
             ('k2', 'v2', 1, False),
         )
 
-        lru = LRU(10, 2)
+        lru = cacheable.LRU(10, 2)
         for key, val, sleep_time, is_timeout in cases:
             lru[key] = val
             time.sleep(sleep_time)
@@ -79,7 +77,7 @@ class TestLRU(unittest.TestCase):
         )
 
         for insert_count, exist_items, cleanup_items in cases:
-            lru = LRU(capacity, 10)
+            lru = cacheable.LRU(capacity, 10)
             for i in range(insert_count):
                 lru[i] = 'val%d' % (i)
 
@@ -116,7 +114,7 @@ class TestLRU(unittest.TestCase):
         )
 
         for insert_count, expect_order_keys in cases:
-            lru = LRU(capacity, 10)
+            lru = cacheable.LRU(capacity, 10)
             for i in range(insert_count):
                 lru[i] = 'val'
                 self._assert_lru_list(lru)
@@ -138,16 +136,16 @@ class TestLRU(unittest.TestCase):
 
         for capacity, case in cases:
             for insert_count, expect_size in case:
-                lru = LRU(capacity, 60)
+                lru = cacheable.LRU(capacity, 60)
                 for i in range(insert_count):
                     lru[i] = 'val'
 
                 self.assertEqual(lru.size, expect_size)
 
 
-class TestProcessWiseCache(unittest.TestCase):
+class TestCacheable(unittest.TestCase):
 
-    @make_wrapper('method_cache_data', capacity=10, timeout=4, is_deepcopy=False)
+    @cacheable.cache('method_cache_data', capacity=10, timeout=4, is_deepcopy=False)
     def _method_cache_data(self, key):
         data = need_cache_data.get(key, {})
         data['tm'] = time.time()
@@ -222,17 +220,17 @@ class TestProcessWiseCache(unittest.TestCase):
         )
 
         for args, argkv, expect_str in cases:
-            self.assertEqual(Cacheable()._arg_str(args, argkv),
+            self.assertEqual(cacheable.Cacheable()._arg_str(args, argkv),
                              expect_str)
 
 
-@make_wrapper('deepcopy_of_cache_data', capacity=100, timeout=60, is_deepcopy=True)
+@cacheable.cache('deepcopy_of_cache_data', capacity=100, timeout=60, is_deepcopy=True)
 def get_deepcopy_of_cache_data(key):
 
     return need_cache_data.get(key, {})
 
 
-@make_wrapper('cache_data', capacity=100, timeout=4, is_deepcopy=False)
+@cacheable.cache('cache_data', capacity=100, timeout=4, is_deepcopy=False)
 def get_cache_data(key):
 
     cache_data = need_cache_data.get(key, {})

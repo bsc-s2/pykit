@@ -24,9 +24,8 @@ class LRU(object):
 
     def __getitem__(self, key):
 
-        now = int(time.time())
-
         with self.lock:
+            now = int(time.time())
             item = self.items[key]
 
             if now > item['tm'] + self.timeout:
@@ -71,28 +70,25 @@ class LRU(object):
 
     def _move_to_tail(self, item):
 
-        with self.lock:
-            if item['pre'] is not None:
-                self._remove_item(item)
+        if item['pre'] is not None:
+            self._remove_item(item)
 
-            self.tail['next'] = item
-            item['pre'] = self.tail
-            item['next'] = None
-            self.tail = item
+        self.tail['next'] = item
+        item['pre'] = self.tail
+        item['next'] = None
+        self.tail = item
 
     def _del_item(self, item):
 
-        with self.lock:
-            del self.items[item['key']]
-            self._remove_item(item)
-            self.size -= 1
+        del self.items[item['key']]
+        self._remove_item(item)
+        self.size -= 1
 
     def _cleanup(self):
 
-        with self.lock:
-            while self.size > self.capacity:
-                item = self.head['next']
-                self._del_item(item)
+        while self.size > self.capacity:
+            item = self.head['next']
+            self._del_item(item)
 
 
 class Cacheable(object):
@@ -114,16 +110,16 @@ class Cacheable(object):
         def func_wrapper(*args, **argkv):
 
             val = None
-            generator_key = self._arg_str(args, argkv)
+            generate_key = self._arg_str(args, argkv)
 
             try:
-                val = self.lru[generator_key]
+                val = self.lru[generate_key]
             except KeyError as e:
                 val = fun(*args, **argkv)
-                self.lru[generator_key] = val
+                self.lru[generate_key] = val
 
                 logger.info(repr(e)
-                            + ' while getitem from LRU, key: {s}'.format(s=generator_key))
+                            + ' while getitem from LRU, key: {s}'.format(s=generate_key))
 
             if self.is_deepcopy:
                 return copy.deepcopy(val)
@@ -133,14 +129,15 @@ class Cacheable(object):
         return func_wrapper
 
 
-cachers = {}
+caches = {}
 
 
-def make_wrapper(name, capacity=1024 * 4, timeout=60, is_deepcopy=True):
+def cache(name, capacity=1024 * 4, timeout=60, is_deepcopy=True):
 
-    cacher = cachers.get(name, Cacheable(capacity=capacity, timeout=timeout,
-                                         is_deepcopy=is_deepcopy))
-    if name not in cachers:
-        cachers[name] = cacher
+    c = caches.get(name)
+    if c is None:
+        c = Cacheable(capacity=capacity, timeout=timeout,
+                      is_deepcopy=is_deepcopy)
+        caches[name] = c
 
-    return cacher._cache_wrapper
+    return c._cache_wrapper

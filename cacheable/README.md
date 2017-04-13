@@ -11,7 +11,7 @@
     - [cacheable.Cacheable](#cacheablecacheable)
 - [Methods](#methods)
     - [LRU[key]](#lrukey)
-    - [cacheable.make_wrapper](#cacheablemake_wrapper)
+    - [cacheable.cache](#cacheablecache)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -26,10 +26,10 @@ The library is considered production ready.
 #   Synopsis
 
 ```python
-from pykit.cacheable import LRU
+from pykit import cacheable
 
 # create a `LRU`, capacity:10 timeout:60
-c = LRU(10, 60)
+c = cacheable.LRU(10, 60)
 
 # set value like the `dict`
 c['key'] = 'val'
@@ -44,17 +44,17 @@ except KeyError:
 ```
 
 ```python
-from pykit.cacheable import make_wrapper
+from pykit import cacheable
 
 cache_data = {
-    'key1': [1],
-    'key2': [2],
+    'key1': 'val_1',
+    'key2': 'val_2',
 }
 
 # define the function with a decorator
-@make_wrapper('cache_name', capacity=100, timeout=60, is_deepcopy=False)
+@cacheable.cache('cache_name', capacity=100, timeout=60, is_deepcopy=False)
 def get_data(param):
-    return cache_data.get(param, [])
+    return cache_data.get(param, '')
 
 # call `get_data`, if item has not been cached, cache the return value
 data = get_data('key1')
@@ -70,10 +70,9 @@ data = get_data('key1')
 # define a method with a decorator
 class MethodCache(object):
 
-    @make_wrapper('method_cache_name', capacity=100, timeout=60,
-                  is_deepcopy=False)
+    @cacheable.cache('method_cache_name', capacity=100, timeout=60, is_deepcopy=False)
     def get_data(self, param):
-        return cache_data.get(param, [])
+        return cache_data.get(param, '')
 
 mm = MethodCache()
 data = mm.get_data('key2')
@@ -112,7 +111,7 @@ Create a `LRU` object, all items will be cached in it.
 
 -   `timeout`: for create `LRU` object, default is 60, unit is second
 
--   `is_deepcopy`: `make_wrapper` return a decorator that use `is_deepcopy`
+-   `is_deepcopy`: `cacheable.cache` return a decorator that use `is_deepcopy`
     to return deepcopy or reference of cached item.
 
     -   `True`: return deepcopy of cached item
@@ -133,8 +132,9 @@ so can get value and set value like `dict`
     Raise a `KeyError` if `key` is not in `LRU` or has been timeout.
 
     ```python
+    from pykit import cacheable
     # create `LRU`, capacity:10, timeout:60
-    lru = LRU(10, 60)
+    lru = cacheable.LRU(10, 60)
 
     # set `lru['a']` to 'val_a'
     lru['a'] = 'val_a'
@@ -162,6 +162,7 @@ so can get value and set value like `dict`
     clean items from head until size is equal to `capacity`.
 
     ```python
+    from pykit import cacheable
     # create a `LRU`, capacity:2 timeout:60
     c = cacheable.LRU(2, 60)
 
@@ -174,27 +175,27 @@ so can get value and set value like `dict`
     c['d'] = 'val_d'
     ```
 
-##  cacheable.make_wrapper
+##  cacheable.cache
 
 **syntax**:
-`cacheable.make_wrapper(name, capacity=1024 * 4, timeout=60, is_deepcopy=True)`
+`cacheable.cache(name, capacity=1024 * 4, timeout=60, is_deepcopy=True)`
 
 If not exist, create a `cacheable.Cacheable` and save it, else use exist one.
 
 ```python
-from pykit.cacheable import make_wrapper
+from pykit import cacheable
 
-need_cache_data_aa = {'key': [0]}
-need_cache_data_bb = {'key': [1]}
+need_cache_data_aa = {'key': 'val_aa'}
+need_cache_data_bb = {'key': 'val_bb'}
 
 #use different `name` create two objects, they don't have any relation.
-@make_wrapper('name_aa', capacity=100, timeout=60, is_deepcopy=False)
+@cacheable.cache('name_aa', capacity=100, timeout=60, is_deepcopy=False)
 def cache_aa(param):
-    return need_cache_data_aa.get(param, [])
+    return need_cache_data_aa.get(param, '')
 
-@make_wrapper('name_bb', capacity=100, timeout=60, is_deepcopy=False)
+@cacheable.cache('name_bb', capacity=100, timeout=60, is_deepcopy=False)
 def cache_bb(param):
-    return need_cache_data_bb.get(param, [])
+    return need_cache_data_bb.get(param, '')
 ```
 
 **arguments**:
@@ -212,16 +213,16 @@ A decorator function that it checks whether the data has been cached,
 if not or has been timeout, cache and return the data.
 
 ```python
-from pykit.cacheable import make_wrapper
+from pykit import cacheable
 
 need_cache_data = {
-    'key1': [1],
-    'key2': [2],
+    'key1': 'val_1',
+    'key2': 'val_2',
 }
 
-@make_wrapper('cache', capacity=100, timeout=60, is_deepcopy=False)
+@cacheable.cache('cache', capacity=100, timeout=60, is_deepcopy=False)
 def get_data(key):
-    return need_cache_data.get(key, [])
+    return need_cache_data.get(key, '')
 
 # params of `get_data` are used to generate key of LRU
 # if params are different, cache them as different items
