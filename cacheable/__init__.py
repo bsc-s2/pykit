@@ -1,11 +1,11 @@
 from .cacheable import (
     LRU,
     Cacheable,
-    make_wrapper,
+    get_cache_wrapper,
 )
 
 __all__ = [
     'LRU',
     'Cacheable',
-    'make_wrapper',
+    'get_cache_wrapper',
 ]
