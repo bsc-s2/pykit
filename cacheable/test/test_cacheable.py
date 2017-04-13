@@ -4,7 +4,9 @@
 import time
 import unittest
 
-from pykit import cacheable
+from pykit.cacheable import LRU
+from pykit.cacheable import Cacheable
+from pykit.cacheable import make_wrapper
 
 
 class TestLRU(unittest.TestCase):
@@ -14,7 +16,7 @@ class TestLRU(unittest.TestCase):
         size = lru.size
         item_head = lru.head
         item_tail = lru.tail
-        for i in xrange(size):
+        for i in range(size):
             item_head = item_head['next']
             item_tail = item_tail['pre']
 
@@ -34,19 +36,17 @@ class TestLRU(unittest.TestCase):
     def test_lru_timeout(self):
 
         cases = (
-            ('k1', 'v1', 5, True, True),
-            ('k2', 'v2', 4, True, False),
-            ('k3', 'v3', 1, False, False),
+            ('k1', 'v1', 3, True),
+            ('k2', 'v2', 1, False),
         )
 
-        lru = cacheable.LRU(10, 4)
-        for key, val, sleep_time, is_old, is_timeout in cases:
+        lru = LRU(10, 2)
+        for key, val, sleep_time, is_timeout in cases:
             lru[key] = val
             time.sleep(sleep_time)
 
             try:
-                (_, old) = lru[key]
-                self.assertEqual(old, is_old)
+                lru[key]
                 self.assertFalse(is_timeout)
 
             except KeyError:
@@ -79,14 +79,14 @@ class TestLRU(unittest.TestCase):
         )
 
         for insert_count, exist_items, cleanup_items in cases:
-            lru = cacheable.LRU(capacity, 10)
-            for i in xrange(insert_count):
+            lru = LRU(capacity, 10)
+            for i in range(insert_count):
                 lru[i] = 'val%d' % (i)
 
-            for i in xrange(insert_count):
+            for i in range(insert_count):
                 try:
-                    (item, _) = lru[i]
-                    self.assertEqual(item, 'val%d' % (i))
+                    val = lru[i]
+                    self.assertEqual(val, 'val%d' % (i))
                     self.assertEqual(lru.tail['key'], i)
                     self.assertIn(i, exist_items)
 
@@ -109,13 +109,15 @@ class TestLRU(unittest.TestCase):
             (6,
              [0, 1, 2, 3, 4, 5]),
 
+            # size of lru > capacity*1.5
+            # clean items from head, until size=capacity
             (7,
              [3, 4, 5, 6]),
         )
 
         for insert_count, expect_order_keys in cases:
-            lru = cacheable.LRU(capacity, 10)
-            for i in xrange(insert_count):
+            lru = LRU(capacity, 10)
+            for i in range(insert_count):
                 lru[i] = 'val'
                 self._assert_lru_list(lru)
 
@@ -136,8 +138,8 @@ class TestLRU(unittest.TestCase):
 
         for capacity, case in cases:
             for insert_count, expect_size in case:
-                lru = cacheable.LRU(capacity, 60)
-                for i in xrange(insert_count):
+                lru = LRU(capacity, 60)
+                for i in range(insert_count):
                     lru[i] = 'val'
 
                 self.assertEqual(lru.size, expect_size)
@@ -145,7 +147,7 @@ class TestLRU(unittest.TestCase):
 
 class TestProcessWiseCache(unittest.TestCase):
 
-    @cacheable.ProcessWiseCache.cache('method_cache_data', capacity=10, timeout=4, is_deepcopy=False)
+    @make_wrapper('method_cache_data', capacity=10, timeout=4, is_deepcopy=False)
     def _method_cache_data(self, key):
         data = need_cache_data.get(key, {})
         data['tm'] = time.time()
@@ -174,9 +176,8 @@ class TestProcessWiseCache(unittest.TestCase):
     def test_cache_item_timeout_and_cache_again(self):
 
         cases = (
-            (1, False),
             (2, False),
-            (2, True),
+            (3, True),
         )
 
         tm = get_cache_data('key')['tm']
@@ -192,7 +193,7 @@ class TestProcessWiseCache(unittest.TestCase):
         self.assertIsNot(get_deepcopy_of_cache_data('key1'),
                          get_deepcopy_of_cache_data('key1'))
 
-    def test_default_key_extractor(self):
+    def test_generate_lru_key(self):
 
         cases = (
             ((),
@@ -221,47 +222,17 @@ class TestProcessWiseCache(unittest.TestCase):
         )
 
         for args, argkv, expect_str in cases:
-            s = cacheable.ProcessWiseCache.arg_str(args, argkv)
-            self.assertEqual(s, expect_str)
-
-    def test_define_key_extractor(self):
-
-        cases = (
-            ('valueerror',
-             cacheable.ProcessWiseCache.arg_str(('valueerror', ), {})),
-
-            ('typeerror',
-             cacheable.ProcessWiseCache.arg_str(('typeerror', ), {})),
-
-            ('key',
-             key_extractor_funtion(('key', ), {}))
-        )
-
-        lru = cacheable.ProcessWiseCache.cachers['cache_data'].lru
-        for key, expect_generate_key in cases:
-            get_cache_data(key)
-            self.assertIn(expect_generate_key, lru.items)
+            self.assertEqual(Cacheable()._arg_str(args, argkv),
+                             expect_str)
 
 
-def key_extractor_funtion(args, argkv):
-
-    if 'valueerror' in args:
-        raise ValueError('test define key_exitractor raise valueerror')
-
-    if 'typeerror' in args:
-        raise TypeError('test define key_extractor raise typeerrro')
-
-    return str(args) + str(argkv)
-
-
-@cacheable.ProcessWiseCache.cache('deepcopy_of_cache_data', capacity=100, timeout=60, is_deepcopy=True)
+@make_wrapper('deepcopy_of_cache_data', capacity=100, timeout=60, is_deepcopy=True)
 def get_deepcopy_of_cache_data(key):
 
     return need_cache_data.get(key, {})
 
 
-@cacheable.ProcessWiseCache.cache('cache_data', capacity=100, timeout=4,
-                                  is_deepcopy=False, key_extractor=key_extractor_funtion)
+@make_wrapper('cache_data', capacity=100, timeout=4, is_deepcopy=False)
 def get_cache_data(key):
 
     cache_data = need_cache_data.get(key, {})

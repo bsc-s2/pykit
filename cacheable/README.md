@@ -7,11 +7,11 @@
 - [Synopsis](#synopsis)
 - [Description](#description)
 - [Classes](#classes)
-  - [cacheable.LRU](#cacheablelru)
+    - [cacheable.LRU](#cacheablelru)
+    - [cacheable.Cacheable](#cacheablecacheable)
 - [Methods](#methods)
-  - [LRU.__getitem__](#lrugetitem)
-  - [LRU.__setitem__](#lrusetitem)
-  - [cacheable.ProcessWiseCache.cache](#cacheableprocesswisecachecache)
+    - [LRU[key]](#lrukey)
+    - [cacheable.make_wrapper](#cacheablemake_wrapper)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -26,52 +26,57 @@ The library is considered production ready.
 #   Synopsis
 
 ```python
-from pykit import cacheable
+from pykit.cacheable import LRU
 
-c = cacheable.LRU(10, 60)
+# create a `LRU`, capacity:10 timeout:60
+c = LRU(10, 60)
+
+# set value like the `dict`
 c['key'] = 'val'
 
-# exist time more than half of the timeout, old=`True`
-# if timeout, delete it and raise `KeyError`
-# if not exist, raise `KeyError`
+# get value like the `dict`
+# if item timeout, delete it and raise `KeyError`
+# if item not exist, raise `KeyError`
 try:
-    (val, old) = c['key']
+    val = c['key']
 except KeyError:
     print('key error')
 ```
 
 ```python
-from pykit import cacheable
+from pykit.cacheable import make_wrapper
 
-cache_data = {'key': [1, 2]}
+cache_data = {
+    'key1': [1],
+    'key2': [2],
+}
 
 # define the function with a decorator
-@cacheable.ProcessWiseCache.cache('cache_name', capacity=100, timeout=60,
-                                  is_deepcopy=False)
+@make_wrapper('cache_name', capacity=100, timeout=60, is_deepcopy=False)
 def get_data(param):
     return cache_data.get(param, [])
 
-# call `get_data`, if `LRU` don't contain the key, cache the return value
-data = get_data('key')
+# call `get_data`, if item has not been cached, cache the return value
+data = get_data('key1')
 
 # call `get_data` use the same param, data will be got from cache
 time.sleep(30)
-data = get_data('key')
+data = get_data('key1')
 
-# if item timeout in `LRU`, when call `get_data`, cache again
+# if item timeout, when call `get_data`, cache again
 time.sleep(70)
-data = get_data('key')
+data = get_data('key1')
 
-# define a function in a class with a decorator
+# define a method with a decorator
 class MethodCache(object):
 
-    @cacheable.ProcessWiseCache.cache('method_cache_name', capacity=10240,
-                                      timeout=5 * 60, is_deepcopy=False)
+    @make_wrapper('method_cache_name', capacity=100, timeout=60,
+                  is_deepcopy=False)
     def get_data(self, param):
         return cache_data.get(param, [])
 
 mm = MethodCache()
-data = mm.get_data('key')
+data = mm.get_data('key2')
 ```
 
 #   Description
@@ -94,158 +99,135 @@ Least Recently Used Cache.
 
 -   `timeout`: max cache time of item, unit is second, default is 60
 
+##  cacheable.Cacheable
+
+**syntax**:
+`cacheable.Cacheable(capacity=1024 * 4, timeout=60, is_deepcopy=True)`
+
+Create a `LRU` object, all items will be cached in it.
+
+**arguments**:
+
+-   `capacity`: for create `LRU` object, default is 1024*4
+
+-   `timeout`: for create `LRU` object, default is 60, unit is second
+
+-   `is_deepcopy`: `make_wrapper` return a decorator that use `is_deepcopy`
+    to return deepcopy or reference of cached item.
+
+    -   `True`: return deepcopy of cached item
+
+    -   `False`: return reference of cached item
+
 #   Methods
 
-##  LRU.__getitem__
+##  LRU[key]
+
+`LRU` contain `__getitem__` and `__setitem__`,
+so can get value and set value like `dict`
+
+-   `LRU[key]`: return the item of `LRU` with `key`.
+
+    If item exist, move it to the tail to avoid to be cleaned.
+
+    Raise a `KeyError` if `key` is not in `LRU` or has been timeout.
+
+    ```python
+    # create `LRU`, capacity:10, timeout:60
+    lru = LRU(10, 60)
+
+    # set `lru['a']` to 'val_a'
+    lru['a'] = 'val_a'
+
+    sleep_time = 30
+    try:
+        time.sleep(sleep_time)
+        val = lru['a']
+        # if sleep_time <= timeout of LRU, return the value
+        # if sleep_time > timeout of LRU, delete it and raise a `KeyError`
+    except KeyError as e:
+        print('key not in lru')
+
+    try:
+        val = lru['b']
+        # if item not in lru, raise a `KeyError`
+    except KeyError as e:
+        print('key not in lru')
+    ```
+
+-   `LRU[key] = value`: set `LRU[key]` to `value` and
+    move it to tail of `LRU` to avoid to be cleaned.
+
+    If size of `LRU` is greater than `capacity` * 1.5,
+    clean items from head until size is equal to `capacity`.
+
+    ```python
+    # create a `LRU`, capacity:2 timeout:60
+    c = cacheable.LRU(2, 60)
+
+    # insert new item to the tail of `LRU`
+    c['a'] = 'val_a'
+    c['b'] = 'val_b'
+    c['c'] = 'val_c'
+
+    # after insert `d`, `a` and `b` will be cleaned
+    c['d'] = 'val_d'
+    ```
+
+##  cacheable.make_wrapper
 
 **syntax**:
-`LRU.__getitem__(key)`
+`cacheable.make_wrapper(name, capacity=1024 * 4, timeout=60, is_deepcopy=True)`
 
-Get cache data from `LRU`.
-
-If exist, move it to the tail of `LRU` to avoid to be cleaned,
-then return the value and item old status.
-
-If timeout, delete it and raise `KeyError`.
-
-If not exist, raise `KeyError`.
-
-**arguments**:
-
--   `key`: key of the cache item
-
-**return**:
-two values
-
--   first is the cache value
--   second is item old status,
-    if cache time of item more than half of `timeout`,
-    it is `True`, otherwise it is `False`
+If not exist, create a `cacheable.Cacheable` and save it, else use exist one.
 
 ```python
-c = cacheable.LRU(10, 10)
-c['a'] = 'val_a'
+from pykit.cacheable import make_wrapper
 
-# old is `False`
-try:
-    (val, old) = c['a']
-except KeyError:
-    print('key error')
-
-# after half of `timeout` old is `True`
-time.sleep(6)
-try:
-    (val, old) = c['a']
-except KeyError:
-    print('key error')
-
-# if timeout, raise `KeyError`
-time.sleep(5)
-try:
-    (val, old) = c['a']
-except KeyError:
-    print('key error')
-
-# if not exist, raise `KeyError`
-try:
-    (val, old) = c['b']
-except KeyError:
-    print('key error')
-```
-
-##  LRU.__setitem__
-**syntax**:
-`LRU.__setitem__(key, val)`
-
-Insert cache data into the tail of `LRU` to avoid to be cleaned,
-if already cached, replace old item and move to the tail of `LRU`
-
-After insert, if size of `LRU` is greater than `capacity` * 1.5,
-clean old items until size is equal to `capacity`
-
-```python
-c = cacheable.LRU(2, 60)
-
-# insert new item to the tail of `LRU`
-c['a'] = 'val_a'
-c['b'] = 'val_b'
-c['c'] = 'val_c'
-
-# after insert `d`, `a` and `b` will be cleaned
-c['d'] = 'val_d'
-```
-
-**arguments**:
-
--   `key`: for distinguishing different items
-
--   `val`: need cached value
-
-**return**:
-nothing
-
-##  cacheable.ProcessWiseCache.cache
-
-**syntax**:
-`cacheable.ProcessWiseCache.cache(name, capacity=1024 * 4, timeout=60,
-                                  is_deepcopy=True, key_extractor=None)`
-
-This is a `classmethod`, for init a `cacheable.ProcessWiseCache` object,
-it use `LRU` cache data.
-
-```python
 need_cache_data_aa = {'key': [0]}
 need_cache_data_bb = {'key': [1]}
 
-#init two objects, they don't have any relation.
-@cacheable.ProcessWiseCache.cache('name_aa', capacity=100, timeout=60, is_deepcopy=False)
+#use different `name` create two objects, they don't have any relation.
+@make_wrapper('name_aa', capacity=100, timeout=60, is_deepcopy=False)
 def cache_aa(param):
     return need_cache_data_aa.get(param, [])
 
-@cacheable.ProcessWiseCache.cache('name_bb', capacity=100, timeout=60, is_deepcopy=False)
+@make_wrapper('name_bb', capacity=100, timeout=60, is_deepcopy=False)
 def cache_bb(param):
     return need_cache_data_bb.get(param, [])
 ```
 
 **arguments**:
 
--   `name`: for distinguishing `cacheable.ProcessWiseCache` objects,
-    if not exist, init a new object and save it, otherwise use exist one
+-   `name`: for distinguishing different `cacheable.Cacheable`
 
--   `capacity`: `capacity` of `LRU`, for init a `LRU` object
+-   `capacity`: used as `capacity` of `cacheable.Cacheable`
 
--   `timeout`: `timeout` of `LRU`, for init a `LRU` object
+-   `timeout`: used as `timeout` of `cacheable.Cacheable`
 
--   `is_deepcopy`: the decorator function use it to
-    return deepcopy or reference of the cache data
-
-    -   `True`: deepcopy of cache data
-    -   `False`: reference of cache data
-
--   `key_extractor`: `LRU.__setitem__ and LRU.__getitem__` `key` generating function,
-    if `None` use the default method `cacheable.ProcessWiseCache.arg_str(args, argkv)`
-
-    ```python
-    # args is `tuple`, argkv is `dict`
-    def key_extractor_function(args, argkv):
-        return str(args) + str(argkv)
-
-    need_cache_data = {'key': 'data'}
-
-    # `key_extractor_function` use `cache_data` params to generate `LRU` `key`
-    # the decorator function use `key` to check whether the data has been cached or not
-    @cacheable.ProcessWiseCache.cache('cache_key', capacity=100, timeout=60,
-                                      is_deepcopy=False, key_extractor=key_extractor_function)
-    def cache_data(a, b, c):
-        return need_cache_data.get('key', 'default_data')
-
-    # `args`=('key1', 'key2') `argkv`={'c': 'key3'}
-    data = cache_data('key1', 'key2', c='key3')
-    ```
+-   `is_deepcopy`: used as `is_deepcopy` of `cacheable.Cacheable`
 
 **return**:
-a decorator function that it checks whether the data has been cached,
+A decorator function that it checks whether the data has been cached,
 if not or has been timeout, cache and return the data.
+
+```python
+from pykit.cacheable import make_wrapper
+
+need_cache_data = {
+    'key1': [1],
+    'key2': [2],
+}
+
+@make_wrapper('cache', capacity=100, timeout=60, is_deepcopy=False)
+def get_data(key):
+    return need_cache_data.get(key, [])
+
+# params of `get_data` are used to generate key of LRU
+# if params are different, cache them as different items
+get_data('key1')
+get_data('key2')
+```
 
 #   Author
 
