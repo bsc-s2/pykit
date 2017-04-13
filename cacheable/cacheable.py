@@ -17,7 +17,6 @@ class LRU(object):
         self.capacity = capacity
         self.cleanup_threshold = int(capacity * 1.5)
         self.timeout = timeout
-        self.item_old_time = int(timeout / 2)
         self.size = 0
         self.items = {}
         self.head = {'next': None, 'pre': None}
@@ -36,7 +35,7 @@ class LRU(object):
 
             self._move_to_tail(item)
 
-            return (item['val'], (now > item['tm'] + self.item_old_time))
+            return item['val']
 
     def __setitem__(self, key, val):
 
@@ -98,66 +97,50 @@ class LRU(object):
 
 class Cacheable(object):
 
-    cachers = {}
-
-    def __init__(self, capacity=1024 * 4, timeout=60, is_deepcopy=True, key_extractor=None):
+    def __init__(self, capacity=1024 * 4, timeout=60, is_deepcopy=True):
 
         self.lru = LRU(capacity, timeout)
         self.is_deepcopy = is_deepcopy
-        self.key_extractor = key_extractor or Cacheable.arg_str
-        self.name = '-no-name-'
-        self.cache_hit = 0
-        self.cache_missed = 0
 
-    @classmethod
-    def cache(clz, name, capacity=1024 * 4, timeout=60, is_deepcopy=True, key_extractor=None):
+    def _arg_str(self, args, argkv):
 
-        cacher = clz.cachers.get(name, clz(capacity, timeout,
-                                           is_deepcopy, key_extractor))
-        clz.cachers[name] = cacher
-        cacher.name = name
-
-        return cacher.cache_wrapper
-
-    @staticmethod
-    def arg_str(args, argkv):
-
-        argkv = [(k, v) for [k, v] in argkv.items()]
+        argkv = [(k, v) for k, v in argkv.items()]
         argkv.sort()
 
         return str([args, argkv])
 
-
-class ProcessWiseCache(Cacheable):
-
-    def cache_wrapper(cself, fun):
+    def _cache_wrapper(self, fun):
 
         def func_wrapper(*args, **argkv):
 
-            arg_str = None
-
-            try:
-                arg_str = cself.key_extractor(args, argkv)
-            except Exception as e:
-                arg_str = Cacheable.arg_str(args, argkv)
-                logger.exception(repr(e) + ' while generate LRU item key')
-
             val = None
+            generator_key = self._arg_str(args, argkv)
 
             try:
-                (val, is_old) = cself.lru[arg_str]
-                cself.cache_hit += 1
+                val = self.lru[generator_key]
             except KeyError as e:
                 val = fun(*args, **argkv)
-                cself.lru[arg_str] = val
-                cself.cache_missed += 1
+                self.lru[generator_key] = val
 
                 logger.info(repr(e)
-                            + ' while getitem from LRU, the  key: {s}'.format(s=arg_str))
+                            + ' while getitem from LRU, key: {s}'.format(s=generator_key))
 
-            if cself.is_deepcopy:
+            if self.is_deepcopy:
                 return copy.deepcopy(val)
             else:
                 return val
 
         return func_wrapper
+
+
+cachers = {}
+
+
+def make_wrapper(name, capacity=1024 * 4, timeout=60, is_deepcopy=True):
+
+    cacher = cachers.get(name, Cacheable(capacity=capacity, timeout=timeout,
+                                         is_deepcopy=is_deepcopy))
+    if name not in cachers:
+        cachers[name] = cacher
+
+    return cacher._cache_wrapper

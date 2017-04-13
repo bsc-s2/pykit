@@ -1,9 +1,11 @@
 from .cacheable import (
     LRU,
-    ProcessWiseCache,
+    Cacheable,
+    make_wrapper,
 )
 
 __all__ = [
     'LRU',
-    'ProcessWiseCache',
+    'Cacheable',
+    'make_wrapper',
 ]
