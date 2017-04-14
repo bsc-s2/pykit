@@ -4,6 +4,8 @@
 
 import types
 
+listtype = (type(()), type([]))
+
 
 def tokenize(line):
     # double quoted segment is preseverd
@@ -72,8 +74,6 @@ def format_line(items, sep=' ', aligns=''):
 
     '''
 
-    listtype = (type([]), type(()))
-
     aligns = [x for x in aligns] + [''] * len(items)
     aligns = aligns[:len(items)]
     aligns = ['r' if x == 'r' else x for x in aligns]
@@ -121,6 +121,245 @@ def format_line(items, sep=' ', aligns=''):
     return "\n".join(lines)
 
 
+def to_str_list(d, key=None):
+
+    # a = {
+    #         1: 3,
+    #         'x': {1:4, 2:5},
+    #         'l': [1, 2, 3],
+    # }
+    # for l in to_str_list(a):
+    #     print l
+    # 1 : 3
+    # l : - 1
+    #     - 2
+    #     - 3
+    # x : 1 : 4
+    #     2 : 5
+
+    if type(d) in listtype:
+
+        if len(d) == 0:
+            return ['[]']
+
+        max_width = 0
+        elt_lines = []
+        for elt in d:
+            sublines = to_str_list(elt)
+            sublines_max_width = max([len(x) for x in sublines])
+
+            if max_width < sublines_max_width:
+                max_width = sublines_max_width
+
+            elt_lines.append(sublines)
+
+        lines = []
+        for sublines in elt_lines:
+
+            # - subline[0]
+            #   subline[1]
+            #   ...
+
+            lines.append('- ' + sublines[0].ljust(max_width))
+
+            for l in sublines[1:]:
+                lines.append('  ' + l.ljust(max_width))
+
+        return lines
+
+    elif type(d) == type({}):
+
+        if len(d) == 0:
+            return ['{}']
+
+        max_k_width = 0
+        max_v_width = 0
+
+        kvs = []
+
+        for k, v in d.items():
+            k = utf8str(k)
+            sublines = to_str_list(v)
+            sublines_max_width = max([len(x) for x in sublines])
+
+            if max_k_width < len(k):
+                max_k_width = len(k)
+
+            if max_v_width < sublines_max_width:
+                max_v_width = sublines_max_width
+
+            kvs.append((k, sublines))
+
+        kvs.sort(key=key)
+
+        lines = []
+        for k, sublines in kvs:
+
+            # foo : sub-0
+            #       sub-1
+            #   b : sub-0
+            #       sub-0
+
+            lines.append(k.rjust(max_k_width) + ' : ' +
+                         sublines[0].ljust(max_v_width))
+
+            for l in sublines[1:]:
+                lines.append(' '.rjust(max_k_width) +
+                             '   ' + l.ljust(max_v_width))
+
+        return lines
+
+    else:
+        return [utf8str(d)]
+
+
+def parallel_lines(lines, *kargs):
+
+    if len(kargs) == 0:
+        if len(lines) == 0:
+            return []
+        else:
+            line = lines[0]
+
+            if type(line) == type({}):
+                kargs = line.keys()
+                kargs.sort()
+            elif type(line) in listtype:
+                kargs = [i for i in range(0, len(line))]
+            else:
+                kargs = ['']
+
+    kargs = [(k[0], str(k[1]))
+             if type(k) in listtype
+             else (k, str(k)) for k in kargs]
+    kargs, column_headers = zip(*kargs)
+
+    lns = [[a + ': ' for a in column_headers]]
+
+    for line in lines:
+        ln = [line]
+        if type(line) == type({}):
+            ln = [line.get(k, '') for k in kargs]
+        elif type(line) in listtype:
+            ln = [line[int(k)] if len(line) > int(k)
+                  else '' for k in kargs]
+        lns += [ln]
+
+    maxwidth = lambda col: max([len(utf8str(c))
+                                for c in col] + [0])
+    maxlen = [maxwidth(col) for col in zip(*lns)]
+    lns = [[utf8str(col[0]).ljust(col[1])
+            for col in zip(l, maxlen)]
+           for l in lns]
+    lns = [' | '.join(l) for l in lns]
+
+    return lns
+
+
+def format_multi_line(items, kargs=[], colors=[],
+                      withsplitline=False, splitchar='-', sep=' | '):
+
+    if len(kargs) == 0:
+
+        if len(items) == 0:
+            return []
+
+        item = items[0]
+
+        if type(item) == type({}):
+            kargs = item.keys()
+            kargs.sort()
+        elif type(item) in listtype:
+            kargs = [i for i in range(len(item))]
+        else:
+            kargs = ['']
+
+    colors = colors or ([None] * len(kargs))
+
+    while len(colors) < len(kargs):
+        colors.extend(colors)
+
+    colors = colors[:len(kargs)]
+
+    _keys = []
+    column_headers = []
+
+    for k in kargs:
+        if type(k) in listtype:
+            _keys.append(k[0])
+            column_headers.append(str(k[1]))
+        else:
+            _keys.append(k)
+            column_headers.append(str(k))
+
+    kargs = _keys
+
+    # element of lns is a mulit-column line
+    # lns = [
+    #         # line 1
+    #         [
+    #                 # column 1 of line 1
+    #                 ['name:', # row 1 of column 1 of line 1
+    #                  'foo',   # row 2 of column 1 of line 1
+    #                 ],
+    #
+    #                 # column 2 of line 1
+    #                 ['school:',
+    #                  'foo',
+    #                  'bar',
+    #                 ],
+    #         ],
+    # ]
+
+    lns = [
+        [[a + ': ']
+         for a in column_headers]
+    ]
+
+    for line in items:
+
+        if withsplitline:
+            lns += [[[None] for k in kargs]]
+
+        if type(line) == type({}):
+
+            ln = [to_str_list(line.get(k, ''))
+                  for k in kargs]
+
+        elif type(line) in listtype:
+
+            ln = [to_str_list(line[int(k)])
+                  if len(line) > int(k) else ''
+                  for k in kargs]
+
+        else:
+            ln = [to_str_list(line)]
+
+        lns.append(ln)
+
+    get_max_width = lambda cols: max([len(utf8str(c[0]))
+                                     for c in cols] + [0])
+
+    max_widths = [get_max_width(cols) for cols in zip(*lns)]
+
+    lines = []
+    for line in lns:
+
+        ln = []
+
+        for i in range(len(max_widths)):
+            color = colors[i]
+            w = max_widths[i]
+
+            ln.append([ColoredString(x.ljust(w), color)
+                       if x is not None else splitchar * w
+                       for x in line[i]])
+
+        lines.append(format_line(ln, sep=sep))
+
+    return lines
+
+
 def _to_str(y):
     if isinstance(y, ColoredString):
         pass
@@ -130,6 +369,8 @@ def _to_str(y):
         y = str(y)
 
     return y
+
+utf8str = lambda s: s.encode('utf8') if type(s) == type(u'') else str(s)
 
 
 def colorize(v, total, ptn='{0}'):
@@ -162,9 +403,10 @@ class ColoredString(object):
             else:
                 if self._prompt:
                     val = ('\001\033[38;5;' + str(e[1]) + 'm\002'
-                            + str(e[0]) + '\001\033[0m\002')
+                           + str(e[0]) + '\001\033[0m\002')
                 else:
-                    val = '\033[38;5;' + str(e[1]) + 'm' + str(e[0]) + '\033[0m'
+                    val = '\033[38;5;' + str(e[1]) + \
+                        'm' + str(e[0]) + '\033[0m'
             rst.append(val)
         return ''.join(rst)
 

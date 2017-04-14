@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import logging
 import unittest
 
 from pykit import strutil
@@ -140,6 +139,95 @@ class TestStrutil(unittest.TestCase):
                                  rst=repr(rst),
                                  _mes=_mes
                              ))
+
+    def test_to_str_list(self):
+
+        inp = {
+            1: 3,
+            'x': {1: 4, 2: 5},
+            'yyy': [1, 2, 3, 1000],
+        }
+
+        rst = strutil.to_str_list(inp)
+
+        for l in rst:
+            dd(repr(l))
+
+        expected = [
+            '  1 : 3     ',
+            '  x : 1 : 4 ',
+            '      2 : 5 ',
+            'yyy : - 1   ',
+            '      - 2   ',
+            '      - 3   ',
+            '      - 1000',
+        ]
+
+        self.assertEqual(expected, rst)
+
+    def test_format_multi_line(self):
+        inp = [
+                {'acl': {},
+                 'bucket': 'game1.read',
+                 'bucket_id': '1400000000000689036',
+                 'conf': {},
+                 'cors': {},
+                 'is_del': 0,
+                 'num_del': '0',
+                 'num_down': '0',
+                 'num_up': '0',
+                 'num_used': '0',
+                 'owner': 'game1',
+                 'redirect': '1870000000000689034',
+                 'relax_upload': 0,
+                 'serversidekey': {},
+                 'space_del': '0',
+                 'space_down': '0',
+                 'space_up': '0',
+                 'space_used': '0',
+                 'ts': '1492091893065708032'},
+                {'acl': {},
+                 'bucket': 'game2.read',
+                 'bucket_id': '1510000000000689037',
+                 'conf': {},
+                 'cors': {},
+                 'is_del': 0,
+                 'num_del': '0',
+                 'num_down': '0',
+                 'num_up': '0',
+                 'num_used': '0',
+                 'owner': 'game2',
+                 'redirect': '1110000000000689035',
+                 'relax_upload': 0,
+                 'serversidekey': {},
+                 'space_del': '0',
+                 'space_down': '0',
+                 'space_up': '0',
+                 'space_used': '0',
+                 'ts': '1492091906629786880'},
+                {'acl': {'imgx': ['READ', 'READ_ACP', 'WRITE', 'WRITE_ACP']},
+                 'bucket': 'imgx-test',
+                 'bucket_id': '1910000000000689048',
+                 'conf': {},
+                 'cors': {},
+                 'is_del': 0,
+                 'num_del': '0',
+                 'num_down': '0',
+                 'num_up': '0',
+                 'num_used': '0',
+                 'owner': 'imgx',
+                 'redirect': '0',
+                 'relax_upload': 1,
+                 'serversidekey': {},
+                 'space_del': '0',
+                 'space_down': '0',
+                 'space_up': '0',
+                 'space_used': '0',
+                 'ts': '1492101189213795840'}]
+
+        rst = strutil.format_multi_line(inp)
+        for l in rst:
+            print l
 
 
 class TestColoredString(unittest.TestCase):

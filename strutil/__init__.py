@@ -5,6 +5,8 @@ from .strutil import (
 
     ColoredString,
     colorize,
+    to_str_list,
+    format_multi_line,
 )
 
 from .strutil import (
@@ -48,4 +50,7 @@ __all__ = [
     'danger',
 
     'fading_color',
+
+    'to_str_list',
+    'format_multi_line',
 ]
