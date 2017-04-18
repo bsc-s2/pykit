@@ -121,14 +121,14 @@ def format_line(items, sep=' ', aligns=''):
     return "\n".join(lines)
 
 
-def to_str_list(d, key=None):
+def struct_repr(d, key=None):
 
     # a = {
     #         1: 3,
     #         'x': {1:4, 2:5},
     #         'l': [1, 2, 3],
     # }
-    # for l in to_str_list(a):
+    # for l in struct_repr(a):
     #     print l
     # 1 : 3
     # l : - 1
@@ -145,7 +145,7 @@ def to_str_list(d, key=None):
         max_width = 0
         elt_lines = []
         for elt in d:
-            sublines = to_str_list(elt)
+            sublines = struct_repr(elt)
             sublines_max_width = max([len(x) for x in sublines])
 
             if max_width < sublines_max_width:
@@ -179,7 +179,7 @@ def to_str_list(d, key=None):
 
         for k, v in d.items():
             k = utf8str(k)
-            sublines = to_str_list(v)
+            sublines = struct_repr(v)
             sublines_max_width = max([len(x) for x in sublines])
 
             if max_k_width < len(k):
@@ -323,17 +323,17 @@ def format_multi_line(items, kargs=[], colors=[],
 
         if type(line) == type({}):
 
-            ln = [to_str_list(line.get(k, ''))
+            ln = [struct_repr(line.get(k, ''))
                   for k in kargs]
 
         elif type(line) in listtype:
 
-            ln = [to_str_list(line[int(k)])
+            ln = [struct_repr(line[int(k)])
                   if len(line) > int(k) else ''
                   for k in kargs]
 
         else:
-            ln = [to_str_list(line)]
+            ln = [struct_repr(line)]
 
         lns.append(ln)
 

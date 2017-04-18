@@ -140,7 +140,7 @@ class TestStrutil(unittest.TestCase):
                                  _mes=_mes
                              ))
 
-    def test_to_str_list(self):
+    def test_struct_repr(self):
 
         inp = {
             1: 3,
@@ -148,7 +148,7 @@ class TestStrutil(unittest.TestCase):
             'yyy': [1, 2, 3, 1000],
         }
 
-        rst = strutil.to_str_list(inp)
+        rst = strutil.struct_repr(inp)
 
         for l in rst:
             dd(repr(l))
@@ -166,68 +166,78 @@ class TestStrutil(unittest.TestCase):
         self.assertEqual(expected, rst)
 
     def test_format_multi_line(self):
+
         inp = [
                 {'acl': {},
                  'bucket': 'game1.read',
                  'bucket_id': '1400000000000689036',
-                 'conf': {},
-                 'cors': {},
-                 'is_del': 0,
-                 'num_del': '0',
-                 'num_down': '0',
-                 'num_up': '0',
                  'num_used': '0',
                  'owner': 'game1',
-                 'redirect': '1870000000000689034',
-                 'relax_upload': 0,
-                 'serversidekey': {},
-                 'space_del': '0',
-                 'space_down': '0',
-                 'space_up': '0',
                  'space_used': '0',
                  'ts': '1492091893065708032'},
                 {'acl': {},
                  'bucket': 'game2.read',
                  'bucket_id': '1510000000000689037',
-                 'conf': {},
-                 'cors': {},
-                 'is_del': 0,
-                 'num_del': '0',
-                 'num_down': '0',
-                 'num_up': '0',
                  'num_used': '0',
                  'owner': 'game2',
-                 'redirect': '1110000000000689035',
-                 'relax_upload': 0,
-                 'serversidekey': {},
-                 'space_del': '0',
-                 'space_down': '0',
-                 'space_up': '0',
                  'space_used': '0',
                  'ts': '1492091906629786880'},
                 {'acl': {'imgx': ['READ', 'READ_ACP', 'WRITE', 'WRITE_ACP']},
                  'bucket': 'imgx-test',
                  'bucket_id': '1910000000000689048',
-                 'conf': {},
-                 'cors': {},
-                 'is_del': 0,
-                 'num_del': '0',
-                 'num_down': '0',
-                 'num_up': '0',
                  'num_used': '0',
                  'owner': 'imgx',
-                 'redirect': '0',
-                 'relax_upload': 1,
-                 'serversidekey': {},
-                 'space_del': '0',
-                 'space_down': '0',
-                 'space_up': '0',
                  'space_used': '0',
                  'ts': '1492101189213795840'}]
 
+        # default
         rst = strutil.format_multi_line(inp)
-        for l in rst:
-            print l
+        # the last line is a '\n' splitted multi-row line
+        expected = [
+                'acl:               | bucket:    | bucket_id:          | num_used:  | owner:  | space_used:  | ts:                ',
+                '{}                 | game1.read | 1400000000000689036 | 0          | game1   | 0            | 1492091893065708032',
+                '{}                 | game2.read | 1510000000000689037 | 0          | game2   | 0            | 1492091906629786880',
+                'imgx : - READ      | imgx-test  | 1910000000000689048 | 0          | imgx    | 0            | 1492101189213795840\n'
+                '       - READ_ACP  |            |                     |            |         |              |                    \n'
+                '       - WRITE     |            |                     |            |         |              |                    \n'
+                '       - WRITE_ACP |            |                     |            |         |              |                    ',
+        ]
+        self.assertEqual(expected, rst)
+
+        # specify key to render
+
+        rst = strutil.format_multi_line(inp, kargs=['bucket'])
+        expected = [
+                'bucket:   ',
+                'game1.read',
+                'game2.read',
+                'imgx-test ',
+        ]
+        self.assertEqual(expected, rst)
+
+        # withsplitline
+        rst = strutil.format_multi_line(inp, kargs=['bucket'], withsplitline=True, splitchar='+')
+        expected = [
+                'bucket:   ',
+                '++++++++++',
+                'game1.read',
+                '++++++++++',
+                'game2.read',
+                '++++++++++',
+                'imgx-test ',
+        ]
+        self.assertEqual(expected, rst)
+
+        # sep
+        rst = strutil.format_multi_line(inp, kargs=['bucket', 'bucket_id'], sep=' # ')
+        expected = [
+                'bucket:    # bucket_id:         ',
+                'game1.read # 1400000000000689036',
+                'game2.read # 1510000000000689037',
+                'imgx-test  # 1910000000000689048',
+        ]
+        self.assertEqual(expected, rst)
+
 
 
 class TestColoredString(unittest.TestCase):

@@ -5,7 +5,7 @@ from .strutil import (
 
     ColoredString,
     colorize,
-    to_str_list,
+    struct_repr,
     format_multi_line,
 )
 
@@ -51,6 +51,6 @@ __all__ = [
 
     'fading_color',
 
-    'to_str_list',
+    'struct_repr',
     'format_multi_line',
 ]
