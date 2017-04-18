@@ -213,21 +213,21 @@ def struct_repr(d, key=None):
         return [utf8str(d)]
 
 
-def format_multi_line(items, kargs=[],
+def format_multi_line(lines, kargs=[],
                       colors=[], line_sep=None, sep=' | '):
 
     if len(kargs) == 0:
 
-        if len(items) == 0:
+        if len(lines) == 0:
             return []
 
-        item = items[0]
+        line0 = lines[0]
 
-        if type(item) == type({}):
-            kargs = item.keys()
+        if type(line0) == type({}):
+            kargs = line0.keys()
             kargs.sort()
-        elif type(item) in listtype:
-            kargs = [i for i in range(len(item))]
+        elif type(line0) in listtype:
+            kargs = [i for i in range(len(line0))]
         else:
             kargs = ['']
 
@@ -273,7 +273,7 @@ def format_multi_line(items, kargs=[],
          for a in column_headers]
     ]
 
-    for line in items:
+    for line in lines:
 
         if line_sep is not None:
             lns += [[[None] for k in kargs]]
