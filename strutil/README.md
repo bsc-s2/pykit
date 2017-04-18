@@ -219,6 +219,129 @@ Supported color names:
 -   `warn` same as `dark yellow`
 -   `danger` same as `red`
 
+##  strutil.struct_repr
+
+**syntax**:
+`strutil.struct_repr(d, key=None)`
+
+Render primitive or composite data to a structural representation string
+list.
+
+```python
+a = {
+    1: 3,
+    'x': {1:4, 2:5},
+    'l': [1, 2, 3],
+}
+for l in strutil.struct_repr(a):
+    print l
+
+# 1 : 3
+# l : - 1
+#     - 2
+#     - 3
+# x : 1 : 4
+#     2 : 5
+```
+
+**arguments**:
+
+-   `d`:
+    a number, string, list or dict to render to a structural
+    representation.
+
+-   `key`:
+    is a callable that is used to sort dict keys.
+
+    It is used in sort: `keys.sort(key=key)`.
+
+**return**:
+a list of string.
+
+##  strutil.format_multi_line
+
+**syntax**:
+`strutil.format_multi_line(lines, kargs=[], colors=[], line_sep=None, sep=' | ')`
+
+Render a list of data into a table.
+
+Number of rows is `len(lines)`.
+Number of columns is `len(lines[0])`.
+
+
+```python
+inp = [
+    {'acl': {},
+     'bucket': 'game1.read',
+     'bucket_id': '1400000000000689036',
+     'num_used': '0',
+     'owner': 'game1',
+     'space_used': '0',
+     'ts': '1492091893065708032'},
+    {'acl': {},
+     'bucket': 'game2.read',
+     'bucket_id': '1510000000000689037',
+     'num_used': '0',
+     'owner': 'game2',
+     'space_used': '0',
+     'ts': '1492091906629786880'},
+    {'acl': {'imgx': ['READ', 'READ_ACP', 'WRITE', 'WRITE_ACP']},
+     'bucket': 'imgx-test',
+     'bucket_id': '1910000000000689048',
+     'num_used': '0',
+     'owner': 'imgx',
+     'space_used': '0',
+     'ts': '1492101189213795840'}]
+
+for l in strutil.format_multi_line(inp, line_sep='-'):
+    print l
+
+# acl:               | bucket:    | bucket_id:          | num_used:  | owner:  | space_used:  | ts:
+# -----------------------------------------------------------------------------------------------------------------
+# {}                 | game1.read | 1400000000000689036 | 0          | game1   | 0            | 1492091893065708032
+# -----------------------------------------------------------------------------------------------------------------
+# {}                 | game2.read | 1510000000000689037 | 0          | game2   | 0            | 1492091906629786880
+# -----------------------------------------------------------------------------------------------------------------
+# imgx : - READ      | imgx-test  | 1910000000000689048 | 0          | imgx    | 0            | 1492101189213795840
+#        - READ_ACP  |            |                     |            |         |              |
+#        - WRITE     |            |                     |            |         |              |
+#        - WRITE_ACP |            |                     |            |         |              |
+ ```
+
+**arguments**:
+
+-   `lines`:
+    list of items to render.
+
+    Element of list can be number, string, list or dict.
+
+-   `kargs`:
+    specifies indexes(for list) or keys(for dict) to render.
+    It is a list.
+
+    Indexes of keys those are not in this list will not be rendered.
+
+-   `colors`:
+    specifies the color for each column.
+    It is a list of color values in number or color name strings.
+
+    If length of `colors` is smaller than the number of columns(the number of
+    indexes of a list, or keys of a dict), the colors are repeated for columns
+    after.
+
+-   `line_sep`:
+    specifies char to separate rows.
+
+    By default it is None, it means do not add line separator.
+
+-   `sep`:
+    specifies column separator char.
+
+    By default it is `" | "`.
+
+**return**:
+a list of string.
+
 #   Author
 
 Zhang Yanpo (张炎泼) <drdr.xp@gmail.com>
