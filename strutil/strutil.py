@@ -213,7 +213,7 @@ def struct_repr(d, key=None):
         return [utf8str(d)]
 
 
-def format_multi_line(lines, kargs=[],
+def format_table(lines, kargs=[],
                       colors=[], line_sep=None, sep=' | '):
 
     if len(kargs) == 0:

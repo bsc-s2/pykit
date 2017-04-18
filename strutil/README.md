@@ -258,10 +258,10 @@ for l in strutil.struct_repr(a):
 **return**:
 a list of string.
 
-##  strutil.format_multi_line
+##  strutil.format_table
 
 **syntax**:
-`strutil.format_multi_line(lines, kargs=[], colors=[], line_sep=None, sep=' | ')`
+`strutil.format_table(lines, kargs=[], colors=[], line_sep=None, sep=' | ')`
 
 Render a list of data into a table.
 
@@ -293,7 +293,7 @@ inp = [
      'space_used': '0',
      'ts': '1492101189213795840'}]
 
-for l in strutil.format_multi_line(inp, line_sep='-'):
+for l in strutil.format_table(inp, line_sep='-'):
     print l
 
 # acl:               | bucket:    | bucket_id:          | num_used:  | owner:  | space_used:  | ts:

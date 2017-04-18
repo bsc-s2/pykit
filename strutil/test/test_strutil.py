@@ -165,7 +165,7 @@ class TestStrutil(unittest.TestCase):
 
         self.assertEqual(expected, rst)
 
-    def test_format_multi_line(self):
+    def test_format_table(self):
 
         inp = [
             {'acl': {},
@@ -191,7 +191,7 @@ class TestStrutil(unittest.TestCase):
              'ts': '1492101189213795840'}]
 
         # default
-        rst = strutil.format_multi_line(inp)
+        rst = strutil.format_table(inp)
         # the last line is a '\n' splitted multi-row line
         expected = [
             'acl:               | bucket:    | bucket_id:          | num_used:  | owner:  | space_used:  | ts:                ',
@@ -206,7 +206,7 @@ class TestStrutil(unittest.TestCase):
 
         # specify key to render
 
-        rst = strutil.format_multi_line(inp, kargs=['bucket'])
+        rst = strutil.format_table(inp, kargs=['bucket'])
         expected = [
             'bucket:   ',
             'game1.read',
@@ -216,7 +216,7 @@ class TestStrutil(unittest.TestCase):
         self.assertEqual(expected, rst)
 
         # line_sep
-        rst = strutil.format_multi_line(inp, kargs=['bucket'], line_sep='+')
+        rst = strutil.format_table(inp, kargs=['bucket'], line_sep='+')
         expected = [
             'bucket:   ',
             '++++++++++',
@@ -229,7 +229,7 @@ class TestStrutil(unittest.TestCase):
         self.assertEqual(expected, rst)
 
         # sep
-        rst = strutil.format_multi_line(
+        rst = strutil.format_table(
             inp, kargs=['bucket', 'bucket_id'], sep=' # ')
         expected = [
             'bucket:    # bucket_id:         ',
