@@ -213,51 +213,8 @@ def struct_repr(d, key=None):
         return [utf8str(d)]
 
 
-def parallel_lines(lines, *kargs):
-
-    if len(kargs) == 0:
-        if len(lines) == 0:
-            return []
-        else:
-            line = lines[0]
-
-            if type(line) == type({}):
-                kargs = line.keys()
-                kargs.sort()
-            elif type(line) in listtype:
-                kargs = [i for i in range(0, len(line))]
-            else:
-                kargs = ['']
-
-    kargs = [(k[0], str(k[1]))
-             if type(k) in listtype
-             else (k, str(k)) for k in kargs]
-    kargs, column_headers = zip(*kargs)
-
-    lns = [[a + ': ' for a in column_headers]]
-
-    for line in lines:
-        ln = [line]
-        if type(line) == type({}):
-            ln = [line.get(k, '') for k in kargs]
-        elif type(line) in listtype:
-            ln = [line[int(k)] if len(line) > int(k)
-                  else '' for k in kargs]
-        lns += [ln]
-
-    maxwidth = lambda col: max([len(utf8str(c))
-                                for c in col] + [0])
-    maxlen = [maxwidth(col) for col in zip(*lns)]
-    lns = [[utf8str(col[0]).ljust(col[1])
-            for col in zip(l, maxlen)]
-           for l in lns]
-    lns = [' | '.join(l) for l in lns]
-
-    return lns
-
-
-def format_multi_line(items, kargs=[], colors=[],
-                      withsplitline=False, splitchar='-', sep=' | '):
+def format_multi_line(items, kargs=[],
+                      colors=[], line_sep=None, sep=' | '):
 
     if len(kargs) == 0:
 
@@ -318,7 +275,7 @@ def format_multi_line(items, kargs=[], colors=[],
 
     for line in items:
 
-        if withsplitline:
+        if line_sep is not None:
             lns += [[[None] for k in kargs]]
 
         if type(line) == type({}):
@@ -338,7 +295,7 @@ def format_multi_line(items, kargs=[], colors=[],
         lns.append(ln)
 
     get_max_width = lambda cols: max([len(utf8str(c[0]))
-                                     for c in cols] + [0])
+                                      for c in cols] + [0])
 
     max_widths = [get_max_width(cols) for cols in zip(*lns)]
 
@@ -352,7 +309,7 @@ def format_multi_line(items, kargs=[], colors=[],
             w = max_widths[i]
 
             ln.append([ColoredString(x.ljust(w), color)
-                       if x is not None else splitchar * w
+                       if x is not None else line_sep * w
                        for x in line[i]])
 
         lines.append(format_line(ln, sep=sep))
