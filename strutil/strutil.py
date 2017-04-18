@@ -214,7 +214,7 @@ def struct_repr(d, key=None):
 
 
 def format_table(lines, kargs=[],
-                      colors=[], line_sep=None, sep=' | '):
+                 colors=[], line_sep=None, sep=' | '):
 
     if len(kargs) == 0:
 
