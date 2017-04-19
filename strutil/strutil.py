@@ -121,7 +121,7 @@ def format_line(items, sep=' ', aligns=''):
     return "\n".join(lines)
 
 
-def struct_repr(d, key=None):
+def struct_repr(data, key=None):
 
     # a = {
     #         1: 3,
@@ -137,14 +137,14 @@ def struct_repr(d, key=None):
     # x : 1 : 4
     #     2 : 5
 
-    if type(d) in listtype:
+    if type(data) in listtype:
 
-        if len(d) == 0:
+        if len(data) == 0:
             return ['[]']
 
         max_width = 0
         elt_lines = []
-        for elt in d:
+        for elt in data:
             sublines = struct_repr(elt)
             sublines_max_width = max([len(x) for x in sublines])
 
@@ -167,9 +167,9 @@ def struct_repr(d, key=None):
 
         return lines
 
-    elif type(d) == type({}):
+    elif type(data) == type({}):
 
-        if len(d) == 0:
+        if len(data) == 0:
             return ['{}']
 
         max_k_width = 0
@@ -177,7 +177,7 @@ def struct_repr(d, key=None):
 
         kvs = []
 
-        for k, v in d.items():
+        for k, v in data.items():
             k = utf8str(k)
             sublines = struct_repr(v)
             sublines_max_width = max([len(x) for x in sublines])
@@ -210,7 +210,7 @@ def struct_repr(d, key=None):
         return lines
 
     else:
-        return [utf8str(d)]
+        return [utf8str(data)]
 
 
 def _get_key_and_headers(keys, rows):
