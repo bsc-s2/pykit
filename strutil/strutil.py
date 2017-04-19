@@ -370,7 +370,7 @@ def colorize(v, total, ptn='{0}'):
 
 class ColoredString(object):
 
-    def __init__(self, v, color=None, prompt=False):
+    def __init__(self, v, color=None, prompt=True):
         if type(color) == type(''):
             color = _named_colors[color]
 

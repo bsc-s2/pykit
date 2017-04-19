@@ -12,6 +12,8 @@
   - [strutil.line_pad](#strutilline_pad)
   - [strutil.format_line](#strutilformat_line)
   - [strutil.color](#strutilcolor)
+  - [strutil.struct_repr](#strutilstruct_repr)
+  - [strutil.format_table](#strutilformat_table)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
