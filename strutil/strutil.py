@@ -122,20 +122,26 @@ def format_line(items, sep=' ', aligns=''):
 
 
 def struct_repr(data, key=None):
+    '''
+    Render a data to a multi-line structural(yaml-like) representation.
 
-    # a = {
-    #         1: 3,
-    #         'x': {1:4, 2:5},
-    #         'l': [1, 2, 3],
-    # }
-    # for l in struct_repr(a):
-    #     print l
-    # 1 : 3
-    # l : - 1
-    #     - 2
-    #     - 3
-    # x : 1 : 4
-    #     2 : 5
+        a = {
+                1: 3,
+                'x': {1:4, 2:5},
+                'l': [1, 2, 3],
+        }
+        for l in struct_repr(a):
+            print l
+
+    Output:
+
+        1 : 3
+        l : - 1
+            - 2
+            - 3
+        x : 1 : 4
+            2 : 5
+    '''
 
     if type(data) in listtype:
 
