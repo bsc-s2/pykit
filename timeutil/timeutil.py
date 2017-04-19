@@ -24,16 +24,20 @@ formats = {
 
 
 def parse(time_str, fmt_key):
-    return datetime.datetime.strptime(time_str, formats[fmt_key])
+    return datetime.datetime.strptime(time_str, _get_format(fmt_key))
 
 
 def format(dt, fmt_key):
-    return dt.strftime(formats[fmt_key])
+    return dt.strftime(_get_format(fmt_key))
 
 
 def format_ts(ts, fmt_key):
     dt = ts_to_datetime(ts)
     return format(dt, fmt_key)
+
+
+def _get_format(fmt_key):
+    return formats.get(fmt_key) or fmt_key
 
 
 def utc_datetime_to_ts(dt):
@@ -73,7 +77,6 @@ def ns_to_ts(ns):
 
 
 def to_sec(v):
-
     """
     Convert millisecond, microsecond or nanosecond to second.
 
