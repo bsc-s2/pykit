@@ -69,15 +69,29 @@ parse time string to datetime instance.
 **arguments**:
 
 -   `time_str`:
-    time_str format, please refer to timeutil.formats, for example:
-    'Tue, 24 Jan 2017 07:51:59 UTC', '2017-01-24T07:51:59.000Z'
+    time in string. Please refer to timeutil.formats, for example:
+    `'Tue, 24 Jan 2017 07:51:59 UTC'`, `'2017-01-24T07:51:59.000Z'`.
 
--   `fmt_key`
-    specify time string format type,
-    value: default, iso, utc, archive, compact, daily, mysql, nginxaccesslog, nginxerrorlog
+-   `fmt_key`:
+    specify time string format.
+    It can be a named format alias, or format string:
+
+    ```
+    'default':        '%a, %d %b %Y %H:%M:%S UTC',
+    'iso':            '%Y-%m-%dT%H:%M:%S.000Z',
+    'utc':            '%a, %d %b %Y %H:%M:%S UTC',
+    'archive':        '%Y%m%d-%H',
+    'compact':        '%Y%m%d-%H%M%S',
+    'daily':          '%Y-%m-%d',
+    'mysql':          '%Y-%m-%d %H:%M:%S',
+    'nginxaccesslog': "%d/%b/%Y:%H:%M:%S",
+    'nginxerrorlog':  "%Y/%m/%d %H:%M:%S",
+    ```
+
+    Thus `parse(tm, "default")` is same as `parse(tm, "%a, %d %b %Y %H:%M:%S UTC")`.
 
 **return**:
-    datetime instance
+datetime instance
 
 ##  timeutil.format
 
@@ -93,8 +107,8 @@ convert datetime instance to specify format time string
     datetime instance
 
 -   `fmt_key`:
-    specify time string format type,
-    value: default, iso, utc, archive, compact, daily, mysql, nginxaccesslog, nginxerrorlog
+    specify time string format.
+    It can be a named format alias, or format string.
 
 **return**:
     specify format time string
@@ -113,8 +127,8 @@ convert timestamp to specify format time string
     timestamp in second
 
 -   `fmt_key`:
-    specify time string format type,
-    value: default, iso, utc, archive, compact, daily, mysql, nginxaccesslog, nginxerrorlog
+    specify time string format.
+    It can be a named format alias, or format string.
 
 **return**:
     specify format time string

@@ -33,6 +33,27 @@ test_case = {
 
 class TestTimeutil(unittest.TestCase):
 
+    def test_direct_format(self):
+
+        for fmt_key, tm_str in test_case['format'].items():
+
+            # parse
+            dt_key = timeutil.parse(tm_str, fmt_key)
+            dt_direct = timeutil.parse(tm_str, timeutil.formats[fmt_key])
+
+            self.assertTrue(dt_key == dt_direct)
+
+            # format
+            self.assertEqual(tm_str, timeutil.format(dt_key, fmt_key))
+            self.assertEqual(tm_str,
+                             timeutil.format(dt_key,
+                                             timeutil.formats[fmt_key]))
+
+            # format_ts
+            now = int(time.time())
+            self.assertEqual(timeutil.format_ts(now, fmt_key),
+                             timeutil.format_ts(now, timeutil.formats[fmt_key]))
+
     def test_parse(self):
 
         for fmt_key, tm_str in test_case['format'].items():
