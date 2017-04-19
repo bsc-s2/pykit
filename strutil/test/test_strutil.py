@@ -9,6 +9,12 @@ from pykit import ututil
 dd = ututil.dd
 
 
+def dd_lines(lines):
+    dd()
+    for l in lines:
+        dd(l)
+
+
 class TestStrutil(unittest.TestCase):
 
     def test_tokenize(self):
@@ -192,6 +198,8 @@ class TestStrutil(unittest.TestCase):
 
         # default
         rst = strutil.format_table(inp)
+        dd_lines(rst)
+
         # the last line is a '\n' splitted multi-row line
         expected = [
             'acl:               | bucket:    | bucket_id:          | num_used:  | owner:  | space_used:  | ts:                ',
@@ -206,17 +214,19 @@ class TestStrutil(unittest.TestCase):
 
         # specify key to render
 
-        rst = strutil.format_table(inp, kargs=['bucket'])
+        rst = strutil.format_table(inp, keys=[['bucket', 'B']])
+        dd_lines(rst)
         expected = [
-            'bucket:   ',
+            'B:        ',
             'game1.read',
             'game2.read',
             'imgx-test ',
         ]
         self.assertEqual(expected, rst)
 
-        # line_sep
-        rst = strutil.format_table(inp, kargs=['bucket'], line_sep='+')
+        # row_sep
+        rst = strutil.format_table(inp, keys=['bucket'], row_sep='+')
+        dd_lines(rst)
         expected = [
             'bucket:   ',
             '++++++++++',
@@ -230,7 +240,8 @@ class TestStrutil(unittest.TestCase):
 
         # sep
         rst = strutil.format_table(
-            inp, kargs=['bucket', 'bucket_id'], sep=' # ')
+            inp, keys=['bucket', 'bucket_id'], sep=' # ')
+        dd_lines(rst)
         expected = [
             'bucket:    # bucket_id:         ',
             'game1.read # 1400000000000689036',

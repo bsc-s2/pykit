@@ -213,43 +213,60 @@ def struct_repr(d, key=None):
         return [utf8str(d)]
 
 
-def format_table(lines, kargs=[],
-                 colors=[], line_sep=None, sep=' | '):
+def _get_key_and_headers(keys, rows):
 
-    if len(kargs) == 0:
+    if keys is None:
 
-        if len(lines) == 0:
-            return []
-
-        line0 = lines[0]
-
-        if type(line0) == type({}):
-            kargs = line0.keys()
-            kargs.sort()
-        elif type(line0) in listtype:
-            kargs = [i for i in range(len(line0))]
+        if len(rows) == 0:
+            keys = []
         else:
-            kargs = ['']
+            r0 = rows[0]
 
-    colors = colors or ([None] * len(kargs))
-
-    while len(colors) < len(kargs):
-        colors.extend(colors)
-
-    colors = colors[:len(kargs)]
+            if type(r0) == type({}):
+                keys = r0.keys()
+                keys.sort()
+            elif type(r0) in listtype:
+                keys = [i for i in range(len(r0))]
+            else:
+                keys = ['']
 
     _keys = []
     column_headers = []
 
-    for k in kargs:
-        if type(k) in listtype:
-            _keys.append(k[0])
-            column_headers.append(str(k[1]))
-        else:
-            _keys.append(k)
-            column_headers.append(str(k))
+    for k in keys:
 
-    kargs = _keys
+        if type(k) not in listtype:
+            k = [k, k]
+
+        _keys.append(k[0])
+        column_headers.append(str(k[1]))
+
+    return _keys, column_headers
+
+
+def _get_colors(colors, col_n):
+
+    if colors is None:
+        colors = []
+
+    colors = colors or ([None] * col_n)
+
+    while len(colors) < col_n:
+        colors.extend(colors)
+
+    colors = colors[:col_n]
+
+    return colors
+
+
+def format_table(rows,
+                 keys=None,
+                 colors=None,
+                 sep=' | ',
+                 row_sep=None):
+
+    keys, column_headers = _get_key_and_headers(keys, rows)
+    colors = _get_colors(colors, len(keys))
 
     # element of lns is a mulit-column line
     # lns = [
@@ -268,29 +285,30 @@ def format_table(lines, kargs=[],
     #         ],
     # ]
 
+    # headers
     lns = [
         [[a + ': ']
          for a in column_headers]
     ]
 
-    for line in lines:
+    for row in rows:
 
-        if line_sep is not None:
-            lns += [[[None] for k in kargs]]
+        if row_sep is not None:
+            lns.append([[None] for k in keys])
 
-        if type(line) == type({}):
+        if type(row) == type({}):
 
-            ln = [struct_repr(line.get(k, ''))
-                  for k in kargs]
+            ln = [struct_repr(row.get(k, ''))
+                  for k in keys]
 
-        elif type(line) in listtype:
+        elif type(row) in listtype:
 
-            ln = [struct_repr(line[int(k)])
-                  if len(line) > int(k) else ''
-                  for k in kargs]
+            ln = [struct_repr(row[int(k)])
+                  if len(row) > int(k) else ''
+                  for k in keys]
 
         else:
-            ln = [struct_repr(line)]
+            ln = [struct_repr(row)]
 
         lns.append(ln)
 
@@ -299,8 +317,8 @@ def format_table(lines, kargs=[],
 
     max_widths = [get_max_width(cols) for cols in zip(*lns)]
 
-    lines = []
-    for line in lns:
+    rows = []
+    for row in lns:
 
         ln = []
 
@@ -309,12 +327,12 @@ def format_table(lines, kargs=[],
             w = max_widths[i]
 
             ln.append([ColoredString(x.ljust(w), color)
-                       if x is not None else line_sep * w
-                       for x in line[i]])
+                       if x is not None else row_sep * w
+                       for x in row[i]])
 
-        lines.append(format_line(ln, sep=sep))
+        rows.append(format_line(ln, sep=sep))
 
-    return lines
+    return rows
 
 
 def _to_str(y):
@@ -327,7 +345,13 @@ def _to_str(y):
 
     return y
 
-utf8str = lambda s: s.encode('utf8') if type(s) == type(u'') else str(s)
+
+def utf8str(s):
+
+    if type(s) == type(u''):
+        return s.encode('utf8')
+    else:
+        return str(s)
 
 
 def colorize(v, total, ptn='{0}'):
@@ -358,13 +382,17 @@ class ColoredString(object):
             if e[1] is None:
                 val = e[0]
             else:
+                _clr = '\033[38;5;' + str(e[1]) + 'm'
+                _rst = '\033[0m'
+
                 if self._prompt:
-                    val = ('\001\033[38;5;' + str(e[1]) + 'm\002'
-                           + str(e[0]) + '\001\033[0m\002')
-                else:
-                    val = '\033[38;5;' + str(e[1]) + \
-                        'm' + str(e[0]) + '\033[0m'
+                    _clr = '\001' + _clr + '\002'
+                    _rst = '\001' + _rst + '\002'
+
+                val = _clr + str(e[0]) + _rst
+
             rst.append(val)
+
         return ''.join(rst)
 
     def __len__(self):

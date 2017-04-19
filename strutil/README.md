@@ -261,12 +261,12 @@ a list of string.
 ##  strutil.format_table
 
 **syntax**:
-`strutil.format_table(lines, kargs=[], colors=[], line_sep=None, sep=' | ')`
+`strutil.format_table(rows, keys=None, colors=None, row_sep=None, sep=' | ')`
 
 Render a list of data into a table.
 
-Number of rows is `len(lines)`.
-Number of columns is `len(lines[0])`.
+Number of rows is `len(rows)`.
+Number of columns is `len(rows[0])`.
 
 
 ```python
@@ -293,7 +293,7 @@ inp = [
      'space_used': '0',
      'ts': '1492101189213795840'}]
 
-for l in strutil.format_table(inp, line_sep='-'):
+for l in strutil.format_table(inp, row_sep='-'):
     print l
 
 # acl:               | bucket:    | bucket_id:          | num_used:  | owner:  | space_used:  | ts:
@@ -306,20 +306,44 @@ for l in strutil.format_table(inp, line_sep='-'):
 #        - READ_ACP  |            |                     |            |         |              |
 #        - WRITE     |            |                     |            |         |              |
 #        - WRITE_ACP |            |                     |            |         |              |
+
+# customize column header:
+for l in strutil.format_table(inp, keys=[['bucket', 'Bkt'],
+                                         ['num_used', 'n']]):
+    print l
+
+# Bkt:       | n:
+# game1.read | 0
+# game2.read | 0
+# imgx-test  | 0
  ```
 
 **arguments**:
 
--   `lines`:
+-   `rows`:
     list of items to render.
 
     Element of list can be number, string, list or dict.
 
--   `kargs`:
+-   `keys`:
     specifies indexes(for list) or keys(for dict) to render.
     It is a list.
 
-    Indexes of keys those are not in this list will not be rendered.
+    Indexes or keys those are not in this list will not be rendered.
+
+    It can also be used to specify customized column headers, if element in
+    list is a 2-element tuple or list:
+
+    ```
+    keys = [
+        ('bucket', 'Bkt'),
+        ('num_used', 'n'),
+        'bucket_id',
+    ]
+    # It output a talbe like below:
+    # Bkt:       | n: | bucket_id:
+    # game1.read | 0  | ...
+    ```
 
 -   `colors`:
     specifies the color for each column.
@@ -329,7 +353,7 @@ for l in strutil.format_table(inp, line_sep='-'):
     indexes of a list, or keys of a dict), the colors are repeated for columns
     after.
 
--   `line_sep`:
+-   `row_sep`:
     specifies char to separate rows.
 
     By default it is None, it means do not add line separator.
