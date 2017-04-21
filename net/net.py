@@ -178,10 +178,17 @@ def parse_ip_regex_str(ip_regexs_str):
 
     ip_regexs_str = ip_regexs_str.strip()
 
-    rst = ip_regexs_str.split(',')
-    for r in rst:
+    regs = ip_regexs_str.split(',')
+    rst = []
+    for r in regs:
+        # do not choose ip if it matches this regex
+        if r.startswith('-'):
+            r = (r[1:], False)
+
         if r == '':
             raise ValueError('invalid regular expression: ' + repr(r))
+
+        rst.append(r)
 
     return rst
 
@@ -192,10 +199,35 @@ def choose_by_regex(ips, ip_regexs):
 
     for ip in ips:
 
+        all_negative = True
         for ip_regex in ip_regexs:
+
+            # choose matched:
+            #     '127[.]'
+            #     ('127[.]', True)
+            # choose unmatched:
+            #     ('127[.], False)
+
+            if type(ip_regex) in (type(()), type([])):
+                ip_regex, to_choose = ip_regex
+            else:
+                ip_regex, to_choose = ip_regex, True
+
+            all_negative = all_negative and not to_choose
+
+            # when to choose it:
+            #     match one of positive regex.
+            #     and match none of negative regex.
+
             if re.match(ip_regex, ip):
-                rst.append(ip)
+                if to_choose:
+                    rst.append(ip)
+
                 break
+        else:
+            # if all regexs are for excluding ip, then choose it
+            if all_negative:
+                rst.append(ip)
 
     return rst
 
