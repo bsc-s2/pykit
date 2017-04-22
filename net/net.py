@@ -184,9 +184,14 @@ def parse_ip_regex_str(ip_regexs_str):
         # do not choose ip if it matches this regex
         if r.startswith('-'):
             r = (r[1:], False)
+        else:
+            r = (r, True)
 
-        if r == '':
+        if r[0] == '':
             raise ValueError('invalid regular expression: ' + repr(r))
+
+        if r[1]:
+            r = r[0]
 
         rst.append(r)
 

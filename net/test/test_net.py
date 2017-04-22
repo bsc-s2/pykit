@@ -242,8 +242,13 @@ class TestNet(unittest.TestCase):
             ',1',
             '-1,',
             ',-1',
+            '127,-',
+            '-,127',
         )
         for inp in cases_err:
+
+            dd('should fail with: ', repr(inp))
+
             try:
                 net.parse_ip_regex_str(inp)
                 self.fail('should fail with ' + repr(inp))
