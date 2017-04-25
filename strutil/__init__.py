@@ -7,6 +7,7 @@ from .strutil import (
     colorize,
     struct_repr,
     format_table,
+    utf8str,
 )
 
 from .strutil import (
@@ -53,4 +54,5 @@ __all__ = [
 
     'struct_repr',
     'format_table',
+    'utf8str',
 ]

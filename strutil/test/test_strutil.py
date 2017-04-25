@@ -250,6 +250,21 @@ class TestStrutil(unittest.TestCase):
         ]
         self.assertEqual(expected, rst)
 
+    def test_utf8str(self):
+        cases = (
+                ('', ''),
+                ('1', '1'),
+                (1, '1'),
+                (u'我', '\xe6\x88\x91'),
+                ('\xe6\x88\x91', '\xe6\x88\x91'),
+        )
+
+        for inp, expected in cases:
+
+            rst = strutil.utf8str(inp)
+
+            self.assertEqual(expected, rst)
+
 
 class TestColoredString(unittest.TestCase):
 
