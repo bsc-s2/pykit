@@ -7,19 +7,16 @@ import time
 import types
 
 formats = {
-    'default': '%a, %d %b %Y %H:%M:%S UTC',
 
-    'iso': '%Y-%m-%dT%H:%M:%S.000Z',
-
-    'utc': '%a, %d %b %Y %H:%M:%S UTC',
-    'archive': '%Y%m%d-%H',
-    'compact': '%Y%m%d-%H%M%S',
-    'daily': '%Y-%m-%d',
-
-    'mysql': '%Y-%m-%d %H:%M:%S',
-
+    'default':        '%a, %d %b %Y %H:%M:%S UTC',
+    'utc':            '%a, %d %b %Y %H:%M:%S UTC',
+    'iso':            '%Y-%m-%dT%H:%M:%S.000Z',
+    'archive':        '%Y%m%d-%H',
+    'compact':        '%Y%m%d-%H%M%S',
+    'daily':          '%Y-%m-%d',
+    'mysql':          '%Y-%m-%d %H:%M:%S',
     'nginxaccesslog': "%d/%b/%Y:%H:%M:%S",
-    'nginxerrorlog': "%Y/%m/%d %H:%M:%S",
+    'nginxerrorlog':  "%Y/%m/%d %H:%M:%S",
 }
 
 
