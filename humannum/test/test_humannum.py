@@ -170,3 +170,32 @@ class TestHumannum(unittest.TestCase):
 
             self.assertEqual(_out, rst, msg)
             self.assertTrue(_in is not rst, 'result must not be input')
+
+    def test_unit(self):
+
+        self.assertEqual('', humannum.value_to_unit[1])
+
+        cases = (
+                (1024**1, 'K'),
+                (1024**2, 'M'),
+                (1024**3, 'G'),
+                (1024**4, 'T'),
+                (1024**5, 'P'),
+                (1024**6, 'E'),
+                (1024**7, 'Z'),
+                (1024**8, 'Y'),
+        )
+
+        for inp, expected in cases:
+
+            rst = humannum.value_to_unit[inp]
+            self.assertEqual(expected, rst)
+
+            rst = humannum.unit_to_value[expected]
+            self.assertEqual(inp, rst)
+
+            with self.assertRaises(KeyError):
+                humannum.value_to_unit[inp + 1]
+
+            with self.assertRaises(KeyError):
+                humannum.value_to_unit[inp - 1]

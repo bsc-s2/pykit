@@ -12,7 +12,7 @@ E = 1024 ** 6
 Z = 1024 ** 7
 Y = 1024 ** 8
 
-unit_to_name = {
+value_to_unit = {
     1: '',
     K: 'K',
     M: 'M',
@@ -25,7 +25,7 @@ unit_to_name = {
 }
 
 unit_to_value = dict([(v, k)
-                      for (k, v) in unit_to_name.items()
+                      for (k, v) in value_to_unit.items()
                       if v != ''
                       ])
 
@@ -44,13 +44,13 @@ def humannum_int(i, unit=None):
 
         unit /= K
 
-        while unit not in unit_to_name:
+        while unit not in value_to_unit:
             unit /= K
 
     v = i * 1.0 / unit
 
     if v == int(v):
-        return '%d%s' % (v, unit_to_name[unit])
+        return '%d%s' % (v, value_to_unit[unit])
 
     if v > 10:
         vlen = 1
@@ -59,7 +59,7 @@ def humannum_int(i, unit=None):
     else:
         vlen = 3
 
-    return ('%.' + str(vlen) + 'f%s') % (v, unit_to_name[unit])
+    return ('%.' + str(vlen) + 'f%s') % (v, value_to_unit[unit])
 
 
 def humannum(data, unit=None, include=None, exclude=None):

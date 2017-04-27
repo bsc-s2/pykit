@@ -10,6 +10,9 @@ from .humannum import (
     humannum,
     parsenum,
     parseint,
+
+    value_to_unit,
+    unit_to_value,
 )
 
 __all__ = [
@@ -24,4 +27,7 @@ __all__ = [
     'humannum',
     'parsenum',
     'parseint',
+
+    'value_to_unit',
+    'unit_to_value',
 ]
