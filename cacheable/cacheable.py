@@ -114,12 +114,9 @@ class Cacheable(object):
 
             try:
                 val = self.lru[generate_key]
-            except KeyError as e:
+            except KeyError:
                 val = fun(*args, **argkv)
                 self.lru[generate_key] = val
-
-                logger.info(repr(e)
-                            + ' while getitem from LRU, key: {s}'.format(s=generate_key))
 
             if self.is_deepcopy:
                 return copy.deepcopy(val)
