@@ -14,6 +14,7 @@ formats = {
     'archive':        '%Y%m%d-%H',
     'compact':        '%Y%m%d-%H%M%S',
     'daily':          '%Y-%m-%d',
+    'daily_compact':  '%Y%m%d',
     'mysql':          '%Y-%m-%d %H:%M:%S',
     'nginxaccesslog': "%d/%b/%Y:%H:%M:%S",
     'nginxerrorlog':  "%Y/%m/%d %H:%M:%S",

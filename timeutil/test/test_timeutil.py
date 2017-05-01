@@ -17,16 +17,17 @@ test_case = {
         'second_accuracy': 1485244319,
     },
 
-    'format': {
-        'default': 'Tue, 24 Jan 2017 07:51:59 UTC',
-        'iso': '2017-01-24T07:51:59.000Z',
-        'utc': 'Tue, 24 Jan 2017 07:51:59 UTC',
-        'archive': '20170124-07',
-        'compact': '20170124-075159',
-        'daily': '2017-01-24',
-        'mysql': '2017-01-24 07:51:59',
+    'format':             {
+        'default':        'Tue, 24 Jan 2017 07:51:59 UTC',
+        'iso':            '2017-01-24T07:51:59.000Z',
+        'utc':            'Tue, 24 Jan 2017 07:51:59 UTC',
+        'archive':        '20170124-07',
+        'compact':        '20170124-075159',
+        'daily':          '2017-01-24',
+        'daily_compact':  '20170124',
+        'mysql':          '2017-01-24 07:51:59',
         'nginxaccesslog': '24/Jan/2017:07:51:59',
-        'nginxerrorlog': '2017/01/24 07:51:59',
+        'nginxerrorlog':  '2017/01/24 07:51:59',
     },
 }
 
@@ -63,7 +64,7 @@ class TestTimeutil(unittest.TestCase):
 
             if fmt_key == 'archive':
                 self.assertEqual(test_case['ts']['hour_accuracy'], ts)
-            elif fmt_key == 'daily':
+            elif fmt_key.startswith('daily'):
                 self.assertEqual(test_case['ts']['day_accuracy'], ts)
             else:
                 self.assertEqual(test_case['ts']['second_accuracy'], ts)
