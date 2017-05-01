@@ -7,7 +7,6 @@ import time
 import types
 
 formats = {
-
     'default':        '%a, %d %b %Y %H:%M:%S UTC',
     'utc':            '%a, %d %b %Y %H:%M:%S UTC',
     'iso':            '%Y-%m-%dT%H:%M:%S.000Z',
@@ -18,6 +17,13 @@ formats = {
     'mysql':          '%Y-%m-%d %H:%M:%S',
     'nginxaccesslog': "%d/%b/%Y:%H:%M:%S",
     'nginxerrorlog':  "%Y/%m/%d %H:%M:%S",
+}
+
+ts_length = {
+    's':  10,
+    'ms': 13,
+    'us': 16,
+    'ns': 19,
 }
 
 
@@ -100,3 +106,19 @@ def to_sec(v):
     else:
         raise ValueError(
             'invalid time length, not 10, 13, 16 or 19: {v}'.format(v=v))
+
+
+def is_timestamp(string, unit=None):
+
+    string = str(string)
+
+    if not string.isdigit():
+        return False
+
+    if unit is None:
+        return len(string) in ts_length.values()
+
+    if unit in ts_length:
+        return len(string) == ts_length[unit]
+
+    return False

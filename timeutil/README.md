@@ -20,6 +20,7 @@
   - [timeutil.us_to_ts](#timeutilus_to_ts)
   - [timeutil.ns_to_ts](#timeutilns_to_ts)
   - [timeutil.to_sec](#timeutilto_sec)
+  - [timeutil.is_timestamp](#timeutilis_timestamp)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -274,6 +275,31 @@ If `val` is not a valid timestamp, it raises `ValueError`.
 
 **return**:
 timestamp in second
+
+##  timeutil.is_timestamp
+
+**syntax**:
+`timeutil.is_timestamp(ts, unit=None)`
+
+It check if `ts` is a valid timestamp, in string or number.
+
+**arguments**:
+
+-   `ts`:
+    is string or number.
+
+-   `unit`:
+    specifies what the unit `ts` is in:
+
+    -   `s`:     second
+    -   `ms`:    millisecond `10^-3`
+    -   `us`:    microsecond `10^-6`
+    -   `ns`:    nanosecond  `10^-9`
+
+    -   `None`:  any of above
+
+**return**:
+`True` or `False`.
 
 # Author
 

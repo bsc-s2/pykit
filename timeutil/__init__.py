@@ -13,6 +13,7 @@ from .timeutil import (
     us_to_ts,
     ns_to_ts,
     to_sec,
+    is_timestamp,
 )
 
 __all__ = [
@@ -30,4 +31,5 @@ __all__ = [
     'us_to_ts',
     'ns_to_ts',
     'to_sec',
+    'is_timestamp',
 ]

@@ -178,3 +178,58 @@ class TestTimeutil(unittest.TestCase):
 
             with self.assertRaises(ValueError):
                 timeutil.to_sec(inp)
+
+    def test_is_timestamp(self):
+        cases = (
+            (False,                None, False,),
+            (0,                    None, False,),
+            ('0',                  None, False,),
+            (u'0',                 None, False,),
+            ((),                   None, False,),
+            ([],                   None, False,),
+            ({},                   None, False,),
+            (type,                 None, False,),
+            (149361634,            None, False,),
+            (14936163419,          None, False,),
+            (149361634100,         None, False,),
+            (14936163410009,       None, False,),
+            (149361634100011,      None, False,),
+            (14936163410001119,    None, False,),
+            (149361634100011122,   None, False,),
+            (14936163410001112229, None, False,),
+            (1493616341,           None, True,),
+            (1493616341000,        None, True,),
+            (1493616341000111,     None, True,),
+            (1493616341000111222,  None, True,),
+            (1493616341,           's',  True,),
+            (1493616341,           'ms', False,),
+            (1493616341,           'us', False,),
+            (1493616341,           'ns', False,),
+            (1493616341000,        's',  False,),
+            (1493616341000,        'ms', True,),
+            (1493616341000,        'us', False,),
+            (1493616341000,        'ns', False,),
+            (1493616341000111,     's',  False,),
+            (1493616341000111,     'ms', False,),
+            (1493616341000111,     'us', True,),
+            (1493616341000111,     'ns', False,),
+            (1493616341000111222,  's',  False,),
+            (1493616341000111222,  'ms', False,),
+            (1493616341000111222,  'us', False,),
+            (1493616341000111222,  'ns', True,),
+        )
+
+        for s, unit, expected in cases:
+
+            dd(s, unit, expected)
+
+            rst = timeutil.is_timestamp(s, unit=unit)
+            dd('rst: ', rst)
+
+            self.assertEqual(expected, rst)
+
+            # test input as string
+            rst = timeutil.is_timestamp(str(s), unit=unit)
+            dd('rst(str): ', rst)
+
+            self.assertEqual(expected, rst)
