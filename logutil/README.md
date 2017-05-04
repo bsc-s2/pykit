@@ -4,6 +4,7 @@
 
 - [Name](#name)
 - [Status](#status)
+- [Synopsis](#synopsis)
 - [Description](#description)
 - [Class](#class)
   - [logutil.FixedWatchedFileHandler](#logutilfixedwatchedfilehandler)

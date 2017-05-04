@@ -9,7 +9,6 @@
 - [Install](#install)
 - [Usage](#usage)
 - [Test](#test)
-  - [Update sub repo](#update-sub-repo)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -81,15 +80,15 @@ jobq.run([0, 1, 2], [add1, printarg])
 
 #   Test
 
-Run one of following to test a all, a module, a TestCase or a function.
+Run one of following to test all, a module, a TestCase or a function.
 
 ```
 ./script/t.sh
 ./script/t.sh zkutil
 ./script/t.sh zkutil.test
-./script/t.sh zkutil.test_zkutil
-./script/t.sh zkutil.test_zkutil.TestZKUtil
-./script/t.sh zkutil.test_zkutil.TestZKUtil.test_lock_data
+./script/t.sh zkutil.test.test_zkutil
+./script/t.sh zkutil.test.test_zkutil.TestZKUtil
+./script/t.sh zkutil.test.test_zkutil.TestZKUtil.test_lock_data
 ```
 
 #   Author
