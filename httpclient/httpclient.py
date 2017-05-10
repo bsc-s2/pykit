@@ -1,132 +1,115 @@
+#!/usr/bin/env python2
+# coding: utf-8
+
 import errno
 import logging
-import socket
 import select
+import socket
 
 logger = logging.getLogger(__name__)
 
-class S2HttpError(Exception): pass
-class BadStatus(S2HttpError): pass
-class LineTooLong(S2HttpError): pass
-class BadHeadersError(S2HttpError): pass
-class ChunkedSizeError(S2HttpError): pass
-class NotConnectedError(S2HttpError): pass
-class ResponseNotReady(S2HttpError): pass
-class HeadersError(S2HttpError): pass
-class BadStatusLine(S2HttpError): pass
 
-_MAXLINESIZE = 65536
-LINE_RECV_LENGTH = 1024*4
-BLOCK_LENGTH = 1024 * 1024 * 20
-SEND_BLOCK_SIZE = 8192
+class HttpError(Exception):
+    pass
 
-NO_CONTENT = 204
-NOT_MODIFIED = 304
 
-#example, how to use
-#   http = Http('127.0.0.1', 6003)
-#   http.request('/file/aa')
-#   status = http.status
-#   headers = http.headers
-#   buf = http.read_body(50*MB)
-#or
-#   http = Http('127.0.0.1', 6003)
-#   http.send_request('file/aa')
-#   http.send_body(body)
-#   http.finish_request()
-#   status = http.status
-#   headers = http.headers
-#   buf = http.read_body(50*MB)
+class LineTooLongError(HttpError):
+    pass
 
-class Http(object):
 
-    def __init__(self, ip, port, timeout = 60):
+class ChunkedSizeError(HttpError):
+    pass
 
-        self.ip = ip
+
+class NotConnectedError(HttpError):
+    pass
+
+
+class ResponseNotReadyError(HttpError):
+    pass
+
+
+class HeadersError(HttpError):
+    pass
+
+
+class BadStatusLineError(HttpError):
+    pass
+
+
+MAX_LINE_LENGTH = 65536
+LINE_RECV_LENGTH = 1024 * 4
+NO_CONTENT_STATUS = (204, 304)
+
+
+class HttpClient(object):
+
+    def __init__(self, host, port, timeout=60):
+
+        self.host = host
         self.port = port
         self.timeout = timeout
         self.sock = None
-
         self.chunked = False
         self.chunk_left = None
         self.content_length = None
         self.has_read = 0
-
-        self.status = None
+        self.status = 0
         self.headers = {}
-
         self.recv_iter = None
 
-    def __del__( self ):
+    def __del__(self):
 
-        if self.recv_iter is not None:
-            try:
-                self.recv_iter.close()
-            except:
-                pass
-        self.recv_iter = None
+        self._close()
 
-        if self.sock is not None:
-            try:
-                self.sock.close()
-            except:
-                pass
-        self.sock = None
+    def request(self, uri, method='GET', headers={}):
 
-    def request(self, uri, method = 'GET', headers = {}):
+        self.send_request(uri, method=method, headers=headers)
 
-        self.send_request( uri, method = method, headers = headers )
+        self.read_headers()
 
-        self.finish_request()
-
-    def send_request( self, uri, method = 'GET', headers = {} ):
+    def send_request(self, uri, method='GET', headers={}):
 
         self._reset_request()
-
         self.method = method
 
-        sbuf = [ '{method} {uri} HTTP/1.1'.format( method=method, uri=uri ), ]
-        sbuf += self._norm_headers(headers)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.settimeout(self.timeout)
+        self.sock.connect((self.host, self.port))
 
-        self.sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-        self.sock.settimeout( self.timeout )
-        self.sock.connect( (self.ip, self.port) )
+        self.sock.sendall(self._get_request_headers(
+            uri, method=method, headers=headers))
 
-        sbuf.extend(['', ''])
-        msg = "\r\n".join( sbuf )
+    def send_body(self, body):
 
-        self.sock.sendall( msg )
-
-    def send_body( self, body ):
         if self.sock is None:
-            raise NotConnectedError()
+            raise NotConnectedError('socket fd is None')
 
-        self.sock.sendall( body )
+        self.sock.sendall(body)
 
-    def finish_request( self ):
+    def read_headers(self):
 
         if self.status is not None:
-            raise ResponseNotReady()
+            raise ResponseNotReadyError('must send request first')
 
-        self.recv_iter = _recv_loop( self.sock, self.timeout )
-        # swollow the first yield and let recv_iter wait for argument
+        self.recv_iter = self._recv_loop()
         self.recv_iter.next()
 
-        self._load_resp_status()
-        self._load_resp_headers()
+        self._read_response_headers()
+
+        return self.headers
 
     def read_body(self, size):
 
         if size is None or size < 0:
-            raise ValueError('size error!')
+            return ''
 
         if self.chunked:
             buf = self._read_chunked(size)
             self.has_read += len(buf)
             return buf
 
-        if size > self.content_length - self.has_read:
-            size = self.content_length - self.has_read
+        size = min(size, self.content_length - self.has_read)
 
         if size <= 0:
             return ''
@@ -136,57 +119,77 @@ class Http(object):
 
         return buf
 
+    def _close(self):
+
+        if self.recv_iter is not None:
+            try:
+                self.recv_iter.close()
+            except Exception as e:
+                logger.Exception(repr(e) + ' while close recv_iter')
+        self.recv_iter = None
+
+        if self.sock is not None:
+            try:
+                self.sock.close()
+            except Exception as e:
+                logger.Exception(repr(e) + ' while close sock')
+        self.sock = None
+
     def _reset_request(self):
 
+        self._close()
         self.chunked = False
         self.chunk_left = None
         self.content_length = None
         self.has_read = 0
-
         self.status = None
         self.headers = {}
 
-    def _norm_headers( self, headers=None ):
+    def _get_request_headers(self, uri, method='GET', headers={}):
 
-        _h = {
-            'Host': self.ip,
-        }
-        _h.update( headers or {} )
+        header_lines = [
+            '{method} {uri} HTTP/1.1'.format(method=method, uri=uri), ]
 
-        hs = []
+        headers = headers or {}
+        if 'Host' not in headers and 'host' not in headers:
+            headers['Host'] = self.host
 
-        for hk, hv in _h.items():
-            hs.append( '%s: %s'%(hk, hv) )
+        for k, v in headers.items():
+            header_lines.append('%s: %s' % (k, v))
 
-        return hs
+        header_lines.extend(['', ''])
+        return '\r\n'.join(header_lines)
 
     def _read(self, size):
-        return self.recv_iter.send( ( 'block', size ) )
+        return self.recv_iter.send(('block', size))
 
     def _readline(self):
-        return self.recv_iter.send( ( 'line', None ) )
+        return self.recv_iter.send(('line', None))
 
     def _read_status(self):
 
         line = self._readline()
 
+        vals = line.split(None, 2)
+        if len(vals) < 2:
+            raise BadStatusLineError('invalid status line:{l}'.format(l=line))
+
+        ver, status = vals[0], vals[1]
+
         try:
-            version, status, reason = line.strip().split(None, 2)
-            status = int( status )
+            status = int(status)
         except ValueError as e:
-            logger.error( repr( e ) )
-            raise BadStatusLine( line )
+            logger.error(repr(e) + ' while get response status')
+            raise BadStatusLineError('status is not int:{l}'.format(l=line))
 
-        if not version.startswith('HTTP/'):
-            raise BadStatusLine( line )
-
-        if status < 100 or status > 999:
-            raise BadStatusLine( line )
+        if not ver.startswith('HTTP/') or status < 100 or status > 999:
+            raise BadStatusLineError('invalid status line:{l}'.format(l=line))
 
         return status
 
-    def _load_resp_status(self):
+    def _get_response_status(self):
 
+        # read until we get a non-100 response
         while True:
 
             status = self._read_status()
@@ -199,10 +202,11 @@ class Http(object):
                 if skip.strip() == '':
                     break
 
-        self.status = status
+        return status
 
-    def _load_resp_headers(self):
+    def _read_response_headers(self):
 
+        self.status = self._get_response_status()
         while True:
 
             line = self._readline()
@@ -210,29 +214,26 @@ class Http(object):
                 break
 
             kv = line.strip().split(':', 1)
-            hname = kv[0]
-            hval = kv[1]
+            if len(kv) < 2:
+                raise HeadersError('invalid headers param line:%s' % (line))
+            self.headers[kv[0].lower()] = kv[1].strip()
 
-            self.headers[ hname.lower() ] = hval.strip()
-
-        if (self.status == NO_CONTENT or self.status == NOT_MODIFIED
-            or self.method == 'HEAD'):
+        if self.status in NO_CONTENT_STATUS or self.method == 'HEAD':
             self.content_length = 0
             return
 
         code = self.headers.get('transfer-encoding', '')
         if code.lower() == 'chunked':
             self.chunked = True
-            self.content_length = None
             return
 
-        length = self.headers.get('content-length')
-        if length is None:
-            self.content_length = 0
-        elif not length.isdigit():
-            raise HeadersError('content-length header value error')
-        else:
+        length = self.headers.get('content-length', '0')
+        try:
             self.content_length = int(length)
+        except ValueError as e:
+            logger.error(
+                repr(e) + ' while get content-length length:{l}'.format(l=length))
+            raise HeadersError('invalid content-length')
 
     def _get_chunk_size(self):
 
@@ -245,8 +246,10 @@ class Http(object):
 
         try:
             chunk_size = int(line, 16)
-        except ValueError:
-            raise ChunkedSizeError()
+        except ValueError as e:
+            logger.error(
+                repr(e) + ' while get chunk size line:{l}'.format(l=line))
+            raise ChunkedSizeError('invalid chunk size')
 
         return chunk_size
 
@@ -265,87 +268,81 @@ class Http(object):
             if self.chunk_left == 0:
                 break
 
-            toread = min(size, self.chunk_left)
-            buf.append( self._read(toread) )
+            read_size = min(size, self.chunk_left)
+            buf.append(self._read(read_size))
 
-            size -= toread
-            self.chunk_left -= toread
+            size -= read_size
+            self.chunk_left -= read_size
 
             if self.chunk_left == 0:
-                self._read( len('\r\n') )
+                self._read(len('\r\n'))
                 self.chunk_left = None
 
-        if self.chunk_left != 0:
-            return ''.join(buf)
+        if self.chunk_left == 0:
 
-        # discard trailer
-        while True:
-            line = self._readline()
-            if line == '':
-                break
-
-        self.chunk_left = 0
+            while True:
+                line = self._readline()
+                if line == '':
+                    break
 
         return ''.join(buf)
 
-def _recv_loop( sock, timeout ):
+    def _recv_loop(self):
 
-    bufs = ['']
-    mode, size = yield
+        bufs = ['']
+        mode, size = yield
 
-    while True:
+        while True:
 
-        if mode == 'line':
+            if mode == 'line':
+                buf = bufs[0]
+                if '\r\n' in buf:
+                    rst, buf = buf.split('\r\n', 1)
+                    bufs[0] = buf
+                    mode, size = yield rst
+                    continue
+                else:
+                    if len(buf) >= MAX_LINE_LENGTH:
+                        raise LineTooLongError(
+                            'line length greater than max_len:{l}'.format(l=len(buf)))
+                    else:
+                        buf += self._recv(LINE_RECV_LENGTH)
+                        bufs[0] = buf
+                        continue
+            else:
+                total = len(bufs[0])
+                while total < size:
+                    bufs.append(self._recv(size - total))
+                    total += len(bufs[-1])
 
-            buf = bufs[ 0 ]
-            if '\r\n' in buf:
-                rst, buf = buf.split( '\r\n', 1 )
-                bufs[ 0 ] = buf
+                rst = ''.join(bufs)
+                if size < len(rst):
+                    bufs = [rst[size:]]
+                    rst = rst[:size]
+                else:
+                    bufs = ['']
                 mode, size = yield rst
-                continue
-            else:
-                if len( buf ) >= _MAXLINESIZE:
-                    raise LineTooLong()
-                else:
-                    buf += _recv_raise( sock, timeout, LINE_RECV_LENGTH )[ 'buf' ]
-                    bufs[ 0 ] = buf
-                    continue
-        else:
-            total = len( bufs[ 0 ] )
-            while total < size:
-                bufs.append( _recv_raise( sock, timeout, size-total )[ 'buf' ] )
-                total += len(bufs[ -1 ])
 
-            rst = ''.join( bufs )
-            if size < len( rst ):
-                bufs = [ rst[ size: ] ]
-                rst = rst[ :size ]
-            else:
-                bufs = [ '' ]
-            mode, size = yield rst
+    def _recv(self, size):
 
-def _recv_raise( sock, timeout, size ):
+        buf = ''
+        for _ in range(2):
+            try:
+                buf = self.sock.recv(size)
+                break
+            except socket.error as e:
+                if len(e.args) <= 0 or e.args[0] != errno.EAGAIN:
+                    raise
 
-    o = { 'buf':None }
-
-    for ii in range( 2 ):
-        try:
-            o['buf'] = sock.recv( size )
-            break
-        except socket.error as e:
-            if len(e.args) > 0 and e.args[ 0 ] == errno.EAGAIN:
                 evin, evout, everr = select.select(
-                        [ sock.fileno() ], [], [], timeout )
-                if len( evin ) != 0:
-                    continue
-                else:
-                    raise socket.timeout( 'timeout %d seconds while waiting to recv'
-                                          % timeout )
-            else:
-                raise
+                    [self.sock.fileno()], [], [], self.timeout)
 
-    if o['buf'] == '':
-        raise socket.error('want to read %d bytes, but read empty !' % size)
+                if len(evin) <= 0:
+                    raise socket.timeout(
+                        '{second}s timeout while recv'.format(second=self.timeout))
 
-    return o
+        if len(buf) <= 0:
+            raise socket.error(
+                'got empty when recv {l} bytes'.format(l=size))
 
+        return buf
