@@ -42,7 +42,7 @@ LINE_RECV_LENGTH = 1024 * 4
 NO_CONTENT_STATUS = (204, 304)
 
 
-class HttpClient(object):
+class Client(object):
 
     def __init__(self, host, port, timeout=60):
 
@@ -227,9 +227,14 @@ class HttpClient(object):
             self.chunked = True
             return
 
-        length = self.headers.get('content-length', '0')
+        length = self.headers.get('content-length')
+        if length is None:
+            self.content_length = 0
+            return
+
         try:
             self.content_length = int(length)
+            self.headers['content-length'] = self.content_length
         except ValueError as e:
             logger.error(
                 repr(e) + ' while get content-length length:{l}'.format(l=length))

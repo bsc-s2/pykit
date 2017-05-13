@@ -1,4 +1,4 @@
-from .httpclient import (
+from .client import (
     HttpError,
     LineTooLongError,
     ChunkedSizeError,
@@ -6,7 +6,7 @@ from .httpclient import (
     ResponseNotReadyError,
     HeadersError,
     BadStatusLineError,
-    HttpClient,
+    Client,
 )
 
 __all__ = [
@@ -17,5 +17,5 @@ __all__ = [
     'ResponseNotReadyError',
     'HeadersError',
     'BadStatusLineError',
-    'HttpClient',
+    'Client',
 ]

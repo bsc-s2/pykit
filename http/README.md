@@ -7,33 +7,33 @@
 - [Synopsis](#synopsis)
 - [Description](#description)
 - [Constants](#constants)
-    - [httpclient.HttpClient.status](#httpclienthttpclientstatus)
-    - [httpclient.HttpClient.has_read](#httpclienthttpclienthasread)
-    - [httpclient.HttpClient.headers](#httpclienthttpclientheaders)
-    - [httpclient.HttpClient.content_length](#httpclienthttpclientcontentlength)
-    - [httpclient.HttpClient.chunked](#httpclienthttpclientchunked)
+    - [http.Client.status](#httpclientstatus)
+    - [http.Client.has_read](#httpclienthasread)
+    - [http.Client.headers](#httpclientheaders)
+    - [http.Client.content_length](#httpclientcontentlength)
+    - [http.Client.chunked](#httpclientchunked)
 - [Exceptions](#exceptions)
-    - [httpclient.HttpError](#httpclienthttperror)
-    - [httpclient.LineTooLongError](#httpclientlinetoolongerror)
-    - [httpclient.ChunkedSizeError](#httpclientchunkedsizeerror)
-    - [httpclient.NotConnectedError](#httpclientnotconnectederror)
-    - [httpclient.ResponseNotReadyError](#httpclientresponsenotreadyerror)
-    - [httpclient.HeadersError](#httpclientheaderserror)
-    - [httpclient.BadStatusLineError](#httpclientbadstatuslineerror)
+    - [http.HttpError](#httphttperror)
+    - [http.LineTooLongError](#httplinetoolongerror)
+    - [http.ChunkedSizeError](#httpchunkedsizeerror)
+    - [http.NotConnectedError](#httpnotconnectederror)
+    - [http.ResponseNotReadyError](#httpresponsenotreadyerror)
+    - [http.HeadersError](#httpheaderserror)
+    - [http.BadStatusLineError](#httpbadstatuslineerror)
 - [Classes](#classes)
-    - [httpclient.HttpClient](#httpclienthttpclient)
+    - [http.Client](#httpclient)
 - [Methods](#methods)
-    - [httpclient.HttpClient.send_request](#httpclienthttpclientsendrequest)
-    - [httpclient.HttpClient.read_headers](#httpclienthttpclientreadheaders)
-    - [httpclient.HttpClient.request](#httpclienthttpclientrequest)
-    - [httpclient.HttpClient.send_body](#httpclienthttpclientsendbody)
-    - [httpclient.HttpClient.read_body](#httpclienthttpclientreadbody)
+    - [http.Client.send_request](#httpclientsendrequest)
+    - [http.Client.read_headers](#httpclientreadheaders)
+    - [http.Client.request](#httpclientrequest)
+    - [http.Client.send_body](#httpclientsendbody)
+    - [http.Client.read_body](#httpclientreadbody)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
 #   Name
 
-httpclient
+http
 
 #   Status
 
@@ -42,7 +42,7 @@ The library is considered production ready.
 #   Synopsis
 
 ```python
-from pykit import httpclient
+from pykit import http
 
 headers = {
     'Host': '127.0.0.1',
@@ -50,7 +50,7 @@ headers = {
 }
 
 try:
-    h = httpclient.HttpClient('127.0.0.1', 80)
+    h = http.Client('127.0.0.1', 80)
     # send http reqeust and recv http response headers
     h.request('/test.txt', method='GET', headers=headers)
     status = h.status
@@ -77,12 +77,12 @@ try:
         body += buf
 
     print(body)
-except (socket.error, httpclient.HttpError) as e:
+except (socket.error, http.HttpError) as e:
     print(repr(e))
 ```
 
 ```python
-from pykit import httpclient
+from pykit import http
 import urllib
 
 content = urllib.urlencode({'f': 'foo', 'b': 'bar'})
@@ -93,7 +93,7 @@ headers = {
 }
 
 try:
-    h = httpclient.HttpClient('127.0.0.1', 80)
+    h = http.Client('127.0.0.1', 80)
     # send http reqeust header
     h.send_request('http://www.example.com', method='POST', headers=headers)
     # send http request body
@@ -102,16 +102,9 @@ try:
     res_headers = h.read_headers()
     status = h.status
     # get response body
-    body = ''
-    while True:
-        buf = h.read_body(1024)
-        if len(buf) <= 0:
-            break
-        body += buf
+    print(h.read_body(4096))
 
-    print(body)
-
-except (socket.error, httpclient.HttpError) as e:
+except (socket.error, http.HttpError) as e:
     print(repr(e))
 ```
 
@@ -119,110 +112,115 @@ except (socket.error, httpclient.HttpError) as e:
 
 HTTP/1.1 client
 
+We find that `httplib` must work in blocking mode and it can not have a timeout
+when recving response.
+
+Use this module, we can set timeout, if timeout raise a `socket.timeout`.
+
 #   Constants
 
-##  httpclient.HttpClient.status
+##  http.Client.status
 
 **syntax**:
-`httpclient.HttpClient.status`
+`http.Client.status`
 
 Status code returned by server.
 
-##  httpclient.HttpClient.has_read
+##  http.Client.has_read
 
 **syntax**:
-`httpclient.HttpClient.has_read`
+`http.Client.has_read`
 
 Has read length of response body
 
-##  httpclient.HttpClient.headers
+##  http.Client.headers
 
 **syntax**:
-`httpclient.HttpClient.headers`
+`http.Client.headers`
 
 A `dict`(header name, header value) of response headers.
 
-##  httpclient.HttpClient.content_length
+##  http.Client.content_length
 
 **syntax**:
-`httpclient.HttpClient.content_length`
+`http.Client.content_length`
 
 Http resonse body length, if body is chunked encoding,
 it is `None`.
 
-##  httpclient.HttpClient.chunked
+##  http.Client.chunked
 
 **syntax**:
-`httpclient.HttpClient.chunked`
+`http.Client.chunked`
 
 Http response body encoding type, `True` is chunked encoding,
 `False` is other encoding.
 
 #   Exceptions
 
-##  httpclient.HttpError
+##  http.HttpError
 
 **syntax**:
-`httpclient.HttpError`
+`http.HttpError`
 
 The base class of the other exceptions in this module.
 It is a subclass of `Exception`.
 
-##  httpclient.LineTooLongError
+##  http.LineTooLongError
 
 **syntax**:
-`httpclient.LineTooLongError`
+`http.LineTooLongError`
 
 A subclass of `HttpError`.
 Raise if length of line is greater than 65536
 when read response headers or get length of chunked block.
 
-##  httpclient.ChunkedSizeError
+##  http.ChunkedSizeError
 
 **syntax**:
-`httpclient.ChunkedSizeError`
+`http.ChunkedSizeError`
 
 A subclass of `HttpError`.
 Raise if get length of chunked block failed.
 
-##  httpclient.NotConnectedError
+##  http.NotConnectedError
 
 **syntax**:
-`httpclient.NotConnectedError`
+`http.NotConnectedError`
 
 A subclass of `HttpError`.
 Raise if send data without connecting to server.
 
-##  httpclient.ResponseNotReadyError
+##  http.ResponseNotReadyError
 
 **syntax**:
-`httpclient.ResponseNotReadyError`
+`http.ResponseNotReadyError`
 
 A subclass of `HttpError`.
 Raise if get response without `send_request`.
 
-##  httpclient.HeadersError
+##  http.HeadersError
 
 **syntax**:
-`httpclient.HeadersError`
+`http.HeadersError`
 
 A subclass of `HttpError`.
 Raise when get response headers failed.
 
-##  httpclient.BadStatusLineError
+##  http.BadStatusLineError
 
 **syntax**:
-`httpclient.BadStatusLineError`
+`http.BadStatusLineError`
 
 A subclass of `HttpError`.
 Raise if get response status failed.
 
 #   Classes
 
-##  httpclient.HttpClient
+##  http.Client
 
 **syntax**:
-`httpclient.HttpClient(host, port, timeout=60)`
+`http.Client(host, port, timeout=60)`
 
 HTTP client class
 
@@ -243,10 +241,10 @@ HTTP client class
 
 #   Methods
 
-##  httpclient.HttpClient.send_request
+##  http.Client.send_request
 
 **syntax**:
-`httpclient.HttpClient.send_request(uri, method='GET', headers={})`
+`http.Client.send_request(uri, method='GET', headers={})`
 
 Connect to server and send request headers to server.
 
@@ -264,14 +262,14 @@ Connect to server and send request headers to server.
 **return**:
 nothing
 
-##  httpclient.HttpClient.read_headers
+##  http.Client.read_headers
 
 **syntax**:
-`httpclient.HttpClient.read_headers()`
+`http.Client.read_headers()`
 
 Reads and returns the response headers.
 The response headers and status code will be cached with
-`httpclient.HttpClient.headers` and `httpclient.HttpClient.status`.
+`http.Client.headers` and `http.Client.status`.
 
 **arguments**:
 nothing
@@ -279,15 +277,15 @@ nothing
 **return**:
 response headers, it is a `dict`(header name , header value).
 
-##  httpclient.HttpClient.request
+##  http.Client.request
 
 **syntax**:
-`httpclient.HttpClient.request(uri, method='GET', headers={})`
+`http.Client.request(uri, method='GET', headers={})`
 
 Send http request which doesn't have body and recv response headers.
-After it, get response body with `httpclient.HttpClient.read_body`,
-get response headers with `httpclient.HttpClient.headers`,
-get response status code with `httpclient.HttpClient.status`.
+After it, get response body with `http.Client.read_body`,
+get response headers with `http.Client.headers`,
+get response status code with `http.Client.status`.
 
 **arguments**:
 
@@ -303,10 +301,10 @@ get response status code with `httpclient.HttpClient.status`.
 **return**:
 nothing
 
-##  httpclient.HttpClient.send_body
+##  http.Client.send_body
 
 **syntax**:
-`httpclient.HttpClient.send_body(body)`
+`http.Client.send_body(body)`
 
 Send http request body.It should be a `str` of data
 to send after the headers are finished
@@ -319,10 +317,10 @@ to send after the headers are finished
 **return**:
 nothing
 
-##  httpclient.HttpClient.read_body
+##  http.Client.read_body
 
 **syntax**:
-`httpclient.HttpClient.read_body(size)`
+`http.Client.read_body(size)`
 
 Reads and returns the response body
 

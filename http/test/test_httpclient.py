@@ -8,7 +8,7 @@ import unittest
 from BaseHTTPServer import BaseHTTPRequestHandler
 from BaseHTTPServer import HTTPServer
 
-from pykit import httpclient
+from pykit import http
 from pykit import ututil
 
 dd = ututil.dd
@@ -22,18 +22,34 @@ MB = (1024**2)
 
 class TestHttpClient(unittest.TestCase):
 
+    special_cases = {
+        'test_recving_server_close':
+        (0, 1, 'HTTP/1.1 200 OK\r\nContent-Length: 10\r\n\r\n'),
+
+        'test_server_delay_response':
+        (0.5, 1, 'HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\nabcd'),
+
+        'test_raise_chunked_size_error':
+        (0, 10, 'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nfoo\r\n'),
+
+        'test_raise_socket_timeout':
+        (3, 1, 'H'),
+
+        'test_raise_line_too_long_error':
+        (0, KB, 'a' * 65536),
+    }
     request_headers = {}
     request_body = {}
 
     def test_raise_connnect_error(self):
 
-        h = httpclient.HttpClient(HOST, PORT)
-        self.assertRaises(httpclient.NotConnectedError, h.send_body, None)
+        h = http.Client(HOST, PORT)
+        self.assertRaises(http.NotConnectedError, h.send_body, None)
 
     def test_raise_line_too_long_error(self):
 
-        h = httpclient.HttpClient(HOST, PORT)
-        self.assertRaises(httpclient.LineTooLongError,
+        h = http.Client(HOST, PORT)
+        self.assertRaises(http.LineTooLongError,
                           h.request, '/line_too_long')
 
     def test_raise_response_headers_error(self):
@@ -42,27 +58,25 @@ class TestHttpClient(unittest.TestCase):
             '/invalid_content_len',
             '/invalid_header',
         )
-        h = httpclient.HttpClient(HOST, PORT)
+        h = http.Client(HOST, PORT)
         for uri in cases:
-            self.assertRaises(httpclient.HeadersError, h.request, uri)
+            self.assertRaises(http.HeadersError, h.request, uri)
 
     def test_raise_chunked_size_error(self):
 
-        h = httpclient.HttpClient(HOST, PORT)
-        h.request('/chunked_size_error')
-        self.assertRaises(httpclient.ChunkedSizeError, h.read_body, 10)
+        h = http.Client(HOST, PORT)
+        h.request('')
+        self.assertRaises(http.ChunkedSizeError, h.read_body, 10)
 
     def test_raise_response_not_ready_error(self):
 
-        h = httpclient.HttpClient(HOST, PORT)
-        self.assertRaises(httpclient.ResponseNotReadyError, h.read_headers)
+        h = http.Client(HOST, PORT)
+        self.assertRaises(http.ResponseNotReadyError, h.read_headers)
 
     def test_raise_socket_timeout(self):
 
-        h = httpclient.HttpClient(HOST, PORT, 2)
-        h.request('/get_10k_sleep3')
-        self.assertRaises(socket.timeout, h.read_body, 10 * KB)
-        time.sleep(2)
+        h = http.Client(HOST, PORT, 2)
+        self.assertRaises(socket.timeout, h.request, '')
 
     def test_raise_badstatus_line_error(self):
 
@@ -73,14 +87,14 @@ class TestHttpClient(unittest.TestCase):
             '/>999',
         )
 
-        h = httpclient.HttpClient(HOST, PORT)
+        h = http.Client(HOST, PORT)
         for uri in cases:
 
-            self.assertRaises(httpclient.BadStatusLineError, h.request, uri)
+            self.assertRaises(http.BadStatusLineError, h.request, uri)
 
     def test_raise_socket_error(self):
 
-        h = httpclient.HttpClient(HOST, PORT)
+        h = http.Client(HOST, PORT)
         h.request('/socket_error')
         self.assertRaises(socket.error, h.read_body, 10)
 
@@ -108,7 +122,7 @@ class TestHttpClient(unittest.TestCase):
             ('/get_30m_range', 10 * MB, 'opq' * 10 * MB, (2 * MB, 25 * MB), False),
             ('/get_30m_range', 50 * MB, 'opq' * 10 * MB, (2 * MB, 25 * MB), False),
         )
-        h = httpclient.HttpClient(HOST, PORT)
+        h = http.Client(HOST, PORT)
         for uri, each_read_size, expected_res, content_range, chunked in cases:
             h.request(uri)
 
@@ -137,7 +151,7 @@ class TestHttpClient(unittest.TestCase):
             ('/get_500', 500),
         )
 
-        h = httpclient.HttpClient(HOST, PORT)
+        h = http.Client(HOST, PORT)
         for uri, expected_status in cases:
             h.request(uri)
 
@@ -151,7 +165,7 @@ class TestHttpClient(unittest.TestCase):
             ('/header_3', {'host': 'example.com', 'b': 'bar', 'f': 'foo'}),
         )
 
-        h = httpclient.HttpClient(HOST, PORT)
+        h = http.Client(HOST, PORT)
         for uri, headers in cases:
             h.request(uri, headers=headers)
             time.sleep(0.1)
@@ -166,53 +180,11 @@ class TestHttpClient(unittest.TestCase):
             ('/header_res3', {'f': 'foo', 'b': 'bar', 't': 'too'}),
         )
 
-        h = httpclient.HttpClient(HOST, PORT)
+        h = http.Client(HOST, PORT)
         for uri, expected_headers in cases:
             h.request(uri)
 
             self.assertEqual(expected_headers, h.headers)
-
-    def test_server_delay_response(self):
-
-        cases = (
-            ('/get_1b_sleep1', 1, 'a', ()),
-            ('/get_1b_sleep2', 1, 'a', ()),
-            ('/get_10k_sleep1', KB, 'bc' * 5 * KB, ()),
-            ('/get_10k_sleep2', KB, 'bc' * 5 * KB, ()),
-            ('/get_30m_sleep1', 10 * MB, 'cde' * 10 * MB, ()),
-            ('/get_30m_sleep2', 10 * MB, 'cde' * 10 * MB, ()),
-
-            ('/get_10b_chunked_sleep1', 1, 'f' * 10, ()),
-            ('/get_10b_chunked_sleep2', 1, 'f' * 10, ()),
-            ('/get_10k_chunked_sleep1', KB, 'gh' * 5 * KB, ()),
-            ('/get_10k_chunked_sleep2', KB, 'gh' * 5 * KB, ()),
-            ('/get_30m_chunked_sleep1', 10 * MB, 'ijk' * 10 * MB, ()),
-            ('/get_30m_chunked_sleep2', 10 * MB, 'ijk' * 10 * MB, ()),
-
-            ('/get_10b_range_sleep1', 1, 'l' * 10, (2, 8)),
-            ('/get_10b_range_sleep2', 1, 'l' * 10, (2, 8)),
-            ('/get_10k_range_sleep1', KB, 'mn' * 5 * KB, (KB, 8 * KB)),
-            ('/get_10k_range_sleep2', KB, 'mn' * 5 * KB, (KB, 8 * KB)),
-            ('/get_30m_range_sleep1', 10 * MB, 'opq' * 10 * MB, (2 * MB, 25 * MB)),
-            ('/get_30m_range_sleep2', 10 * MB, 'opq' * 10 * MB, (2 * MB, 25 * MB)),
-        )
-
-        h = httpclient.HttpClient(HOST, PORT, 3)
-        for uri, each_read_size, expected_res, content_range in cases:
-            h.request(uri)
-
-            bufs = ''
-            while True:
-                b = h.read_body(each_read_size)
-                if len(b) <= 0:
-                    break
-                bufs += b
-
-            start, end = 0, len(expected_res)
-            if len(content_range) >= 2:
-                start, end = content_range[0], content_range[1] + 1
-
-            self.assertEqual(bufs, expected_res[start:end])
 
     def test_send_body(self):
 
@@ -222,7 +194,7 @@ class TestHttpClient(unittest.TestCase):
             ('/put_30m', 'cde' * 10 * MB, {'Content-Length': 30 * MB}),
         )
 
-        h = httpclient.HttpClient(HOST, PORT)
+        h = http.Client(HOST, PORT)
         for uri, body, headers in cases:
             h.send_request(uri, method='PUT', headers=headers)
             h.send_body(body)
@@ -231,6 +203,49 @@ class TestHttpClient(unittest.TestCase):
 
             self.assertEqual(self.request_body, body)
 
+    def test_recving_server_close(self):
+
+        h = http.Client(HOST, PORT, 3)
+        succ = False
+
+        try:
+            h.request('')
+            h.read_body(1024)
+        except socket.error as e:
+            dd(repr(e) + ' while recv server close')
+            succ = True
+        except Exception as e:
+            dd(repr(e) + ' unexpected exception')
+
+        self.assertTrue(succ)
+
+    def test_server_delay_response(self):
+
+        case = ({'content-length': 4}, 'abcd')
+        expected_headers, expected_body = case
+
+        h = http.Client(HOST, PORT, 1)
+        h.request('')
+        body = h.read_body(1024)
+
+        self.assertEqual(h.headers, expected_headers)
+        self.assertEqual(body, expected_body)
+
+    def test_client_delay_send_data(self):
+
+        case = ('/client_delay', {'Content-Length': 10}, 'abcde' * 2)
+        uri, headers, body = case
+
+        h = http.Client(HOST, PORT, 3)
+        h.send_request(uri, method='PUT', headers=headers)
+
+        while len(body) > 0:
+            h.send_body(body[:1])
+            time.sleep(1)
+            body = body[1:]
+
+        self.assertEqual(case[2], self.request_body)
+
     def __init__(self, *args, **kwargs):
 
         super(TestHttpClient, self).__init__(*args, **kwargs)
@@ -238,26 +253,61 @@ class TestHttpClient(unittest.TestCase):
         self.http_server = None
 
     def setUp(self):
+
         self.server_thread = threading.Thread(target=self._start_server)
         self.server_thread.start()
         time.sleep(0.1)
 
     def tearDown(self):
-        self.http_server.shutdown()
-        self.http_server.server_close()
+
+        if self.http_server is not None:
+            self.http_server.shutdown()
+            self.http_server.server_close()
+
         self.server_thread.join()
 
     def _start_server(self):
 
+        if self._testMethodName in self.special_cases:
+            self._special_case_handle()
+        else:
+            addr = (HOST, PORT)
+            self.http_server = HTTPServer(addr, Handle)
+            self.http_server.serve_forever()
+
+    def _special_case_handle(self):
+
         addr = (HOST, PORT)
-        self.http_server = HTTPServer(addr, Handle)
-        self.http_server.serve_forever()
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(addr)
+        sock.listen(10)
+
+        conn, _ = sock.accept()
+        data = conn.recv(1024)
+        dd('recv data:' + data)
+
+        res = self.special_cases.get(self._testMethodName)
+        if res is None:
+            return
+
+        sleep_time, each_send_size, content = res
+        try:
+            while len(content) > 0:
+                conn.sendall(content[:each_send_size])
+                content = content[each_send_size:]
+                time.sleep(sleep_time)
+        except socket.error as e:
+            dd(repr(e) + ' while response')
+
+        time.sleep(1)
+        sock.close()
+        conn.close()
 
 
 class Handle(BaseHTTPRequestHandler):
 
     all_responses = {
-        '/line_too_long': (200, {'line': 'a' * 65540}, (0, '')),
         '/invalid_content_len': (200, {'content-length': 'abc'}, (0, '')),
         '/invalid_header': (200, {}, (0, '')),
 
@@ -268,8 +318,6 @@ class Handle(BaseHTTPRequestHandler):
         '/get_10b_chunked': (200, {'Transfer-Encoding': 'chunked'}, (5, 'f' * 10)),
         '/get_10k_chunked': (200, {'Transfer-Encoding': 'chunked'}, (KB, 'gh' * 5 * KB)),
         '/get_30m_chunked': (200, {'Transfer-Encoding': 'chunked'}, (10 * MB, 'ijk' * 10 * MB)),
-
-        '/chunked_size_error': (200, {'Transfer-Encoding': 'chunked'}, (0, '')),
 
         '/get_10b_range': (206,
                            {'Content-Range': 'bytes %d-%d/%d' % (2, 8, 10),
@@ -336,61 +384,56 @@ class Handle(BaseHTTPRequestHandler):
 
         read_bytes = 0
         bufs = ''
-        while read_bytes < length:
-            bufs += self.rfile.read(length - read_bytes)
-            read_bytes = len(bufs)
 
-        TestHttpClient.request_body = bufs
-        self.send_response(200)
-        self.send_header('Content-Length', 0)
-        self.end_headers()
+        try:
+            while read_bytes < length:
+                bufs += self.rfile.read(length - read_bytes)
+                read_bytes = len(bufs)
+
+            TestHttpClient.request_body = bufs
+            self.send_response(200)
+            self.send_header('Content-Length', 0)
+            self.end_headers()
+        except Exception as e:
+            dd(repr(e) + ' while parse put request')
 
     def do_GET(self):
 
         TestHttpClient.request_headers = self.headers.dict
-        uri = self.path
-        sleep_time = 0
-        if '_sleep' in uri:
-            sleep_time = int(uri[uri.find('_sleep'):][6:])
-            uri = uri[:uri.find('_sleep')]
 
-        res = self.all_responses.get(uri)
+        res = self.all_responses.get(self.path)
         if res is None:
             dd('path error:' + self.path)
             return
 
         status, headers, body = res
 
-        self.send_response(status)
+        try:
+            self.send_response(status)
 
-        for k, v in headers.items():
-            self.send_header(k, v)
-        self.end_headers()
+            for k, v in headers.items():
+                self.send_header(k, v)
+            self.end_headers()
 
-        self._send_body(headers, body, sleep_time)
+            self._send_body(headers, body)
+        except Exception as e:
+            dd(repr(e) + ' while parse get request')
 
-    def _send_body(self, headers, body, sleep_time):
-
-        if self.path == '/chunked_size_error':
-            self.wfile.write('zzz\r\n')
-            return
+    def _send_body(self, headers, body):
 
         each_send_size, data = self._get_body(headers, body)
-        length = len(data)
-        start = 0
         ext = ';extname'
-        while length > 0:
-            time.sleep(sleep_time)
-            send_buf = data[start:start + each_send_size]
+        while len(data) > 0:
+            send_buf = data[:each_send_size]
             if 'Transfer-Encoding' in headers:
+                if len(ext) > 0:
+                    ext = ''
+                else:
+                    ext = ';extname'
                 send_buf = '%x%s\r\n%s\r\n' % (len(send_buf), ext, send_buf)
+
             self.wfile.write(send_buf)
-            start += each_send_size
-            length -= each_send_size
-            if len(ext) > 0:
-                ext = ''
-            else:
-                ext = ';extname'
+            data = data[each_send_size:]
 
         if 'Transfer-Encoding' in headers:
             self.wfile.write('0\r\n\r\n')
