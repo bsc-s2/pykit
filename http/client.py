@@ -39,7 +39,6 @@ class BadStatusLineError(HttpError):
 
 MAX_LINE_LENGTH = 65536
 LINE_RECV_LENGTH = 1024 * 4
-NO_CONTENT_STATUS = (204, 304)
 
 
 class Client(object):
@@ -54,7 +53,7 @@ class Client(object):
         self.chunk_left = None
         self.content_length = None
         self.has_read = 0
-        self.status = 0
+        self.status = None
         self.headers = {}
         self.recv_iter = None
 
@@ -66,6 +65,7 @@ class Client(object):
 
         self.send_request(uri, method=method, headers=headers)
 
+        self.read_status()
         self.read_headers()
 
     def send_request(self, uri, method='GET', headers={}):
@@ -77,122 +77,38 @@ class Client(object):
         self.sock.settimeout(self.timeout)
         self.sock.connect((self.host, self.port))
 
-        self.sock.sendall(self._get_request_headers(
-            uri, method=method, headers=headers))
-
-    def send_body(self, body):
-
-        if self.sock is None:
-            raise NotConnectedError('socket fd is None')
-
-        self.sock.sendall(body)
-
-    def read_headers(self):
-
-        if self.status is not None:
-            raise ResponseNotReadyError('must send request first')
-
-        self.recv_iter = self._recv_loop()
-        self.recv_iter.next()
-
-        self._read_response_headers()
-
-        return self.headers
-
-    def read_body(self, size):
-
-        if size is None or size < 0:
-            return ''
-
-        if self.chunked:
-            buf = self._read_chunked(size)
-            self.has_read += len(buf)
-            return buf
-
-        size = min(size, self.content_length - self.has_read)
-
-        if size <= 0:
-            return ''
-
-        buf = self._read(size)
-        self.has_read += size
-
-        return buf
-
-    def _close(self):
-
-        if self.recv_iter is not None:
-            try:
-                self.recv_iter.close()
-            except Exception as e:
-                logger.Exception(repr(e) + ' while close recv_iter')
-        self.recv_iter = None
-
-        if self.sock is not None:
-            try:
-                self.sock.close()
-            except Exception as e:
-                logger.Exception(repr(e) + ' while close sock')
-        self.sock = None
-
-    def _reset_request(self):
-
-        self._close()
-        self.chunked = False
-        self.chunk_left = None
-        self.content_length = None
-        self.has_read = 0
-        self.status = None
-        self.headers = {}
-
-    def _get_request_headers(self, uri, method='GET', headers={}):
-
-        header_lines = [
-            '{method} {uri} HTTP/1.1'.format(method=method, uri=uri), ]
+        bufs = ['{method} {uri} HTTP/1.1'.format(method=method, uri=uri), ]
 
         headers = headers or {}
         if 'Host' not in headers and 'host' not in headers:
             headers['Host'] = self.host
 
         for k, v in headers.items():
-            header_lines.append('%s: %s' % (k, v))
+            bufs.append('%s: %s' % (k, v))
 
-        header_lines.extend(['', ''])
-        return '\r\n'.join(header_lines)
+        bufs.extend(['', ''])
 
-    def _read(self, size):
-        return self.recv_iter.send(('block', size))
+        self.sock.sendall('\r\n'.join(bufs))
 
-    def _readline(self):
-        return self.recv_iter.send(('line', None))
+    def send_body(self, body):
 
-    def _read_status(self):
+        if self.sock is None:
+            raise NotConnectedError('socket object is None')
 
-        line = self._readline()
+        self.sock.sendall(body)
 
-        vals = line.split(None, 2)
-        if len(vals) < 2:
-            raise BadStatusLineError('invalid status line:{l}'.format(l=line))
+    def read_status(self):
 
-        ver, status = vals[0], vals[1]
+        if self.status is not None or self.sock is None:
+            raise ResponseNotReadyError('response is unavailable')
 
-        try:
-            status = int(status)
-        except ValueError as e:
-            logger.error(repr(e) + ' while get response status')
-            raise BadStatusLineError('status is not int:{l}'.format(l=line))
-
-        if not ver.startswith('HTTP/') or status < 100 or status > 999:
-            raise BadStatusLineError('invalid status line:{l}'.format(l=line))
-
-        return status
-
-    def _get_response_status(self):
+        self.recv_iter = self._recv_loop()
+        self.recv_iter.next()
 
         # read until we get a non-100 response
         while True:
 
-            status = self._read_status()
+            status = self._get_response_status()
             if status >= 200:
                 break
 
@@ -202,11 +118,11 @@ class Client(object):
                 if skip.strip() == '':
                     break
 
+        self.status = status
         return status
 
-    def _read_response_headers(self):
+    def read_headers(self):
 
-        self.status = self._get_response_status()
         while True:
 
             line = self._readline()
@@ -218,7 +134,7 @@ class Client(object):
                 raise HeadersError('invalid headers param line:%s' % (line))
             self.headers[kv[0].lower()] = kv[1].strip()
 
-        if self.status in NO_CONTENT_STATUS or self.method == 'HEAD':
+        if self.status in (204, 304) or self.method == 'HEAD':
             self.content_length = 0
             return
 
@@ -239,6 +155,86 @@ class Client(object):
             logger.error(
                 repr(e) + ' while get content-length length:{l}'.format(l=length))
             raise HeadersError('invalid content-length')
+
+        return self.headers
+
+    def read_body(self, size):
+
+        if size is not None and size <= 0:
+            return ''
+
+        if self.chunked:
+            buf = self._read_chunked(size)
+            self.has_read += len(buf)
+            return buf
+
+        if size is None:
+            size = self.content_length - self.has_read
+        else:
+            size = min(size, self.content_length - self.has_read)
+
+        if size <= 0:
+            return ''
+
+        buf = self._read(size)
+        self.has_read += size
+
+        return buf
+
+    def _close(self):
+
+        if self.recv_iter is not None:
+            try:
+                self.recv_iter.close()
+            except Exception as e:
+                logger.Exception(repr(e) + ' while close recv_iter')
+
+        self.recv_iter = None
+
+        if self.sock is not None:
+            try:
+                self.sock.close()
+            except Exception as e:
+                logger.Exception(repr(e) + ' while close sock')
+
+        self.sock = None
+
+    def _reset_request(self):
+
+        self._close()
+        self.chunked = False
+        self.chunk_left = None
+        self.content_length = None
+        self.has_read = 0
+        self.status = None
+        self.headers = {}
+
+    def _read(self, size):
+        return self.recv_iter.send(('block', size))
+
+    def _readline(self):
+        return self.recv_iter.send(('line', None))
+
+    def _get_response_status(self):
+
+        line = self._readline()
+
+        vals = line.split(None, 2)
+        if len(vals) < 2:
+            raise BadStatusLineError('invalid status line:{l}'.format(l=line))
+
+        ver, status = vals[0], vals[1]
+
+        try:
+            status = int(status)
+        except ValueError as e:
+            logger.error(repr(e) + ' while get response status')
+            raise BadStatusLineError('status is not int:{l}'.format(l=line))
+
+        if not ver.startswith('HTTP/') or status < 100 or status > 999:
+            raise BadStatusLineError('invalid status line:{l}'.format(l=line))
+
+        return status
 
     def _get_chunk_size(self):
 
@@ -265,7 +261,7 @@ class Client(object):
         if self.chunk_left == 0:
             return ''
 
-        while size > 0:
+        while size is None or size > 0:
 
             if self.chunk_left is None:
                 self.chunk_left = self._get_chunk_size()
@@ -273,10 +269,13 @@ class Client(object):
             if self.chunk_left == 0:
                 break
 
-            read_size = min(size, self.chunk_left)
-            buf.append(self._read(read_size))
+            if size is not None:
+                read_size = min(size, self.chunk_left)
+                size -= read_size
+            else:
+                read_size = self.chunk_left
 
-            size -= read_size
+            buf.append(self._read(read_size))
             self.chunk_left -= read_size
 
             if self.chunk_left == 0:

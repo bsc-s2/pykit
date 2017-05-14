@@ -2,34 +2,35 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 #   Table of Content
 
-- [Name](#name)
-- [Status](#status)
-- [Synopsis](#synopsis)
-- [Description](#description)
-- [Constants](#constants)
-    - [http.Client.status](#httpclientstatus)
-    - [http.Client.has_read](#httpclienthasread)
-    - [http.Client.headers](#httpclientheaders)
-    - [http.Client.content_length](#httpclientcontentlength)
-    - [http.Client.chunked](#httpclientchunked)
-- [Exceptions](#exceptions)
-    - [http.HttpError](#httphttperror)
-    - [http.LineTooLongError](#httplinetoolongerror)
-    - [http.ChunkedSizeError](#httpchunkedsizeerror)
-    - [http.NotConnectedError](#httpnotconnectederror)
-    - [http.ResponseNotReadyError](#httpresponsenotreadyerror)
-    - [http.HeadersError](#httpheaderserror)
-    - [http.BadStatusLineError](#httpbadstatuslineerror)
-- [Classes](#classes)
-    - [http.Client](#httpclient)
-- [Methods](#methods)
-    - [http.Client.send_request](#httpclientsendrequest)
-    - [http.Client.read_headers](#httpclientreadheaders)
-    - [http.Client.request](#httpclientrequest)
-    - [http.Client.send_body](#httpclientsendbody)
-    - [http.Client.read_body](#httpclientreadbody)
-- [Author](#author)
-- [Copyright and License](#copyright-and-license)
+* [Name](#name)
+* [Status](#status)
+* [Synopsis](#synopsis)
+* [Description](#description)
+* [Exceptions](#exceptions)
+    * [http.HttpError](#httphttperror)
+    * [http.LineTooLongError](#httplinetoolongerror)
+    * [http.ChunkedSizeError](#httpchunkedsizeerror)
+    * [http.NotConnectedError](#httpnotconnectederror)
+    * [http.ResponseNotReadyError](#httpresponsenotreadyerror)
+    * [http.HeadersError](#httpheaderserror)
+    * [http.BadStatusLineError](#httpbadstatuslineerror)
+* [Constants](#constants)
+    * [http.Client.status](#httpclientstatus)
+    * [http.Client.has_read](#httpclienthasread)
+    * [http.Client.headers](#httpclientheaders)
+    * [http.Client.content_length](#httpclientcontentlength)
+    * [http.Client.chunked](#httpclientchunked)
+* [Classes](#classes)
+    * [http.Client](#httpclient)
+* [Methods](#methods)
+    * [http.Client.send_request](#httpclientsendrequest)
+    * [http.Client.read_status](#httpclientreadstatus)
+    * [http.Client.read_headers](#httpclientreadheaders)
+    * [http.Client.request](#httpclientrequest)
+    * [http.Client.send_body](#httpclientsendbody)
+    * [http.Client.read_body](#httpclientreadbody)
+* [Author](#author)
+* [Copyright and License](#copyright*and*license)
 
 #   Name
 
@@ -51,8 +52,12 @@ headers = {
 
 try:
     h = http.Client('127.0.0.1', 80)
-    # send http reqeust and recv http response headers
+
+    # send http reqeust without body
+    # read response status line
+    # read response headers
     h.request('/test.txt', method='GET', headers=headers)
+
     status = h.status
     # response code return from http server, type is int
     # 200
@@ -69,14 +74,7 @@ try:
     # }
 
     # get response body
-    body = ''
-    while True:
-        buf = h.read_body(1024)
-        if len(buf) <= 0:
-            break
-        body += buf
-
-    print(body)
+    print(h.read_body(None))
 except (socket.error, http.HttpError) as e:
     print(repr(e))
 ```
@@ -94,16 +92,21 @@ headers = {
 
 try:
     h = http.Client('127.0.0.1', 80)
-    # send http reqeust header
+
+    # send http reqeust
     h.send_request('http://www.example.com', method='POST', headers=headers)
+
     # send http request body
     h.send_body(content)
-    # get response headers
-    res_headers = h.read_headers()
-    status = h.status
-    # get response body
-    print(h.read_body(4096))
 
+    # read response status line
+    status = h.read_status()
+
+    # read response headers
+    res_headers = h.read_headers()
+
+    # read response body
+    print(h.read_body(None))
 except (socket.error, http.HttpError) as e:
     print(repr(e))
 ```
@@ -116,45 +119,6 @@ We find that `httplib` must work in blocking mode and it can not have a timeout
 when recving response.
 
 Use this module, we can set timeout, if timeout raise a `socket.timeout`.
-
-#   Constants
-
-##  http.Client.status
-
-**syntax**:
-`http.Client.status`
-
-Status code returned by server.
-
-##  http.Client.has_read
-
-**syntax**:
-`http.Client.has_read`
-
-Has read length of response body
-
-##  http.Client.headers
-
-**syntax**:
-`http.Client.headers`
-
-A `dict`(header name, header value) of response headers.
-
-##  http.Client.content_length
-
-**syntax**:
-`http.Client.content_length`
-
-Http resonse body length, if body is chunked encoding,
-it is `None`.
-
-##  http.Client.chunked
-
-**syntax**:
-`http.Client.chunked`
-
-Http response body encoding type, `True` is chunked encoding,
-`False` is other encoding.
 
 #   Exceptions
 
@@ -172,8 +136,8 @@ It is a subclass of `Exception`.
 `http.LineTooLongError`
 
 A subclass of `HttpError`.
-Raise if length of line is greater than 65536
-when read response headers or get length of chunked block.
+Raise if length of line is greater or equal than 65536
+when read response status line,  headers and get length of chunked block.
 
 ##  http.ChunkedSizeError
 
@@ -197,7 +161,7 @@ Raise if send data without connecting to server.
 `http.ResponseNotReadyError`
 
 A subclass of `HttpError`.
-Raise if get response without `send_request`.
+Raise if response is unavailable.
 
 ##  http.HeadersError
 
@@ -205,7 +169,7 @@ Raise if get response without `send_request`.
 `http.HeadersError`
 
 A subclass of `HttpError`.
-Raise when get response headers failed.
+Raise if read response headers failed.
 
 ##  http.BadStatusLineError
 
@@ -213,7 +177,45 @@ Raise when get response headers failed.
 `http.BadStatusLineError`
 
 A subclass of `HttpError`.
-Raise if get response status failed.
+Raise if read response status line failed.
+
+#   Constants
+
+##  http.Client.status
+
+**syntax**:
+`http.Client.status`
+
+Status code returned by server.
+
+##  http.Client.has_read
+
+**syntax**:
+`http.Client.has_read`
+
+The length of response body that has been read.
+
+##  http.Client.headers
+
+**syntax**:
+`http.Client.headers`
+
+A `dict`(header name, header value) of response headers.
+
+##  http.Client.content_length
+
+**syntax**:
+`http.Client.content_length`
+
+Http resonse body length, if body is chunked encoding,
+it is `None`.
+
+##  http.Client.chunked
+
+**syntax**:
+`http.Client.chunked`
+
+Whether response body is chunked encoding or not.
 
 #   Classes
 
@@ -246,7 +248,7 @@ HTTP client class
 **syntax**:
 `http.Client.send_request(uri, method='GET', headers={})`
 
-Connect to server and send request headers to server.
+Connect to server and send http request.
 
 **arguments**:
 
@@ -262,14 +264,27 @@ Connect to server and send request headers to server.
 **return**:
 nothing
 
+##  http.Client.read_status
+
+**syntax**:
+`http.Client.read_status()`
+
+Read response status line and return the status code.
+Cache the response status code with `http.Client.status`
+
+**arguments**:
+nothing
+
+**return**:
+response status code.
+
 ##  http.Client.read_headers
 
 **syntax**:
 `http.Client.read_headers()`
 
-Reads and returns the response headers.
-The response headers and status code will be cached with
-`http.Client.headers` and `http.Client.status`.
+Read and return the response headers.
+Cache the response headers with `http.Client.headers`
 
 **arguments**:
 nothing
@@ -282,10 +297,9 @@ response headers, it is a `dict`(header name , header value).
 **syntax**:
 `http.Client.request(uri, method='GET', headers={})`
 
-Send http request which doesn't have body and recv response headers.
-After it, get response body with `http.Client.read_body`,
-get response headers with `http.Client.headers`,
-get response status code with `http.Client.status`.
+Send http request without body and read response status line, headers.
+After it, get response status code with `http.Client.status`,
+get response headers with `http.Client.headers`.
 
 **arguments**:
 
@@ -306,7 +320,7 @@ nothing
 **syntax**:
 `http.Client.send_body(body)`
 
-Send http request body.It should be a `str` of data
+Send http request body. It should be a `str` of data
 to send after the headers are finished
 
 **arguments**:
@@ -322,12 +336,13 @@ nothing
 **syntax**:
 `http.Client.read_body(size)`
 
-Reads and returns the response body
+Read and return the response body.
 
 **arguments**:
 
 -   `size`:
-    need read size, if greater than left size, use the min one.
+    need read size, if greater than left size use the min one,
+    if `None` read left unread body.
 
 **return**:
 the read response body.

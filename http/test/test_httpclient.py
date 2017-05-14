@@ -71,7 +71,7 @@ class TestHttpClient(unittest.TestCase):
     def test_raise_response_not_ready_error(self):
 
         h = http.Client(HOST, PORT)
-        self.assertRaises(http.ResponseNotReadyError, h.read_headers)
+        self.assertRaises(http.ResponseNotReadyError, h.read_status)
 
     def test_raise_socket_timeout(self):
 
@@ -103,36 +103,49 @@ class TestHttpClient(unittest.TestCase):
         cases = (
             ('/get_1b', 1, 'a', (), False),
             ('/get_1b', 10, 'a', (), False),
+            ('/get_1b', None, 'a', (), False),
             ('/get_10k', KB, 'bc' * 5 * KB, (), False),
             ('/get_10k', 20 * KB, 'bc' * 5 * KB, (), False),
+            ('/get_10k', None, 'bc' * 5 * KB, (), False),
             ('/get_30m', 10 * MB, 'cde' * 10 * MB, (), False),
             ('/get_30m', 50 * MB, 'cde' * 10 * MB, (), False),
+            ('/get_30m', None, 'cde' * 10 * MB, (), False),
 
             ('/get_10b_chunked', 1, 'f' * 10, (), True),
             ('/get_10b_chunked', 10, 'f' * 10, (), True),
+            ('/get_10b_chunked', None, 'f' * 10, (), True),
             ('/get_10k_chunked', KB, 'gh' * 5 * KB, (), True),
             ('/get_10k_chunked', 20 * KB, 'gh' * 5 * KB, (), True),
+            ('/get_10k_chunked', None, 'gh' * 5 * KB, (), True),
             ('/get_30m_chunked', 10 * MB, 'ijk' * 10 * MB, (), True),
             ('/get_30m_chunked', 50 * MB, 'ijk' * 10 * MB, (), True),
+            ('/get_30m_chunked', None, 'ijk' * 10 * MB, (), True),
 
             ('/get_10b_range', 1, 'l' * 10, (2, 8), False),
             ('/get_10b_range', 10, 'l' * 10, (2, 8), False),
+            ('/get_10b_range', None, 'l' * 10, (2, 8), False),
             ('/get_10k_range', KB, 'mn' * 5 * KB, (KB, 8 * KB), False),
             ('/get_10k_range', 20 * KB, 'mn' * 5 * KB, (KB, 8 * KB), False),
+            ('/get_10k_range', None, 'mn' * 5 * KB, (KB, 8 * KB), False),
             ('/get_30m_range', 10 * MB, 'opq' * 10 * MB, (2 * MB, 25 * MB), False),
             ('/get_30m_range', 50 * MB, 'opq' * 10 * MB, (2 * MB, 25 * MB), False),
+            ('/get_30m_range', None, 'opq' * 10 * MB, (2 * MB, 25 * MB), False),
         )
         h = http.Client(HOST, PORT)
         for uri, each_read_size, expected_res, content_range, chunked in cases:
             h.request(uri)
 
             bufs = ''
-            while True:
-                b = h.read_body(each_read_size)
-                if len(b) <= 0:
-                    break
-                bufs += b
+            if each_read_size is None:
+                bufs = h.read_body(None)
                 self.assertEqual(h.has_read, len(bufs))
+            else:
+                while True:
+                    b = h.read_body(each_read_size)
+                    if len(b) <= 0:
+                        break
+                    bufs += b
+                    self.assertEqual(h.has_read, len(bufs))
 
             start, end = 0, len(expected_res)
             if len(content_range) >= 2:
@@ -198,6 +211,7 @@ class TestHttpClient(unittest.TestCase):
         for uri, body, headers in cases:
             h.send_request(uri, method='PUT', headers=headers)
             h.send_body(body)
+            h.read_status()
             h.read_headers()
             time.sleep(0.1)
 
