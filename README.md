@@ -49,7 +49,7 @@ There is a `README.md` for each module.
 | [utfjson](utfjson)             | Force `json.dump` and `json.load` in `utf-8` encoding                                 |
 | [zkutil](zkutil)               | Unitility functions for zookeeper                                                     |
 | [cacheable](cacheable)         | Cache data which access frequently                                                    |
-| [httpclient](httpclient)       | HTTP/1.1 client                                                                       |
+| [http](http)                   | HTTP/1.1 client                                                                       |
 
 #   Install
 
