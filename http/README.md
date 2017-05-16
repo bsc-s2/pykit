@@ -2,35 +2,35 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 #   Table of Content
 
-* [Name](#name)
-* [Status](#status)
-* [Synopsis](#synopsis)
-* [Description](#description)
-* [Exceptions](#exceptions)
-    * [http.HttpError](#httphttperror)
-    * [http.LineTooLongError](#httplinetoolongerror)
-    * [http.ChunkedSizeError](#httpchunkedsizeerror)
-    * [http.NotConnectedError](#httpnotconnectederror)
-    * [http.ResponseNotReadyError](#httpresponsenotreadyerror)
-    * [http.HeadersError](#httpheaderserror)
-    * [http.BadStatusLineError](#httpbadstatuslineerror)
-* [Constants](#constants)
-    * [http.Client.status](#httpclientstatus)
-    * [http.Client.has_read](#httpclienthasread)
-    * [http.Client.headers](#httpclientheaders)
-    * [http.Client.content_length](#httpclientcontentlength)
-    * [http.Client.chunked](#httpclientchunked)
-* [Classes](#classes)
-    * [http.Client](#httpclient)
-* [Methods](#methods)
-    * [http.Client.send_request](#httpclientsendrequest)
-    * [http.Client.read_status](#httpclientreadstatus)
-    * [http.Client.read_headers](#httpclientreadheaders)
-    * [http.Client.request](#httpclientrequest)
-    * [http.Client.send_body](#httpclientsendbody)
-    * [http.Client.read_body](#httpclientreadbody)
-* [Author](#author)
-* [Copyright and License](#copyright*and*license)
+- [Name](#name)
+- [Status](#status)
+- [Synopsis](#synopsis)
+- [Description](#description)
+- [Exceptions](#exceptions)
+    - [http.HttpError](#httphttperror)
+    - [http.LineTooLongError](#httplinetoolongerror)
+    - [http.ChunkedSizeError](#httpchunkedsizeerror)
+    - [http.NotConnectedError](#httpnotconnectederror)
+    - [http.ResponseNotReadyError](#httpresponsenotreadyerror)
+    - [http.HeadersError](#httpheaderserror)
+    - [http.BadStatusLineError](#httpbadstatuslineerror)
+- [Constants](#constants)
+    - [http.Client.status](#httpclientstatus)
+    - [http.Client.has_read](#httpclienthas_read)
+    - [http.Client.headers](#httpclientheaders)
+    - [http.Client.content_length](#httpclientcontent_length)
+    - [http.Client.chunked](#httpclientchunked)
+- [Classes](#classes)
+    - [http.Client](#httpclient)
+- [Methods](#methods)
+    - [http.Client.send_request](#httpclientsend_request)
+    - [http.Client.read_status](#httpclientread_status)
+    - [http.Client.read_headers](#httpclientread_headers)
+    - [http.Client.request](#httpclientrequest)
+    - [http.Client.send_body](#httpclientsend_body)
+    - [http.Client.read_body](#httpclientread_body)
+- [Author](#author)
+- [Copyright and License](#copyright-and-license)
 
 #   Name
 
@@ -145,7 +145,7 @@ when read response status line,  headers and get length of chunked block.
 `http.ChunkedSizeError`
 
 A subclass of `HttpError`.
-Raise if get length of chunked block failed.
+Raise if failed to get length of chunked block.
 
 ##  http.NotConnectedError
 
@@ -169,7 +169,7 @@ Raise if response is unavailable.
 `http.HeadersError`
 
 A subclass of `HttpError`.
-Raise if read response headers failed.
+Raise if failed to read response headers.
 
 ##  http.BadStatusLineError
 
@@ -177,7 +177,7 @@ Raise if read response headers failed.
 `http.BadStatusLineError`
 
 A subclass of `HttpError`.
-Raise if read response status line failed.
+Raise if failed to read response status line.
 
 #   Constants
 
@@ -207,7 +207,7 @@ A `dict`(header name, header value) of response headers.
 **syntax**:
 `http.Client.content_length`
 
-Http resonse body length, if body is chunked encoding,
+Length of http response body, if body is chunked encoding,
 it is `None`.
 
 ##  http.Client.chunked
@@ -345,7 +345,7 @@ Read and return the response body.
     if `None` read left unread body.
 
 **return**:
-the read response body.
+the response body.
 
 #   Author
 

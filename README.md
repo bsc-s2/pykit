@@ -35,9 +35,11 @@ There is a `README.md` for each module.
 
 | name                           | description                                                                           |
 | :--                            | :--                                                                                   |
+| [cacheable](cacheable)         | Cache data which access frequently                                                    |
 | [cachepool](cachepool)         | Reusable object cache in process                                                      |
 | [daemonize](daemonize)         | Start, stop or restart a daemon process                                               |
 | [dictutil](dictutil)           | Dictionary helper utility                                                             |
+| [http](http)                   | HTTP/1.1 client                                                                       |
 | [humannum](humannum)           | Convert number to human readable number string                                        |
 | [jobq](jobq)                   | Process serial of input elements with several functions concurrently and sequentially |
 | [logutil](logutil)             | Unitility functions to create logger or make log message                              |
@@ -48,8 +50,6 @@ There is a `README.md` for each module.
 | [timeutil](timeutil)           | Support specify time format output and get current ts, ms, us api etc                 |
 | [utfjson](utfjson)             | Force `json.dump` and `json.load` in `utf-8` encoding                                 |
 | [zkutil](zkutil)               | Unitility functions for zookeeper                                                     |
-| [cacheable](cacheable)         | Cache data which access frequently                                                    |
-| [http](http)                   | HTTP/1.1 client                                                                       |
 
 #   Install
 

@@ -5,6 +5,7 @@ import socket
 import threading
 import time
 import unittest
+import gc
 from BaseHTTPServer import BaseHTTPRequestHandler
 from BaseHTTPServer import HTTPServer
 
@@ -235,7 +236,7 @@ class TestHttpClient(unittest.TestCase):
 
     def test_server_delay_response(self):
 
-        case = ({'content-length': 4}, 'abcd')
+        case = ({'content-length': '4'}, 'abcd')
         expected_headers, expected_body = case
 
         h = http.Client(HOST, PORT, 1)
@@ -259,6 +260,16 @@ class TestHttpClient(unittest.TestCase):
             body = body[1:]
 
         self.assertEqual(case[2], self.request_body)
+
+    def test_garbage_collector(self):
+
+        h = http.Client(HOST, PORT)
+        h.request('/get_30m')
+        h.read_body(None)
+        del h
+
+        gc.collect()
+        self.assertListEqual(gc.garbage, [])
 
     def __init__(self, *args, **kwargs):
 

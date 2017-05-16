@@ -102,7 +102,7 @@ class Client(object):
         if self.status is not None or self.sock is None:
             raise ResponseNotReadyError('response is unavailable')
 
-        self.recv_iter = self._recv_loop()
+        self.recv_iter = _recv_loop(self.sock, self.timeout)
         self.recv_iter.next()
 
         # read until we get a non-100 response
@@ -143,14 +143,10 @@ class Client(object):
             self.chunked = True
             return
 
-        length = self.headers.get('content-length')
-        if length is None:
-            self.content_length = 0
-            return
+        length = self.headers.get('content-length', '0')
 
         try:
             self.content_length = int(length)
-            self.headers['content-length'] = self.content_length
         except ValueError as e:
             logger.error(
                 repr(e) + ' while get content-length length:{l}'.format(l=length))
@@ -291,62 +287,63 @@ class Client(object):
 
         return ''.join(buf)
 
-    def _recv_loop(self):
 
-        bufs = ['']
-        mode, size = yield
+def _recv_loop(sock, timeout):
 
-        while True:
+    bufs = ['']
+    mode, size = yield
 
-            if mode == 'line':
-                buf = bufs[0]
-                if '\r\n' in buf:
-                    rst, buf = buf.split('\r\n', 1)
-                    bufs[0] = buf
-                    mode, size = yield rst
-                    continue
-                else:
-                    if len(buf) >= MAX_LINE_LENGTH:
-                        raise LineTooLongError(
-                            'line length greater than max_len:{l}'.format(l=len(buf)))
-                    else:
-                        buf += self._recv(LINE_RECV_LENGTH)
-                        bufs[0] = buf
-                        continue
-            else:
-                total = len(bufs[0])
-                while total < size:
-                    bufs.append(self._recv(size - total))
-                    total += len(bufs[-1])
+    while True:
 
-                rst = ''.join(bufs)
-                if size < len(rst):
-                    bufs = [rst[size:]]
-                    rst = rst[:size]
-                else:
-                    bufs = ['']
+        if mode == 'line':
+            buf = bufs[0]
+            if '\r\n' in buf:
+                rst, buf = buf.split('\r\n', 1)
+                bufs[0] = buf
                 mode, size = yield rst
+                continue
+            else:
+                if len(buf) >= MAX_LINE_LENGTH:
+                    raise LineTooLongError(
+                        'line length greater than max_len:{l}'.format(l=len(buf)))
+                else:
+                    buf += _recv(sock, timeout, LINE_RECV_LENGTH)
+                    bufs[0] = buf
+                    continue
+        else:
+            total = len(bufs[0])
+            while total < size:
+                bufs.append(_recv(sock, timeout, size - total))
+                total += len(bufs[-1])
 
-    def _recv(self, size):
+            rst = ''.join(bufs)
+            if size < len(rst):
+                bufs = [rst[size:]]
+                rst = rst[:size]
+            else:
+                bufs = ['']
+            mode, size = yield rst
 
-        buf = ''
-        for _ in range(2):
-            try:
-                buf = self.sock.recv(size)
-                break
-            except socket.error as e:
-                if len(e.args) <= 0 or e.args[0] != errno.EAGAIN:
-                    raise
 
-                evin, evout, everr = select.select(
-                    [self.sock.fileno()], [], [], self.timeout)
+def _recv(sock, timeout, size):
 
-                if len(evin) <= 0:
-                    raise socket.timeout(
-                        '{second}s timeout while recv'.format(second=self.timeout))
+    buf = ''
+    for _ in range(2):
+        try:
+            buf = sock.recv(size)
+            break
+        except socket.error as e:
+            if len(e.args) <= 0 or e.args[0] != errno.EAGAIN:
+                raise
 
-        if len(buf) <= 0:
-            raise socket.error(
-                'got empty when recv {l} bytes'.format(l=size))
+            evin, evout, everr = select.select(
+                [sock.fileno()], [], [], timeout)
 
-        return buf
+            if len(evin) <= 0:
+                raise socket.timeout(
+                    '{second}s timeout while recv'.format(second=timeout))
+
+    if len(buf) <= 0:
+        raise socket.error('got empty when recv {l} bytes'.format(l=size))
+
+    return buf
