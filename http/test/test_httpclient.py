@@ -152,9 +152,9 @@ class TestHttpClient(unittest.TestCase):
             if len(content_range) >= 2:
                 start, end = content_range[0], content_range[1] + 1
 
-            self.assertEqual(bufs, expected_res[start:end])
-            self.assertEqual(h.content_length, None if chunked else len(bufs))
-            self.assertEqual(h.chunked, chunked)
+            self.assertEqual(expected_res[start:end], bufs)
+            self.assertEqual(None if chunked else len(bufs), h.content_length)
+            self.assertEqual(chunked, h.chunked)
 
     def test_status(self):
 
@@ -169,7 +169,7 @@ class TestHttpClient(unittest.TestCase):
         for uri, expected_status in cases:
             h.request(uri)
 
-            self.assertEqual(h.status, expected_status)
+            self.assertEqual(expected_status, h.status)
 
     def test_request_headers(self):
 
@@ -216,7 +216,7 @@ class TestHttpClient(unittest.TestCase):
             h.read_headers()
             time.sleep(0.1)
 
-            self.assertEqual(self.request_body, body)
+            self.assertEqual(body, self.request_body)
 
     def test_recving_server_close(self):
 
@@ -243,8 +243,8 @@ class TestHttpClient(unittest.TestCase):
         h.request('')
         body = h.read_body(1024)
 
-        self.assertEqual(h.headers, expected_headers)
-        self.assertEqual(body, expected_body)
+        self.assertEqual(expected_headers, h.headers)
+        self.assertEqual(expected_body, body)
 
     def test_client_delay_send_data(self):
 
@@ -269,7 +269,7 @@ class TestHttpClient(unittest.TestCase):
         del h
 
         gc.collect()
-        self.assertListEqual(gc.garbage, [])
+        self.assertListEqual([], gc.garbage)
 
     def __init__(self, *args, **kwargs):
 
