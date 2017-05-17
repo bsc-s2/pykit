@@ -1,11 +1,11 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
+import gc
 import socket
 import threading
 import time
 import unittest
-import gc
 from BaseHTTPServer import BaseHTTPRequestHandler
 from BaseHTTPServer import HTTPServer
 
@@ -326,8 +326,8 @@ class TestHttpClient(unittest.TestCase):
             dd(repr(e) + ' while response')
 
         time.sleep(1)
-        sock.close()
         conn.close()
+        sock.close()
 
 
 class Handle(BaseHTTPRequestHandler):
