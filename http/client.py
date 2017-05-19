@@ -65,8 +65,7 @@ class Client(object):
 
         self.send_request(uri, method=method, headers=headers)
 
-        self.read_status()
-        self.read_headers()
+        self.read_response()
 
     def send_request(self, uri, method='GET', headers={}):
 
@@ -153,6 +152,13 @@ class Client(object):
             raise HeadersError('invalid content-length')
 
         return self.headers
+
+    def read_response(self):
+
+        self.read_status()
+        self.read_headers()
+
+        return self.status, self.headers
 
     def read_body(self, size):
 

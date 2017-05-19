@@ -72,7 +72,7 @@ class TestHttpClient(unittest.TestCase):
     def test_raise_response_not_ready_error(self):
 
         h = http.Client(HOST, PORT)
-        self.assertRaises(http.ResponseNotReadyError, h.read_status)
+        self.assertRaises(http.ResponseNotReadyError, h.read_response)
 
     def test_raise_socket_timeout(self):
 
@@ -212,8 +212,7 @@ class TestHttpClient(unittest.TestCase):
         for uri, body, headers in cases:
             h.send_request(uri, method='PUT', headers=headers)
             h.send_body(body)
-            h.read_status()
-            h.read_headers()
+            h.read_response()
             time.sleep(0.1)
 
             self.assertEqual(body, self.request_body)

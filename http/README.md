@@ -26,6 +26,7 @@
     - [http.Client.send_request](#httpclientsend_request)
     - [http.Client.read_status](#httpclientread_status)
     - [http.Client.read_headers](#httpclientread_headers)
+    - [http.Client.read_response](#httpclientread_response)
     - [http.Client.request](#httpclientrequest)
     - [http.Client.send_body](#httpclientsend_body)
     - [http.Client.read_body](#httpclientread_body)
@@ -99,11 +100,8 @@ try:
     # send http request body
     h.send_body(content)
 
-    # read response status line
-    status = h.read_status()
-
-    # read response headers
-    res_headers = h.read_headers()
+    # read response status line and headers
+    status, headers = h.read_response()
 
     # read response body
     print(h.read_body(None))
@@ -291,6 +289,24 @@ nothing
 
 **return**:
 response headers, it is a `dict`(header name , header value).
+
+##  http.Client.read_response
+
+**syntax**:
+`http.Client.read_response()`
+
+Read response status line, headers and return them.
+Cache the status code with `http.Client.status`
+Cache the response headers with `http.Client.headers`
+
+**arguments**:
+nothing
+
+**return**: two values,
+
+-   status: response status code, type is `int`
+
+-   headers: response headers, it is a `dict`(header name , header value).
 
 ##  http.Client.request
 
