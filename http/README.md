@@ -24,10 +24,9 @@
     - [http.Client](#httpclient)
 - [Methods](#methods)
     - [http.Client.send_request](#httpclientsend_request)
-    - [http.Client.read_status](#httpclientread_status)
-    - [http.Client.read_headers](#httpclientread_headers)
     - [http.Client.request](#httpclientrequest)
     - [http.Client.send_body](#httpclientsend_body)
+    - [http.Client.read_response](#httpclientread_response)
     - [http.Client.read_body](#httpclientread_body)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
@@ -99,11 +98,8 @@ try:
     # send http request body
     h.send_body(content)
 
-    # read response status line
-    status = h.read_status()
-
-    # read response headers
-    res_headers = h.read_headers()
+    # read response status line, headers
+    status, res_headers = h.read_response()
 
     # read response body
     print(h.read_body(None))
@@ -264,34 +260,6 @@ Connect to server and send http request.
 **return**:
 nothing
 
-##  http.Client.read_status
-
-**syntax**:
-`http.Client.read_status()`
-
-Read response status line and return the status code.
-Cache the response status code with `http.Client.status`
-
-**arguments**:
-nothing
-
-**return**:
-response status code.
-
-##  http.Client.read_headers
-
-**syntax**:
-`http.Client.read_headers()`
-
-Read and return the response headers.
-Cache the response headers with `http.Client.headers`
-
-**arguments**:
-nothing
-
-**return**:
-response headers, it is a `dict`(header name , header value).
-
 ##  http.Client.request
 
 **syntax**:
@@ -330,6 +298,24 @@ to send after the headers are finished
 
 **return**:
 nothing
+
+##  http.Client.read_response
+
+**syntax**:
+`http.Client.read_response()`
+
+Read response status line, headers and return them.
+Cache the status code with `http.Client.status`
+Cache the response headers with `http.Client.headers`
+
+**arguments**:
+nothing
+
+**return**: two values,
+
+-   status: response status code, type is `int`
+
+-   headers: response headers, it is a `dict`(header name , header value).
 
 ##  http.Client.read_body
 

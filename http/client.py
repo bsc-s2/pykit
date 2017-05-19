@@ -65,8 +65,7 @@ class Client(object):
 
         self.send_request(uri, method=method, headers=headers)
 
-        self.read_status()
-        self.read_headers()
+        self.read_response()
 
     def send_request(self, uri, method='GET', headers={}):
 
@@ -97,7 +96,7 @@ class Client(object):
 
         self.sock.sendall(body)
 
-    def read_status(self):
+    def read_response(self):
 
         if self.status is not None or self.sock is None:
             raise ResponseNotReadyError('response is unavailable')
@@ -105,54 +104,10 @@ class Client(object):
         self.recv_iter = _recv_loop(self.sock, self.timeout)
         self.recv_iter.next()
 
-        # read until we get a non-100 response
-        while True:
+        self._read_status()
+        self._read_headers()
 
-            status = self._get_response_status()
-            if status >= 200:
-                break
-
-            # skip the header from the 100 response
-            while True:
-                skip = self._readline()
-                if skip.strip() == '':
-                    break
-
-        self.status = status
-        return status
-
-    def read_headers(self):
-
-        while True:
-
-            line = self._readline()
-            if line == '':
-                break
-
-            kv = line.strip().split(':', 1)
-            if len(kv) < 2:
-                raise HeadersError('invalid headers param line:%s' % (line))
-            self.headers[kv[0].lower()] = kv[1].strip()
-
-        if self.status in (204, 304) or self.method == 'HEAD':
-            self.content_length = 0
-            return self.headers
-
-        code = self.headers.get('transfer-encoding', '')
-        if code.lower() == 'chunked':
-            self.chunked = True
-            return self.headers
-
-        length = self.headers.get('content-length', '0')
-
-        try:
-            self.content_length = int(length)
-        except ValueError as e:
-            logger.error(
-                repr(e) + ' while get content-length length:{l}'.format(l=length))
-            raise HeadersError('invalid content-length')
-
-        return self.headers
+        return self.status, self.headers
 
     def read_body(self, size):
 
@@ -176,6 +131,54 @@ class Client(object):
         self.has_read += size
 
         return buf
+
+    def _read_status(self):
+
+        # read until we get a non-100 response
+        while True:
+
+            status = self._get_response_status()
+            if status >= 200:
+                break
+
+            # skip the header from the 100 response
+            while True:
+                skip = self._readline()
+                if skip.strip() == '':
+                    break
+
+        self.status = status
+
+    def _read_headers(self):
+
+        while True:
+
+            line = self._readline()
+            if line == '':
+                break
+
+            kv = line.strip().split(':', 1)
+            if len(kv) < 2:
+                raise HeadersError('invalid headers param line:%s' % (line))
+            self.headers[kv[0].lower()] = kv[1].strip()
+
+        if self.status in (204, 304) or self.method == 'HEAD':
+            self.content_length = 0
+            return
+
+        code = self.headers.get('transfer-encoding', '')
+        if code.lower() == 'chunked':
+            self.chunked = True
+            return
+
+        length = self.headers.get('content-length', '0')
+
+        try:
+            self.content_length = int(length)
+        except ValueError as e:
+            logger.error(
+                repr(e) + ' while get content-length length:{l}'.format(l=length))
+            raise HeadersError('invalid content-length')
 
     def _close(self):
 
