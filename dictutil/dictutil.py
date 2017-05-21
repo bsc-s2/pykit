@@ -47,6 +47,44 @@ def breadth_iter(mydict):
                 q.append((ks, v))
 
 
+def get(dic, key_path, vars=None, default=0, ignore_vars_key_error=None):
+
+    if vars is None:
+        vars = {}
+
+    if ignore_vars_key_error is None:
+        ignore_vars_key_error = True
+
+    _default = vars.get('_default', default)
+    node = dic
+
+    _keys = key_path.split('.')
+    if _keys == ['']:
+        return node
+
+    for k in _keys:
+
+        if k.startswith('$'):
+            k = k[1:]
+            if k in vars:
+                key = vars[k]
+            else:
+                if ignore_vars_key_error:
+                    return _default
+                else:
+                    raise KeyError('{k} does not exist in vars: {vars}'.format(
+                            k=k, vars=vars))
+        else:
+            key = k
+
+        if key not in node:
+            return _default
+
+        node = node[key]
+
+    return node
+
+
 def make_getter_str(key_path, default=0):
 
     s = 'lambda dic, vars={}: dic'

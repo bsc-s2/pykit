@@ -4,6 +4,9 @@
 import unittest
 
 from pykit import dictutil
+from pykit import ututil
+
+dd = ututil.dd
 
 
 class TestDictDeepIter(unittest.TestCase):
@@ -228,14 +231,29 @@ class TestGetter(unittest.TestCase):
 
         cases = (
 
+            ('', 0,
+             {"x": 1}, {},
+             {"x": 1}
+             ),
+
             ('x', 0,
              {}, {},
              0
              ),
 
+            ('x', 0,
+             {'x': {'y': 3}}, {},
+             {'y': 3}
+             ),
+
             ('x', 55,
              {}, {},
              55
+             ),
+
+            ('x', 55,
+             {}, {'_default': 66},
+             66
              ),
 
             ('x', 55,
@@ -291,6 +309,50 @@ class TestGetter(unittest.TestCase):
                                  rst=repr(rst),
                              )
                              )
+
+            # test dictutil.get() with the same set of cases
+
+            rst = dictutil.get(_dic, _in, vars=_vars, default=_default)
+            dd('dictutil.get({dic}, {key_path} vars={vars}, default={default})'.format(
+                dic=_dic,
+                key_path=_in,
+                vars=_vars,
+                default=_default,
+            ))
+            dd(rst)
+
+            self.assertEqual(_out, rst,
+                             'input: {_in}, {_default}, {_dic}, {_vars} expected: {_out}, actual: {rst}'.format(
+                                 _in=repr(_in),
+                                 _default=repr(_default),
+                                 _dic=repr(_dic),
+                                 _vars=repr(_vars),
+                                 _out=repr(_out),
+                                 rst=repr(rst),
+                             )
+                             )
+
+    def test_get_ignore_vars_key_error(self):
+
+        cases = (
+                ({}, '$a', {"a": "x"}, None, 0),
+                ({}, '$a', {"a": "x"}, True, 0),
+        )
+
+        for case in cases:
+
+            dd('case: ', case)
+
+            dic, key_path, vars, ign, expected = case
+            rst = dictutil.get(dic, key_path, vars=vars, ignore_vars_key_error=ign)
+
+            dd('rst: ', rst)
+
+            self.assertEqual(expected, rst)
+
+        with self.assertRaises(KeyError):
+            dictutil.get({}, '$a', {}, ignore_vars_key_error=False)
+
 
 
 class TestSetter(unittest.TestCase):

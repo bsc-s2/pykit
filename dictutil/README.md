@@ -9,6 +9,7 @@
   - [dictutil.attrdict](#dictutilattrdict)
   - [dictutil.depth_iter](#dictutildepth_iter)
   - [dictutil.breadth_iter](#dictutilbreadth_iter)
+  - [dictutil.get](#dictutilget)
   - [dictutil.make_getter](#dictutilmake_getter)
   - [dictutil.make_setter](#dictutilmake_setter)
     - [Synopsis](#synopsis-1)
@@ -252,6 +253,54 @@ an iterator. Each element it yields is a tuple of keys and value.
 
 **return**:
 an iterator, each element it yields is a tuple that contains keys and value.
+
+##  dictutil.get
+
+Returns the value of the item specified by `key_path`.
+
+`dictutil.get(dic, key_path, vars=v, default=3)`
+ is equivalent to
+`dictutil.make_getter(key_path, default=3)(dic, vars=v)`
+
+**syntax**:
+`dictutil.get(dic, key_path, vars=None, default=0, ignore_vars_key_error=None)`
+
+**arguments**:
+
+-   `dic`:
+    dictionary.
+
+-   `key_path`:
+    is a dot separated path string of key hierarchy to get an item from a
+    dictionary.
+
+    Example: `foo.bar` is same as `some_dict["foo"]["bar"]`.
+
+-   `vars`:
+    is a dictionary contains dynamic keys in `key_path`.
+
+    `dictutil.get({'a':1}, '$foo', vars={"foo":"a"})`
+    is same as
+    `dictutil.get({'a':1}, 'a')`
+
+-   `default`:
+    is the default value if the item is not found.
+    For example when `foo.bar` is used on a dictionary `{"foo":{}}`.
+
+    It must be a primitive value such as `int`, `float`, `bool`, `string` or `None`.
+
+-   `ignore_vars_key_error`:
+    specifies if it should ignore when a dynamic key does not present in
+    `vars`.
+
+    By default it is `True`.
+
+    If it is `True`, default value is returned.
+
+    If it is `False`, `KeyError` will be raised.
+
+**return**:
+item value it found by `key_path`, or `default`
 
 ##  dictutil.make_getter
 
