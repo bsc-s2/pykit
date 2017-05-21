@@ -263,7 +263,7 @@ Returns the value of the item specified by `key_path`.
 `dictutil.make_getter(key_path, default=3)(dic, vars=v)`
 
 **syntax**:
-`dictutil.get(dic, key_path, vars=None, default=0)`
+`dictutil.get(dic, key_path, vars=None, default=0, ignore_vars_key_error=None)`
 
 **arguments**:
 
@@ -288,6 +288,16 @@ Returns the value of the item specified by `key_path`.
     For example when `foo.bar` is used on a dictionary `{"foo":{}}`.
 
     It must be a primitive value such as `int`, `float`, `bool`, `string` or `None`.
+
+-   `ignore_vars_key_error`:
+    specifies if it should ignore when a dynamic key does not present in
+    `vars`.
+
+    By default it is `True`.
+
+    If it is `True`, default value is returned.
+
+    If it is `False`, `KeyError` will be raised.
 
 **return**:
 item value it found by `key_path`, or `default`

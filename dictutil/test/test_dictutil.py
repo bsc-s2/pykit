@@ -241,9 +241,19 @@ class TestGetter(unittest.TestCase):
              0
              ),
 
+            ('x', 0,
+             {'x': {'y': 3}}, {},
+             {'y': 3}
+             ),
+
             ('x', 55,
              {}, {},
              55
+             ),
+
+            ('x', 55,
+             {}, {'_default': 66},
+             66
              ),
 
             ('x', 55,
@@ -321,6 +331,28 @@ class TestGetter(unittest.TestCase):
                                  rst=repr(rst),
                              )
                              )
+
+    def test_get_ignore_vars_key_error(self):
+
+        cases = (
+                ({}, '$a', {"a": "x"}, None, 0),
+                ({}, '$a', {"a": "x"}, True, 0),
+        )
+
+        for case in cases:
+
+            dd('case: ', case)
+
+            dic, key_path, vars, ign, expected = case
+            rst = dictutil.get(dic, key_path, vars=vars, ignore_vars_key_error=ign)
+
+            dd('rst: ', rst)
+
+            self.assertEqual(expected, rst)
+
+        with self.assertRaises(KeyError):
+            dictutil.get({}, '$a', {}, ignore_vars_key_error=False)
+
 
 
 class TestSetter(unittest.TestCase):
