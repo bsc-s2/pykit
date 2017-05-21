@@ -4,6 +4,9 @@
 import unittest
 
 from pykit import dictutil
+from pykit import ututil
+
+dd = ututil.dd
 
 
 class TestDictDeepIter(unittest.TestCase):
@@ -228,6 +231,11 @@ class TestGetter(unittest.TestCase):
 
         cases = (
 
+            ('', 0,
+             {"x": 1}, {},
+             {"x": 1}
+             ),
+
             ('x', 0,
              {}, {},
              0
@@ -280,6 +288,28 @@ class TestGetter(unittest.TestCase):
             acc = dictutil.make_getter(_in, default=_default)
 
             rst = acc(_dic, vars=_vars)
+
+            self.assertEqual(_out, rst,
+                             'input: {_in}, {_default}, {_dic}, {_vars} expected: {_out}, actual: {rst}'.format(
+                                 _in=repr(_in),
+                                 _default=repr(_default),
+                                 _dic=repr(_dic),
+                                 _vars=repr(_vars),
+                                 _out=repr(_out),
+                                 rst=repr(rst),
+                             )
+                             )
+
+            # test dictutil.get() with the same set of cases
+
+            rst = dictutil.get(_dic, _in, vars=_vars, default=_default)
+            dd('dictutil.get({dic}, {key_path} vars={vars}, default={default})'.format(
+                dic=_dic,
+                key_path=_in,
+                vars=_vars,
+                default=_default,
+            ))
+            dd(rst)
 
             self.assertEqual(_out, rst,
                              'input: {_in}, {_default}, {_dic}, {_vars} expected: {_out}, actual: {rst}'.format(
