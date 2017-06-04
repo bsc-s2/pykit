@@ -42,18 +42,17 @@ There is a `README.md` for each module.
 | [http](http)                   | HTTP/1.1 client                                                                       |
 | [humannum](humannum)           | Convert number to human readable number string                                        |
 | [jobq](jobq)                   | Process serial of input elements with several functions concurrently and sequentially |
-| [logutil](logutil)             | Unitility functions to create logger or make log message                              |
+| [logutil](logutil)             | Utility functions to create logger or make log message                                |
 | [mysqlconnpool](mysqlconnpool) | Mysql connection pool with MySQLdb in python                                          |
 | [net](net)                     | Network utility                                                                       |
 | [portlock](portlock)           | cross process lock                                                                    |
 | [strutil](strutil)             | A collection of helper functions used to manipulate string                            |
 | [timeutil](timeutil)           | Support specify time format output and get current ts, ms, us api etc                 |
 | [utfjson](utfjson)             | Force `json.dump` and `json.load` in `utf-8` encoding                                 |
-| [zkutil](zkutil)               | Unitility functions for zookeeper                                                     |
+| [zkutil](zkutil)               | Utility functions for zookeeper                                                       |
+| [threadutil](threadutil)       | Utility functions for better management of threads                                    |
 
 #   Install
-
-This package does not support installation.
 
 Just clone it and copy it into your project source folder.
 
@@ -78,6 +77,8 @@ jobq.run([0, 1, 2], [add1, printarg])
 # > 2
 # > 3
 ```
+
+See the `README.md` of sub modules for detail.
 
 #   Test
 
