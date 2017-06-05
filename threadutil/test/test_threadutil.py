@@ -94,9 +94,14 @@ class TestThreadutil(unittest.TestCase):
         self.assertEqual(array, [3, 2, 1])
 
     def test_start_daemon_thread(self):
+        noop = lambda : None
+
         # Thread should be non-daemon by default
-        t = tu.start_thread(lambda: None)
+        t = tu.start_thread(noop)
         self.assertFalse(t.daemon)
 
-        t = tu.start_thread(lambda: None, daemon=True)
+        t = tu.start_thread(noop, daemon=True)
+        self.assertTrue(t.daemon)
+
+        t = tu.start_daemon_thread(noop)
         self.assertTrue(t.daemon)

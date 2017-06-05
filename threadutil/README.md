@@ -8,6 +8,7 @@
 - [Description](#description)
 - [Methods](#methods)
   - [start_thread](#start_thread)
+  - [start_daemon_thread](#start_daemon_thread)
   - [raise_in_thread](#raise_in_thread)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
@@ -78,6 +79,11 @@ t = threadutil.start_thread(work, name='my_thread', args=(10, ), kwargs={'x': 2}
 **Returns**
 
 The created thread object.
+
+## start_daemon_thread
+
+Create and start a daemon thread. See `start_thread` method for more detail.
+
 
 ## raise_in_thread
 

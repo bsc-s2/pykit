@@ -25,6 +25,11 @@ def start_thread(target, name=None, args=None, kwargs=None, daemon=False):
     return t
 
 
+def start_daemon_thread(target, name=None, args=None, kwargs=None):
+    return start_thread(target, name=name, args=args, kwargs=kwargs,
+                        daemon=True)
+
+
 def raise_in_thread(thread, exctype):
     """
     Asynchronously raises an exception in the context of the given thread,
