@@ -47,10 +47,10 @@ There is a `README.md` for each module.
 | [net](net)                     | Network utility                                                                       |
 | [portlock](portlock)           | cross process lock                                                                    |
 | [strutil](strutil)             | A collection of helper functions used to manipulate string                            |
+| [threadutil](threadutil)       | Utility functions for better management of threads                                    |
 | [timeutil](timeutil)           | Support specify time format output and get current ts, ms, us api etc                 |
 | [utfjson](utfjson)             | Force `json.dump` and `json.load` in `utf-8` encoding                                 |
 | [zkutil](zkutil)               | Utility functions for zookeeper                                                       |
-| [threadutil](threadutil)       | Utility functions for better management of threads                                    |
 
 #   Install
 

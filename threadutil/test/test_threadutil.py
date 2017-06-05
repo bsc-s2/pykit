@@ -5,13 +5,17 @@ import unittest
 import threading
 import time
 
-from pykit.threadutil import threadutil
+from pykit import threadutil
+
+
+tu = threadutil.threadutil
 
 
 def _work(sess):
     try:
         while True:
-            time.sleep(0.1)
+            x = 1
+
     except SystemExit:
         sess['raised'] = True
 
@@ -20,8 +24,10 @@ class TestThreadutil(unittest.TestCase):
 
     def _verify_exception_raised(self, sess, thread):
         # we wait few seconds for the exception to be raised.
-        for i in range(50):
+        for i in range(100):
             if sess['raised']:
+                # The thread might still be alive at this point.
+                time.sleep(0.2)
                 self.assertFalse(thread.is_alive())
                 break
 
@@ -33,40 +39,64 @@ class TestThreadutil(unittest.TestCase):
     def test_raise_in_thread(self):
         sess = {'raised': False}
 
-        t = threading.Thread(target=_work, args=(sess, ))
-        t.daemon = True
-        t.start()
-
+        t = tu.start_thread(_work, args=(sess, ), daemon=True)
         self.assertFalse(sess['raised'])
 
         with self.assertRaises(TypeError):
-            threadutil.raise_in_thread('thread', SystemExit)
+            tu.raise_in_thread('thread', SystemExit)
 
         with self.assertRaises(TypeError):
-            threadutil.raise_in_thread(t, SystemExit())
+            tu.raise_in_thread(t, SystemExit())
 
         class SomeClass(object):
             pass
 
         with self.assertRaises(ValueError):
-            threadutil.raise_in_thread(t, SomeClass)
+            tu.raise_in_thread(t, SomeClass)
 
-        threadutil.raise_in_thread(t, SystemExit)
+        tu.raise_in_thread(t, SystemExit)
         self._verify_exception_raised(sess, t)
 
     def test_raise_in_thread_many_times(self):
         sess = {'raised': False}
 
-        t = threading.Thread(target=_work, args=(sess, ))
-        t.daemon = True
-        t.start()
-
+        t = tu.start_thread(_work, args=(sess, ), daemon=True)
         self.assertFalse(sess['raised'])
 
-        for i in range(10):
-            threadutil.raise_in_thread(t, SystemExit)
+        for i in range(5):
+            try:
+                tu.raise_in_thread(t, SystemExit)
+            except tu.InvalidThreadIdError:
+                # This will happen if the thread is already terminated by
+                # a previous raise_in_thread call.
+                pass
 
         self._verify_exception_raised(sess, t)
 
         # Raising in a dead thread shoud not break.
-        threadutil.raise_in_thread(t, SystemExit)
+        with self.assertRaises(tu.InvalidThreadIdError):
+            tu.raise_in_thread(t, SystemExit)
+
+    def test_start_thread(self):
+        def _sort(a, reverse=False):
+            a.sort(reverse=reverse)
+
+        array = [3, 1, 2]
+        t = tu.start_thread(_sort, args=(array, ))
+        t.join()
+
+        self.assertEqual(array, [1, 2, 3])
+
+        t = tu.start_thread(_sort, args=(array, ),
+                                    kwargs={'reverse': True})
+        t.join()
+
+        self.assertEqual(array, [3, 2, 1])
+
+    def test_start_daemon_thread(self):
+        # Thread should be non-daemon by default
+        t = tu.start_thread(lambda: None)
+        self.assertFalse(t.daemon)
+
+        t = tu.start_thread(lambda: None, daemon=True)
+        self.assertTrue(t.daemon)

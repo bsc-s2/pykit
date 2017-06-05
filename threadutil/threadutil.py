@@ -10,16 +10,35 @@ class AsyncRaiseError(Exception):
     pass
 
 
+class InvalidThreadIdError(AsyncRaiseError):
+    pass
+
+
+def start_thread(target, name=None, args=None, kwargs=None, daemon=False):
+    args = args or ()
+    kwargs = kwargs or {}
+
+    t = threading.Thread(target=target, name=name, args=args, kwargs=kwargs)
+    t.daemon = daemon
+    t.start()
+
+    return t
+
+
 def raise_in_thread(thread, exctype):
     """
-    Raises the given exception in the context of the given thread,
+    Asynchronously raises an exception in the context of the given thread,
     which should cause the thread to exit silently (unless caught).
+
+    Raises:
+        - InvalidThreadIdError if the given thread is not alive or found.
+        - TypeError or ValueError if any input is illegal.
+        - AsyncRaiseError for other unexpected errors.
     """
     if not isinstance(thread, threading.Thread):
         raise TypeError("Only Thread is allowed, got {t}".format(t=thread))
 
-    if thread.is_alive():
-        _async_raise(thread.ident, exctype)
+    _async_raise(thread.ident, exctype)
 
 
 def _async_raise(tid, exctype):
@@ -32,18 +51,19 @@ def _async_raise(tid, exctype):
 
     # PyThreadState_SetAsyncExc requires GIL to be held
     gil_state = ctypes.pythonapi.PyGILState_Ensure()
-    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(tid),
-                                                     ctypes.py_object(exctype))
-    ctypes.pythonapi.PyGILState_Release(gil_state)
+    try:
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(tid),
+                                                         ctypes.py_object(exctype))
+        if res == 0:
+            # The thread is likely dead already.
+            raise InvalidThreadIdError(tid)
 
-    if res == 0:
-        raise ValueError("invalid thread id")
+        elif res != 1:
+            # If more than one threads are affected (WTF?), we're in trouble, and
+            # we try our best to revert the effect, although this may not work.
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(tid), None)
 
-    elif res != 1:
-        # if it returns a number greater than one, we're in trouble,
-        # and we call it again with exc=None to revert the effect.
-        gil_state = ctypes.pythonapi.PyGILState_Ensure()
-        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
+            raise AsyncRaiseError("PyThreadState_SetAsyncExc failed", res)
+
+    finally:
         ctypes.pythonapi.PyGILState_Release(gil_state)
-
-        raise AsyncRaiseError("PyThreadState_SetAsyncExc failed", res)

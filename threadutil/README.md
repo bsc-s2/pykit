@@ -7,6 +7,7 @@
 - [Synopsis](#synopsis)
 - [Description](#description)
 - [Methods](#methods)
+  - [start_thread](#start_thread)
   - [raise_in_thread](#raise_in_thread)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
@@ -47,9 +48,40 @@ A collection of helper function for managing python threads easily.
 
 # Methods
 
+## start_thread
+
+Create and start a thread with the given parameters.
+
+**Syntax**
+
+```
+t = threadutil.start_thread(work, name='my_thread', args=(10, ), kwargs={'x': 2}, daemon=True)
+```
+
+**Arguments**
+
+- `target`:
+    The callable object to run.
+
+- `name`:
+    The thread name. By default, a unique name is constructed of the form "Thread-N" where N is a small decimal number.
+
+- `args`:
+    The argument tuple for the target invocation. Defaults to `()`.
+
+- `kwargs`:
+    A dictionary of keyword arguments for the target invocation. Defaults to `{}`.
+
+- `daemon`:
+    Whether to create a daemon thread.
+
+**Returns**
+
+The created thread object.
+
 ## raise_in_thread
 
-Raises an exception in the given thread.
+Asynchronously Raises an exception in the given thread.
 It is useful when you want to terminate some threads from the main thread.
 
 Please note that the exception will be raised only when executing python bytecode.
@@ -73,6 +105,12 @@ threadutil.raise_in_thread(thread, exception)
 **Returns**
 
 `None`
+
+**Raises**
+
+- `InvalidThreadIdError` if the given thread is not alive or found.
+- `TypeError` or `ValueError` if any input is illegal.
+- `AsyncRaiseError` for other unexpected errors.
 
 #   Author
 
