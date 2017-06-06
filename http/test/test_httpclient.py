@@ -270,6 +270,26 @@ class TestHttpClient(unittest.TestCase):
         gc.collect()
         self.assertListEqual([], gc.garbage)
 
+    def test_profiling(self):
+
+        h = http.Client(HOST, PORT)
+        h.request('/get_10k')
+        h.read_body(None)
+
+        ks = (
+            'conn',
+            'send_header',
+            'recv_status',
+            'recv_header',
+            'recv_body',
+        )
+
+        for i, k in enumerate(ks):
+            self.assertEqual(k, h.profile[i][0])
+            self.assertEqual(type(0.1), type(h.profile[i][1]))
+
+        dd(h.get_profile_str())
+
     def __init__(self, *args, **kwargs):
 
         super(TestHttpClient, self).__init__(*args, **kwargs)
@@ -279,6 +299,7 @@ class TestHttpClient(unittest.TestCase):
     def setUp(self):
 
         self.server_thread = threading.Thread(target=self._start_server)
+        self.server_thread.daemon = True
         self.server_thread.start()
         time.sleep(0.1)
 

@@ -5,6 +5,7 @@ import errno
 import logging
 import select
 import socket
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ LINE_RECV_LENGTH = 1024 * 4
 
 class Client(object):
 
-    def __init__(self, host, port, timeout=60):
+    def __init__(self, host, port, timeout=60, profiling=True):
 
         self.host = host
         self.port = port
@@ -56,6 +57,10 @@ class Client(object):
         self.status = None
         self.headers = {}
         self.recv_iter = None
+
+        self.profiling = profiling
+        self.profile = []
+
 
     def __del__(self):
 
@@ -72,9 +77,13 @@ class Client(object):
         self._reset_request()
         self.method = method
 
+        t0 = _time()
+
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(self.timeout)
         self.sock.connect((self.host, self.port))
+
+        self._add_profile(conn=t0)
 
         bufs = ['{method} {uri} HTTP/1.1'.format(method=method, uri=uri), ]
 
@@ -87,14 +96,18 @@ class Client(object):
 
         bufs.extend(['', ''])
 
+        t0 = _time()
         self.sock.sendall('\r\n'.join(bufs))
+        self._add_profile(send_header=t0)
 
     def send_body(self, body):
 
         if self.sock is None:
             raise NotConnectedError('socket object is None')
 
+        t0 = _time()
         self.sock.sendall(body)
+        self._add_profile(send_body=t0)
 
     def read_status(self):
 
@@ -113,7 +126,11 @@ class Client(object):
 
             # skip the header from the 100 response
             while True:
+
+                t0 = _time()
                 skip = self._readline()
+                self._add_profile(recv_skip_header=t0)
+
                 if skip.strip() == '':
                     break
 
@@ -122,6 +139,7 @@ class Client(object):
 
     def read_headers(self):
 
+        t0 = _time()
         while True:
 
             line = self._readline()
@@ -132,6 +150,8 @@ class Client(object):
             if len(kv) < 2:
                 raise HeadersError('invalid headers param line:%s' % (line))
             self.headers[kv[0].lower()] = kv[1].strip()
+
+        self._add_profile(recv_header=t0)
 
         if self.status in (204, 304) or self.method == 'HEAD':
             self.content_length = 0
@@ -161,6 +181,14 @@ class Client(object):
         return self.status, self.headers
 
     def read_body(self, size):
+
+        t0 = _time()
+        try:
+            return self._read_body(size)
+        finally:
+            self._add_profile(recv_body=t0)
+
+    def _read_body(self, size):
 
         if size is not None and size <= 0:
             return ''
@@ -219,7 +247,9 @@ class Client(object):
 
     def _get_response_status(self):
 
+        t0 = _time()
         line = self._readline()
+        self._add_profile(recv_status=t0)
 
         vals = line.split(None, 2)
         if len(vals) < 2:
@@ -293,6 +323,23 @@ class Client(object):
 
         return ''.join(buf)
 
+    def get_profile_str(self):
+
+        rst = []
+        for p in self.profile:
+            rst.append('{0}: {1:.6f}'.format(*p))
+
+        return ', '.join(rst)
+
+    def _add_profile(self, **kwargs):
+        if not self.profiling:
+            return
+
+        k, t0 = kwargs.items()[0]
+        tm = _time() - t0
+        tm = float('%.6f' % tm)
+        self.profile.append((k, tm))
+
 
 def _recv_loop(sock, timeout):
 
@@ -353,3 +400,7 @@ def _recv(sock, timeout, size):
         raise socket.error('got empty when recv {l} bytes'.format(l=size))
 
     return buf
+
+
+def _time():
+    return time.time()

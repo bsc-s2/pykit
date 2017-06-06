@@ -7,31 +7,34 @@
 - [Synopsis](#synopsis)
 - [Description](#description)
 - [Exceptions](#exceptions)
-    - [http.HttpError](#httphttperror)
-    - [http.LineTooLongError](#httplinetoolongerror)
-    - [http.ChunkedSizeError](#httpchunkedsizeerror)
-    - [http.NotConnectedError](#httpnotconnectederror)
-    - [http.ResponseNotReadyError](#httpresponsenotreadyerror)
-    - [http.HeadersError](#httpheaderserror)
-    - [http.BadStatusLineError](#httpbadstatuslineerror)
+  - [http.HttpError](#httphttperror)
+  - [http.LineTooLongError](#httplinetoolongerror)
+  - [http.ChunkedSizeError](#httpchunkedsizeerror)
+  - [http.NotConnectedError](#httpnotconnectederror)
+  - [http.ResponseNotReadyError](#httpresponsenotreadyerror)
+  - [http.HeadersError](#httpheaderserror)
+  - [http.BadStatusLineError](#httpbadstatuslineerror)
 - [Constants](#constants)
-    - [http.Client.status](#httpclientstatus)
-    - [http.Client.has_read](#httpclienthas_read)
-    - [http.Client.headers](#httpclientheaders)
-    - [http.Client.content_length](#httpclientcontent_length)
-    - [http.Client.chunked](#httpclientchunked)
+  - [http.Client.status](#httpclientstatus)
+  - [http.Client.has_read](#httpclienthas_read)
+  - [http.Client.headers](#httpclientheaders)
+  - [http.Client.content_length](#httpclientcontent_length)
+  - [http.Client.chunked](#httpclientchunked)
 - [Classes](#classes)
-    - [http.Client](#httpclient)
+  - [http.Client](#httpclient)
 - [Methods](#methods)
-    - [http.Client.send_request](#httpclientsend_request)
-    - [http.Client.read_status](#httpclientread_status)
-    - [http.Client.read_headers](#httpclientread_headers)
-    - [http.Client.read_response](#httpclientread_response)
-    - [http.Client.request](#httpclientrequest)
-    - [http.Client.send_body](#httpclientsend_body)
-    - [http.Client.read_body](#httpclientread_body)
+  - [http.Client.send_request](#httpclientsend_request)
+  - [http.Client.read_status](#httpclientread_status)
+  - [http.Client.read_headers](#httpclientread_headers)
+  - [http.Client.read_response](#httpclientread_response)
+  - [http.Client.request](#httpclientrequest)
+  - [http.Client.send_body](#httpclientsend_body)
+  - [http.Client.read_body](#httpclientread_body)
+  - [http.Client.get_profile_str](#httpclientget_profile_str)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 #   Name
 
@@ -220,7 +223,7 @@ Whether response body is chunked encoding or not.
 ##  http.Client
 
 **syntax**:
-`http.Client(host, port, timeout=60)`
+`http.Client(host, port, timeout=60, profiling=True)`
 
 HTTP client class
 
@@ -238,6 +241,14 @@ HTTP client class
     if `None`, it is equivalent to `socket.setblocking(1)`.
     if `0.0`, it is equivalent to `socket.setblocking(0)`.
 
+-   `profiling`:
+    whether to collect time spent on each phase.
+
+    By default it is `True`.
+
+    One could use `http.Client.get_profile_str()` to retreive profiling
+    information, it returns a string like:
+    `conn: 0.000450, send_header: 0.000110, recv_status: 0.000541, recv_header: 0.000027, recv_body: 0.000050`
 
 #   Methods
 
@@ -362,6 +373,32 @@ Read and return the response body.
 
 **return**:
 the response body.
+
+##  http.Client.get_profile_str
+
+**syntax**:
+`http.Client.get_profile_str()`
+
+**return**:
+a string shows time spent on each phase of a request.
+The following fields would presents in it:
+
+```
+conn: 0.000450, send_header: 0.000110, recv_status: 0.000541, recv_header: 0.000027, recv_body: 0.000050
+```
+
+The numbers are time in second.
+
+It is possible there are less than these field, if request failed.
+
+It is also possible some of the above fields appear more than once.
+
+For example if a server responds a `100-Continue` status line and a `200-OK`
+status line, there would be two `recv_status` fields.
+
+If the caller calls `http.Client.read_body` more than one time, there would be
+more than one `recv_body` fields.
+
 
 #   Author
 
