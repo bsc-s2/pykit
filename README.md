@@ -39,6 +39,7 @@ There is a `README.md` for each module.
 | [cachepool](cachepool)         | Reusable object cache in process                                                      |
 | [daemonize](daemonize)         | Start, stop or restart a daemon process                                               |
 | [dictutil](dictutil)           | Dictionary helper utility                                                             |
+| [etcd](etcd)                   | etcd client                                                                           |
 | [http](http)                   | HTTP/1.1 client                                                                       |
 | [humannum](humannum)           | Convert number to human readable number string                                        |
 | [jobq](jobq)                   | Process serial of input elements with several functions concurrently and sequentially |
