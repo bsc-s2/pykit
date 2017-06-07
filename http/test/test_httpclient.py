@@ -272,6 +272,9 @@ class TestHttpClient(unittest.TestCase):
 
     def test_trace(self):
 
+        class FakeErrorDuringHTTP(Exception):
+            pass
+
         h = http.Client(HOST, PORT)
         h.request('/get_10k')
         h.read_body(1)
@@ -280,7 +283,7 @@ class TestHttpClient(unittest.TestCase):
         # emulate error
         try:
             with h.stopwatch.timer('exception'):
-                raise ValueError(3)
+                raise FakeErrorDuringHTTP(3)
         except Exception:
             pass
 
@@ -300,8 +303,13 @@ class TestHttpClient(unittest.TestCase):
             self.assertEqual(type(0.1), type(trace[i]['time']))
 
         names = [x['name'] for x in trace]
-        self.assertEqual(['conn', 'send_header', 'recv_status', 'recv_header',
-                          'recv_body', 'recv_body', 'exception',
+        self.assertEqual(['conn',
+                          'send_header',
+                          'recv_status',
+                          'recv_header',
+                          'recv_body',
+                          'recv_body',
+                          'exception',
                           'pykit.http.Client'],
                          names)
 
@@ -309,7 +317,8 @@ class TestHttpClient(unittest.TestCase):
 
     def test_trace_min_tracing_milliseconds(self):
 
-        h = http.Client(HOST, PORT, stopwatch_kwargs={'min_tracing_milliseconds':1000})
+        h = http.Client(HOST, PORT, stopwatch_kwargs={
+                        'min_tracing_milliseconds': 1000})
         h.request('/get_10k')
         h.read_body(None)
 
