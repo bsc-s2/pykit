@@ -389,7 +389,7 @@ conn: 0.000450, send_header: 0.000110, recv_status: 0.000541, recv_header: 0.000
 
 The numbers are time in second.
 
-It is possible there are less than these field, if request failed.
+There might be less fields in the result, if request failed.
 
 It is also possible some of the above fields appear more than once.
 
