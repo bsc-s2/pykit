@@ -173,13 +173,13 @@ class Client(object):
                 break
 
             # skip the header from the 100 response
-            while True:
+            with self.stopwatch.timer('recv_skip_header'):
 
-                with self.stopwatch.timer('recv_skip_header'):
+                while True:
+
                     skip = self._readline()
-
-                if skip.strip() == '':
-                    break
+                    if skip.strip() == '':
+                        break
 
         self.status = status
         return status

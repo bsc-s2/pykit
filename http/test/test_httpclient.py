@@ -277,6 +277,7 @@ class TestHttpClient(unittest.TestCase):
         h.read_body(1)
         h.read_body(None)
 
+        # emulate error
         try:
             with h.stopwatch.timer('exception'):
                 raise ValueError(3)
