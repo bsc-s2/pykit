@@ -274,7 +274,17 @@ class TestHttpClient(unittest.TestCase):
 
         h = http.Client(HOST, PORT)
         h.request('/get_10k')
+        h.read_body(1)
         h.read_body(None)
+
+        try:
+            with h.stopwatch.timer('exception'):
+                raise ValueError(3)
+        except Exception:
+            pass
+
+        trace = h.get_trace()
+        dd('trace:', trace)
 
         ks = (
             'conn',
@@ -285,10 +295,16 @@ class TestHttpClient(unittest.TestCase):
         )
 
         for i, k in enumerate(ks):
-            self.assertEqual(k, h.profile[i][0])
-            self.assertEqual(type(0.1), type(h.profile[i][1]))
+            self.assertEqual(k, trace[i]['name'])
+            self.assertEqual(type(0.1), type(trace[i]['time']))
 
-        dd(h.get_profile_str())
+        names = [x['name'] for x in trace]
+        self.assertEqual(['conn', 'send_header', 'recv_status', 'recv_header',
+                          'recv_body', 'recv_body', 'exception',
+                          'pykit.http.Client'],
+                         names)
+
+        dd('trace str:', h.get_trace_str())
 
     def __init__(self, *args, **kwargs):
 

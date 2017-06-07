@@ -30,7 +30,7 @@
   - [http.Client.request](#httpclientrequest)
   - [http.Client.send_body](#httpclientsend_body)
   - [http.Client.read_body](#httpclientread_body)
-  - [http.Client.get_profile_str](#httpclientget_profile_str)
+  - [http.Client.get_trace_str](#httpclientget_trace_str)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -223,7 +223,7 @@ Whether response body is chunked encoding or not.
 ##  http.Client
 
 **syntax**:
-`http.Client(host, port, timeout=60, profiling=True)`
+`http.Client(host, port, timeout=60)`
 
 HTTP client class
 
@@ -240,15 +240,6 @@ HTTP client class
     The value argument can be a nonnegative float expressing seconds, or `None`.
     if `None`, it is equivalent to `socket.setblocking(1)`.
     if `0.0`, it is equivalent to `socket.setblocking(0)`.
-
--   `profiling`:
-    whether to collect time spent on each phase.
-
-    By default it is `True`.
-
-    One could use `http.Client.get_profile_str()` to retreive profiling
-    information, it returns a string like:
-    `conn: 0.000450, send_header: 0.000110, recv_status: 0.000541, recv_header: 0.000027, recv_body: 0.000050`
 
 #   Methods
 
@@ -374,17 +365,17 @@ Read and return the response body.
 **return**:
 the response body.
 
-##  http.Client.get_profile_str
+##  http.Client.get_trace_str
 
 **syntax**:
-`http.Client.get_profile_str()`
+`http.Client.get_trace_str()`
 
 **return**:
 a string shows time spent on each phase of a request.
 The following fields would presents in it:
 
 ```
-conn: 0.000450, send_header: 0.000110, recv_status: 0.000541, recv_header: 0.000027, recv_body: 0.000050
+conn: 0.000001 -; send_header: 0.000000 -; recv_status: 0.000000 -; recv_header: 0.000000 -; recv_body: 0.000000 -; recv_body: 0.000000 -; exception: 0.000000 -; pykit.http.Client: 0.000002 Exception:ValueError
 ```
 
 The numbers are time in second.

@@ -5,7 +5,8 @@ import errno
 import logging
 import select
 import socket
-import time
+
+import stopwatch
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,9 @@ LINE_RECV_LENGTH = 1024 * 4
 
 class Client(object):
 
-    def __init__(self, host, port, timeout=60, profiling=True):
+    stopwatch_root_name = 'pykit.http.Client'
+
+    def __init__(self, host, port, timeout=60):
 
         self.host = host
         self.port = port
@@ -58,9 +61,57 @@ class Client(object):
         self.headers = {}
         self.recv_iter = None
 
-        self.profiling = profiling
-        self.profile = []
+        self.stopwatch = None
+        self.stopwatch_started = False
 
+    def get_trace_str(self):
+        tr = self.get_trace()
+        rst = []
+        for t in tr:
+            ent = '{name}: {time:.6f} {annotation}'.format(
+                name=t['name'],
+                time=float('{:.6f}'.format(t['time'] / 1000)),
+                annotation=','.join(t['annotation']) or '-'
+            )
+            rst.append(ent)
+
+        return '; '.join(rst)
+
+    def get_trace(self):
+        sw = self.get_stopwatch()
+        rst = []
+        for t in sw.get_last_trace_report():
+            ent = dict(
+                name=t.name,
+                time=t.end_time - t.start_time,
+                annotation=[self._human_annotation(
+                    an) for an in t.trace_annotations],
+            )
+
+            rst.append(ent)
+
+        return rst
+
+    def _human_annotation(self, annotation):
+        an = annotation
+        return '{key}:{value}'.format(key=an.key, value=an.value)
+
+    def get_stopwatch(self):
+
+        if self.stopwatch_started:
+            self.stopwatch.end(self.stopwatch_root_name)
+            self.stopwatch_started = False
+
+        return self.stopwatch
+
+    def new_stopwatch(self):
+
+        if self.stopwatch is None:
+            # min_tracing_milliseconds=0 to trace all events. StopWatch trace
+            # only event those cost less than min_tracing_milliseconds
+            self.stopwatch = stopwatch.StopWatch(min_tracing_milliseconds=0)
+            self.stopwatch.start(self.stopwatch_root_name)
+            self.stopwatch_started = True
 
     def __del__(self):
 
@@ -77,13 +128,12 @@ class Client(object):
         self._reset_request()
         self.method = method
 
-        t0 = _time()
+        self.new_stopwatch()
 
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.settimeout(self.timeout)
-        self.sock.connect((self.host, self.port))
-
-        self._add_profile(conn=t0)
+        with self.stopwatch.timer('conn'):
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.settimeout(self.timeout)
+            self.sock.connect((self.host, self.port))
 
         bufs = ['{method} {uri} HTTP/1.1'.format(method=method, uri=uri), ]
 
@@ -96,18 +146,16 @@ class Client(object):
 
         bufs.extend(['', ''])
 
-        t0 = _time()
-        self.sock.sendall('\r\n'.join(bufs))
-        self._add_profile(send_header=t0)
+        with self.stopwatch.timer('send_header'):
+            self.sock.sendall('\r\n'.join(bufs))
 
     def send_body(self, body):
 
         if self.sock is None:
             raise NotConnectedError('socket object is None')
 
-        t0 = _time()
-        self.sock.sendall(body)
-        self._add_profile(send_body=t0)
+        with self.stopwatch.timer('send_body'):
+            self.sock.sendall(body)
 
     def read_status(self):
 
@@ -127,9 +175,8 @@ class Client(object):
             # skip the header from the 100 response
             while True:
 
-                t0 = _time()
-                skip = self._readline()
-                self._add_profile(recv_skip_header=t0)
+                with self.stopwatch.timer('recv_skip_header'):
+                    skip = self._readline()
 
                 if skip.strip() == '':
                     break
@@ -139,19 +186,19 @@ class Client(object):
 
     def read_headers(self):
 
-        t0 = _time()
-        while True:
+        with self.stopwatch.timer('recv_header'):
 
-            line = self._readline()
-            if line == '':
-                break
+            while True:
 
-            kv = line.strip().split(':', 1)
-            if len(kv) < 2:
-                raise HeadersError('invalid headers param line:%s' % (line))
-            self.headers[kv[0].lower()] = kv[1].strip()
+                line = self._readline()
+                if line == '':
+                    break
 
-        self._add_profile(recv_header=t0)
+                kv = line.strip().split(':', 1)
+                if len(kv) < 2:
+                    raise HeadersError(
+                        'invalid headers param line:%s' % (line))
+                self.headers[kv[0].lower()] = kv[1].strip()
 
         if self.status in (204, 304) or self.method == 'HEAD':
             self.content_length = 0
@@ -182,11 +229,8 @@ class Client(object):
 
     def read_body(self, size):
 
-        t0 = _time()
-        try:
+        with self.stopwatch.timer('recv_body'):
             return self._read_body(size)
-        finally:
-            self._add_profile(recv_body=t0)
 
     def _read_body(self, size):
 
@@ -247,9 +291,8 @@ class Client(object):
 
     def _get_response_status(self):
 
-        t0 = _time()
-        line = self._readline()
-        self._add_profile(recv_status=t0)
+        with self.stopwatch.timer('recv_status'):
+            line = self._readline()
 
         vals = line.split(None, 2)
         if len(vals) < 2:
@@ -323,23 +366,6 @@ class Client(object):
 
         return ''.join(buf)
 
-    def get_profile_str(self):
-
-        rst = []
-        for p in self.profile:
-            rst.append('{0}: {1:.6f}'.format(*p))
-
-        return ', '.join(rst)
-
-    def _add_profile(self, **kwargs):
-        if not self.profiling:
-            return
-
-        k, t0 = kwargs.items()[0]
-        tm = _time() - t0
-        tm = float('%.6f' % tm)
-        self.profile.append((k, tm))
-
 
 def _recv_loop(sock, timeout):
 
@@ -400,7 +426,3 @@ def _recv(sock, timeout, size):
         raise socket.error('got empty when recv {l} bytes'.format(l=size))
 
     return buf
-
-
-def _time():
-    return time.time()
