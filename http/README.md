@@ -223,7 +223,7 @@ Whether response body is chunked encoding or not.
 ##  http.Client
 
 **syntax**:
-`http.Client(host, port, timeout=60)`
+`http.Client(host, port, timeout=60, stopwatch_kwargs=None)`
 
 HTTP client class
 
@@ -240,6 +240,20 @@ HTTP client class
     The value argument can be a nonnegative float expressing seconds, or `None`.
     if `None`, it is equivalent to `socket.setblocking(1)`.
     if `0.0`, it is equivalent to `socket.setblocking(0)`.
+
+-   `stopwatch_kwargs`:
+    is an dictionary used as keyword arguments when initializing stopwatch instance.
+
+    ```
+    class StopWatch(object):
+        def __init__(self,
+                     strict_assert=True,
+                     export_tracing_func=None,
+                     export_aggregated_timers_func=None,
+                     max_tracing_spans_for_path=1000,
+                     min_tracing_milliseconds=3,
+                     time_func=None):
+    ```
 
 #   Methods
 

@@ -47,7 +47,7 @@ class Client(object):
 
     stopwatch_root_name = 'pykit.http.Client'
 
-    def __init__(self, host, port, timeout=60):
+    def __init__(self, host, port, timeout=60, stopwatch_kwargs=None):
 
         self.host = host
         self.port = port
@@ -61,7 +61,16 @@ class Client(object):
         self.headers = {}
         self.recv_iter = None
 
-        self.stopwatch = None
+        self.stopwatch_kwargs = {
+            # min_tracing_milliseconds=0 to trace all events. StopWatch trace
+            # only event those cost less than min_tracing_milliseconds
+            'min_tracing_milliseconds': 0,
+        }
+
+        if stopwatch_kwargs is not None:
+            self.stopwatch_kwargs.update(stopwatch_kwargs)
+
+        self.stopwatch = stopwatch.StopWatch(**self.stopwatch_kwargs)
         self.stopwatch_started = False
 
     def get_trace_str(self):
@@ -78,7 +87,7 @@ class Client(object):
         return '; '.join(rst)
 
     def get_trace(self):
-        sw = self.get_stopwatch()
+        sw = self.get_and_end_stopwatch()
         rst = []
         for t in sw.get_last_trace_report():
             ent = dict(
@@ -96,22 +105,25 @@ class Client(object):
         an = annotation
         return '{key}:{value}'.format(key=an.key, value=an.value)
 
-    def get_stopwatch(self):
+    def get_and_end_stopwatch(self):
+        '''stopwatch must be stopped before it can be read
+        '''
+        self.end_stopwatch()
+        return self.stopwatch
+
+    def end_stopwatch(self):
 
         if self.stopwatch_started:
             self.stopwatch.end(self.stopwatch_root_name)
             self.stopwatch_started = False
 
-        return self.stopwatch
+    def start_stopwatch(self):
 
-    def new_stopwatch(self):
+        if self.stopwatch_started:
+            return
 
-        if self.stopwatch is None:
-            # min_tracing_milliseconds=0 to trace all events. StopWatch trace
-            # only event those cost less than min_tracing_milliseconds
-            self.stopwatch = stopwatch.StopWatch(min_tracing_milliseconds=0)
-            self.stopwatch.start(self.stopwatch_root_name)
-            self.stopwatch_started = True
+        self.stopwatch.start(self.stopwatch_root_name)
+        self.stopwatch_started = True
 
     def __del__(self):
 
@@ -128,7 +140,7 @@ class Client(object):
         self._reset_request()
         self.method = method
 
-        self.new_stopwatch()
+        self.start_stopwatch()
 
         with self.stopwatch.timer('conn'):
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

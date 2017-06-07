@@ -270,7 +270,7 @@ class TestHttpClient(unittest.TestCase):
         gc.collect()
         self.assertListEqual([], gc.garbage)
 
-    def test_profiling(self):
+    def test_trace(self):
 
         h = http.Client(HOST, PORT)
         h.request('/get_10k')
@@ -306,6 +306,20 @@ class TestHttpClient(unittest.TestCase):
                          names)
 
         dd('trace str:', h.get_trace_str())
+
+    def test_trace_min_tracing_milliseconds(self):
+
+        h = http.Client(HOST, PORT, stopwatch_kwargs={'min_tracing_milliseconds':1000})
+        h.request('/get_10k')
+        h.read_body(None)
+
+        # only steps cost time>1000 are traced. thus nothing should be traced
+        trace_str = h.get_trace_str()
+        dd('trace:', trace_str)
+
+        self.assertEqual('', trace_str)
+
+        self.assertEqual([], h.get_trace())
 
     def __init__(self, *args, **kwargs):
 
