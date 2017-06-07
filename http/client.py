@@ -79,7 +79,7 @@ class Client(object):
         for t in tr:
             ent = '{name}: {time:.6f} {annotation}'.format(
                 name=t['name'],
-                time=float('{:.6f}'.format(t['time'] / 1000)),
+                time=float('{:.6f}'.format(t['time'])),
                 annotation=','.join(t['annotation']) or '-'
             )
             rst.append(ent)
