@@ -1,0 +1,5 @@
+[ remote: https://github.com/ ]
+[ base: ]
+
+git-subrepo             baishancloud/git-subrepo            master   git-subrepo
+stopwatch.py            baishancloud/stopwatch              master   stopwatch.py
