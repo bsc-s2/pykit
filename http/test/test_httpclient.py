@@ -270,6 +270,66 @@ class TestHttpClient(unittest.TestCase):
         gc.collect()
         self.assertListEqual([], gc.garbage)
 
+    def test_trace(self):
+
+        class FakeErrorDuringHTTP(Exception):
+            pass
+
+        h = http.Client(HOST, PORT)
+        h.request('/get_10k')
+        h.read_body(1)
+        h.read_body(None)
+
+        # emulate error
+        try:
+            with h.stopwatch.timer('exception'):
+                raise FakeErrorDuringHTTP(3)
+        except Exception:
+            pass
+
+        trace = h.get_trace()
+        dd('trace:', trace)
+
+        ks = (
+            'conn',
+            'send_header',
+            'recv_status',
+            'recv_header',
+            'recv_body',
+        )
+
+        for i, k in enumerate(ks):
+            self.assertEqual(k, trace[i]['name'])
+            self.assertEqual(type(0.1), type(trace[i]['time']))
+
+        names = [x['name'] for x in trace]
+        self.assertEqual(['conn',
+                          'send_header',
+                          'recv_status',
+                          'recv_header',
+                          'recv_body',
+                          'recv_body',
+                          'exception',
+                          'pykit.http.Client'],
+                         names)
+
+        dd('trace str:', h.get_trace_str())
+
+    def test_trace_min_tracing_milliseconds(self):
+
+        h = http.Client(HOST, PORT, stopwatch_kwargs={
+                        'min_tracing_milliseconds': 1000})
+        h.request('/get_10k')
+        h.read_body(None)
+
+        # only steps cost time>1000 are traced. thus nothing should be traced
+        trace_str = h.get_trace_str()
+        dd('trace:', trace_str)
+
+        self.assertEqual('', trace_str)
+
+        self.assertEqual([], h.get_trace())
+
     def __init__(self, *args, **kwargs):
 
         super(TestHttpClient, self).__init__(*args, **kwargs)
@@ -279,6 +339,7 @@ class TestHttpClient(unittest.TestCase):
     def setUp(self):
 
         self.server_thread = threading.Thread(target=self._start_server)
+        self.server_thread.daemon = True
         self.server_thread.start()
         time.sleep(0.1)
 

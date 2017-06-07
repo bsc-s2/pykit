@@ -6,6 +6,8 @@ import logging
 import select
 import socket
 
+import stopwatch
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,7 +45,9 @@ LINE_RECV_LENGTH = 1024 * 4
 
 class Client(object):
 
-    def __init__(self, host, port, timeout=60):
+    stopwatch_root_name = 'pykit.http.Client'
+
+    def __init__(self, host, port, timeout=60, stopwatch_kwargs=None):
 
         self.host = host
         self.port = port
@@ -56,6 +60,70 @@ class Client(object):
         self.status = None
         self.headers = {}
         self.recv_iter = None
+
+        self.stopwatch_kwargs = {
+            # min_tracing_milliseconds=0 to trace all events. StopWatch trace
+            # only event those cost less than min_tracing_milliseconds
+            'min_tracing_milliseconds': 0,
+        }
+
+        if stopwatch_kwargs is not None:
+            self.stopwatch_kwargs.update(stopwatch_kwargs)
+
+        self.stopwatch = stopwatch.StopWatch(**self.stopwatch_kwargs)
+        self.stopwatch_started = False
+
+    def get_trace_str(self):
+        tr = self.get_trace()
+        rst = []
+        for t in tr:
+            ent = '{name}: {time:.6f} {annotation}'.format(
+                name=t['name'],
+                time=float('{:.6f}'.format(t['time'] / 1000)),
+                annotation=','.join(t['annotation']) or '-'
+            )
+            rst.append(ent)
+
+        return '; '.join(rst)
+
+    def get_trace(self):
+        sw = self.get_and_end_stopwatch()
+        rst = []
+        for t in sw.get_last_trace_report():
+            ent = dict(
+                name=t.name,
+                time=t.end_time - t.start_time,
+                annotation=[self._human_annotation(
+                    an) for an in t.trace_annotations],
+            )
+
+            rst.append(ent)
+
+        return rst
+
+    def _human_annotation(self, annotation):
+        an = annotation
+        return '{key}:{value}'.format(key=an.key, value=an.value)
+
+    def get_and_end_stopwatch(self):
+        '''stopwatch must be stopped before it can be read
+        '''
+        self.end_stopwatch()
+        return self.stopwatch
+
+    def end_stopwatch(self):
+
+        if self.stopwatch_started:
+            self.stopwatch.end(self.stopwatch_root_name)
+            self.stopwatch_started = False
+
+    def start_stopwatch(self):
+
+        if self.stopwatch_started:
+            return
+
+        self.stopwatch.start(self.stopwatch_root_name)
+        self.stopwatch_started = True
 
     def __del__(self):
 
@@ -72,9 +140,12 @@ class Client(object):
         self._reset_request()
         self.method = method
 
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.settimeout(self.timeout)
-        self.sock.connect((self.host, self.port))
+        self.start_stopwatch()
+
+        with self.stopwatch.timer('conn'):
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.settimeout(self.timeout)
+            self.sock.connect((self.host, self.port))
 
         bufs = ['{method} {uri} HTTP/1.1'.format(method=method, uri=uri), ]
 
@@ -87,14 +158,16 @@ class Client(object):
 
         bufs.extend(['', ''])
 
-        self.sock.sendall('\r\n'.join(bufs))
+        with self.stopwatch.timer('send_header'):
+            self.sock.sendall('\r\n'.join(bufs))
 
     def send_body(self, body):
 
         if self.sock is None:
             raise NotConnectedError('socket object is None')
 
-        self.sock.sendall(body)
+        with self.stopwatch.timer('send_body'):
+            self.sock.sendall(body)
 
     def read_status(self):
 
@@ -112,26 +185,32 @@ class Client(object):
                 break
 
             # skip the header from the 100 response
-            while True:
-                skip = self._readline()
-                if skip.strip() == '':
-                    break
+            with self.stopwatch.timer('recv_skip_header'):
+
+                while True:
+
+                    skip = self._readline()
+                    if skip.strip() == '':
+                        break
 
         self.status = status
         return status
 
     def read_headers(self):
 
-        while True:
+        with self.stopwatch.timer('recv_header'):
 
-            line = self._readline()
-            if line == '':
-                break
+            while True:
 
-            kv = line.strip().split(':', 1)
-            if len(kv) < 2:
-                raise HeadersError('invalid headers param line:%s' % (line))
-            self.headers[kv[0].lower()] = kv[1].strip()
+                line = self._readline()
+                if line == '':
+                    break
+
+                kv = line.strip().split(':', 1)
+                if len(kv) < 2:
+                    raise HeadersError(
+                        'invalid headers param line:%s' % (line))
+                self.headers[kv[0].lower()] = kv[1].strip()
 
         if self.status in (204, 304) or self.method == 'HEAD':
             self.content_length = 0
@@ -161,6 +240,11 @@ class Client(object):
         return self.status, self.headers
 
     def read_body(self, size):
+
+        with self.stopwatch.timer('recv_body'):
+            return self._read_body(size)
+
+    def _read_body(self, size):
 
         if size is not None and size <= 0:
             return ''
@@ -219,7 +303,8 @@ class Client(object):
 
     def _get_response_status(self):
 
-        line = self._readline()
+        with self.stopwatch.timer('recv_status'):
+            line = self._readline()
 
         vals = line.split(None, 2)
         if len(vals) < 2:

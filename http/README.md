@@ -7,31 +7,34 @@
 - [Synopsis](#synopsis)
 - [Description](#description)
 - [Exceptions](#exceptions)
-    - [http.HttpError](#httphttperror)
-    - [http.LineTooLongError](#httplinetoolongerror)
-    - [http.ChunkedSizeError](#httpchunkedsizeerror)
-    - [http.NotConnectedError](#httpnotconnectederror)
-    - [http.ResponseNotReadyError](#httpresponsenotreadyerror)
-    - [http.HeadersError](#httpheaderserror)
-    - [http.BadStatusLineError](#httpbadstatuslineerror)
+  - [http.HttpError](#httphttperror)
+  - [http.LineTooLongError](#httplinetoolongerror)
+  - [http.ChunkedSizeError](#httpchunkedsizeerror)
+  - [http.NotConnectedError](#httpnotconnectederror)
+  - [http.ResponseNotReadyError](#httpresponsenotreadyerror)
+  - [http.HeadersError](#httpheaderserror)
+  - [http.BadStatusLineError](#httpbadstatuslineerror)
 - [Constants](#constants)
-    - [http.Client.status](#httpclientstatus)
-    - [http.Client.has_read](#httpclienthas_read)
-    - [http.Client.headers](#httpclientheaders)
-    - [http.Client.content_length](#httpclientcontent_length)
-    - [http.Client.chunked](#httpclientchunked)
+  - [http.Client.status](#httpclientstatus)
+  - [http.Client.has_read](#httpclienthas_read)
+  - [http.Client.headers](#httpclientheaders)
+  - [http.Client.content_length](#httpclientcontent_length)
+  - [http.Client.chunked](#httpclientchunked)
 - [Classes](#classes)
-    - [http.Client](#httpclient)
+  - [http.Client](#httpclient)
 - [Methods](#methods)
-    - [http.Client.send_request](#httpclientsend_request)
-    - [http.Client.read_status](#httpclientread_status)
-    - [http.Client.read_headers](#httpclientread_headers)
-    - [http.Client.read_response](#httpclientread_response)
-    - [http.Client.request](#httpclientrequest)
-    - [http.Client.send_body](#httpclientsend_body)
-    - [http.Client.read_body](#httpclientread_body)
+  - [http.Client.send_request](#httpclientsend_request)
+  - [http.Client.read_status](#httpclientread_status)
+  - [http.Client.read_headers](#httpclientread_headers)
+  - [http.Client.read_response](#httpclientread_response)
+  - [http.Client.request](#httpclientrequest)
+  - [http.Client.send_body](#httpclientsend_body)
+  - [http.Client.read_body](#httpclientread_body)
+  - [http.Client.get_trace_str](#httpclientget_trace_str)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 #   Name
 
@@ -220,7 +223,7 @@ Whether response body is chunked encoding or not.
 ##  http.Client
 
 **syntax**:
-`http.Client(host, port, timeout=60)`
+`http.Client(host, port, timeout=60, stopwatch_kwargs=None)`
 
 HTTP client class
 
@@ -238,6 +241,19 @@ HTTP client class
     if `None`, it is equivalent to `socket.setblocking(1)`.
     if `0.0`, it is equivalent to `socket.setblocking(0)`.
 
+-   `stopwatch_kwargs`:
+    is an dictionary used as keyword arguments when initializing stopwatch instance.
+
+    ```
+    class StopWatch(object):
+        def __init__(self,
+                     strict_assert=True,
+                     export_tracing_func=None,
+                     export_aggregated_timers_func=None,
+                     max_tracing_spans_for_path=1000,
+                     min_tracing_milliseconds=3,
+                     time_func=None):
+    ```
 
 #   Methods
 
@@ -362,6 +378,32 @@ Read and return the response body.
 
 **return**:
 the response body.
+
+##  http.Client.get_trace_str
+
+**syntax**:
+`http.Client.get_trace_str()`
+
+**return**:
+a string shows time spent on each phase of a request.
+The following fields would presents in it:
+
+```
+conn: 0.000001 -; send_header: 0.000000 -; recv_status: 0.000000 -; recv_header: 0.000000 -; recv_body: 0.000000 -; recv_body: 0.000000 -; exception: 0.000000 -; pykit.http.Client: 0.000002 Exception:ValueError
+```
+
+The numbers are time in second.
+
+There might be less fields in the result, if request failed.
+
+It is also possible some of the above fields appear more than once.
+
+For example if a server responds a `100-Continue` status line and a `200-OK`
+status line, there would be two `recv_status` fields.
+
+If the caller calls `http.Client.read_body` more than one time, there would be
+more than one `recv_body` fields.
+
 
 #   Author
 
