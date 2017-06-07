@@ -6,7 +6,7 @@ import logging
 import select
 import socket
 
-import stopwatch
+from pykit import stopwatch
 
 logger = logging.getLogger(__name__)
 
