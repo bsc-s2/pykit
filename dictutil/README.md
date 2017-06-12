@@ -197,7 +197,7 @@ an object provides with dictionary item access with attribute.
     #     (['mykey1', 'mykey2', 'k1', 'k12', 'k121'], 'v-a.b.a')
     #     (['mykey1', 'mykey2', 'k1', 'k11'], 'v-a.a')
 
-   ```
+    ```
 
 -   `maxdepth`:
     specifies the max depth of iteration.
@@ -217,26 +217,26 @@ an object provides with dictionary item access with attribute.
     points to a non-leaf descendent.
     By default it is `False`.
 
-   ```python
+    ```python
     mydict = {'a':
                  {'a.a': 'v-a.a',
                   'a.b': {'a.b.a': 'v-a.b.a'},
                   'a.c': {'a.c.a': {'a.c.a.a': 'v-a.c.a.a'}}
                  }
              }
-   for keys, vals in dictutil.depth_iter(mydict, intermediate=True):
+    for keys, vals in dictutil.depth_iter(mydict, intermediate=True):
        print keys
 
-   # output:
-   #     ['a']                              # intermediate
-   #     ['a', 'a.a']
-   #     ['a', 'a.b']                       # intermediate
-   #     ['a', 'a.b', 'a.b.a']
-   #     ['a', 'a.c']                       # intermediate
-   #     ['a', 'a.c', 'a.c.a']              # intermediate
-   #     ['a', 'a.c', 'a.c.a', 'a.c.a.a']
+    # output:
+    #     ['a']                              # intermediate
+    #     ['a', 'a.a']
+    #     ['a', 'a.b']                       # intermediate
+    #     ['a', 'a.b', 'a.b.a']
+    #     ['a', 'a.c']                       # intermediate
+    #     ['a', 'a.c', 'a.c.a']              # intermediate
+    #     ['a', 'a.c', 'a.c.a', 'a.c.a.a']
 
-   ```
+    ```
 
 **return**:
 an iterator. Each element it yields is a tuple of keys and value.
