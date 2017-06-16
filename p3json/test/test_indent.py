@@ -1,6 +1,6 @@
 import textwrap
 from StringIO import StringIO
-from json.tests import PyTest, CTest
+from pykit.p3json.test import PyTest
 
 
 class TestIndent(object):
@@ -57,4 +57,3 @@ class TestIndent(object):
 
 
 class TestPyIndent(TestIndent, PyTest): pass
-class TestCIndent(TestIndent, CTest): pass

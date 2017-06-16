@@ -1,4 +1,4 @@
-from json.tests import PyTest, CTest
+from pykit.p3json.test import PyTest
 
 
 # from http://json.org/JSON_checker/test/pass3.json
@@ -21,4 +21,3 @@ class TestPass3(object):
 
 
 class TestPyPass3(TestPass3, PyTest): pass
-class TestCPass3(TestPass3, CTest): pass

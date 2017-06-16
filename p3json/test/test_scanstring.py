@@ -1,5 +1,5 @@
 import sys
-from json.tests import PyTest, CTest
+from pykit.p3json.test import PyTest
 
 
 class TestScanstring(object):
@@ -140,13 +140,16 @@ class TestScanstring(object):
         ]
         for s in bad_escapes:
             with self.assertRaises(ValueError):
-                scanstring(s, 1, None, True)
+                # XXX for python2 json compatibility: py_scanstring does not have argument encoding in py3
+                scanstring(s, 1, True)
+                # scanstring(s, 1, None, True)
 
     def test_issue3623(self):
         self.assertRaises(ValueError, self.json.decoder.scanstring, b"xxx", 1,
                           "xxx")
-        self.assertRaises(UnicodeDecodeError,
-                          self.json.encoder.encode_basestring_ascii, b"xx\xff")
+        # XXX for python2 json compatibility: py3 does not have this issue
+        # self.assertRaises(UnicodeDecodeError,
+        #                   self.json.encoder.encode_basestring_ascii, b"xx\xff")
 
     def test_overflow(self):
         with self.assertRaises(OverflowError):
@@ -154,4 +157,3 @@ class TestScanstring(object):
 
 
 class TestPyScanstring(TestScanstring, PyTest): pass
-class TestCScanstring(TestScanstring, CTest): pass

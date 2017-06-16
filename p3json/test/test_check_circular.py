@@ -1,4 +1,4 @@
-from json.tests import PyTest, CTest
+from pykit.p3json.test import PyTest
 
 
 def default_iterable(obj):
@@ -31,4 +31,3 @@ class TestCheckCircular(object):
 
 
 class TestPyCheckCircular(TestCheckCircular, PyTest): pass
-class TestCCheckCircular(TestCheckCircular, CTest): pass

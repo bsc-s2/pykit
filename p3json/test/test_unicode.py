@@ -1,9 +1,11 @@
 from collections import OrderedDict
-from json.tests import PyTest, CTest
+from pykit.p3json.test import PyTest
 
 
 class TestUnicode(object):
     def test_encoding1(self):
+        # XXX for python2 json compatibility: encoding is disabled in py3
+        return
         encoder = self.json.JSONEncoder(encoding='utf-8')
         u = u'\N{GREEK SMALL LETTER ALPHA}\N{GREEK CAPITAL LETTER OMEGA}'
         s = u.encode('utf-8')
@@ -12,6 +14,8 @@ class TestUnicode(object):
         self.assertEqual(ju, js)
 
     def test_encoding2(self):
+        # XXX for python2 json compatibility: encoding is disabled in py3
+        return
         u = u'\N{GREEK SMALL LETTER ALPHA}\N{GREEK CAPITAL LETTER OMEGA}'
         s = u.encode('utf-8')
         ju = self.dumps(u, encoding='utf-8')
@@ -70,20 +74,29 @@ class TestUnicode(object):
                          OrderedDict(p))
 
     def test_default_encoding(self):
+        # XXX for python2 json compatibility: encoding is disabled in py3
+        return
+
         self.assertEqual(self.loads(u'{"a": "\xe9"}'.encode('utf-8')),
             {'a': u'\xe9'})
 
     def test_unicode_preservation(self):
-        self.assertEqual(type(self.loads(u'""')), unicode)
+        # XXX for python2 json compatibility: loads returns str
+        self.assertEqual(type(self.loads(u'""')), str)
         self.assertEqual(type(self.loads(u'"a"')), unicode)
         self.assertEqual(type(self.loads(u'["a"]')[0]), unicode)
         # Issue 10038.
-        self.assertEqual(type(self.loads('"foo"')), unicode)
+        self.assertEqual(type(self.loads('"foo"')), str)
+        # self.assertEqual(type(self.loads(u'""')), unicode)
+        # self.assertEqual(type(self.loads(u'"a"')), unicode)
+        # self.assertEqual(type(self.loads(u'["a"]')[0]), unicode)
+        # # Issue 10038.
+        # self.assertEqual(type(self.loads('"foo"')), unicode)
 
     def test_bad_encoding(self):
-        self.assertRaises(UnicodeEncodeError, self.loads, '"a"', u"rat\xe9")
-        self.assertRaises(TypeError, self.loads, '"a"', 1)
+        # self.assertRaises(UnicodeEncodeError, self.loads, '"a"', "rat\xe9")
+        # XXX for python2 json compatibility: single argument
+        self.assertRaises(TypeError, self.loads, 1)
 
 
 class TestPyUnicode(TestUnicode, PyTest): pass
-class TestCUnicode(TestUnicode, CTest): pass

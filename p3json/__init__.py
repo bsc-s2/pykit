@@ -338,7 +338,8 @@ def loads(s, encoding=None, cls=None, object_hook=None, parse_float=None,
     The ``encoding`` argument is ignored and deprecated.
 
     """
-    if isinstance(s, str):
+    # XXX for python2 json compatibility: basestring is base class of str and unicode
+    if isinstance(s, basestring):
         if s.startswith('\ufeff'):
             raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
                                   s, 0)

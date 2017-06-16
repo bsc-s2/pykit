@@ -1,5 +1,5 @@
 from cStringIO import StringIO
-from json.tests import PyTest, CTest
+from pykit.p3json.test import PyTest
 
 
 class TestDump(object):
@@ -29,4 +29,3 @@ class TestDump(object):
 
 
 class TestPyDump(TestDump, PyTest): pass
-class TestCDump(TestDump, CTest): pass

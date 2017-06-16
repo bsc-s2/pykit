@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from json.tests import PyTest, CTest
+from pykit.p3json.test import PyTest
 
 
 CASES = [
@@ -11,11 +11,10 @@ CASES = [
     (u' s p a c e d ', '" s p a c e d "'),
     (u'\U0001d120', '"\\ud834\\udd20"'),
     (u'\u03b1\u03a9', '"\\u03b1\\u03a9"'),
-    ('\xce\xb1\xce\xa9', '"\\u03b1\\u03a9"'),
-    (u'\u03b1\u03a9', '"\\u03b1\\u03a9"'),
-    ('\xce\xb1\xce\xa9', '"\\u03b1\\u03a9"'),
-    (u'\u03b1\u03a9', '"\\u03b1\\u03a9"'),
-    (u'\u03b1\u03a9', '"\\u03b1\\u03a9"'),
+
+    # XXX for python2 json compatibility: string will not be converted to unicode
+    # ('\xce\xb1\xce\xa9', '"\\u03b1\\u03a9"'),
+
     (u"`1~!@#$%^&*()_+-={':[,]}|;.</>?", '"`1~!@#$%^&*()_+-={\':[,]}|;.</>?"'),
     (u'\x08\x0c\n\r\t', '"\\b\\f\\n\\r\\t"'),
     (u'\u0123\u4567\u89ab\ucdef\uabcd\uef4a', '"\\u0123\\u4567\\u89ab\\ucdef\\uabcd\\uef4a"'),
@@ -38,4 +37,3 @@ class TestEncodeBasestringAscii(object):
 
 
 class TestPyEncodeBasestringAscii(TestEncodeBasestringAscii, PyTest): pass
-class TestCEncodeBasestringAscii(TestEncodeBasestringAscii, CTest): pass

@@ -1,27 +1,21 @@
 import os
 import sys
-import json
 import doctest
 import unittest
 
 from test import test_support
+from pykit import p3json
 
 # import json with and without accelerations
 cjson = test_support.import_fresh_module('json', fresh=['_json'])
-pyjson = test_support.import_fresh_module('json', blocked=['_json'])
+# pyjson = test_support.import_fresh_module('json', blocked=['_json'])
+pyjson = p3json
 
 # create two base classes that will be used by the other tests
 class PyTest(unittest.TestCase):
     json = pyjson
     loads = staticmethod(pyjson.loads)
     dumps = staticmethod(pyjson.dumps)
-
-@unittest.skipUnless(cjson, 'requires _json')
-class CTest(unittest.TestCase):
-    if cjson is not None:
-        json = cjson
-        loads = staticmethod(cjson.loads)
-        dumps = staticmethod(cjson.dumps)
 
 # test PyTest and CTest checking if the functions come from the right module
 class TestPyTest(PyTest):
@@ -32,14 +26,6 @@ class TestPyTest(PyTest):
                          'json.decoder')
         self.assertEqual(self.json.encoder.encode_basestring_ascii.__module__,
                          'json.encoder')
-
-class TestCTest(CTest):
-    def test_cjson(self):
-        self.assertEqual(self.json.scanner.make_scanner.__module__, '_json')
-        self.assertEqual(self.json.decoder.scanstring.__module__, '_json')
-        self.assertEqual(self.json.encoder.c_make_encoder.__module__, '_json')
-        self.assertEqual(self.json.encoder.encode_basestring_ascii.__module__,
-                         '_json')
 
 
 here = os.path.dirname(__file__)

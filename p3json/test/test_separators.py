@@ -1,5 +1,5 @@
 import textwrap
-from json.tests import PyTest, CTest
+from pykit.p3json.test import PyTest
 
 
 class TestSeparators(object):
@@ -41,4 +41,3 @@ class TestSeparators(object):
 
 
 class TestPySeparators(TestSeparators, PyTest): pass
-class TestCSeparators(TestSeparators, CTest): pass

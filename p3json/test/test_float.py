@@ -1,5 +1,5 @@
 import math
-from json.tests import PyTest, CTest
+from pykit.p3json.test import PyTest
 
 
 class TestFloat(object):
@@ -11,7 +11,9 @@ class TestFloat(object):
             self.assertEqual(self.loads(unicode(self.dumps(num))), num)
 
     def test_ints(self):
-        for num in [1, 1L, 1<<32, 1<<64]:
+        # XXX for python2 json compatibility: no long int allowed
+        # for num in [1, 1L, 1<<32, 1<<64]:
+        for num in [1, 1<<32, 1<<64]:
             self.assertEqual(self.dumps(num), str(num))
             self.assertEqual(int(self.dumps(num)), num)
             self.assertEqual(self.loads(self.dumps(num)), num)
@@ -45,4 +47,3 @@ class TestFloat(object):
 
 
 class TestPyFloat(TestFloat, PyTest): pass
-class TestCFloat(TestFloat, CTest): pass

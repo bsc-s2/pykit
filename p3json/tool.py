@@ -12,7 +12,7 @@ Usage::
 """
 import argparse
 import collections
-import json
+from pykit import p3json
 import sys
 
 

@@ -1,4 +1,4 @@
-from json.tests import PyTest, CTest
+from pykit.p3json.test import PyTest
 
 
 class TestDefault(object):
@@ -9,4 +9,3 @@ class TestDefault(object):
 
 
 class TestPyDefault(TestDefault, PyTest): pass
-class TestCDefault(TestDefault, CTest): pass

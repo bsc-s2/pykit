@@ -1,4 +1,4 @@
-from json.tests import PyTest, CTest
+from pykit.p3json.test import PyTest
 
 # 2007-10-05
 JSONDOCS = [
@@ -68,8 +68,10 @@ JSONDOCS = [
     '{"Comma instead if closing brace": true,',
     # http://json.org/JSON_checker/test/fail33.json
     '["mismatch"}',
-    # http://code.google.com/p/simplejson/issues/detail?id=3
-    u'["A\u001FZ control characters in string"]',
+
+    # XXX for python2 json compatibility: unicode is not allowed any more
+    # # http://code.google.com/p/simplejson/issues/detail?id=3
+    # u'["A\u001FZ control characters in string"]',
 ]
 
 SKIPS = {
@@ -102,4 +104,3 @@ class TestFail(object):
 
 
 class TestPyFail(TestFail, PyTest): pass
-class TestCFail(TestFail, CTest): pass

@@ -179,7 +179,7 @@ class JSONEncoder(object):
 
         """
         # This is for extremely simple cases and benchmarks.
-        if isinstance(o, str):
+        if isinstance(o, basestring):
             if self.ensure_ascii:
                 return encode_basestring_ascii(o)
             else:
@@ -259,7 +259,9 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
         list=list,
         str=str,
         tuple=tuple,
-        _intstr=int.__str__,
+        # XXX for python2 json compatibility: support int and long
+        # _intstr=int.__str__
+        _intstr=str
     ):
 
     if _indent is not None and not isinstance(_indent, str):
@@ -289,7 +291,7 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
                 first = False
             else:
                 buf = separator
-            if isinstance(value, str):
+            if isinstance(value, basestring):
                 yield buf + _encoder(value)
             elif value is None:
                 yield buf + 'null'
@@ -297,7 +299,8 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
                 yield buf + 'true'
             elif value is False:
                 yield buf + 'false'
-            elif isinstance(value, int):
+            # XXX for python2 json compatibility: python2 has long, python3 does not
+            elif isinstance(value, (int, long)):
                 # Subclasses of int/float may override __str__, but we still
                 # want to encode them as integers/floats in JSON. One example
                 # within the standard library is IntEnum.
@@ -346,7 +349,7 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
         else:
             items = dct.items()
         for key, value in items:
-            if isinstance(key, str):
+            if isinstance(key, basestring):
                 pass
             # JavaScript is weakly typed for these, so it makes sense to
             # also allow them.  Many encoders seem to do something like this.
@@ -359,7 +362,8 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
                 key = 'false'
             elif key is None:
                 key = 'null'
-            elif isinstance(key, int):
+            # XXX for python2 json compatibility: python2 has long, python3 does not
+            elif isinstance(key, (int, long)):
                 # see comment for int/float in _make_iterencode
                 key = _intstr(key)
             elif _skipkeys:
@@ -372,7 +376,7 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
                 yield item_separator
             yield _encoder(key)
             yield _key_separator
-            if isinstance(value, str):
+            if isinstance(value, basestring):
                 yield _encoder(value)
             elif value is None:
                 yield 'null'
@@ -380,7 +384,8 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
                 yield 'true'
             elif value is False:
                 yield 'false'
-            elif isinstance(value, int):
+            # XXX for python2 json compatibility: python2 has long, python3 does not
+            elif isinstance(value, (int, long)):
                 # see comment for int/float in _make_iterencode
                 yield _intstr(value)
             elif isinstance(value, float):
@@ -403,7 +408,7 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
             del markers[markerid]
 
     def _iterencode(o, _current_indent_level):
-        if isinstance(o, str):
+        if isinstance(o, basestring):
             yield _encoder(o)
         elif o is None:
             yield 'null'
@@ -411,7 +416,8 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
             yield 'true'
         elif o is False:
             yield 'false'
-        elif isinstance(o, int):
+        # XXX for python2 json compatibility: python2 has long, python3 does not
+        elif isinstance(o, (int, long)):
             # see comment for int/float in _make_iterencode
             yield _intstr(o)
         elif isinstance(o, float):

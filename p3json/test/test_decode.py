@@ -1,7 +1,7 @@
 import decimal
 from StringIO import StringIO
 from collections import OrderedDict
-from json.tests import PyTest, CTest
+from pykit.p3json.test import PyTest
 
 
 class TestDecode(object):
@@ -26,7 +26,10 @@ class TestDecode(object):
         self.assertEqual(self.loads('{}'), {})
         self.assertEqual(self.loads('[]'), [])
         self.assertEqual(self.loads('""'), u"")
-        self.assertIsInstance(self.loads('""'), unicode)
+
+        # XXX for python2 json compatibility
+        # self.assertIsInstance(self.loads('""'), unicode)
+        self.assertIsInstance(self.loads('""'), str)
 
     def test_object_pairs_hook(self):
         s = '{"xkd":1, "kcw":2, "art":3, "hxm":4, "qrt":5, "pad":6, "hoy":7}'
@@ -66,4 +69,3 @@ class TestDecode(object):
         self.assertRaises(ValueError, d.raw_decode, u'a'*42, -50000)
 
 class TestPyDecode(TestDecode, PyTest): pass
-class TestCDecode(TestDecode, CTest): pass

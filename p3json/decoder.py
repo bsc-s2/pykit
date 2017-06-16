@@ -1,8 +1,9 @@
 """Implementation of JSONDecoder
 """
 import re
+import sys
 
-from json import scanner
+from pykit.p3json import scanner
 c_scanstring = None
 
 __all__ = ['JSONDecoder', 'JSONDecodeError']
@@ -112,12 +113,16 @@ def py_scanstring(s, end, strict=True,
         else:
             uni = _decode_uXXXX(s, end)
             end += 5
-            if 0xd800 <= uni <= 0xdbff and s[end:end + 2] == '\\u':
+            # XXX for python2 json compatibility: must check if sys.maxunicode > 65535 in pyt2
+            # if 0xd800 <= uni <= 0xdbff and s[end:end + 2] == '\\u':
+            if sys.maxunicode > 65535 and \
+               0xd800 <= uni <= 0xdbff and s[end:end + 2] == '\\u':
                 uni2 = _decode_uXXXX(s, end + 1)
                 if 0xdc00 <= uni2 <= 0xdfff:
                     uni = 0x10000 + (((uni - 0xd800) << 10) | (uni2 - 0xdc00))
                     end += 6
-            char = chr(uni)
+            # XXX for python2 json compatibility: in py3, chr is ok for unicode. in py2: unichr
+            char = unichr(uni)
         _append(char)
     return ''.join(chunks), end
 
@@ -181,7 +186,7 @@ def JSONObject(s_and_end, strict, scan_once, object_hook, object_pairs_hook,
         try:
             value, end = scan_once(s, end)
         except StopIteration as err:
-            raise JSONDecodeError("Expecting value", s, err.value)
+            raise JSONDecodeError("Expecting value", s, err[0])
         pairs_append((key, value))
         try:
             nextchar = s[end]
@@ -225,7 +230,7 @@ def JSONArray(s_and_end, scan_once, _w=WHITESPACE.match, _ws=WHITESPACE_STR):
         try:
             value, end = scan_once(s, end)
         except StopIteration as err:
-            raise JSONDecodeError("Expecting value", s, err.value)
+            raise JSONDecodeError("Expecting value", s, err[0])
         _append(value)
         nextchar = s[end:end + 1]
         if nextchar in _ws:
@@ -351,5 +356,5 @@ class JSONDecoder(object):
         try:
             obj, end = self.scan_once(s, idx)
         except StopIteration as err:
-            raise JSONDecodeError("Expecting value", s, err.value)
+            raise JSONDecodeError("Expecting value", s, err[0])
         return obj, end

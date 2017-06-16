@@ -1,4 +1,4 @@
-from json.tests import PyTest, CTest
+from pykit.p3json.test import PyTest
 
 
 class JSONTestObject:
@@ -105,4 +105,3 @@ class TestRecursion(object):
 
 
 class TestPyRecursion(TestRecursion, PyTest): pass
-class TestCRecursion(TestRecursion, CTest): pass
