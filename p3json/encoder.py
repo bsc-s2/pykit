@@ -55,7 +55,8 @@ def py_encode_basestring_ascii(s):
                 s1 = 0xd800 | ((n >> 10) & 0x3ff)
                 s2 = 0xdc00 | (n & 0x3ff)
                 return '\\u{0:04x}\\u{1:04x}'.format(s1, s2)
-    return '"' + ESCAPE_ASCII.sub(replace, s) + '"'
+
+    return str('"' + ESCAPE_ASCII.sub(replace, s) + '"')
 
 
 encode_basestring_ascii = (
