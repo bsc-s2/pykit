@@ -95,21 +95,22 @@ class TestScanstring(object):
         def assertScan(given, expect):
             self.assertEqual(scanstring(given, 1, None, True),
                              (expect, len(given)))
-            if not isinstance(given, unicode):
-                given = unicode(given)
-                self.assertEqual(scanstring(given, 1, None, True),
-                                 (expect, len(given)))
+            # XXX for python2 json compatibility: no unicode is allowed as input json-string
+            # if not isinstance(given, unicode):
+            #     given = unicode(given)
+            #     self.assertEqual(scanstring(given, 1, None, True),
+            #                      (expect, len(given)))
 
-        surrogates = unichr(0xd834) + unichr(0xdd20)
-        assertScan('"z\\ud834\\u0079x"', u'z\ud834yx')
-        assertScan('"z\\ud834\\udd20x"', u'z\U0001d120x')
-        assertScan('"z\\ud834\\ud834\\udd20x"', u'z\ud834\U0001d120x')
-        assertScan('"z\\ud834x"', u'z\ud834x')
-        assertScan(u'"z\\ud834\udd20x12345"', u'z%sx12345' % surrogates)
-        assertScan('"z\\udd20x"', u'z\udd20x')
-        assertScan(u'"z\ud834\udd20x"', u'z\ud834\udd20x')
-        assertScan(u'"z\ud834\\udd20x"', u'z%sx' % surrogates)
-        assertScan(u'"z\ud834x"', u'z\ud834x')
+        # surrogates = unichr(0xd834) + unichr(0xdd20)
+        assertScan('"z\\ud834\\u0079x"', 'z\xed\xa0\xb4yx')
+        assertScan('"z\\ud834\\udd20x"', 'z\xed\xa0\xb4\xed\xb4\xa0x')
+        assertScan('"z\\ud834\\ud834\\udd20x"', 'z\xed\xa0\xb4\xed\xa0\xb4\xed\xb4\xa0x')
+        assertScan('"z\\ud834x"', 'z\xed\xa0\xb4x')
+        assertScan('"z\\ud834\udd20x12345"', 'z\xed\xa0\xb4\xed\xb4\xa0x12345')
+        assertScan('"z\\udd20x"', 'z\xed\xb4\xa0x')
+        assertScan('"z\ud834\udd20x"', 'z\xed\xa0\xb4\xed\xb4\xa0x')
+        assertScan('"z\ud834\\udd20x"', 'z\xed\xa0\xb4\xed\xb4\xa0x')
+        assertScan('"z\ud834x"', 'z\xed\xa0\xb4x')
 
     def test_bad_escapes(self):
         scanstring = self.json.decoder.scanstring

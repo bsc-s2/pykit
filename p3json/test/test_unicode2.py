@@ -37,11 +37,11 @@ class TestS2Cases(object):
                 ('"\\/\xb6\xd4."', '/\xb6\xd4.'),
                 ('"\xe6\x88\x91"', '我'),
 
-                # unicode is loaded as unicode
-                ('"abc\\u6211"', u'abc我'),
+                # unicode is loaded and encoded in utf-8
+                ('"abc\\u6211"', 'abc\xe6\x88\x91'),
 
                 ('{"我": "我"}', {'我':'我'}),
-                ('{"\\u6211": "\\u6211"}', {u'我': u'我'}),
+                ('{"\\u6211": "\\u6211"}', {u'我'.encode('utf-8'): u'我'.encode('utf-8')}),
         ]
 
         for inp, expected in cases:

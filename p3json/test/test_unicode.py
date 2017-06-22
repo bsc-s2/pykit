@@ -50,13 +50,15 @@ class TestUnicode(object):
     def test_big_unicode_decode(self):
         u = u'z\U0001d120x'
         self.assertEqual(self.loads('"' + u + '"'), u)
-        self.assertEqual(self.loads('"z\\ud834\\udd20x"'), u)
+        # XXX for python2 json compatibility: output is utf-8
+        self.assertEqual(self.loads('"z\\ud834\\udd20x"'), 'z\xed\xa0\xb4\xed\xb4\xa0x')
 
     def test_unicode_decode(self):
         for i in range(0, 0xd7ff):
             u = unichr(i)
             s = '"\\u{0:04x}"'.format(i)
-            self.assertEqual(self.loads(s), u)
+            # XXX for python2 json compatibility: output is utf-8
+            self.assertEqual(self.loads(s), u.encode('utf-8'))
 
     def test_object_pairs_hook_with_unicode(self):
         s = u'{"xkd":1, "kcw":2, "art":3, "hxm":4, "qrt":5, "pad":6, "hoy":7}'

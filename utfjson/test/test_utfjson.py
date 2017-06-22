@@ -13,18 +13,18 @@ class TestUTFJson(unittest.TestCase):
         self.assertEqual(None, utfjson.load(None))
         self.assertEqual({}, utfjson.load('{}'))
 
-        # load unicode, result in unicode
+        # load unicode, result in utf-8
 
-        self.assertEqual('我'.decode('utf-8'), utfjson.load('"\\u6211"'))
-        self.assertEqual(unicode,         type(utfjson.load('"\\u6211"')))
+        self.assertEqual('我',      utfjson.load('"\\u6211"'))
+        self.assertEqual(str,  type(utfjson.load('"\\u6211"')))
 
         # unicode and string in a dictionary.
 
         obj = '{"a": "\\u6211", "b": "1"}'
         rst = utfjson.load(obj)
 
-        self.assertEqual({"a": u"\u6211", "b": "1"}, rst)
-        self.assertEqual(unicode, type(rst["a"]))
+        self.assertEqual({"a": "\xe6\x88\x91", "b": "1"}, rst)
+        self.assertEqual(str, type(rst["a"]))
         self.assertEqual(str, type(rst["b"]))
 
         # load utf-8, result in str
@@ -51,7 +51,7 @@ class TestUTFJson(unittest.TestCase):
         self.assertEqual(u'我', utfjson.load('"我"', encoding='utf-8'))
         self.assertEqual(unicode, type(utfjson.load('"我"', encoding='utf-8')))
 
-        self.assertEqual({'a': u"我"}, utfjson.load('{"a": "\\u6211"}'))
+        self.assertEqual({'a': u"我".encode('utf-8')}, utfjson.load('{"a": "\\u6211"}'))
         self.assertEqual({'a': u"我"}, utfjson.load('{"a": "我"}', encoding='utf-8'))
         self.assertEqual({'a':  "我"}, utfjson.load('{"a": "我"}'))
         self.assertEqual({'a':  "我"}, utfjson.load('{"a": "我"}'))
@@ -87,3 +87,6 @@ class TestUTFJson(unittest.TestCase):
         self.assertEqual('{"\\u6211": "\\u6211"}', utfjson.dump({u"我": u"我"}, encoding=None))
 
         self.assertEqual('"\\""', utfjson.dump('"'))
+
+        # encoded chars and unicode chars in one string
+        self.assertEqual('/aaa\xe7\x89\x88\xe6\x9c\xac/jfkdsl\x01', utfjson.load('"\/aaa\xe7\x89\x88\xe6\x9c\xac\/jfkdsl\u0001"'))

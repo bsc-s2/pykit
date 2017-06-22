@@ -121,8 +121,9 @@ def py_scanstring(s, end, strict=True,
                 if 0xdc00 <= uni2 <= 0xdfff:
                     uni = 0x10000 + (((uni - 0xd800) << 10) | (uni2 - 0xdc00))
                     end += 6
-            # XXX for python2 json compatibility: in py3, chr is ok for unicode. in py2: unichr
-            char = unichr(uni)
+            # XXX for python2 json compatibility: output all string as utf-8,
+            # in order to ensure that result string is not unicode
+            char = unichr(uni).encode('utf-8')
         _append(char)
     return ''.join(chunks), end
 
