@@ -67,7 +67,8 @@ class TestPass1(object):
     def test_parse(self):
         # test in/out equivalence and parsing
         res = self.loads(JSON)
-        out = self.dumps(res)
+        # XXX for python2 json compatibility: use ensure_ascii=False to dumps encoded string.
+        out = self.dumps(res, ensure_ascii=False)
         self.assertEqual(res, self.loads(out))
 
 
