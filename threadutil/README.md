@@ -78,7 +78,7 @@ Create and start a thread with the given parameters.
 
     > A daemon thread will quit when the main thread in a process quits.
     > A non-daemon thread keeps running after main thread quits.
-    > A process does not quit if there are any threads running.
+    > A process does not quit if there are any non-daemon threads running.
 
 **Returns**
 
@@ -104,14 +104,17 @@ It is useful when you want to terminate some threads from the main thread.
 
 ### Caveat: It might not work as expected
 
-Please note that the exception will be raised only when executing python bytecode.
-If your thread calls a native/built-in blocking function, the exception will be
-raised only when execution returns to the python code.
+The exception will be raised only when executing python bytecode. If your
+thread calls a native/built-in blocking function (such as `time.sleep()` and
+`threading.Thread.join()`), the exception will be raised only when execution
+returns to the python code.
+
+There is also an issue if the built-in function internally calls
+PyErr_Clear(), which would effectively cancel your pending exception. You can
+try to raise it again.
 
 Thus This function does not guarantee that a running thread will be
 interrupted and shut down when it is called.
-If a thread has not returned from `time.sleep()` or `threading.Thread.join()`,
-it continues running until returning from these function.
 
 
 **Arguments**
