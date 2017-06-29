@@ -51,13 +51,13 @@ A collection of helper function for managing python threads easily.
 
 ## start_thread
 
-Create and start a thread with the given parameters.
-
 **Syntax**
 
 ```
-t = threadutil.start_thread(work, name='my_thread', args=(10, ), kwargs={'x': 2}, daemon=True)
+t = threadutil.start_thread(work, name='my_thread', args=(10, ), kwargs={'x': 2}, daemon=False)
 ```
+
+Create and start a thread with the given parameters.
 
 **Arguments**
 
@@ -74,7 +74,11 @@ t = threadutil.start_thread(work, name='my_thread', args=(10, ), kwargs={'x': 2}
     A dictionary of keyword arguments for the target invocation. Defaults to `{}`.
 
 - `daemon`:
-    Whether to create a daemon thread.
+    Whether to create a **daemon** thread.
+
+    > A daemon thread will quit when the main thread in a process quits.
+    > A non-daemon thread keeps running after main thread quits.
+    > A process does not quit if there are any non-daemon threads running.
 
 **Returns**
 
@@ -82,23 +86,36 @@ The created thread object.
 
 ## start_daemon_thread
 
-Create and start a daemon thread. See `start_thread` method for more detail.
+Create and start a daemon thread.
+It is same as `threadutil.start_thread()` except that it sets argument `daemon=True`.
+
+See `start_thread` method for more detail.
 
 
 ## raise_in_thread
-
-Asynchronously Raises an exception in the given thread.
-It is useful when you want to terminate some threads from the main thread.
-
-Please note that the exception will be raised only when executing python bytecode.
-If your thread calls a native/built-in blocking function, the exception will be
-raised only when execution returns to the python code.
 
 **Syntax**
 
 ```
 threadutil.raise_in_thread(thread, exception)
 ```
+Asynchronously Raises an exception in the given thread.
+It is useful when you want to terminate some threads from the main thread.
+
+### Caveat: It might not work as expected
+
+The exception will be raised only when executing python bytecode. If your
+thread calls a native/built-in blocking function (such as `time.sleep()` and
+`threading.Thread.join()`), the exception will be raised only when execution
+returns to the python code.
+
+There is also an issue if the built-in function internally calls
+PyErr_Clear(), which would effectively cancel your pending exception. You can
+try to raise it again.
+
+Thus This function does not guarantee that a running thread will be
+interrupted and shut down when it is called.
+
 
 **Arguments**
 
