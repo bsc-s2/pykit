@@ -1,8 +1,8 @@
 #!/bin/sh
 
 yum install -y \
-    docker \
-    docker-python
+    docker-1.12.6 \
+    python-docker-py-1.10.6 \
 
 # pip install docker-py
 
