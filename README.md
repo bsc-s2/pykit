@@ -9,6 +9,7 @@
 - [Install](#install)
 - [Usage](#usage)
 - [Test](#test)
+- [For developer](#for-developer)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -93,6 +94,11 @@ Run one of following to test all, a module, a TestCase or a function.
 ./script/t.sh zkutil.test.test_zkutil.TestZKUtil
 ./script/t.sh zkutil.test.test_zkutil.TestZKUtil.test_lock_data
 ```
+
+#   For developer
+
+There are several scripts for developers.
+See [script](script).
 
 #   Author
 
