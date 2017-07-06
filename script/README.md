@@ -38,6 +38,14 @@
     ./script/t.sh zkutil.test.test_zkutil.TestZKUtil.test_lock_data
     ```
 
+    One can use `-v` to tell `t.sh` to display verbose info during test:
+
+    -   `t.sh -v` lets python unittest run in verbose mode: to display each
+        case function.
+
+    -   `t.sh -vv` or `t.sh -v -v` enables displaying debug message by
+        `pykit.ututil.dd()`.
+
 -   `toc.sh` add Table-of-Content to markdown files.
 
     Usage:
