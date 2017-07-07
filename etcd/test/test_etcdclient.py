@@ -4,10 +4,8 @@
 import time
 import unittest
 
-import docker
-
 from pykit import etcd
-from pykit import proc
+from pykit import utdocker
 from pykit import utfjson
 from pykit import ututil
 
@@ -355,13 +353,13 @@ class TestClient(unittest.TestCase):
 
     def test_nomoremachine_exception(self):
 
-        _stop_etcd_server(ETCD_NAMES)
+        utdocker.stop_container(*ETCD_NAMES)
         c = etcd.Client(host=HOSTS, read_timeout=1)
         self.assertRaises(etcd.NoMoreMachineError, c.get, '/key')
 
     def test_etcdreadtimeouterror_exception(self):
 
-        _stop_etcd_server(ETCD_NAMES)
+        utdocker.stop_container(*ETCD_NAMES)
         c = etcd.Client(host=HOSTS, read_timeout=1)
         self.assertRaises(etcd.EtcdReadTimeoutError, c.api_execute,
                           '/v2/keys/abc', 'GET', timeout=1, raise_read_timeout=True)
@@ -391,7 +389,7 @@ class TestClient(unittest.TestCase):
 
     def test_next_server(self):
 
-        _stop_etcd_server(['etcd_t0'])
+        utdocker.stop_container('etcd_t0')
         c = etcd.Client(host=HOSTS, read_timeout=2)
         c.set('key', 'val')
         self.assertIn('key', c)
@@ -633,7 +631,7 @@ class TestClient(unittest.TestCase):
             res = c.get('key1')
             self.assertEqual('val1', res.value)
         finally:
-            _remove_containers(names)
+            utdocker.remove_container(*names)
 
     def test_st_leader(self):
 
@@ -747,7 +745,7 @@ class TestClient(unittest.TestCase):
                 self.assertEqual(2 - i, len(c.members))
                 time.sleep(10)
         finally:
-            _remove_containers(names)
+            utdocker.remove_container(*names)
 
     def test_add_member(self):
 
@@ -766,27 +764,25 @@ class TestClient(unittest.TestCase):
         )
 
         c = etcd.Client(host=hosts)
-        dcli = _docker_cli()
         try:
             for ip, name, node, count in cases:
                 c.add_member(*['http://%s:3380' % (ip)])
                 hosts.append((ip, 3379))
                 nodes.append(node)
                 names.append(name)
-                dcli.create_container(
-                    name=name,
-                    image=etcd_test_tag,
-                    networking_config=_get_network_config(ip),
-                    command=_generate_command(
-                        len(hosts) - 1, hosts, nodes, state='existing')
-                )
 
-                dcli.start(container=name)
+                utdocker.start_container(name, etcd_test_tag, ip,
+                                         _generate_command(
+                                             len(hosts) - 1,
+                                             hosts,
+                                             nodes,
+                                             state='existing'))
+
                 time.sleep(10)
 
                 self.assertEqual(count, len(c.members))
         finally:
-            _remove_containers(names)
+            utdocker.remove_container(*names)
 
     def _clear_users_roles(self, root_pwd):
 
@@ -895,35 +891,6 @@ class TestClient(unittest.TestCase):
             self._clear_users_roles('')
 
 
-def _create_docker_network():
-
-    dcli = _docker_cli()
-    try:
-        dcli.inspect_network('network1')
-        return
-    except docker.errors.NotFound:
-        pass
-
-    ipam_pool = docker.utils.create_ipam_pool(
-        subnet='192.168.52.0/24',
-        gateway='192.168.52.254'
-    )
-    ipam_config = docker.utils.create_ipam_config(
-        pool_configs=[ipam_pool]
-    )
-
-    dcli.create_network("network1", driver="bridge", ipam=ipam_config)
-
-
-def _get_network_config(ip):
-
-    cli = _docker_cli()
-    cfg = cli.create_networking_config({
-        'network1': cli.create_endpoint_config(ipv4_address=ip,)})
-
-    return cfg
-
-
 def _generate_command(index, hosts, nodes, state='new'):
 
     node = nodes[index]
@@ -948,54 +915,12 @@ def _generate_command(index, hosts, nodes, state='new'):
 
 def _start_etcd_server(hosts, names, nodes, state='new'):
 
-    _create_docker_network()
-    dcli = _docker_cli()
+    utdocker.create_network()
 
     for i in range(len(hosts)):
 
         name = names[i]
         ip, _ = hosts[i]
-        if not _container_exist(name):
-            dcli.create_container(
-                name=name,
-                image=etcd_test_tag,
-                networking_config=_get_network_config(ip),
-                command=_generate_command(i, hosts, nodes, state=state)
-            )
+        command = _generate_command(i, hosts, nodes, state=state)
 
-        dcli.start(container=name)
-
-
-def _stop_etcd_server(names):
-
-    cli = _docker_cli()
-    for n in names:
-        try:
-            cli.stop(container=n)
-        except Exception as e:
-            dd(repr(e), ' when stop etcd server')
-
-
-def _remove_containers(names):
-
-    for n in names:
-        try:
-            proc.command_ex('docker', 'kill', n)
-        except Exception as e:
-            dd(repr(e) + ' while kill container')
-        proc.command_ex('docker', 'rm', n)
-
-
-def _docker_cli():
-    dcli = docker.Client(base_url='unix://var/run/docker.sock')
-    return dcli
-
-
-def _container_exist(name):
-
-    dcli = _docker_cli()
-    try:
-        dcli.inspect_container(name)
-        return True
-    except docker.errors.NotFound:
-        return False
+        utdocker.start_container(name, etcd_test_tag, ip, command)
