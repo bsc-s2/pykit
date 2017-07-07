@@ -3,6 +3,8 @@ import subprocess
 import time
 import unittest
 
+from pykit import redisutil
+
 from pykit import utdocker
 from pykit import ututil
 
@@ -10,27 +12,7 @@ dd = ututil.dd
 
 this_base = os.path.dirname(__file__)
 
-
-def subproc(script):
-
-    subproc = subprocess.Popen(['sh'],
-                               close_fds=True,
-                               env=dict(
-                                       PYTHONPATH=this_base + '/../..',
-                               ),
-                               stdin=subprocess.PIPE,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
-
-    out, err = subproc.communicate(script)
-
-    subproc.wait()
-
-    if subproc.returncode != 0:
-        print out
-        print err
-
-    return (subproc.returncode, out, err)
+redis_tag = 'daocloud.io/redis:3.2.3'
 
 
 def read_file(fn):
@@ -42,7 +24,7 @@ def read_file(fn):
         return None
 
 
-class TestDaemonize(unittest.TestCase):
+class TestRedis(unittest.TestCase):
 
     foo_fn = '/tmp/foo'
     bar_fn = '/tmp/bar'
@@ -77,55 +59,23 @@ class TestDaemonize(unittest.TestCase):
             pass
 
     def setUp(self):
-        self._clean()
+        self.redis_name = 'redis-0'
+        self.ip = '192.168.52.40'
+        utdocker.create_network()
+        utdocker.start_container(self.redis_name, redis_tag, self.ip, '')
+
+        self.rcl = redisutil.get_client((self.ip, 6379))
+        # self._clean()
 
     def tearDown(self):
-        self._clean()
+        pass
+        # self._clean()
 
     def test_start(self):
 
-        subproc('python2 {b}/foo.py start'.format(b=this_base))
-        time.sleep(0.2)
+        hname = 'foo'
+        rst = self.rcl.hset(hname, 'a', 1)
+        dd('hset rst:', rst)
 
-        self.assertEqual('foo-before', read_file(self.foo_fn))
-        time.sleep(1)
-        self.assertEqual('foo-after', read_file(self.foo_fn))
-
-    def test_stop(self):
-
-        subproc('python2 {b}/foo.py start'.format(b=this_base))
-        time.sleep(0.2)
-
-        self.assertEqual('foo-before', read_file(self.foo_fn), 'foo started')
-
-        subproc('python2 {b}/foo.py stop'.format(b=this_base))
-        time.sleep(0.2)
-
-        self.assertEqual('foo-before', read_file(self.foo_fn),
-                         'process has been kill thus no content is updated')
-
-    def test_restart(self):
-
-        subproc('python2 {b}/foo.py start'.format(b=this_base))
-        time.sleep(0.2)
-
-        self.assertEqual('foo-before', read_file(self.foo_fn))
-
-        os.unlink(self.foo_fn)
-        self.assertEqual(None, read_file(self.foo_fn))
-
-        subproc('python2 {b}/foo.py restart'.format(b=this_base))
-        time.sleep(0.2)
-
-        self.assertEqual('foo-before', read_file(self.foo_fn),
-                         'restarted and rewritten to the file')
-
-    def test_exclusive_pid(self):
-
-        subproc('python2 {b}/foo.py start'.format(b=this_base))
-        time.sleep(0.1)
-        subproc('python2 {b}/bar.py start'.format(b=this_base))
-        time.sleep(0.1)
-
-        self.assertEqual(None, read_file(self.bar_fn),
-                         'bar.py not started or run')
+        rst = self.rcl.hget(hname, 'a')
+        dd('hget rst:', rst)
