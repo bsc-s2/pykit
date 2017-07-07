@@ -3,6 +3,11 @@ import subprocess
 import time
 import unittest
 
+from pykit import utdocker
+from pykit import ututil
+
+dd = ututil.dd
+
 this_base = os.path.dirname(__file__)
 
 
