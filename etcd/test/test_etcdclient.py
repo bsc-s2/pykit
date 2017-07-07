@@ -1,13 +1,13 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import subprocess
 import time
 import unittest
 
 import docker
 
 from pykit import etcd
+from pykit import proc
 from pykit import utfjson
 from pykit import ututil
 
@@ -980,10 +980,10 @@ def _remove_containers(names):
 
     for n in names:
         try:
-            _run_shell('docker', 'kill', n)
+            proc.command_ex('docker', 'kill', n)
         except Exception as e:
             dd(repr(e) + ' while kill container')
-        _run_shell('docker', 'rm', n)
+        proc.command_ex('docker', 'rm', n)
 
 
 def _docker_cli():
@@ -999,27 +999,3 @@ def _container_exist(name):
         return True
     except docker.errors.NotFound:
         return False
-
-
-class ShellError(Exception):
-    pass
-
-
-def _run_shell(*args, **argkv):
-
-    subproc = subprocess.Popen(args,
-                               close_fds=True,
-                               cwd=None,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, )
-
-    out, err = subproc.communicate()
-
-    subproc.wait()
-
-    if subproc.returncode != 0:
-        raise ShellError(subproc.returncode, out, err, args, argkv)
-
-    rst = [subproc.returncode, out, err]
-
-    return rst
