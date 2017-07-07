@@ -3,6 +3,7 @@ from .proc import (
     command,
     command_ex,
     shell_script,
+    start_daemon,
 )
 
 __all__ = [
@@ -10,4 +11,5 @@ __all__ = [
     'command',
     'command_ex',
     'shell_script',
+    'start_daemon',
 ]

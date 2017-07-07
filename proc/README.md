@@ -12,6 +12,7 @@
   - [proc.command](#proccommand)
   - [proc.command_ex](#proccommand_ex)
   - [proc.shell_script](#procshell_script)
+  - [proc.start_daemon](#procstart_daemon)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -49,6 +50,26 @@ print out
 # Unlike the above snippet, following statement does not start an sh process.
 
 returncode, out, err = proc.command('ls', 'a*', cwd='/usr/local')
+```
+
+```python
+# a.py
+import sys
+
+with open('foo', 'w') as f:
+    f.write(str(sys.argv))
+
+# b.py
+import time
+from pykit import proc
+
+proc.start_daemon('python', './a.py', 'test')
+time.sleep(1)
+try:
+    with open('foo', 'r') as f:
+        print repr(f.read())
+except Exception as e:
+    print repr(e)
 ```
 
 #   Exceptions
@@ -134,6 +155,30 @@ It is just a shortcut of:
 options['stdin'] = script_str
 return command('sh', **options)
 ```
+
+##  proc.start_daemon
+
+**syntax**:
+`proc.start_daemon(cmd, target, *args)`
+
+Create a deamon process and replace it with `target`.
+
+**arguments**:
+
+-   `cmd`:
+    The path of executable to run.
+    Such as `sh`, `bash`, `python`.
+
+-   `target`:
+    The path of the script.
+
+-   `*args`:
+    Type is `tuple` or `list`.
+    The arguments passed to the script.
+    Type of every element must be `str`.
+
+**return**:
+nothing
 
 #   Author
 

@@ -6,13 +6,16 @@ import signal
 import sys
 import time
 
+import __main__
+
 logger = logging.getLogger(__name__)
+
 
 
 class Daemon(object):
 
     def __init__(self,
-                 pidfile,
+                 pidfile=None,
                  stdin='/dev/null',
                  stdout='/dev/null',
                  stderr='/dev/null'):
@@ -20,7 +23,7 @@ class Daemon(object):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
-        self.pidfile = pidfile
+        self.pidfile = pidfile or _default_pid_file()
         # NOTE: We need to open another separate file to avoid the file
         #       reopened # again. Which case, process lose file lock.
         #
@@ -31,8 +34,9 @@ class Daemon(object):
         # are held.  This is bad: it means that a process can lose the locks
         # on a file like /etc/passwd or /etc/mtab when for some reason a
         # library function decides to open, read and close it.
-        self.lockfile = pidfile + ".lock"
+        self.lockfile = self.pidfile + ".lock"
         self.lockfp = None
+
 
     def daemonize(self):
         """
@@ -41,11 +45,13 @@ class Daemon(object):
         http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
         """
 
+
         try:
 
             pid = os.fork()
             if pid > 0:
                 # exit first parent
+                _close_std_io()
                 sys.exit(0)
 
         except OSError as e:
@@ -62,6 +68,7 @@ class Daemon(object):
             pid = os.fork()
             if pid > 0:
                 # exit from second parent
+                _close_std_io()
                 sys.exit(0)
 
         except OSError as e:
@@ -178,12 +185,30 @@ def _read_file(fn):
         return f.read()
 
 
+def _close_std_io():
+    os.close(0)
+    os.close(1)
+    os.close(2)
+
+
+def _default_pid_file():
+
+    if hasattr(__main__, '__file__'):
+        name = __main__.__file__
+        name = os.path.basename(name)
+        if name == '<stdin>':
+            name = '__stdin__'
+        return '/var/run/' + name.rsplit('.', 1)[0]
+    else:
+        return '/var/run/pykit.daemonize'
+
+
 def daemonize_cli(run_func, pidfn):
 
     logging.basicConfig(stream=sys.stderr)
     logging.getLogger(__name__).setLevel(logging.DEBUG)
 
-    d = Daemon(pidfn)
+    d = Daemon(pidfile=pidfn)
 
     logger.info("sys.argv: " + repr(sys.argv))
 

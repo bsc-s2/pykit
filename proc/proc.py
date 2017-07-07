@@ -1,6 +1,13 @@
+#!/usr/bin/env python2
+# coding: utf-8
 
+import logging
+import os
 import subprocess
 
+from pykit import daemonize
+
+logger = logging.getLogger(__name__)
 
 class ProcError(Exception):
 
@@ -52,3 +59,19 @@ def command_ex(cmd, *arguments, **options):
 def shell_script(script_str, **options):
     options['stdin'] = script_str
     return command('sh', **options)
+
+
+def start_daemon(cmd, target, *args):
+
+    try:
+        pid = os.fork()
+    except OSError as e:
+        logger.error(repr(e) + ' while fork')
+        raise
+
+    if pid == 0:
+        d = daemonize.Daemon()
+        d.daemonize()
+        os.execlp(cmd, cmd, target, *args)
+    else:
+        os.wait()

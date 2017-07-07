@@ -7,6 +7,7 @@ import unittest
 
 from pykit import proc
 from pykit import ututil
+from pykit import daemonize
 
 dd = ututil.dd
 
@@ -117,3 +118,8 @@ class TestDaemonize(unittest.TestCase):
 
         self.assertEqual(None, read_file(self.bar_fn),
                          'bar.py not started or run')
+
+    def test_default_pid_file(self):
+
+        d = daemonize.Daemon()
+        self.assertEqual('/var/run/__main__', d.pidfile)

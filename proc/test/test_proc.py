@@ -1,4 +1,5 @@
 import os
+import time
 import unittest
 
 from pykit import proc
@@ -10,6 +11,16 @@ this_base = os.path.dirname(__file__)
 
 
 class TestProcError(unittest.TestCase):
+
+    foo_fn = '/tmp/foo'
+
+    def _read_file(self, fn):
+        try:
+            with open(fn, 'r') as f:
+                cont = f.read()
+                return cont
+        except EnvironmentError:
+            return None
 
     def test_procerror(self):
         ex_args = (1, 'out', 'err', 'ls', ('a', 'b'), {"close_fds": True})
@@ -118,3 +129,17 @@ class TestProcError(unittest.TestCase):
 
         self.assertEqual(0, returncode)
         self.assertEqual('__init__.py\n', out)
+
+    def test_start_daemon(self):
+
+        cases = (
+            ('python2', this_base + '/write.py', ['foo'], 'foo'),
+            ('python2', this_base + '/write.py', ['foo', 'bar'], 'foobar'),
+            ('sh', this_base + '/write.sh', ['123'], '123'),
+            ('sh', this_base + '/write.sh', ['123', '456'], '123456'),
+        )
+
+        for cmd, target, args, expected in cases:
+            proc.start_daemon(cmd, target, *args)
+            time.sleep(1)
+            self.assertEqual(expected, self._read_file(self.foo_fn))
