@@ -45,8 +45,11 @@ s = redisutil.RedisChannel(6379, '/foo', 'server')
 c.send_msg('c2s')
 s.send_msg('s2c')
 
-print s.recv_msg() # c2s
-print c.recv_msg() # s2c
+# list channels
+print c.list_channel('/') # ["/foo"]
+print s.recv_msg()        # c2s
+print c.recv_msg()        # s2c
+
 ```
 
 #   Methods
