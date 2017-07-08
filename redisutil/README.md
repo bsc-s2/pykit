@@ -110,6 +110,8 @@ Nothing
 
 Create a redis list based channel for cross process communication.
 
+See [redis-list-command](https://redis.io/commands#list).
+
 Initializing this class does **NOT** create a socket connecting to redis or
 create any data in redis.
 
