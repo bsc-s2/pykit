@@ -7,10 +7,10 @@
 - [Description](#description)
 - [Synopsis](#synopsis)
 - [Methods](#methods)
-  - [redisutil.get_client(ip_port)](#redisutilget_clientip_port)
-  - [wait_serve](#wait_serve)
+  - [redisutil.get_client](#redisutilget_client)
+  - [redisutil.wait_serve](#redisutilwait_serve)
 - [Classes](#classes)
-  - [RedisChannel](#redischannel)
+  - [redisutil.RedisChannel](#redisutilredischannel)
     - [RedisChannel.send_msg](#redischannelsend_msg)
     - [RedisChannel.recv_msg](#redischannelrecv_msg)
     - [RedisChannel.recv_last_msg](#redischannelrecv_last_msg)
@@ -51,7 +51,7 @@ print c.recv_msg() # s2c
 
 #   Methods
 
-##  redisutil.get_client(ip_port)
+##  redisutil.get_client
 
 **syntax**:
 `redisutil.get_client(ip_port)`
@@ -74,10 +74,10 @@ It is also safe to use if a process fork and inherited opened socket file-descri
 an instance of `redis.StrictRedis`.
 
 
-##  wait_serve
+##  redisutil.wait_serve
 
 **syntax**:
-`wait_serve(ip_port, timeout=5)`
+`redisutil.wait_serve(ip_port, timeout=5)`
 
 Wait for at most `timeout` seconds until redis start serving request.
 It is useful when start a redis server.
@@ -100,10 +100,10 @@ Nothing
 
 #   Classes
 
-##  RedisChannel
+##  redisutil.RedisChannel
 
 **syntax**:
-`RedisChannel(ip_port, channel, peer)`
+`redisutil.RedisChannel(ip_port, channel, peer)`
 
 Create a redis list based channel for cross process communication.
 
