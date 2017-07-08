@@ -1,0 +1,194 @@
+#   Name
+
+redisutil
+
+#   Status
+
+This library is considered production ready.
+
+#   Description
+
+For using redis more easily.
+
+#   Synopsis
+
+```python
+# Using redis as a duplex cross process communication channel pool.
+
+# client and server with the same channel name "/foo" is a pair
+c = redisutil.RedisChannel(6379, '/foo', 'client')
+s = redisutil.RedisChannel(6379, '/foo', 'server')
+
+c.send_msg('c2s')
+s.send_msg('s2c')
+
+print s.recv_msg() # c2s
+print c.recv_msg() # s2c
+```
+
+#   Methods
+
+##  redisutil.get_client(ip_port)
+
+**syntax**:
+`redisutil.get_client(ip_port)`
+
+Return a process-wise singleton redis clinet, which is an instance of `redis.StrictRedis`.
+
+Redis client returned is shared across the entire process and will not be
+re-created.
+
+It is also safe to use if a process fork and inherited opened socket file-descriptors.
+
+**arguments**:
+
+-   `ip_port`: could be a port number in `int` or `long` to get or create a
+    client connecting to localhost.
+
+    It can also be tuple of `(ip, port)`.
+
+**return**:
+an instance of `redis.StrictRedis`.
+
+
+##  wait_serve
+
+**syntax**:
+`wait_serve(ip_port, timeout=5)`
+
+Wait for at most `timeout` seconds until redis start serving request.
+It is useful when start a redis server.
+
+**arguments**:
+
+-   `ip_port`:
+    tuple of `(ip, port)` or a single int/long number as port.
+
+-   `timeout`:
+    specifies max waiting time, in seconds.
+
+**return**:
+Nothing
+
+**raise**:
+
+-   `redis.ConnectionError`:
+    if redis does not respond in `timeout` seconds.
+
+#   Classes
+
+##  RedisChannel
+
+**syntax**:
+`RedisChannel(ip_port, channel, peer)`
+
+Create a redis list based channel for cross process communication.
+
+Initializing this class does **NOT** create a socket connecting to redis or
+create any data in redis.
+
+A channel support duplex communication.
+Thus in redis it creates two lists for each channel for two way communication:
+`<channel>/client` and `<channel>/server`.
+
+Client side uses `<channel>/client` to send message.
+Server side uses `<channel>/server` to send message.
+
+A client should initialize `RedisChannel` with argument `peer` set to `client`.
+A server should initialize `RedisChannel` with argument `peer` set to `server`.
+
+**arguments**:
+
+-   `ip_port`:
+    tuple of `(ip, port)` or a single int/long number as port.
+
+-   `channel`:
+    specifies the name of the channel to create.
+
+    A channel should be in URI form, starting with `/`, such as: `/asyncworker/image-process`
+
+    `channel` can also be a tuple of string:
+    `('asyncworker', 'image-process')` will be converted to `/asyncworker/image-process`.
+
+-   `peer`:
+    specifies this instance is a client or a server.
+    It can be `"client"` or `"server"`.
+
+**return**:
+an instance of `RedisChannel`.
+
+###  RedisChannel.send_msg
+
+**syntax**:
+`RedisChannel.send_msg(data)`
+
+Send data. `data` is json-encoded in redis list.
+
+**arguments**:
+
+-   `data`:
+    any data type that can be json encoded.
+
+**return**:
+Nothing
+
+###  RedisChannel.recv_msg
+
+**syntax**:
+`RedisChannel.recv_msg()`
+
+Receive one message.
+If there is no message in this channel, it returns `None`.
+
+**return**:
+data that is loaded from json. Or `None` if there is no message in channel.
+
+###  RedisChannel.recv_last_msg
+
+**syntax**:
+`RedisChannel.recv_last_msg()`
+
+Similar to `RedisChannel.recv_msg` except it returns only the last message it
+sees and removes all previous messages from this channel.
+
+**return**:
+data that is loaded from json. Or `None` if there is no message in channel.
+
+###  RedisChannel.peek_msg
+
+**syntax**:
+`RedisChannel.peek_msg()`
+
+Similar to `RedisChannel.recv_msg` except it does not remove the message it
+returned.
+
+**return**:
+data that is loaded from json. Or `None` if there is no message in channel.
+
+###  RedisChannel.list_channel
+
+**syntax**:
+`RedisChannel.list_channel(prefix)`
+
+List all channel names those start with `prefix`.
+
+**arguments**:
+
+-   `prefix`:
+    specifies what channel to list.
+
+    `prefix` must starts with '/', ends with '/'.
+
+**return**:
+a list of channel names.
+
+
+#   Author
+
+Zhang Yanpo (张炎泼) <drdr.xp@gmail.com>
+
+#   Copyright and License
+
+The MIT License (MIT)
+
+Copyright (c) 2015 Zhang Yanpo (张炎泼) <drdr.xp@gmail.com>

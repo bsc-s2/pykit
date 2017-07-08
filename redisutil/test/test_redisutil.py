@@ -12,20 +12,9 @@ from pykit import ututil
 
 dd = ututil.dd
 
-this_base = os.path.dirname(__file__)
-
 redis_tag = 'daocloud.io/redis:3.2.3'
 
 redis_port = 6379
-
-
-def read_file(fn):
-    try:
-        with open(fn, 'r') as f:
-            cont = f.read()
-            return cont
-    except EnvironmentError:
-        return None
 
 
 class TestRedis(unittest.TestCase):
