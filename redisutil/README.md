@@ -1,3 +1,26 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+#   Table of Content
+
+- [Name](#name)
+- [Status](#status)
+- [Description](#description)
+- [Synopsis](#synopsis)
+- [Methods](#methods)
+  - [redisutil.get_client(ip_port)](#redisutilget_clientip_port)
+  - [wait_serve](#wait_serve)
+- [Classes](#classes)
+  - [RedisChannel](#redischannel)
+    - [RedisChannel.send_msg](#redischannelsend_msg)
+    - [RedisChannel.recv_msg](#redischannelrecv_msg)
+    - [RedisChannel.recv_last_msg](#redischannelrecv_last_msg)
+    - [RedisChannel.peek_msg](#redischannelpeek_msg)
+    - [RedisChannel.list_channel](#redischannellist_channel)
+- [Author](#author)
+- [Copyright and License](#copyright-and-license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 #   Name
 
 redisutil

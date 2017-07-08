@@ -2,7 +2,6 @@ import os
 import sys
 import unittest
 
-import redis
 from pykit import redisutil
 from pykit import utdocker
 from pykit import ututil
