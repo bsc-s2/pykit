@@ -45,7 +45,7 @@ def wait_serve(ip_port, timeout=5):
             return
 
         except redis.ConnectionError as e:
-            logger.info('can not connect to redis: ' + repr(ip_port))
+            logger.info('can not connect to redis: ' + repr(ip_port) + ' ' + repr(e))
             time.sleep(0.1)
             continue
     else:
