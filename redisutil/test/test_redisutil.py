@@ -1,12 +1,9 @@
 import os
 import sys
-import subprocess
-import time
-import redis
 import unittest
 
+import redis
 from pykit import redisutil
-
 from pykit import utdocker
 from pykit import ututil
 
@@ -22,8 +19,8 @@ class TestRedis(unittest.TestCase):
     def setUp(self):
 
         self.containers = [
-                ('redis-0', redis_tag, '192.168.52.40'),
-                ('redis-1', redis_tag, '192.168.52.41'),
+            ('redis-0', redis_tag, '192.168.52.40'),
+            ('redis-1', redis_tag, '192.168.52.41'),
         ]
 
         # for single redis cases:
@@ -35,12 +32,11 @@ class TestRedis(unittest.TestCase):
 
         for args in self.containers:
             utdocker.start_container(*(args + ('',)))
-            dd('started redis in docker: ' +repr(args))
+            dd('started redis in docker: ' + repr(args))
 
             redisutil.wait_serve((args[2], redis_port))
 
         self.rcl = redisutil.get_client((self.ip, redis_port))
-
 
     def tearDown(self):
 
@@ -106,8 +102,9 @@ class TestRedis(unittest.TestCase):
 
         # for both parent and child process
         for i in range(n):
-            self.rcl.hset(hname, 'x' + str(i), 'foobarjfkdslafjdasklfdjsaklfdsa' + str(i))
-            self.rcl.hget(hname, 'x' + str(i-1))
+            self.rcl.hset(hname, 'x' + str(i),
+                          'foobarjfkdslafjdasklfdjsaklfdsa' + str(i))
+            self.rcl.hget(hname, 'x' + str(i - 1))
 
             if i % 100 == 0:
                 dd('pid:', os.getpid(), ' finished ', i, ' set/get')
@@ -138,8 +135,10 @@ class TestRedis(unittest.TestCase):
 
     def test_normalize_ip_port(self):
 
-        self.assertEqual(('127.0.0.1', 1234), redisutil.normalize_ip_port(1234))
-        self.assertEqual(('1.2.3.4', 1234), redisutil.normalize_ip_port(('1.2.3.4', 1234)))
+        self.assertEqual(('127.0.0.1', 1234),
+                         redisutil.normalize_ip_port(1234))
+        self.assertEqual(('1.2.3.4', 1234),
+                         redisutil.normalize_ip_port(('1.2.3.4', 1234)))
 
     def test_redis_channel(self):
 
@@ -200,13 +199,15 @@ class TestRedis(unittest.TestCase):
     def test_tuple_channel(self):
 
         c = redisutil.RedisChannel((self.ip, redis_port), '/foo/a', 'client')
-        s = redisutil.RedisChannel((self.ip, redis_port), ('foo', 'a'), 'server')
+        s = redisutil.RedisChannel(
+            (self.ip, redis_port), ('foo', 'a'), 'server')
 
         c.send_msg(1)
         rst = s.recv_msg()
         dd('server recv:', rst)
 
         self.assertEqual(1, rst)
+
 
 def child_exit():
 

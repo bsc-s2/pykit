@@ -4,7 +4,6 @@ import threading
 import time
 
 import redis
-
 from pykit import utfjson
 
 logger = logging.getLogger(__name__)
@@ -66,8 +65,8 @@ class RedisChannel(object):
     '''
 
     other_peer = {
-            'client': 'server',
-            'server': 'client',
+        'client': 'server',
+        'server': 'client',
     }
 
     def __init__(self, ip_port, channel, peer):
@@ -84,7 +83,8 @@ class RedisChannel(object):
         self.channel = channel
         self.peer = peer.lower()
         self.send_list_name = '/'.join([self.channel, self.peer])
-        self.recv_list_name = '/'.join([self.channel, self.other_peer[self.peer]])
+        self.recv_list_name = '/'.join([self.channel,
+                                        self.other_peer[self.peer]])
 
     def send_msg(self, data):
         j = utfjson.dump(data)
