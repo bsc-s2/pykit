@@ -195,6 +195,13 @@ class TestRedis(unittest.TestCase):
         dd('after write, list_channel:', rst)
         self.assertEqual(['/foo/a', '/foo/b'], rst)
 
+        # empty channel then channel can not be seen.
+        redisutil.RedisChannel((self.ip, redis_port), '/foo/a', 'server').recv_msg()
+        redisutil.RedisChannel((self.ip, redis_port), '/foo/b', 'client').recv_msg()
+
+        rst = ca.list_channel('/foo/')
+        self.assertEqual([], rst)
+
     def test_tuple_channel(self):
 
         c = redisutil.RedisChannel((self.ip, redis_port), '/foo/a', 'client')
