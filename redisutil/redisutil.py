@@ -128,12 +128,12 @@ class RedisChannel(object):
 
         rst = []
         for c in channels:
-            if c.endswith('/server'):
-                c = c[:-len('/server')]
 
-            elif c.endswith('/client'):
-                c = c[:-len('/client')]
-
+            for k in other_peer:
+                k = '/' + k
+                if c.endswith(k):
+                    c = c[:-len(k)]
+                    break
             else:
                 logger.info('not a channel: ' + repr(c))
                 continue
