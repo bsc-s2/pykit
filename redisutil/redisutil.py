@@ -117,14 +117,19 @@ class RedisChannel(object):
 
     def list_channel(self, prefix):
         if isinstance(prefix, (list, tuple)):
-            prefix = '/' + '/'.join(prefix) + '/'
+            _prefix = '/' + '/'.join(prefix) + '/'
 
-        assert prefix.startswith('/')
-        assert not prefix.endswith('*')
-        assert prefix.endswith('/')
+        if not _prefix.startswith('/'):
+            raise ValueError('prefix must starts with "/", but:' + repr(prefix))
 
-        prefix = prefix + '*'
-        channels = self.rcl.keys(prefix)
+        if _prefix.endswith('*'):
+            raise ValueError('prefix must NOT ends with "*", but:' + repr(prefix))
+
+        if not _prefix.endswith('/'):
+            raise ValueError('prefix must ends with "/", but:' + repr(prefix))
+
+        _prefix = _prefix + '*'
+        channels = self.rcl.keys(_prefix)
 
         rst = []
         for c in channels:
