@@ -179,6 +179,9 @@ class TestRedis(unittest.TestCase):
         dd('client recv last:', rst)
         self.assertEqual('s2c9', rst)
 
+        rst = c.peek_msg()
+        self.assertEqual(None, rst, 'all messages should have been read, after recv_last_msg()')
+
     def test_list_redis_channel(self):
 
         ca = redisutil.RedisChannel((self.ip, redis_port), '/foo/a', 'client')

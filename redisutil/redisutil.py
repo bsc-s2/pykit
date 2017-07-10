@@ -2,6 +2,7 @@ import logging
 import os
 import threading
 import time
+from collections import defaultdict
 
 import redis
 from pykit import utfjson
@@ -10,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 # redis is thread safe
 
-# NOTE: fork may duplicate file descriptor that confuse connection pool.
-_pid_client = {}
+# NOTE: fork may duplicate file descriptor that confuses connection pool.
+_pid_client = defaultdict(dict)
 _lock = threading.RLock()
 
 
@@ -22,8 +23,6 @@ def get_client(ip_port):
     pid = os.getpid()
 
     with _lock:
-        if ip_port not in _pid_client:
-            _pid_client[ip_port] = {}
         o = _pid_client[ip_port]
 
         if pid not in o:
