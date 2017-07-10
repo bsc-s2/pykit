@@ -180,7 +180,8 @@ class TestRedis(unittest.TestCase):
         self.assertEqual('s2c9', rst)
 
         rst = c.peek_msg()
-        self.assertEqual(None, rst, 'all messages should have been read, after recv_last_msg()')
+        self.assertEqual(
+            None, rst, 'all messages should have been read, after recv_last_msg()')
 
     def test_list_redis_channel(self):
 
@@ -199,8 +200,10 @@ class TestRedis(unittest.TestCase):
         self.assertEqual(['/foo/a', '/foo/b'], rst)
 
         # empty channel then channel can not be seen.
-        redisutil.RedisChannel((self.ip, redis_port), '/foo/a', 'server').recv_msg()
-        redisutil.RedisChannel((self.ip, redis_port), '/foo/b', 'client').recv_msg()
+        redisutil.RedisChannel((self.ip, redis_port),
+                               '/foo/a', 'server').recv_msg()
+        redisutil.RedisChannel((self.ip, redis_port),
+                               '/foo/b', 'client').recv_msg()
 
         rst = ca.list_channel('/foo/')
         self.assertEqual([], rst)

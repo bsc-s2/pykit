@@ -5,6 +5,7 @@ import time
 from collections import defaultdict
 
 import redis
+
 from pykit import utfjson
 
 logger = logging.getLogger(__name__)
@@ -122,10 +123,12 @@ class RedisChannel(object):
             _prefix = prefix
 
         if not _prefix.startswith('/'):
-            raise ValueError('prefix must starts with "/", but:' + repr(prefix))
+            raise ValueError(
+                'prefix must starts with "/", but:' + repr(prefix))
 
         if _prefix.endswith('*'):
-            raise ValueError('prefix must NOT ends with "*", but:' + repr(prefix))
+            raise ValueError(
+                'prefix must NOT ends with "*", but:' + repr(prefix))
 
         if not _prefix.endswith('/'):
             raise ValueError('prefix must ends with "/", but:' + repr(prefix))
@@ -136,7 +139,7 @@ class RedisChannel(object):
         rst = []
         for c in channels:
 
-            for k in other_peer:
+            for k in self.other_peer:
                 k = '/' + k
                 if c.endswith(k):
                     c = c[:-len(k)]
