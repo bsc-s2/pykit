@@ -1,6 +1,5 @@
 import docker
 
-from pykit import proc
 from pykit import ututil
 
 dd = ututil.dd
@@ -42,15 +41,18 @@ def stop_container(*names):
 
 def remove_container(*names):
 
-    # TODO use docker api instead of shell command
+    dcli = get_client()
 
     for name in names:
         try:
-            proc.command_ex('docker', 'kill', name)
+            dcli.kill(name)
         except Exception as e:
-            dd(repr(e) + ' while kill container: ' + repr(name))
+            dd(repr(e) + ' while killing container: ' + repr(name))
 
-        proc.command_ex('docker', 'rm', name)
+        try:
+            dcli.remove_container(name)
+        except Exception as e:
+            dd(repr(e) + ' while removing container: ' + repr(name))
 
 
 def create_network():
