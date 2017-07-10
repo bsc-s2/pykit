@@ -118,6 +118,8 @@ class RedisChannel(object):
     def list_channel(self, prefix):
         if isinstance(prefix, (list, tuple)):
             _prefix = '/' + '/'.join(prefix) + '/'
+        else:
+            _prefix = prefix
 
         if not _prefix.startswith('/'):
             raise ValueError('prefix must starts with "/", but:' + repr(prefix))
