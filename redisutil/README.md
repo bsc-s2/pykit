@@ -59,7 +59,7 @@ print c.recv_msg()        # s2c
 **syntax**:
 `redisutil.get_client(ip_port)`
 
-Return a process-wise singleton redis clinet, which is an instance of `redis.StrictRedis`.
+Return a process-wise singleton redis client, which is an instance of `redis.StrictRedis`.
 
 Redis client returned is shared across the entire process and will not be
 re-created.
