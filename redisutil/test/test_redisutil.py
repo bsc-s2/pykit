@@ -227,38 +227,41 @@ class TestRedis(unittest.TestCase):
         ca = redisutil.RedisChannel((self.ip, redis_port), '/foo/a', 'client', timeout=1)
         ca.send_msg(1)
         self.assertEqual(['/foo/a'], ca.list_channel('/foo/'))
-        time.sleep(2)
+        time.sleep(1.5)
         self.assertEqual([], ca.list_channel('/foo/'))
 
     def test_brecv_message(self):
 
         c = redisutil.RedisChannel((self.ip, redis_port), '/foo', 'client')
         s = redisutil.RedisChannel((self.ip, redis_port), '/foo', 'server')
-        self.assertEqual(None, s.brecv_msg(timeout=2))
+
+        c.send_msg('aa')
+        self.assertEqual('aa', s.brecv_msg(timeout=1))
+        self.assertEqual(None, s.brecv_msg(timeout=1))
 
         def _send_msg():
-            time.sleep(2)
+            time.sleep(0.5)
             c.send_msg('bar')
 
         threadutil.start_thread(target=_send_msg, daemon=True)
-        self.assertEqual('bar', s.brecv_msg(timeout=3))
+        self.assertEqual('bar', s.brecv_msg(timeout=1))
 
     def test_brecv_last_message(self):
 
         c = redisutil.RedisChannel((self.ip, redis_port), '/foo', 'client')
         s = redisutil.RedisChannel((self.ip, redis_port), '/foo', 'server')
-        self.assertEqual(None, s.brecv_last_msg(timeout=2))
 
         c.send_msg('aa')
         c.send_msg('bb')
-        self.assertEqual('bb', s.brecv_last_msg(timeout=3))
+        self.assertEqual('bb', s.brecv_last_msg(timeout=1))
+        self.assertEqual(None, s.brecv_last_msg(timeout=1))
 
         def _send_msg():
-            time.sleep(2)
+            time.sleep(0.5)
             c.send_msg('cc')
 
         threadutil.start_thread(target=_send_msg, daemon=True)
-        self.assertEqual('cc', s.brecv_last_msg(timeout=3))
+        self.assertEqual('cc', s.brecv_last_msg(timeout=1))
 
     def test_rpeek_message(self):
 
