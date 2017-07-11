@@ -70,7 +70,7 @@ class RedisChannel(object):
         'server': 'client',
     }
 
-    def __init__(self, ip_port, channel, peer):
+    def __init__(self, ip_port, channel, peer, timeout=None):
 
         assert peer in self.other_peer
 
@@ -86,10 +86,14 @@ class RedisChannel(object):
         self.send_list_name = '/'.join([self.channel, self.peer])
         self.recv_list_name = '/'.join([self.channel,
                                         self.other_peer[self.peer]])
+        self.timeout = timeout
 
     def send_msg(self, data):
         j = utfjson.dump(data)
         self.rcl.rpush(self.send_list_name, j)
+
+        if self.timeout is not None:
+            self.rcl.expire(self.send_list_name, self.timeout)
 
     def recv_msg(self):
 
@@ -98,6 +102,14 @@ class RedisChannel(object):
             return None
 
         return utfjson.load(v)
+
+    def brecv_msg(self, timeout=0):
+
+        v = self.rcl.blpop(self.recv_list_name, timeout=timeout)
+        if v is None or len(v) < 2:
+            return None
+
+        return utfjson.load(v[1])
 
     def recv_last_msg(self):
 
@@ -109,8 +121,23 @@ class RedisChannel(object):
 
             last = v
 
+    def brecv_last_msg(self, timeout=0):
+
+        msg = self.recv_last_msg()
+        if msg is not None:
+            return msg
+
+        return self.brecv_msg(timeout=timeout)
+
     def peek_msg(self):
         v = self.rcl.lindex(self.recv_list_name, 0)
+        if v is None:
+            return None
+
+        return utfjson.load(v)
+
+    def rpeek_msg(self):
+        v = self.rcl.lindex(self.recv_list_name, -1)
         if v is None:
             return None
 

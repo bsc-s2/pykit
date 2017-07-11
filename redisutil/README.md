@@ -106,7 +106,7 @@ Nothing
 ##  redisutil.RedisChannel
 
 **syntax**:
-`redisutil.RedisChannel(ip_port, channel, peer)`
+`redisutil.RedisChannel(ip_port, channel, peer, timeout=None)`
 
 Create a redis list based channel for cross process communication.
 
@@ -142,6 +142,10 @@ A server should initialize `RedisChannel` with argument `peer` set to `server`.
     specifies this instance is a client or a server.
     It can be `"client"` or `"server"`.
 
+-   `timeout`:
+    the expire time of the channel, unit is second.
+    If `None`, then exist indefinitely.
+
 **return**:
 an instance of `RedisChannel`.
 
@@ -171,6 +175,25 @@ If there is no message in this channel, it returns `None`.
 **return**:
 data that is loaded from json. Or `None` if there is no message in channel.
 
+###  RedisChannel.brecv_msg
+
+**syntax**:
+`RedisChannel.brecv_msg(timeout=0)`
+
+Block to receive one message.
+If there is no message in this channel,
+then block for `timeout` seconds or until
+a value was pushed to the channel.
+
+**arguments**:
+
+-   `timeout`:
+    seconds of the block time.
+    If `0`, then block indefinitely.
+
+**return**:
+data that is loaded from json. Or `None` if timeout.
+
 ###  RedisChannel.recv_last_msg
 
 **syntax**:
@@ -182,6 +205,23 @@ sees and removes all previous messages from this channel.
 **return**:
 data that is loaded from json. Or `None` if there is no message in channel.
 
+###  RedisChannel.brecv_last_msg
+
+**syntax**:
+`RedisChannel.brecv_last_msg(timeout=0)`
+
+Similar to `RedisChannel.recv_last_msg` except it block for `timeout`
+seconds if the channel is empty.
+
+**arguments**:
+
+-   `timeout`:
+    seconds of the block time.
+    If `0`, then block indefinitely.
+
+**return**:
+data that is loaded from json. Or `None` if timeout.
+
 ###  RedisChannel.peek_msg
 
 **syntax**:
@@ -189,6 +229,17 @@ data that is loaded from json. Or `None` if there is no message in channel.
 
 Similar to `RedisChannel.recv_msg` except it does not remove the message it
 returned.
+
+**return**:
+data that is loaded from json. Or `None` if there is no message in channel.
+
+###  RedisChannel.rpeek_msg
+
+**syntax**:
+`RedisChannel.rpeek_msg()`
+
+Similar to `RedisChannel.peek_msg`
+except it gets message from the tail of the channel.
 
 **return**:
 data that is loaded from json. Or `None` if there is no message in channel.

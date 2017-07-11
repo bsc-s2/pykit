@@ -1,10 +1,12 @@
 import os
 import sys
+import time
 import unittest
 
 from pykit import redisutil
 from pykit import utdocker
 from pykit import ututil
+from pykit import threadutil
 
 dd = ututil.dd
 
@@ -219,6 +221,62 @@ class TestRedis(unittest.TestCase):
         dd('server recv:', rst)
 
         self.assertEqual(1, rst)
+
+    def test_channel_timeout(self):
+
+        ca = redisutil.RedisChannel((self.ip, redis_port), '/foo/a', 'client', timeout=1)
+        ca.send_msg(1)
+        self.assertEqual(['/foo/a'], ca.list_channel('/foo/'))
+        time.sleep(2)
+        self.assertEqual([], ca.list_channel('/foo/'))
+
+    def test_brecv_message(self):
+
+        c = redisutil.RedisChannel((self.ip, redis_port), '/foo', 'client')
+        s = redisutil.RedisChannel((self.ip, redis_port), '/foo', 'server')
+        self.assertEqual(None, s.brecv_msg(timeout=2))
+
+        def _send_msg():
+            time.sleep(2)
+            c.send_msg('bar')
+
+        threadutil.start_thread(target=_send_msg, daemon=True)
+        self.assertEqual('bar', s.brecv_msg(timeout=3))
+
+    def test_brecv_last_message(self):
+
+        c = redisutil.RedisChannel((self.ip, redis_port), '/foo', 'client')
+        s = redisutil.RedisChannel((self.ip, redis_port), '/foo', 'server')
+        self.assertEqual(None, s.brecv_last_msg(timeout=2))
+
+        c.send_msg('aa')
+        c.send_msg('bb')
+        self.assertEqual('bb', s.brecv_last_msg(timeout=3))
+
+        def _send_msg():
+            time.sleep(2)
+            c.send_msg('cc')
+
+        threadutil.start_thread(target=_send_msg, daemon=True)
+        self.assertEqual('cc', s.brecv_last_msg(timeout=3))
+
+    def test_rpeek_message(self):
+
+        c = redisutil.RedisChannel((self.ip, redis_port), '/foo', 'client')
+        s = redisutil.RedisChannel((self.ip, redis_port), '/foo', 'server')
+
+        self.assertEqual(None, c.rpeek_msg())
+        self.assertEqual(None, s.rpeek_msg())
+
+        c.send_msg('c2s1')
+        c.send_msg('c2s2')
+        s.send_msg('s2c1')
+        s.send_msg('s2c2')
+
+        # rpeek does not remove message
+        for ii in range(2):
+            self.assertEqual('c2s2', s.rpeek_msg())
+            self.assertEqual('s2c2', c.rpeek_msg())
 
 
 def child_exit():
