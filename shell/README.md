@@ -6,10 +6,8 @@
 - [Status](#status)
 - [Synopsis](#synopsis)
 - [Description](#description)
-- [Exceptions](#exceptions)
-  - [SystemExit](#systemexit)
-- [Classes](#classes)
-  - [shell.command_normal](#shellcommand_normal)
+- [Methods](#methods)
+  - [shell.command](#shellcommand)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -33,7 +31,7 @@ Used to manage command. set diffent arguments to execute diffent functions.
 from pykit import shell
 
 arguments = {
-    'hello': lambda *x: sys.stdout.write(repr(x)),
+    'echo_repr': lambda *x: sys.stdout.write(repr(x)),
 
     'foo': {
         'bar': lambda *x: sys.stdout.write('bar'),
@@ -44,40 +42,31 @@ arguments = {
     },
 }
 
-shell.command_complete(**arguments)
+shell.command(**arguments)
 
 ```
 then you can execute your command as:
 ```
-python demo.py hello hello!    # 'hello' is printed
-python demo.py foo bar         # 'bar' is printed
-python demo.py foo bob alice   # 'alice' is printed
+python demo.py echo_repr hello!     # "('hello!',)" is printed
+python demo.py foo bar              # 'bar' is printed
+python demo.py foo bob alice        # 'alice' is printed
 ```
 
 #   Description
 
-A python module to manage command.
+A python module to manage commands.
 
-#   Exceptions
+#   Methods
 
-##  SystemExit
-
-syntax:
-`SystemExit`
-
-Raises a SystemExit unless function returns 0, True or None.
-
-#   Classes
-
-##  shell.command_normal
+##  shell.command
 
 syntax:
-`shell.command_normal(**argv)`
+`shell.command(**argkv)`
 
 arguments:
 
--  `argv`:
-    A dict whose key is a command name, and value is the function to run.
+-  `argkv`:
+    A dict whose key is a command, and value is command option or function to run.
 
 #   Author
 

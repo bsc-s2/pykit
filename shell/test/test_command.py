@@ -4,133 +4,136 @@
 import os
 import sys
 import unittest
+import logging
 
 from pykit import shell
 
-class TestS2Command(unittest.TestCase):
+class TestCommand(unittest.TestCase):
 
     def setUp(self):
-        self.out_buf = os.getcwd() + 'out_buf'
-        self.backup_sys = sys.argv
+        self.out_buf = os.path.join(os.getcwd(), 'out_buf')
+        self.backup_argv = sys.argv
         sys.argv = sys.argv[:1]
+
+        logging.basicConfig(level=logging.CRITICAL)
 
     def tearDown(self):
-        sys.argv = self.backup_sys
-        os.remove(self.out_buf)
-
-    def test_command_normal_output(self):
-
-        arguments = {'hello': lambda *x: sys.stdout.write(repr(x))}
-
-        sys.argv.append('hello')
-        sys.argv.append('hello_world')
-
-        backup = sys.stdout
-        with open(self.out_buf, 'w') as fw:
-            sys.stdout = fw
-            try:
-                shell.command_normal(**arguments)
-            except (SystemExit) as e:
-                if len(e.args) > 0:
-                    self.assertEqual(0, e.args[0])
-
-        sys.stdout = backup
-        with open(self.out_buf, 'r') as fr:
-            s = fr.readline()
-            self.assertEqual(s, "('hello_world',)")
-
-        sys.argv = sys.argv[:1]
-
-        sys.argv.append('err_hello')
-        backup = sys.stderr
-        with open(self.out_buf, 'w') as fw:
-            sys.stderr = fw
-            try:
-                shell.command_normal(**arguments)
-            except (SystemExit) as e:
-                if len(e.args) > 0:
-                    self.assertEqual(2, e.args[0])
-
-        sys.stderr = backup
-        with open(self.out_buf, 'r') as fr:
-            s = fr.readline()
-            self.assertEqual(s, "No such command: err_hello")
-
-        sys.argv = sys.argv[:1]
-
-    def test_command_normal_error(self):
-
-        arguments = {'err': lambda x, y:  int(x) / int(y)}
-
-        sys.argv.extend(['err', '7', '0']);
-        backup = sys.stderr
-        with open(self.out_buf, 'w') as fw:
-            sys.stderr = fw
-            try:
-                shell.command_normal(**arguments)
-            except SystemExit as e:
-                if len(e.args) > 0:
-                    self.assertEqual(1, e.args[0])
-            except ZeroDivisionError as e:
-                pass
-
-        sys.stderr = backup
-        with open(self.out_buf, 'r') as fr:
-            s = fr.readline()
-            self.assertEqual(s, "ZeroDivisionError('integer division or modulo by zero',)")
-
-        sys.argv = sys.argv[:1]
-
-        sys.argv.extend(['err', '7', '3'])
+        sys.argv = self.backup_argv
         try:
-            shell.command_normal(**arguments)
-        except SystemExit as e:
-            if len(e.args) > 0:
-                self.assertEqual(1, e.args[0])
+            os.remove(self.out_buf)
+        except EnvironmentError as e:
+            sys.stderr.write(repr(e))
 
-        sys.argv = sys.argv[:1]
+    def excute_test(self, arguments, argv, out_str, exit_code):
 
-    def test_command_normal_wrong_command(self):
+        sys.argv.extend(argv)
 
-        arguments = {
-                'foo': {
-                    'bob': {
-                        'alice': lambda *x: sys.stdout.write(repr('alice'))
-                    }
-                }
-            }
+        backup_stderr = sys.stderr
 
-        sys.argv.extend(['foo', 'bob', 'alice'])
-        backup = sys.stdout
-        with open(self.out_buf, 'w') as fw:
-            sys.stdout = fw
-            try:
-                shell.command_normal(**arguments)
-            except SystemExit as e:
-                if len(e.args) > 0:
-                    self.assertEqual(0, e.args[0])
-
-        sys.stdout = backup
-        with open(self.out_buf, 'r') as fr:
-            s = fr.readline()
-            self.assertEqual(s, "'alice'")
-
-        sys.argv = sys.argv[:1]
-
-        sys.argv.extend(['foo', 'bob'])
-        backup = sys.stderr
         with open(self.out_buf, 'w') as fw:
             sys.stderr = fw
+
             try:
-                shell.command_normal(**arguments)
+                shell.command(**arguments)
             except SystemExit as e:
                 if len(e.args) > 0:
-                    self.assertEqual(2, e.args[0])
+                    self.assertEqual(exit_code, e.args[0])
 
-        sys.stderr = backup
+        sys.stderr = backup_stderr
+
         with open(self.out_buf, 'r') as fr:
-            s = fr.readline()
-            self.assertEqual(s, 'No such command: foo bob')
+            s = fr.read()
+            self.assertEqual(s, out_str)
 
         sys.argv = sys.argv[:1]
+
+    def test_command_no_such_command(self):
+
+        testcases = (
+            (
+                {'echo': lambda *x: sys.stderr.write(repr(x))},
+                [],
+                'No such command: ',
+                2,
+            ),
+            (
+                {'echo': lambda *x: sys.stderr.write(repr(x))},
+                ['echoo'],
+                'No such command: echoo',
+                2,
+            ),
+            (
+                {'call': 'not_callable'},
+                ['call'],
+                'No such command: call',
+                2,
+            )
+        )
+
+        for arguments, argvs, out_str, exit_code in testcases:
+            self.excute_test(arguments, argvs, out_str, exit_code)
+
+    def test_command_execute_error(self):
+
+        testcases = (
+            (
+                {'divi': lambda x, y: int(x)/int(y)},
+                ['divi'],
+                "TypeError('<lambda>() takes exactly 2 arguments (0 given)',)",
+                1,
+            ),
+            (
+                {'mod': {
+                    'mod_2': lambda x: int(x)%2,
+                    },
+                },
+                ['mod', 'mod_2'],
+                "TypeError('<lambda>() takes exactly 1 argument (0 given)',)",
+                1,
+            ),
+            (
+                {'divi': lambda x, y: int(x)/int(y)},
+                ['divi', '7', '0'],
+                "ZeroDivisionError('integer division or modulo by zero',)",
+                1,
+            ),
+            (
+                {'divi': lambda x, y: int(x)/int(y)},
+                ['divi', 'string', 'number'],
+                '''ValueError("invalid literal for int() with base 10: \'string\'",)''',
+                1,
+            ),
+        )
+
+        for arguments, argvs, out_str, exit_code in testcases:
+            self.excute_test(arguments, argvs, out_str, exit_code)
+
+    def test_command_execute_normal(self):
+
+        testcases = (
+            (
+                {'echo_repr': lambda *x: sys.stderr.write(repr(x))},
+                ['echo_repr', 'hello_world'],
+                "('hello_world',)",
+                0,
+            ),
+            (
+                {'divi': lambda x, y: int(x)/int(y)},
+                ['divi', '7', '3'],
+                '',
+                1,
+            ),
+            (
+                {'mod': {
+                    'mod_2':lambda x: int(x)%2,
+                    }
+                },
+                ['mod', 'mod_2', '3'],
+                '',
+                1,
+            ),
+        )
+
+        for arguments, argvs, out_str, exit_code in testcases:
+            self.excute_test(arguments, argvs, out_str, exit_code)
 

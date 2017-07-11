@@ -1,7 +1,7 @@
-from .shell import (
-    command_normal,
+from .command import (
+    command,
 )
 
 __all__ = [
-    "command_normal",
+    "command",
 ]

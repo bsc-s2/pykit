@@ -50,7 +50,7 @@ There is a `README.md` for each module.
 | [portlock](portlock)           | cross process lock                                                                    |
 | [proc](proc)                   | Utility to create sub process                                                         |
 | [redisutil](redisutil)         | For using redis more easily.                                                          |
-| [shell](shell)             | Set different command arguments to execute different functions                            |
+| [shell](shell)                 | Set different command arguments to execute different functions                        |
 | [strutil](strutil)             | A collection of helper functions used to manipulate string                            |
 | [threadutil](threadutil)       | Utility functions for better management of threads                                    |
 | [timeutil](timeutil)           | Support specify time format output and get current ts, ms, us api etc                 |
