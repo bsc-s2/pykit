@@ -105,7 +105,7 @@ class TestRedis(unittest.TestCase):
                           'foobarjfkdslafjdasklfdjsaklfdsa' + str(i))
             self.rcl.hget(hname, 'x' + str(i - 1))
 
-            if i % 100 == 0:
+            if i % 1024 == 0:
                 dd('pid:', os.getpid(), ' finished ', i, ' set/get')
 
         if pid == 0:
