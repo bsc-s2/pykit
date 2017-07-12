@@ -3,6 +3,7 @@ from .threadutil import (
     InvalidThreadIdError,
     raise_in_thread,
     start_thread,
+    start_daemon_thread,
 )
 
 
@@ -11,4 +12,5 @@ __all__ = [
     'InvalidThreadIdError',
     'raise_in_thread',
     'start_thread',
+    'start_daemon_thread',
 ]

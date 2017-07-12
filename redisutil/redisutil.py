@@ -109,7 +109,9 @@ class RedisChannel(object):
         if v is None or len(v) < 2:
             return None
 
-        return utfjson.load(v[1])
+        key, value = v[:2]
+
+        return utfjson.load(value)
 
     def recv_last_msg(self):
 
@@ -123,11 +125,13 @@ class RedisChannel(object):
 
     def brecv_last_msg(self, timeout=0):
 
-        msg = self.recv_last_msg()
-        if msg is not None:
-            return msg
+        msg = self.brecv_msg(timeout=timeout)
+        if msg is None:
+            return None
 
-        return self.brecv_msg(timeout=timeout)
+        last = self.recv_last_msg() or msg
+
+        return last
 
     def peek_msg(self):
         v = self.rcl.lindex(self.recv_list_name, 0)

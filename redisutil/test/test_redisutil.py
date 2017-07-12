@@ -243,7 +243,7 @@ class TestRedis(unittest.TestCase):
             time.sleep(0.5)
             c.send_msg('bar')
 
-        threadutil.start_thread(target=_send_msg, daemon=True)
+        threadutil.start_daemon_thread(target=_send_msg)
         self.assertEqual('bar', s.brecv_msg(timeout=1))
 
     def test_brecv_last_message(self):
@@ -260,7 +260,7 @@ class TestRedis(unittest.TestCase):
             time.sleep(0.5)
             c.send_msg('cc')
 
-        threadutil.start_thread(target=_send_msg, daemon=True)
+        threadutil.start_daemon_thread(target=_send_msg)
         self.assertEqual('cc', s.brecv_last_msg(timeout=1))
 
     def test_rpeek_message(self):

@@ -146,8 +146,8 @@ A server should initialize `RedisChannel` with argument `peer` set to `server`.
     It can be `"client"` or `"server"`.
 
 -   `timeout`:
-    the expire time of the channel, unit is second.
-    If `None`, then exist indefinitely.
+    the expire time of the channel, in second.
+    If it is `None`, the channel exists until been cleaned.
 
 **return**:
 an instance of `RedisChannel`.
@@ -192,7 +192,7 @@ a value was pushed to the channel.
 
 -   `timeout`:
     seconds of the block time.
-    If `0`, then block indefinitely.
+    If it is `0`, then block until a message is available.
 
 **return**:
 data that is loaded from json. Or `None` if timeout.
@@ -213,14 +213,14 @@ data that is loaded from json. Or `None` if there is no message in channel.
 **syntax**:
 `RedisChannel.brecv_last_msg(timeout=0)`
 
-Similar to `RedisChannel.recv_last_msg` except it block for `timeout`
+Similar to `RedisChannel.recv_last_msg` except it blocks for `timeout`
 seconds if the channel is empty.
 
 **arguments**:
 
 -   `timeout`:
     seconds of the block time.
-    If `0`, then block indefinitely.
+    If it is `0`, then block until a message is available.
 
 **return**:
 data that is loaded from json. Or `None` if timeout.
@@ -245,7 +245,7 @@ Similar to `RedisChannel.peek_msg`
 except it gets message from the tail of the channel.
 
 **return**:
-data that is loaded from json. Or `None` if there is no message in channel.
+JSON decoded message. Or `None` if there is no message in channel.
 
 ###  RedisChannel.list_channel
 
