@@ -658,3 +658,58 @@ class TestAttrDict(unittest.TestCase):
             ad.x.x is ad.x, 'circular references work for all dict items.')
         self.assertTrue(ad.x.x.x is ad.x.x,
                         'circular references work for all dict items.(2)')
+
+
+class TestIsSubDict(unittest.TestCase):
+
+    def test_dict(self):
+
+        for case in [
+            (1, 1, True),
+            (1, 2, False),
+            ("x", "x", True),
+            ("x", "b", False),
+            (None, None, True),
+
+            ({"a": 1}, {"a": 1}, True),
+            ({}, {"a": None}, False),
+            ({"a": 1}, {}, True),
+            ({"a": 1}, None, False),
+            (None, {"a": 1}, False),
+
+            ({"a": (1, 2)}, {"a": (1, 2)}, True),
+            ({"a": (1, 2, 3)}, {"a": (1, 2)}, True),
+
+            ({"a": 1}, [], False),
+            ({"a": [1, (2, 3)]}, {"a": [1, (2,)]}, True),
+            ({"a": [1, (2, 3)]}, {"a": [1, (2, 4)]}, False),
+            ({"a": [1, (2, 3)]}, {"a": [1, (2, 3, 4)]}, False),
+
+            ({"a": 1, "b": 2}, {"a": 1}, True),
+            ({"a": 1}, {"a": 1, "b": 2}, False),
+            ({"a": 1, "b": {"c": 3, "d": 4}}, {"a": 1, "b": {"d": 4}}, True),
+            ({"a": 1, "b": {"c": 3, "d": 4}}, {"a": 1, "b": 2}, False),
+        ]:
+            self.assertEqual(dictutil.contains(case[0], case[1]), case[2])
+
+    def test_recursive_dict(self):
+        a = {}
+        a[1] = {}
+        a[1][1] = a
+
+        b = {}
+        b[1] = {}
+        b[1][1] = {}
+        b[1][1][1] = b
+
+        self.assertEqual(dictutil.contains(a, b), True)
+
+    def test_recursive_dict_with_list(self):
+        a = {'k': [0, 2]}
+        a['k'][0] = {'k': [0, 2]}
+        a['k'][0]['k'][0] = a
+
+        b = {'k': [0, 2]}
+        b['k'][0] = b
+
+        self.assertEqual(dictutil.contains(a, b), True)

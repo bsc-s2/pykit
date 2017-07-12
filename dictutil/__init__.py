@@ -6,6 +6,7 @@ from .dictutil import (
     make_getter,
     make_setter,
     make_getter_str,
+    contains,
 
     AttrDict,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "make_getter",
     "make_setter",
     "make_getter_str",
+    "contains",
 
     "AttrDict",
 ]

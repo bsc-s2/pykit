@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import types
+from collections import defaultdict
 
 
 def depth_iter(mydict, ks=None, maxdepth=10240, intermediate=False):
@@ -164,6 +165,45 @@ def make_setter(key_path, value=None, incr=False):
 
     return _set_dict
 
+
+def _contains(a, b, ref_table):
+    if a is b:
+        return True
+
+    if (isinstance(a, list) and isinstance(b, list)
+            or (isinstance(a, tuple) and isinstance(b, tuple))):
+
+        if len(a) < len(b):
+            return False
+
+        for i, v in enumerate(b):
+            if not _contains(a[i], v, ref_table):
+                return False
+        else:
+            return True
+
+    if not isinstance(a, dict) or not isinstance(b, dict):
+        return a == b
+
+    id_a, id_b = id(a), id(b)
+
+    if ref_table[id_a].get(id_b) is not None:
+        return ref_table[id_a][id_b]
+
+    ref_table[id_a][id_b] = True
+
+    for k, v in b.items():
+        if a.get(k) is None:
+            return False
+
+        if not _contains(a[k], v, ref_table):
+            return False
+
+    return True
+
+
+def contains(a, b):
+    return _contains(a, b, defaultdict(dict))
 
 class AttrDict(dict):
 
