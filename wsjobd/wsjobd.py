@@ -4,17 +4,22 @@
 import logging
 import threading
 import time
-from collections import OrderedDict
 
-import conf
-import serviceconf.wsjobd as cnf
-from geventwebsocket import Resource
-from geventwebsocket import WebSocketApplication
-from geventwebsocket import WebSocketError
-from geventwebsocket import WebSocketServer
+import psutil
+from geventwebsocket import WebSocketApplication, WebSocketError
+
 from pykit import utfjson
 
 logger = logging.getLogger(__name__)
+
+MEM_LOW_THRESHOLD = 500 * 1024 ** 2  # 500M
+CPU_LOW_THRESHOLD = 3  # 3%
+MAX_CLIENT_NUMBER = 1000
+JOBS_DIR = 'jobs'
+
+
+class SystemOverloadError(Exception):
+    pass
 
 
 class JobError(Exception):
@@ -123,7 +128,11 @@ def progress_sender(job, channel, interval=5, stat=None):
             logger.info('jod %s on channel %s send progress: %s' %
                         (job.ident, repr(channel), repr(stat(data))))
 
-            channel.ws.send(utfjson.dump(stat(data)))
+            to_send = stat(data)
+            if channel.report_system_load and type(to_send) == type({}):
+                to_send['system_load'] = channel.get_system_load()
+
+            channel.ws.send(utfjson.dump(to_send))
 
             time.sleep(interval)
 
@@ -154,11 +163,35 @@ class JobdWebSocketApplication(WebSocketApplication):
             if self.ignore_message == True:
                 return
 
-            msg = utfjson.load(message)
+            try:
+                msg = utfjson.load(message)
+            except Exception as e:
+                raise InvalidMessageError(
+                    'message is not a vaild json string: %s' % message)
+
             self._check_msg(msg)
+
+            self.report_system_load = msg.get('report_system_load') == True
+            self.cpu_sample_interval = msg.get('cpu_sample_interval', 0.02)
+
+            if not isinstance(self.cpu_sample_interval, (int, long, float)):
+                raise InvalidMessageError(
+                    'cpu_sample_interval is not a number')
+
+            check_load = msg.get('check_load')
+            if type(check_load) == type({}):
+                self._check_system_load(check_load)
+
             self._setup_response(msg)
             self.ignore_message = True
             return
+
+        except SystemOverloadError as e:
+            logger.info('system overload on chennel %s, %s'
+                        % (repr(self), repr(e)))
+            self._send_err(e)
+            time.sleep(3)
+            self.ws.close()
 
         except JobError as e:
             logger.info('error on channel %s while handling message, %s'
@@ -184,6 +217,48 @@ class JobdWebSocketApplication(WebSocketApplication):
         except Exception as e:
             logger.error(('error on channel %s while sending back error '
                           + 'message, %s') % (repr(self), repr(e)))
+
+    def get_system_load(self):
+        return {
+            'mem_available': psutil.virtual_memory().available,
+            'cpu_idle_percent': psutil.cpu_times_percent(
+                self.cpu_sample_interval).idle,
+            'client_number': len(self.protocol.server.clients),
+        }
+
+    def _check_system_load(self, check_load):
+        mem_low_threshold = check_load.get('mem_low_threshold',
+                                           MEM_LOW_THRESHOLD)
+        cpu_low_threshold = check_load.get('cpu_low_threshold',
+                                           CPU_LOW_THRESHOLD)
+        max_client_number = check_load.get('max_client_number',
+                                           MAX_CLIENT_NUMBER)
+
+        if not isinstance(mem_low_threshold, (int, long, float)):
+            raise InvalidMessageError('mem_low_threshold is not a number')
+
+        if not isinstance(cpu_low_threshold, (int, long, float)):
+            raise InvalidMessageError('cpu_low_threshold is not a number')
+
+        if not isinstance(max_client_number, (int, long, float)):
+            raise InvalidMessageError('max_client_number is not a number')
+
+        system_load = self.get_system_load()
+
+        if system_load['mem_available'] < mem_low_threshold:
+            raise SystemOverloadError(
+                'available memory: %d is less than: %d' %
+                (system_load['mem_available'], mem_low_threshold))
+
+        if system_load['cpu_idle_percent'] < cpu_low_threshold:
+            raise SystemOverloadError(
+                'cpu idle percent: %f is lower than: %f' %
+                (system_load['cpu_idle_percent'], cpu_low_threshold))
+
+        if system_load['client_number'] > max_client_number:
+            raise SystemOverloadError(
+                'client number: %d is larger than: %d' %
+                (system_load['client_number'], max_client_number))
 
     def _check_msg(self, msg):
         if type(msg) != type({}):
@@ -231,7 +306,7 @@ class JobdWebSocketApplication(WebSocketApplication):
         func_name = mod_func[-1]
 
         try:
-            mod = __import__("jobs." + mod_name)
+            mod = __import__('%s.%s' % (JOBS_DIR, mod_name))
         except (ImportError, SyntaxError) as e:
             raise LoadingError('failed to import %s: %s' % (mod_name, repr(e)))
 
@@ -247,21 +322,3 @@ class JobdWebSocketApplication(WebSocketApplication):
 
     def on_close(self, reason):
         logger.info('on close, the channel is: ' + repr(self))
-
-
-def run():
-    WebSocketServer(
-        ('127.0.0.1', conf.websocket_service_ports['wsjobd']),
-        Resource(OrderedDict({'/': JobdWebSocketApplication})),
-    ).serve_forever()
-
-
-if __name__ == "__main__":
-    import genlog
-    genlog.init_root_logger(logging.INFO)
-
-    l = logging.getLogger('stoclient')
-    l.setLevel(logging.DEBUG)
-
-    from pykit import daemonize
-    daemonize.daemonize_cli(run, cnf.PID_PATH)
