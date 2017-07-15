@@ -70,8 +70,8 @@ class TestCommand(unittest.TestCase):
             )
         )
 
-        for arguments, argvs, out_str, exit_code in testcases:
-            self.excute_test(arguments, argvs, out_str, exit_code)
+        for arguments, argv, out_str, exit_code in testcases:
+            self.excute_test(arguments, argv, out_str, exit_code)
 
     def test_command_execute_error(self):
 
@@ -105,8 +105,8 @@ class TestCommand(unittest.TestCase):
             ),
         )
 
-        for arguments, argvs, out_str, exit_code in testcases:
-            self.excute_test(arguments, argvs, out_str, exit_code)
+        for arguments, argv, out_str, exit_code in testcases:
+            self.excute_test(arguments, argv, out_str, exit_code)
 
     def test_command_execute_normal(self):
 
@@ -134,6 +134,6 @@ class TestCommand(unittest.TestCase):
             ),
         )
 
-        for arguments, argvs, out_str, exit_code in testcases:
-            self.excute_test(arguments, argvs, out_str, exit_code)
+        for arguments, argv, out_str, exit_code in testcases:
+            self.excute_test(arguments, argv, out_str, exit_code)
 

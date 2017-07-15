@@ -8,12 +8,12 @@ import os
 
 logger = logging.getLogger(__name__)
 
-def command(**argkv):
+def command(**kwargs):
 
-    argkv = copy.deepcopy(argkv)
+    kwargs = copy.deepcopy(kwargs)
 
     args = sys.argv[1:]
-    root = argkv
+    root = kwargs
     cmd = []
 
     try:

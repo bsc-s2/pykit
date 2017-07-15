@@ -61,11 +61,11 @@ A python module to manage commands.
 ##  shell.command
 
 syntax:
-`shell.command(**argkv)`
+`shell.command(**kwargs)`
 
 arguments:
 
--  `argkv`:
+-  `kwargs`:
     A dict whose key is a command, and value is command option or function to run.
 
 #   Author
