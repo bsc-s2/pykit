@@ -12,10 +12,28 @@ from pykit import utfjson
 
 logger = logging.getLogger(__name__)
 
-MEM_LOW_THRESHOLD = 500 * 1024 ** 2  # 500M
-CPU_LOW_THRESHOLD = 3  # 3%
-MAX_CLIENT_NUMBER = 1000
+MEM_AVAILABLE = 'mem_available'
+CPU_IDLE_PERCENT = 'cpu_idle_percent'
+CLIENT_NUMBER = 'client_number'
 JOBS_DIR = 'jobs'
+
+CHECK_LOAD_PARAMS = {
+    'mem_low_threshold': {
+        'load_name': MEM_AVAILABLE,
+        'default': 500 * 1024 ** 2,  # 500M
+        'greater': True,
+    },
+    'cpu_low_threshold': {
+        'load_name': CPU_IDLE_PERCENT,
+        'default': 3,  # 3%
+        'greater': True,
+    },
+    'max_client_number': {
+        'load_name': CLIENT_NUMBER,
+        'default': 1000,
+        'greater': False,
+    },
+}
 
 
 class SystemOverloadError(Exception):
@@ -189,25 +207,19 @@ class JobdWebSocketApplication(WebSocketApplication):
         except SystemOverloadError as e:
             logger.info('system overload on chennel %s, %s'
                         % (repr(self), repr(e)))
-            self._send_err(e)
-            time.sleep(3)
-            self.ws.close()
+            self._send_err_and_close(e)
 
         except JobError as e:
             logger.info('error on channel %s while handling message, %s'
                         % (repr(self), repr(e)))
-            self._send_err(e)
-            time.sleep(3)
-            self.ws.close()
+            self._send_err_and_close(e)
 
         except Exception as e:
             logger.exception(('exception on channel %s while handling ' +
                               'message, %s') % (repr(self), repr(e)))
-            self._send_err(e)
-            time.sleep(3)
-            self.ws.close()
+            self._send_err_and_close(e)
 
-    def _send_err(self, err):
+    def _send_err_and_close(self, err):
         try:
             err_msg = {
                 'err': err.__class__.__name__,
@@ -218,47 +230,38 @@ class JobdWebSocketApplication(WebSocketApplication):
             logger.error(('error on channel %s while sending back error '
                           + 'message, %s') % (repr(self), repr(e)))
 
+        time.sleep(3)
+        self.ws.close()
+
     def get_system_load(self):
         return {
-            'mem_available': psutil.virtual_memory().available,
-            'cpu_idle_percent': psutil.cpu_times_percent(
+            MEM_AVAILABLE: psutil.virtual_memory().available,
+            CPU_IDLE_PERCENT: psutil.cpu_times_percent(
                 self.cpu_sample_interval).idle,
-            'client_number': len(self.protocol.server.clients),
+            CLIENT_NUMBER: len(self.protocol.server.clients),
         }
 
     def _check_system_load(self, check_load):
-        mem_low_threshold = check_load.get('mem_low_threshold',
-                                           MEM_LOW_THRESHOLD)
-        cpu_low_threshold = check_load.get('cpu_low_threshold',
-                                           CPU_LOW_THRESHOLD)
-        max_client_number = check_load.get('max_client_number',
-                                           MAX_CLIENT_NUMBER)
-
-        if not isinstance(mem_low_threshold, (int, long, float)):
-            raise InvalidMessageError('mem_low_threshold is not a number')
-
-        if not isinstance(cpu_low_threshold, (int, long, float)):
-            raise InvalidMessageError('cpu_low_threshold is not a number')
-
-        if not isinstance(max_client_number, (int, long, float)):
-            raise InvalidMessageError('max_client_number is not a number')
-
         system_load = self.get_system_load()
 
-        if system_load['mem_available'] < mem_low_threshold:
-            raise SystemOverloadError(
-                'available memory: %d is less than: %d' %
-                (system_load['mem_available'], mem_low_threshold))
+        for param_name, param_attr in CHECK_LOAD_PARAMS.iteritems():
+            param_value = check_load.get(param_name, param_attr['default'])
 
-        if system_load['cpu_idle_percent'] < cpu_low_threshold:
-            raise SystemOverloadError(
-                'cpu idle percent: %f is lower than: %f' %
-                (system_load['cpu_idle_percent'], cpu_low_threshold))
+            if not isinstance(param_value, (int, long, float)):
+                raise InvalidMessageError('%s is not a number' % param_name)
 
-        if system_load['client_number'] > max_client_number:
-            raise SystemOverloadError(
-                'client number: %d is larger than: %d' %
-                (system_load['client_number'], max_client_number))
+            load_name = param_attr['load_name']
+            diff = system_load[load_name] - param_value
+
+            if not param_attr['greater']:
+                diff = 0 - diff
+
+            if diff < 0:
+                raise SystemOverloadError(
+                    '%s: %d is %s than: %d' %
+                    (load_name, system_load[load_name],
+                     param_attr['greater'] and 'less' or 'greater',
+                     param_value))
 
     def _check_msg(self, msg):
         if type(msg) != type({}):
