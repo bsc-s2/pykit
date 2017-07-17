@@ -47,11 +47,11 @@ if __name__ == "__main__":
 
 #   Description
 
-This module based on geventwebsocket, it is the server side of a websocket connection, a client can send a jod description to it, on receiving the job description, it will run that job in a thread, and send progress of the job back to the client periodicly.
+This module is a gevent based websocket server. When the server receives a job description from a client, it runs that job asynchronously in a thread, and reports the progress back to the client periodically.
 
 #   Job description
 
-Job description is a string formated in json, it is used to tell wsjob what to do, it can contain the following fields:
+Job description is a string formatted in json, it is used to tell wsjobd what to do, it can contain the following fields:
 
 - `func`
     required. the function of job, it contain module name and function name, seperated by a dot, the module shoud in the `jobs` directory.
@@ -60,7 +60,7 @@ Job description is a string formated in json, it is used to tell wsjob what to d
     required. the identifier of a job, it is used to prevent from creating the same job repeatedly.
 
 - `progress`
-    a dict to set progrss reporting related settings, it can contain the following fields:
+    a dict to set progress reporting related settings, it can contain the following fields:
 
     - `interval`
        the interval of progress reporting, default is 5 seconds

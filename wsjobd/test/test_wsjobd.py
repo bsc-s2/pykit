@@ -2,38 +2,24 @@
 # coding: utf-8
 
 import os
+import random
 import subprocess
 import time
 import unittest
-import random
+
 import websocket
+
+from pykit import proc, utfjson
 from pykit.wsjobd.test.wsjobd_server import PORT
-from pykit import utfjson
 
 random.seed(time.time())
 this_base = os.path.dirname(__file__)
 
 
 def subproc(script):
-
-    subproc = subprocess.Popen(['sh'],
-                               close_fds=True,
-                               env=dict(
-                                       PYTHONPATH='/usr/local/s2/current',
-                               ),
-                               stdin=subprocess.PIPE,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
-
-
-    out, err = subproc.communicate(script)
-    subproc.wait()
-
-    if subproc.returncode != 0:
-        print out
-        print err
-
-    return (subproc.returncode, out, err)
+    return proc.command('sh', close_fds=True,
+                        env=dict(PYTHONPATH='/usr/local/s2/current'),
+                        stdin=script)
 
 
 class TestWsjobd(unittest.TestCase):
@@ -57,6 +43,7 @@ class TestWsjobd(unittest.TestCase):
 
     def setUp(self):
         self._clean()
+        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
 
     def tearDown(self):
         self._clean()
@@ -72,7 +59,6 @@ class TestWsjobd(unittest.TestCase):
         return 'random_ident_%d' % random.randint(10000, 99999)
 
     def test_invalid_jobdesc(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
         cases = (
             ('foo', 'not json'),
             (utfjson.dump('foo'), 'not dict'),
@@ -86,12 +72,11 @@ class TestWsjobd(unittest.TestCase):
             ws.send(msg)
 
             resp = utfjson.load(ws.recv())
-            self.assertEqual(True, 'err' in resp, desc)
+            self.assertIn('err', resp, desc)
 
             ws.close()
 
     def test_normal_job(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
         job_desc = {
             'func': 'test_job_normal.run',
             'ident': self.get_random_ident(),
@@ -104,7 +89,6 @@ class TestWsjobd(unittest.TestCase):
         self.assertEqual('foo', resp['result'], 'test get result')
 
     def test_report_interval(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
         job_desc = {
             'func': 'test_job_loop_10.run',
             'ident': self.get_random_ident(),
@@ -130,7 +114,6 @@ class TestWsjobd(unittest.TestCase):
         self.assertLess(diff, 0.1)
 
     def test_progress_key(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
         job_desc = {
             'func': 'test_job_progress_key.run',
             'ident': self.get_random_ident(),
@@ -148,7 +131,6 @@ class TestWsjobd(unittest.TestCase):
         self.assertEqual('80%', resp)
 
     def test_check_system_load(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
         job_desc = {
             'func': 'test_job_normal.run',
             'ident': self.get_random_ident(),
@@ -182,7 +164,6 @@ class TestWsjobd(unittest.TestCase):
         self.assertEqual('SystemOverloadError', resp['err'])
 
     def test_max_client_number(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
         job_desc = {
             'func': 'test_job_loop_10.run',
             'ident': self.get_random_ident(),
@@ -198,7 +179,7 @@ class TestWsjobd(unittest.TestCase):
 
         resp = ws.recv()
         resp = utfjson.load(resp)
-        self.assertEqual(False, 'err' in resp)
+        self.assertNotIn('err', resp)
 
         job_desc = {
             'func': 'test_job_loop_10.run',
@@ -217,24 +198,7 @@ class TestWsjobd(unittest.TestCase):
         resp = utfjson.load(resp)
         self.assertEqual('SystemOverloadError', resp['err'])
 
-    def test_check_system_load_use_default(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
-        job_desc = {
-            'func': 'test_job_normal.run',
-            'ident': self.get_random_ident(),
-            'check_load': {
-            },
-        }
-
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
-
-        resp = ws.recv()
-        resp = utfjson.load(resp)
-        self.assertEqual(False, 'err' in resp)
-
     def test_function_not_exists(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
         job_desc = {
             'func': 'foo.bar',
             'ident': self.get_random_ident(),
@@ -244,10 +208,9 @@ class TestWsjobd(unittest.TestCase):
         ws.send(utfjson.dump(job_desc))
 
         resp = utfjson.load(ws.recv())
-        self.assertEqual(True, 'err' in resp)
+        self.assertIn('err', resp)
 
     def test_report_system_load(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
         job_desc = {
             'func': 'test_job_normal.run',
             'ident': self.get_random_ident(),
@@ -258,12 +221,11 @@ class TestWsjobd(unittest.TestCase):
         ws.send(utfjson.dump(job_desc))
 
         resp = utfjson.load(ws.recv())
-        self.assertEqual(True, 'mem_available' in resp['system_load'])
-        self.assertEqual(True, 'cpu_idle_percent' in resp['system_load'])
-        self.assertEqual(True, 'client_number' in resp['system_load'])
+        self.assertIn('mem_available', resp['system_load'])
+        self.assertIn('cpu_idle_percent', resp['system_load'])
+        self.assertIn('client_number', resp['system_load'])
 
     def test_same_ident_same_job(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
         ident = self.get_random_ident()
         job_desc = {
             'func': 'test_job_echo.run',
@@ -294,7 +256,6 @@ class TestWsjobd(unittest.TestCase):
         self.assertEqual('foo', resp['echo'])
 
     def test_same_ident_different_job(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
         ident = self.get_random_ident()
         job_desc = {
             'func': 'test_job_echo.run',
@@ -326,7 +287,6 @@ class TestWsjobd(unittest.TestCase):
         self.assertEqual('bar', resp['echo'])
 
     def test_client_close(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
         ident = self.get_random_ident()
         job_desc = {
             'func': 'test_job_echo.run',
@@ -354,7 +314,6 @@ class TestWsjobd(unittest.TestCase):
         self.assertEqual('foo', resp['result'])
 
     def test_invalid_cpu_sample_interval(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
         job_desc = {
             'func': 'test_job_normal.run',
             'ident': self.get_random_ident(),
@@ -368,11 +327,14 @@ class TestWsjobd(unittest.TestCase):
         self.assertEqual('InvalidMessageError', resp['err'])
 
     def test_invalid_check_load_args(self):
-        subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
         cases = (
-            {'check_load': {'mem_low_threshold': 'foo'}},
-            {'check_load': {'cpu_low_threshold': None}},
-            {'check_load': {'max_client_number': {}}},
+            {'check_load': {'mem_low_threshold': 'foo',
+                            'cpu_low_threshold': 0}},
+            {'check_load': {'cpu_low_threshold': None,
+                            'mem_low_threshold': 0}},
+            {'check_load': {'max_client_number': {},
+                            'cpu_low_threshold': 0,
+                            'mem_low_threshold': 0}},
         )
 
         job_desc = {
