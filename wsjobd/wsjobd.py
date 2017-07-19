@@ -6,15 +6,43 @@ import threading
 import time
 from collections import OrderedDict
 
-import conf
-import serviceconf.wsjobd as cnf
+import psutil
 from geventwebsocket import Resource
 from geventwebsocket import WebSocketApplication
 from geventwebsocket import WebSocketError
 from geventwebsocket import WebSocketServer
+
+from pykit import threadutil
 from pykit import utfjson
 
 logger = logging.getLogger(__name__)
+
+MEM_AVAILABLE = 'mem_available'
+CPU_IDLE_PERCENT = 'cpu_idle_percent'
+CLIENT_NUMBER = 'client_number'
+JOBS_DIR = 'jobs'
+
+CHECK_LOAD_PARAMS = {
+    'mem_low_threshold': {
+        'load_name': MEM_AVAILABLE,
+        'default': 500 * 1024 ** 2,  # 500M
+        'greater': True,
+    },
+    'cpu_low_threshold': {
+        'load_name': CPU_IDLE_PERCENT,
+        'default': 3,  # 3%
+        'greater': True,
+    },
+    'max_client_number': {
+        'load_name': CLIENT_NUMBER,
+        'default': 1000,
+        'greater': False,
+    },
+}
+
+
+class SystemOverloadError(Exception):
+    pass
 
 
 class JobError(Exception):
@@ -51,18 +79,18 @@ class Job(object):
         self.ctx = {}
         self.err = None
 
-        with self.lock:
-            if self.ident in self.sessions:
-                logger.info('job: %s already exists, created by chennel %s' %
-                            (self.ident, repr(self.sessions[self.ident].channel)))
-                return
-            else:
-                self.sessions[self.ident] = self
-                logger.info(('inserted job: %s to sessions by channel %s, ' +
-                             'there are %d jobs in sessions now') %
-                            (self.ident, repr(self.channel), len(self.sessions)))
+        if self.ident in self.sessions:
+            logger.info('job: %s already exists, created by chennel %s' %
+                        (self.ident, repr(self.sessions[self.ident].channel)))
+            return
+        else:
+            self.sessions[self.ident] = self
+            logger.info(('inserted job: %s to sessions by channel %s, ' +
+                         'there are %d jobs in sessions now') %
+                        (self.ident, repr(self.channel), len(self.sessions)))
 
-        self.thread = make_thread(self.work, ())
+        self.thread = threadutil.start_thread(target=self.work, args=(),
+                                              daemon=True)
 
     def work(self):
 
@@ -89,19 +117,13 @@ class Job(object):
 
 
 def get_or_create_job(channel, msg, func):
-    Job(channel, msg, func)
 
-    # job might just finished and is removed
-    job = Job.sessions.get(msg['ident'])
+    with Job.lock:
+        Job(channel, msg, func)
+
+        job = Job.sessions.get(msg['ident'])
 
     return job
-
-
-def make_thread(target, args):
-    th = threading.Thread(target=target, args=args)
-    th.daemon = True
-    th.start()
-    return th
 
 
 def progress_sender(job, channel, interval=5, stat=None):
@@ -115,15 +137,19 @@ def progress_sender(job, channel, interval=5, stat=None):
             # if thread died due to some reason, still send 10 stats
             if not job.thread.is_alive():
                 logger.info('job %s died: %s' % (job.ident, repr(job.err)))
-                i -= 1
                 if i == 0:
                     channel.ws.close()
                     break
+                i -= 1
 
             logger.info('jod %s on channel %s send progress: %s' %
                         (job.ident, repr(channel), repr(stat(data))))
 
-            channel.ws.send(utfjson.dump(stat(data)))
+            to_send = stat(data)
+            if channel.report_system_load and type(to_send) == type({}):
+                to_send['system_load'] = channel.get_system_load()
+
+            channel.ws.send(utfjson.dump(to_send))
 
             time.sleep(interval)
 
@@ -154,27 +180,47 @@ class JobdWebSocketApplication(WebSocketApplication):
             if self.ignore_message == True:
                 return
 
-            msg = utfjson.load(message)
+            try:
+                msg = utfjson.load(message)
+            except Exception as e:
+                raise InvalidMessageError(
+                    'message is not a vaild json string: %s' % message)
+
             self._check_msg(msg)
+
+            self.report_system_load = msg.get('report_system_load') == True
+            self.cpu_sample_interval = msg.get('cpu_sample_interval', 0.02)
+
+            if not isinstance(self.cpu_sample_interval, (int, long, float)):
+                raise InvalidMessageError(
+                    'cpu_sample_interval is not a number')
+
+            check_load = msg.get('check_load')
+            if type(check_load) == type({}):
+                self._check_system_load(check_load)
+
+            self.jobs_dir = msg.get('jobs_dir', JOBS_DIR)
+
             self._setup_response(msg)
             self.ignore_message = True
             return
 
+        except SystemOverloadError as e:
+            logger.info('system overload on chennel %s, %s'
+                        % (repr(self), repr(e)))
+            self._send_err_and_close(e)
+
         except JobError as e:
             logger.info('error on channel %s while handling message, %s'
                         % (repr(self), repr(e)))
-            self._send_err(e)
-            time.sleep(3)
-            self.ws.close()
+            self._send_err_and_close(e)
 
         except Exception as e:
             logger.exception(('exception on channel %s while handling ' +
                               'message, %s') % (repr(self), repr(e)))
-            self._send_err(e)
-            time.sleep(3)
-            self.ws.close()
+            self._send_err_and_close(e)
 
-    def _send_err(self, err):
+    def _send_err_and_close(self, err):
         try:
             err_msg = {
                 'err': err.__class__.__name__,
@@ -184,6 +230,39 @@ class JobdWebSocketApplication(WebSocketApplication):
         except Exception as e:
             logger.error(('error on channel %s while sending back error '
                           + 'message, %s') % (repr(self), repr(e)))
+
+        time.sleep(3)
+        self.ws.close()
+
+    def get_system_load(self):
+        return {
+            MEM_AVAILABLE: psutil.virtual_memory().available,
+            CPU_IDLE_PERCENT: psutil.cpu_times_percent(
+                self.cpu_sample_interval).idle,
+            CLIENT_NUMBER: len(self.protocol.server.clients),
+        }
+
+    def _check_system_load(self, check_load):
+        system_load = self.get_system_load()
+
+        for param_name, param_attr in CHECK_LOAD_PARAMS.iteritems():
+            param_value = check_load.get(param_name, param_attr['default'])
+
+            if not isinstance(param_value, (int, long, float)):
+                raise InvalidMessageError('%s is not a number' % param_name)
+
+            load_name = param_attr['load_name']
+            diff = system_load[load_name] - param_value
+
+            if not param_attr['greater']:
+                diff = 0 - diff
+
+            if diff < 0:
+                raise SystemOverloadError(
+                    '%s: %d is %s than: %d' %
+                    (load_name, system_load[load_name],
+                     param_attr['greater'] and 'less' or 'greater',
+                     param_value))
 
     def _check_msg(self, msg):
         if type(msg) != type({}):
@@ -222,20 +301,23 @@ class JobdWebSocketApplication(WebSocketApplication):
         else:
             lam = lambda r: r[progress_key]
 
-        make_thread(target=progress_sender, args=(job, channel, interval, lam))
+        threadutil.start_thread(target=progress_sender,
+                                args=(job, channel, interval, lam),
+                                daemon=True)
 
     def _get_func_by_name(self, msg):
-
-        mod_func = msg['func'].split('.')
-        mod_name = '.'.join(mod_func[:-1])
+        mod_func = self.jobs_dir.split('/') + msg['func'].split('.')
+        mod_path = '.'.join(mod_func[:-1])
         func_name = mod_func[-1]
 
         try:
-            mod = __import__("jobs." + mod_name)
+            mod = __import__(mod_path)
         except (ImportError, SyntaxError) as e:
-            raise LoadingError('failed to import %s: %s' % (mod_name, repr(e)))
+            raise LoadingError('failed to import %s: %s' % (mod_path, repr(e)))
 
-        mod = getattr(mod, mod_name)
+        for mod_name in mod_path.split('.')[1:]:
+            mod = getattr(mod, mod_name)
+
         logger.info('mod imported from: ' + repr(mod.__file__))
 
         try:
@@ -249,19 +331,8 @@ class JobdWebSocketApplication(WebSocketApplication):
         logger.info('on close, the channel is: ' + repr(self))
 
 
-def run():
+def run(ip='127.0.0.1', port=63482):
     WebSocketServer(
-        ('127.0.0.1', conf.websocket_service_ports['wsjobd']),
+        (ip, port),
         Resource(OrderedDict({'/': JobdWebSocketApplication})),
     ).serve_forever()
-
-
-if __name__ == "__main__":
-    import genlog
-    genlog.init_root_logger(logging.INFO)
-
-    l = logging.getLogger('stoclient')
-    l.setLevel(logging.DEBUG)
-
-    from pykit import daemonize
-    daemonize.daemonize_cli(run, cnf.PID_PATH)

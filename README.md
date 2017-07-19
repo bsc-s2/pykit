@@ -54,6 +54,7 @@ There is a `README.md` for each module.
 | [threadutil](threadutil)       | Utility functions for better management of threads                                    |
 | [timeutil](timeutil)           | Support specify time format output and get current ts, ms, us api etc                 |
 | [utfjson](utfjson)             | Force `json.dump` and `json.load` in `utf-8` encoding                                 |
+| [wsjobd](wsjobd)               | Job daemon based on websocket protocol                                                |
 | [zkutil](zkutil)               | Utility functions for zookeeper                                                       |
 
 #   Install
