@@ -4,10 +4,15 @@
 import logging
 import threading
 import time
+from collections import OrderedDict
 
 import psutil
-from geventwebsocket import WebSocketApplication, WebSocketError
+from geventwebsocket import Resource
+from geventwebsocket import WebSocketApplication
+from geventwebsocket import WebSocketError
+from geventwebsocket import WebSocketServer
 
+from pykit import threadutil
 from pykit import utfjson
 
 logger = logging.getLogger(__name__)
@@ -74,18 +79,18 @@ class Job(object):
         self.ctx = {}
         self.err = None
 
-        with self.lock:
-            if self.ident in self.sessions:
-                logger.info('job: %s already exists, created by chennel %s' %
-                            (self.ident, repr(self.sessions[self.ident].channel)))
-                return
-            else:
-                self.sessions[self.ident] = self
-                logger.info(('inserted job: %s to sessions by channel %s, ' +
-                             'there are %d jobs in sessions now') %
-                            (self.ident, repr(self.channel), len(self.sessions)))
+        if self.ident in self.sessions:
+            logger.info('job: %s already exists, created by chennel %s' %
+                        (self.ident, repr(self.sessions[self.ident].channel)))
+            return
+        else:
+            self.sessions[self.ident] = self
+            logger.info(('inserted job: %s to sessions by channel %s, ' +
+                         'there are %d jobs in sessions now') %
+                        (self.ident, repr(self.channel), len(self.sessions)))
 
-        self.thread = make_thread(self.work, ())
+        self.thread = threadutil.start_thread(target=self.work, args=(),
+                                              daemon=True)
 
     def work(self):
 
@@ -112,19 +117,13 @@ class Job(object):
 
 
 def get_or_create_job(channel, msg, func):
-    Job(channel, msg, func)
 
-    # job might just finished and is removed
-    job = Job.sessions.get(msg['ident'])
+    with Job.lock:
+        Job(channel, msg, func)
+
+        job = Job.sessions.get(msg['ident'])
 
     return job
-
-
-def make_thread(target, args):
-    th = threading.Thread(target=target, args=args)
-    th.daemon = True
-    th.start()
-    return th
 
 
 def progress_sender(job, channel, interval=5, stat=None):
@@ -138,10 +137,10 @@ def progress_sender(job, channel, interval=5, stat=None):
             # if thread died due to some reason, still send 10 stats
             if not job.thread.is_alive():
                 logger.info('job %s died: %s' % (job.ident, repr(job.err)))
-                i -= 1
                 if i == 0:
                     channel.ws.close()
                     break
+                i -= 1
 
             logger.info('jod %s on channel %s send progress: %s' %
                         (job.ident, repr(channel), repr(stat(data))))
@@ -199,6 +198,8 @@ class JobdWebSocketApplication(WebSocketApplication):
             check_load = msg.get('check_load')
             if type(check_load) == type({}):
                 self._check_system_load(check_load)
+
+            self.jobs_dir = msg.get('jobs_dir', JOBS_DIR)
 
             self._setup_response(msg)
             self.ignore_message = True
@@ -300,20 +301,23 @@ class JobdWebSocketApplication(WebSocketApplication):
         else:
             lam = lambda r: r[progress_key]
 
-        make_thread(target=progress_sender, args=(job, channel, interval, lam))
+        threadutil.start_thread(target=progress_sender,
+                                args=(job, channel, interval, lam),
+                                daemon=True)
 
     def _get_func_by_name(self, msg):
-
-        mod_func = msg['func'].split('.')
-        mod_name = '.'.join(mod_func[:-1])
+        mod_func = self.jobs_dir.split('/') + msg['func'].split('.')
+        mod_path = '.'.join(mod_func[:-1])
         func_name = mod_func[-1]
 
         try:
-            mod = __import__('%s.%s' % (JOBS_DIR, mod_name))
+            mod = __import__(mod_path)
         except (ImportError, SyntaxError) as e:
-            raise LoadingError('failed to import %s: %s' % (mod_name, repr(e)))
+            raise LoadingError('failed to import %s: %s' % (mod_path, repr(e)))
 
-        mod = getattr(mod, mod_name)
+        for mod_name in mod_path.split('.')[1:]:
+            mod = getattr(mod, mod_name)
+
         logger.info('mod imported from: ' + repr(mod.__file__))
 
         try:
@@ -325,3 +329,10 @@ class JobdWebSocketApplication(WebSocketApplication):
 
     def on_close(self, reason):
         logger.info('on close, the channel is: ' + repr(self))
+
+
+def run(ip='127.0.0.1', port=63482):
+    WebSocketServer(
+        (ip, port),
+        Resource(OrderedDict({'/': JobdWebSocketApplication})),
+    ).serve_forever()
