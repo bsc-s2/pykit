@@ -3,7 +3,8 @@
 import logging
 from collections import OrderedDict
 
-from geventwebsocket import Resource, WebSocketServer
+from geventwebsocket import Resource
+from geventwebsocket import WebSocketServer
 
 from pykit import wsjobd
 

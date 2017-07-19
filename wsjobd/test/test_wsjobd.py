@@ -3,14 +3,18 @@
 
 import os
 import random
-import subprocess
 import time
 import unittest
 
 import websocket
 
-from pykit import proc, utfjson
+from pykit import proc
+from pykit import utfjson
+from pykit import ututil
+from pykit.wsjobd import Job
 from pykit.wsjobd.test.wsjobd_server import PORT
+
+dd = ututil.dd
 
 random.seed(time.time())
 this_base = os.path.dirname(__file__)
@@ -18,7 +22,6 @@ this_base = os.path.dirname(__file__)
 
 def subproc(script):
     return proc.command('sh', close_fds=True,
-                        env=dict(PYTHONPATH='/usr/local/s2/current'),
                         stdin=script)
 
 
@@ -28,18 +31,9 @@ class TestWsjobd(unittest.TestCase):
         try:
             subproc('python2 {b}/wsjobd_server.py stop'.format(b=this_base))
         except Exception as e:
-            print repr(e)
+            dd('failed to stop wsjobd server: ' + repr(e))
 
         time.sleep(0.1)
-
-    @classmethod
-    def setUpClass(cls):
-        subproc('cp pykit/wsjobd/test/test_jobs/test_job_*.py jobs')
-
-    @classmethod
-    def tearDownClass(cls):
-        subproc('rm -f jobs/test_job_*.py')
-        subproc('rm -f jobs/test_job_*.pyc')
 
     def setUp(self):
         self._clean()
@@ -65,6 +59,10 @@ class TestWsjobd(unittest.TestCase):
             (utfjson.dump({}), 'no func'),
             (utfjson.dump({'func': 'foo'}), 'no ident'),
             (utfjson.dump({'ident': 'bar'}), 'no func'),
+            (utfjson.dump({'ident': 'bar', 'func': {}}), 'invalid func'),
+            (utfjson.dump({'ident': 44, 'func': 'foo'}), 'invalid ident'),
+            (utfjson.dump({'ident': 'foo', 'func': 'foo', 'jobs_dir': {}}),
+             'invalid jobs_dir'),
         )
         for msg, desc in cases:
             ws = self.get_connection()
@@ -80,6 +78,7 @@ class TestWsjobd(unittest.TestCase):
         job_desc = {
             'func': 'test_job_normal.run',
             'ident': self.get_random_ident(),
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -95,6 +94,7 @@ class TestWsjobd(unittest.TestCase):
             'progress': {
                 'interval': 0.5,
             },
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -121,6 +121,7 @@ class TestWsjobd(unittest.TestCase):
                 'key': 'foo',
             },
             'report_system_load': True,
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -138,6 +139,7 @@ class TestWsjobd(unittest.TestCase):
                 'mem_low_threshold': 100 * 1024 ** 3,
                 'cpu_low_threshold': 0,
             },
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -154,6 +156,7 @@ class TestWsjobd(unittest.TestCase):
                 'cpu_low_threshold': 100.1,
                 'mem_low_threshold': 0,
             },
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -172,6 +175,7 @@ class TestWsjobd(unittest.TestCase):
                 'cpu_low_threshold': 0,
                 'mem_low_threshold': 0,
             },
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -189,6 +193,7 @@ class TestWsjobd(unittest.TestCase):
                 'cpu_low_threshold': 0,
                 'mem_low_threshold': 0,
             },
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -198,10 +203,11 @@ class TestWsjobd(unittest.TestCase):
         resp = utfjson.load(resp)
         self.assertEqual('SystemOverloadError', resp['err'])
 
-    def test_function_not_exists(self):
+    def test_module_not_exists(self):
         job_desc = {
             'func': 'foo.bar',
             'ident': self.get_random_ident(),
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -215,6 +221,7 @@ class TestWsjobd(unittest.TestCase):
             'func': 'test_job_normal.run',
             'ident': self.get_random_ident(),
             'report_system_load': True,
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -232,6 +239,7 @@ class TestWsjobd(unittest.TestCase):
             'ident': ident,
             'echo': 'foo',
             'sleep_time': 10,
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -244,6 +252,7 @@ class TestWsjobd(unittest.TestCase):
             'func': 'test_job_echo.run',
             'ident': ident,
             'echo': 'bar',
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -262,6 +271,7 @@ class TestWsjobd(unittest.TestCase):
             'ident': ident,
             'echo': 'foo',
             'sleep_time': 0.1,
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -276,6 +286,7 @@ class TestWsjobd(unittest.TestCase):
             'func': 'test_job_echo.run',
             'ident': ident,
             'echo': 'bar',
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -293,6 +304,7 @@ class TestWsjobd(unittest.TestCase):
             'ident': ident,
             'echo': 'foo',
             'time_sleep': 10,
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -304,6 +316,7 @@ class TestWsjobd(unittest.TestCase):
             'ident': ident,
             'echo': 'bar',
             'time_sleep': 10,
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -318,6 +331,7 @@ class TestWsjobd(unittest.TestCase):
             'func': 'test_job_normal.run',
             'ident': self.get_random_ident(),
             'cpu_sample_interval': 'foo',
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         ws = self.get_connection()
@@ -339,6 +353,7 @@ class TestWsjobd(unittest.TestCase):
 
         job_desc = {
             'func': 'test_job_normal.run',
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
         for case in cases:
@@ -350,3 +365,79 @@ class TestWsjobd(unittest.TestCase):
 
             resp = utfjson.load(ws.recv())
             self.assertEqual('InvalidMessageError', resp['err'])
+
+    def test_func_not_exists(self):
+        ident = self.get_random_ident()
+        job_desc = {
+            'func': 'test_job_echo.func_not_exists',
+            'ident': ident,
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
+        }
+
+        ws = self.get_connection()
+        ws.send(utfjson.dump(job_desc))
+        resp = ws.recv()
+        resp = utfjson.load(resp)
+        self.assertEqual('LoadingError', resp['err'])
+
+    def test_worker_exception(self):
+        ident = self.get_random_ident()
+        job_desc = {
+            'func': 'test_job_worker_exception.run',
+            'ident': ident,
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
+            'progress': {
+                'interval': 0.1,
+            },
+        }
+
+        ws = self.get_connection()
+        ws.send(utfjson.dump(job_desc))
+
+        for i in range(10):
+            resp = ws.recv()
+            self.assertNotIn('err', resp)
+
+        with self.assertRaises(Exception):
+            for i in range(3):
+                ws.recv()
+
+    def test_create_job(self):
+        self.assertEqual(0, len(Job.sessions))
+
+        def f(self):
+            time.sleep(0.2)
+            return
+
+        Job('channel', {'ident': 'a'}, f)
+        joba = Job.sessions['a']
+
+        self.assertEqual(1, len(Job.sessions))
+
+        Job('channel', {'ident': 'a'}, f)
+        joba1 = Job.sessions['a']
+
+        #  joba already exists
+        self.assertEqual(joba1, joba)
+        self.assertEqual(1, len(Job.sessions))
+
+        time.sleep(0.15)
+        Job('channel', {'ident': 'b'}, f)
+
+        self.assertEqual(2, len(Job.sessions))
+
+        time.sleep(0.15)
+        self.assertEqual(1, len(Job.sessions))
+
+        time.sleep(0.1)
+        self.assertEqual(0, len(Job.sessions))
+
+        #  test use same ident after first one exit
+        Job('channel', {'ident': 'a'}, f)
+        joba1 = Job.sessions['a']
+
+        time.sleep(0.25)
+
+        Job('channel', {'ident': 'a'}, f)
+        joba2 = Job.sessions['a']
+        self.assertNotEqual(joba1, joba2)

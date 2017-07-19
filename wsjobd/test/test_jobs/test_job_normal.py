@@ -2,13 +2,12 @@
 # coding: utf-8
 
 import logging
-import time
 
 logger = logging.getLogger(__name__)
 
-def run( job ):
+
+def run(job):
 
     data = job.data
 
     data['result'] = 'foo'
-
