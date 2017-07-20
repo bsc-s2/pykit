@@ -161,7 +161,10 @@ return command('sh', **options)
 **syntax**:
 `proc.start_daemon(cmd, target, *args)`
 
-Create a deamon process and replace it with `target`.
+Create a deamon process and replace it with `cmd`.
+Besides `stdin`, `stdout` and `stderr`, all file
+descriptors from parent process will be closed in
+the daemon process.
 
 **arguments**:
 

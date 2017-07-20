@@ -4,6 +4,7 @@
 import os
 import time
 import unittest
+import sys
 
 from pykit import proc
 from pykit import ututil
@@ -123,3 +124,21 @@ class TestDaemonize(unittest.TestCase):
 
         d = daemonize.Daemon()
         self.assertEqual('/var/run/__main__', d.pidfile)
+
+    def test_close_fds(self):
+
+        subproc('python2 {b}/close_fds.py close'.format(b=this_base))
+        time.sleep(0.2)
+
+        fds = read_file(self.foo_fn)
+
+        dd(fds)
+        self.assertNotIn(self.bar_fn, fds)
+
+        subproc('python2 {b}/close_fds.py open'.format(b=this_base))
+        time.sleep(0.2)
+
+        fds = read_file(self.foo_fn)
+
+        dd(fds)
+        self.assertIn(self.bar_fn, fds)

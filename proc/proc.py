@@ -9,6 +9,7 @@ from pykit import daemonize
 
 logger = logging.getLogger(__name__)
 
+
 class ProcError(Exception):
 
     def __init__(self, returncode, out, err, cmd, arguments, options):
@@ -70,7 +71,7 @@ def start_daemon(cmd, target, *args):
         raise
 
     if pid == 0:
-        d = daemonize.Daemon()
+        d = daemonize.Daemon(close_fds=True)
         d.daemonize()
         os.execlp(cmd, cmd, target, *args)
     else:

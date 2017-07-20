@@ -65,7 +65,7 @@ can not run at the same time.
 ## daemonize.daemonize_cli
 
 **syntax**:
-`daemonize.daemonize_cli(callable, pid_path)`
+`daemonize.daemonize_cli(callable, pid_path, close_fds=False)`
 
 Read command line arguments and then start, stop or restart a daemon process.
 
@@ -80,6 +80,10 @@ Read command line arguments and then start, stop or restart a daemon process.
     It is used to identify a daemon process.
     Thus two processes those are with the same `pid` file can not run at the
     same time.
+
+-   `close_fds`:
+    If it is `True`, besides `stdin`, `stdout` and `stderr`, all other file descriptors
+    will also be closed.
 
 **return**:
 None
