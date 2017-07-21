@@ -1,6 +1,7 @@
 
 import errno
 import hashlib
+import logging
 import socket
 import threading
 import time
@@ -9,6 +10,8 @@ PORT_N = 3
 PORT_RANGE = (40000, 60000)
 
 DEFAULT_SLEEP_TIME = 0.01  # sec
+
+logger = logging.getLogger(__name__)
 
 
 class PortlockError(Exception):
@@ -99,9 +102,10 @@ class Portlock(object):
             try:
                 so.bind(addr)
                 self.socks[i] = so
+                logger.debug('success to bind: {addr}'.format(addr=addr))
             except socket.error as e:
                 if e.errno == errno.EADDRINUSE:
-                    pass
+                    logger.debug('failure to bind: {addr}'.format(addr=addr))
                 else:
                     raise
 
