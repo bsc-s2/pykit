@@ -5,6 +5,9 @@ import logging
 import socket
 import threading
 import time
+import platform
+
+OS = platform.system()
 
 PORT_N = 3
 PORT_RANGE = (40000, 60000)
@@ -54,6 +57,11 @@ class Portlock(object):
 
     def has_locked(self):
 
+        if OS == 'Linux':
+            return self.socks[0] is not None
+
+        # other OS
+
         return len([x for x in self.socks
                     if x is not None]) > len(self.socks) / 2
 
@@ -92,6 +100,23 @@ class Portlock(object):
         self.thread_lock.release()
 
     def _lock(self):
+
+        if OS == 'Linux':
+            so = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            try:
+                addr = '\0/portlock/' + self.key
+                so.bind(addr)
+                self.socks[0] = so
+                logger.debug('success to bind: {addr}'.format(addr=addr))
+            except socket.error as e:
+                if e.errno == errno.EADDRINUSE:
+                    logger.debug('failure to bind: {addr}'.format(addr=addr))
+                else:
+                    raise
+
+            return
+
+        # other OS
 
         for i in range(len(self.socks)):
 
@@ -139,7 +164,7 @@ def str_to_addr(x):
 if __name__ == "__main__":
 
     import resource
-    resource.setrlimit(resource.RLIMIT_NOFILE, (10240, -1))
+    resource.setrlimit(resource.RLIMIT_NOFILE, (102400, 102400))
 
     def test_collision():
         dd = {}
