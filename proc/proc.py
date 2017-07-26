@@ -62,7 +62,7 @@ def shell_script(script_str, **options):
     return command('sh', **options)
 
 
-def start_daemon(cmd, target, *args):
+def start_daemon(cmd, target, env, *args):
 
     try:
         pid = os.fork()
@@ -73,6 +73,8 @@ def start_daemon(cmd, target, *args):
     if pid == 0:
         d = daemonize.Daemon(close_fds=True)
         d.daemonize()
-        os.execlp(cmd, cmd, target, *args)
+        args = list(args)
+        args.append(env)
+        os.execlpe(cmd, cmd, target, *args)
     else:
         os.wait()

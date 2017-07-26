@@ -140,6 +140,6 @@ class TestProcError(unittest.TestCase):
         )
 
         for cmd, target, args, expected in cases:
-            proc.start_daemon(cmd, target, *args)
+            proc.start_daemon(cmd, target, os.environ, *args)
             time.sleep(1)
             self.assertEqual(expected, self._read_file(self.foo_fn))

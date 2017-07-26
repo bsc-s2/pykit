@@ -159,7 +159,7 @@ return command('sh', **options)
 ##  proc.start_daemon
 
 **syntax**:
-`proc.start_daemon(cmd, target, *args)`
+`proc.start_daemon(cmd, target, env, *args)`
 
 Create a deamon process and replace it with `cmd`.
 Besides `stdin`, `stdout` and `stderr`, all file
@@ -174,6 +174,10 @@ the daemon process.
 
 -   `target`:
     The path of the script.
+
+-   `env`:
+    It is a dictionary to pass environment variables
+    to the daemon process.
 
 -   `*args`:
     Type is `tuple` or `list`.
