@@ -1,9 +1,11 @@
 import logging
+import random
 import threading
 import time
 import unittest
 
 from pykit import jobq
+from pykit import threadutil
 
 
 def add1(args):
@@ -228,6 +230,71 @@ class TestJobManager(unittest.TestCase):
             self.assertEqual(0, st['doing'])
 
         jm.join()
+
+    def test_change_nr_thread(self):
+
+        def _pass(args):
+            return args
+
+        rst = []
+
+        jm = jobq.JobManager([_pass, rst.append])
+
+        for invalid in (0, -1, 1.1):
+            self.assertRaises(
+                AssertionError, jm.set_thread_num, _pass, invalid)
+
+        n = 10240
+        for i in range(n):
+
+            jm.put(i)
+
+            # change thread number every 91 put
+            if i % 91:
+                # randomly change thread number
+                jm.set_thread_num(_pass, i % 3 + 1)
+
+        jm.join()
+
+        rst.sort()
+        for i in range(n):
+            self.assertEqual(i, rst[i])
+
+    def test_change_nr_thread_keep_order(self):
+
+        def _pass(args):
+            return args
+
+        rst = []
+
+        jm = jobq.JobManager([_pass, rst.append], keep_order=True)
+
+        setter = {'running': True}
+
+        def _change_thread_nr():
+            while setter['running']:
+                jm.set_thread_num(_pass, random.randint(1, 4))
+                time.sleep(0.5)
+
+        ths = []
+        for ii in range(3):
+            th = threadutil.start_daemon_thread(_change_thread_nr)
+            ths.append(th)
+
+        n = 10240
+        for i in range(n):
+            jm.put(i)
+
+        jm.join()
+
+        rst.sort()
+        for i in range(n):
+            self.assertEqual(i, rst[i])
+
+        setter['running'] = False
+
+        for th in ths:
+            th.join()
 
 
 class TestJobQ(unittest.TestCase):

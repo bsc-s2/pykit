@@ -4,6 +4,9 @@ from .jobq import (
     run,
     stat,
     JobManager,
+
+    JobWorkerError,
+    JobWorkerNotFound,
 )
 
 __all__ = [
@@ -12,4 +15,7 @@ __all__ = [
     'run',
     'stat',
     'JobManager',
+
+    'JobWorkerError',
+    'JobWorkerNotFound',
 ]
