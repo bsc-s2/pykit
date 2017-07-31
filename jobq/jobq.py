@@ -4,6 +4,8 @@ import threading
 import time
 import types
 
+from pykit import threadutil
+
 if sys.version_info[0] == 2:
     import Queue
 else:
@@ -17,6 +19,14 @@ class EmptyRst(object):
 
 
 class Finish(object):
+    pass
+
+
+class JobWorkerError(Exception):
+    pass
+
+
+class JobWorkerNotFound(JobWorkerError):
     pass
 
 
@@ -46,7 +56,6 @@ class JobManager(object):
     def make_sessions(self):
 
         inq = self.head_queue
-        keep_order = self.keep_order
 
         workers = self.workers + [_blackhole]
         for i, worker in enumerate(workers):
@@ -57,30 +66,109 @@ class JobManager(object):
             worker, n = worker
 
             sess = {'worker': worker,
-                    'threads': [],
+                    'threads': {},
                     'input': inq,
+                    'output': _make_q(),
                     'probe': self.probe,
                     'index': i,
                     'total': len(workers),
+                    # When exiting, it is not allowed to change thread number.
+                    # Because we need to send a Finish to each thread.
+                    'exiting': False,
                     'running': True,
+                    # left close, right open
+                    # Indicate what thread should be running.
+                    'thread_index_range': [0, n],
+                    # protect read/write session info
+                    'session_lock': threading.RLock(),
                     }
 
-            outq = _make_q()
-
-            if keep_order and n > 1:
+            if self.keep_order:
                 # to maximize concurrency
                 sess['queue_of_outq'] = _make_q(n=1024 * 1024)
-                sess['lock'] = threading.RLock()
-                sess['coor_th'] = _thread(_coordinate, (sess, outq))
 
-                sess['threads'] = [_thread(_exec_in_order, (sess, _make_q()))
-                                   for ii in range(n)]
-            else:
-                sess['threads'] = [_thread(_exec, (sess, outq))
-                                   for ii in range(n)]
+                # protect input.get() and ouput.put()
+                sess['keep_order_lock'] = threading.RLock()
+                sess['coordinator_thread'] = _make_worker_thread(
+                    sess, _coordinate, sess['output'], 0)
+
+            self.add_worker_thread(sess)
 
             self.sessions.append(sess)
-            inq = outq
+            inq = sess['output']
+
+    def add_worker_thread(self, sess):
+
+        with sess['session_lock']:
+
+            if sess['exiting']:
+                logger.info('session exiting. Thread number change not allowed')
+                return
+
+            s, e = sess['thread_index_range']
+
+            for i in range(s, e):
+
+                if i not in sess['threads']:
+
+                    if self.keep_order:
+                        th = _make_worker_thread(
+                            sess, _exec_in_order, _make_q(), i)
+                    else:
+                        th = _make_worker_thread(
+                            sess, _exec, sess['output'], i)
+
+                    sess['threads'][i] = th
+
+    def set_thread_num(self, worker, n):
+
+        # When thread number is increased, new threads are created.
+        # If thread number is reduced, we do not stop worker thread in this
+        # function.
+        # Because we do not have a steady way to shutdown a running thread in
+        # python.
+        # Worker thread checks if it should continue running in _exec() and
+        # _exec_in_order(), by checking its thread_index against running thread
+        # index range thread_index_range.
+
+        assert(n > 0)
+        assert(isinstance(n, int))
+
+        for sess in self.sessions:
+
+            if sess['worker'] is not worker:
+                continue
+
+            with sess['session_lock']:
+
+                if sess['exiting']:
+                    logger.info('session exiting. Thread number change not allowed')
+                    break
+
+                s, e = sess['thread_index_range']
+                oldn = e - s
+
+                if n < oldn:
+                    s += oldn - n
+                elif n > oldn:
+                    e += n - oldn
+                else:
+                    break
+
+                sess['thread_index_range'] = [s, e]
+                self.add_worker_thread(sess)
+
+                logger.info('thread number is set to {n},'
+                            ' thread index: {idx},'
+                            ' running threads: {ths}'.format(
+                                n=n,
+                                idx=range(sess['thread_index_range'][0],
+                                          sess['thread_index_range'][1]),
+                                ths=sorted(sess['threads'].keys())))
+                break
+
+        else:
+            raise JobWorkerNotFound(worker)
 
     def put(self, elt):
         self.head_queue.put(elt)
@@ -91,16 +179,21 @@ class JobManager(object):
 
         for sess in self.sessions:
 
+            with sess['session_lock']:
+                # prevent adding or removing thread
+                sess['exiting'] = True
+                ths = sess['threads'].values()
+
             # put nr = len(threads) Finish
-            for th in sess['threads']:
+            for th in ths:
                 sess['input'].put(Finish)
 
-            for th in sess['threads']:
+            for th in ths:
                 th.join(endtime - time.time())
 
             if 'queue_of_outq' in sess:
                 sess['queue_of_outq'].put(Finish)
-                sess['coor_th'].join(endtime - time.time())
+                sess['coordinator_thread'].join(endtime - time.time())
 
             # if join timeout, let threads quit at next loop
             sess['running'] = False
@@ -150,9 +243,18 @@ def _q_stat(q):
             }
 
 
-def _exec(sess, output_q):
+def _exec(sess, output_q, thread_index):
 
     while sess['running']:
+
+        # If this thread is not in the running thread range, exit.
+        if thread_index < sess['thread_index_range'][0]:
+
+            with sess['session_lock']:
+                del sess['threads'][thread_index]
+
+            logger.info('worker-thread {i} quit'.format(i=thread_index))
+            return
 
         args = sess['input'].get()
         if args is Finish:
@@ -177,11 +279,19 @@ def _exec(sess, output_q):
         _put_rst(output_q, rst)
 
 
-def _exec_in_order(sess, output_q):
+def _exec_in_order(sess, output_q, thread_index):
 
     while sess['running']:
 
-        with sess['lock']:
+        if thread_index < sess['thread_index_range'][0]:
+
+            with sess['session_lock']:
+                del sess['threads'][thread_index]
+
+            logger.info('worker-thread {i} quit'.format(i=thread_index))
+            return
+
+        with sess['keep_order_lock']:
 
             args = sess['input'].get()
             if args is Finish:
@@ -206,7 +316,7 @@ def _exec_in_order(sess, output_q):
         output_q.put(rst)
 
 
-def _coordinate(sess, output_q):
+def _coordinate(sess, output_q, thread_index):
 
     while sess['running']:
 
@@ -239,10 +349,8 @@ def _make_q(n=1024):
     return Queue.Queue(n)
 
 
-def _thread(func, args):
-    th = threading.Thread(target=func,
-                          args=args)
-    th.daemon = True
-    th.start()
-
-    return th
+def _make_worker_thread(sess, exec_func, outq, thread_index):
+    # `thread_index` identifying a thread in sess['threads'].
+    # It is used to decide which thread to remove.
+    return threadutil.start_daemon_thread(exec_func,
+                                          args=(sess, outq, thread_index,))
