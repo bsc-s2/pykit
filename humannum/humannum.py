@@ -29,6 +29,8 @@ unit_to_value = dict([(v, k)
                       if v != ''
                       ])
 
+integer_types = (type(0), type(0L))
+
 
 def humannum_int(i, unit=None):
 
@@ -64,7 +66,7 @@ def humannum_int(i, unit=None):
 
 def humannum(data, unit=None, include=None, exclude=None):
 
-    if type(data) == type({}):
+    if isinstance(data, types.DictType):
 
         data = data.copy()
 
@@ -80,16 +82,23 @@ def humannum(data, unit=None, include=None, exclude=None):
 
         return data
 
-    elif type(data) == type([]):
-        return [humannum(x) for x in data]
-
-    elif type(data) == type(''):
+    elif isinstance(data, types.BooleanType):
+        # We have to deal with bool because for historical reason bool is
+        # subclass of int.
+        # When bool is introduced into python 2.2 it is represented with int,
+        # similar to C.
         return data
 
-    elif type(data) in [type(0), type(0L)]:
+    elif isinstance(data, types.ListType):
+        return [humannum(x) for x in data]
+
+    elif isinstance(data, types.StringTypes):
+        return data
+
+    elif isinstance(data, integer_types):
         return humannum_int(data, unit=unit)
 
-    elif type(data) == type(0.1):
+    elif isinstance(data, types.FloatType):
         if data > 999:
             return humannum_int(int(data), unit=unit)
         elif abs(data) < 0.0000000001:
@@ -107,10 +116,10 @@ def parseint(data):
 
 def parsenum(data):
 
-    if type(data) in (type(0), type(0L)):
+    if isinstance(data, integer_types):
         return data
 
-    if type(data) not in types.StringTypes:
+    if not isinstance(data, types.StringTypes):
         return data
 
     if data == '':
