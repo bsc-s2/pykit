@@ -73,13 +73,13 @@ class JobManager(object):
                     'index': i,
                     'total': len(workers),
                     # When exiting, it is not allowed to change thread number.
-                    # Because we need to send a Finish to each thread.
+                    # Because we need to send a `Finish` to each thread.
                     'exiting': False,
                     'running': True,
-                    # left close, right open
-                    # Indicate what thread should be running.
-                    'thread_index_range': [0, n],
-                    # protect read/write session info
+                    # left close, right open: 0 running, n not.
+                    # Indicate what thread should have been running.
+                    'running_index_range': [0, n],
+                    # protect reading/writing session info
                     'session_lock': threading.RLock(),
                     }
 
@@ -102,10 +102,11 @@ class JobManager(object):
         with sess['session_lock']:
 
             if sess['exiting']:
-                logger.info('session exiting. Thread number change not allowed')
+                logger.info('session exiting.'
+                            ' Thread number change not allowed')
                 return
 
-            s, e = sess['thread_index_range']
+            s, e = sess['running_index_range']
 
             for i in range(s, e):
 
@@ -129,7 +130,7 @@ class JobManager(object):
         # python.
         # Worker thread checks if it should continue running in _exec() and
         # _exec_in_order(), by checking its thread_index against running thread
-        # index range thread_index_range.
+        # index range running_index_range.
 
         assert(n > 0)
         assert(isinstance(n, int))
@@ -142,10 +143,11 @@ class JobManager(object):
             with sess['session_lock']:
 
                 if sess['exiting']:
-                    logger.info('session exiting. Thread number change not allowed')
+                    logger.info('session exiting.'
+                                ' Thread number change not allowed')
                     break
 
-                s, e = sess['thread_index_range']
+                s, e = sess['running_index_range']
                 oldn = e - s
 
                 if n < oldn:
@@ -155,15 +157,15 @@ class JobManager(object):
                 else:
                     break
 
-                sess['thread_index_range'] = [s, e]
+                sess['running_index_range'] = [s, e]
                 self.add_worker_thread(sess)
 
                 logger.info('thread number is set to {n},'
                             ' thread index: {idx},'
                             ' running threads: {ths}'.format(
                                 n=n,
-                                idx=range(sess['thread_index_range'][0],
-                                          sess['thread_index_range'][1]),
+                                idx=range(sess['running_index_range'][0],
+                                          sess['running_index_range'][1]),
                                 ths=sorted(sess['threads'].keys())))
                 break
 
@@ -248,7 +250,7 @@ def _exec(sess, output_q, thread_index):
     while sess['running']:
 
         # If this thread is not in the running thread range, exit.
-        if thread_index < sess['thread_index_range'][0]:
+        if thread_index < sess['running_index_range'][0]:
 
             with sess['session_lock']:
                 del sess['threads'][thread_index]
@@ -283,12 +285,13 @@ def _exec_in_order(sess, output_q, thread_index):
 
     while sess['running']:
 
-        if thread_index < sess['thread_index_range'][0]:
+        if thread_index < sess['running_index_range'][0]:
 
             with sess['session_lock']:
                 del sess['threads'][thread_index]
 
-            logger.info('worker-thread {i} quit'.format(i=thread_index))
+            logger.info('in-order worker-thread {i} quit'.format(
+                i=thread_index))
             return
 
         with sess['keep_order_lock']:
