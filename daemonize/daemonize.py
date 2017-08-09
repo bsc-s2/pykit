@@ -25,13 +25,14 @@ class Daemon(object):
         self.stderr = stderr
         self.pidfile = pidfile or _default_pid_file()
         # NOTE: We need to open another separate file to avoid the file
-        #       reopened # again. Which case, process lose file lock.
+        #       being reopened again.
+        #       In which case, process loses file lock.
         #
         # From "man fcntl":
         # As well as being removed by an explicit F_UNLCK, record locks are
-        # automatically released when the process terminates  or  if  it
-        # closes  any  file descriptor  referring  to  a  file  on which locks
-        # are held.  This is bad: it means that a process can lose the locks
+        # automatically released when the process terminates or if it
+        # closes any file descriptor referring to a file on which locks
+        # are held. This is bad: it means that a process can lose the locks
         # on a file like /etc/passwd or /etc/mtab when for some reason a
         # library function decides to open, read and close it.
         self.lockfile = self.pidfile + ".lock"
