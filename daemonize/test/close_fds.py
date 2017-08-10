@@ -2,6 +2,8 @@ import daemonize
 import os
 import sys
 
+from pykit import proc
+
 foo_fn = '/tmp/foo'
 bar_fn = '/tmp/bar'
 pidfn = '/tmp/test_daemonize.pid'
@@ -17,18 +19,8 @@ def write_file(fn, cont):
 
 
 def run():
-
-    names = []
-
-    fd_path = '/proc/' + str(os.getpid()) + '/fd'
-    for n in os.listdir(fd_path):
-        try:
-            dst = os.readlink(fd_path + '/' + n)
-            names.append(dst)
-        except:
-            pass
-
-    write_file(foo_fn, ''.join(names))
+    code, out, err = proc.shell_script('/usr/sbin/lsof -p ' + str(os.getpid()))
+    write_file(foo_fn, repr(out))
 
 
 if __name__ == '__main__':

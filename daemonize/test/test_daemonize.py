@@ -4,7 +4,6 @@
 import os
 import time
 import unittest
-import sys
 
 from pykit import proc
 from pykit import ututil
@@ -15,12 +14,11 @@ dd = ututil.dd
 this_base = os.path.dirname(__file__)
 
 
-def subproc(script):
-    return proc.shell_script(script,
-                             env=dict(
-                                 PYTHONPATH=this_base + '/../..',
-                             ),
-                             )
+def subproc(script, env=None):
+    if env is None:
+        env=dict(PYTHONPATH=this_base + '/../..',)
+
+    return proc.shell_script(script, env=env)
 
 
 def read_file(fn):
@@ -126,19 +124,20 @@ class TestDaemonize(unittest.TestCase):
         self.assertEqual('/var/run/__main__', d.pidfile)
 
     def test_close_fds(self):
+        env = dict(PYTHONPATH='{path_daemonize}:{path_pykit}'.format(
+                              path_daemonize=this_base + '/../..',
+                              path_pykit=this_base + '/../../..'))
 
-        subproc('python2 {b}/close_fds.py close'.format(b=this_base))
+        subproc('python2 {b}/close_fds.py close'.format(b=this_base), env=env)
         time.sleep(0.2)
 
         fds = read_file(self.foo_fn)
 
-        dd(fds)
         self.assertNotIn(self.bar_fn, fds)
 
-        subproc('python2 {b}/close_fds.py open'.format(b=this_base))
+        subproc('python2 {b}/close_fds.py open'.format(b=this_base), env=env)
         time.sleep(0.2)
 
         fds = read_file(self.foo_fn)
 
-        dd(fds)
         self.assertIn(self.bar_fn, fds)
