@@ -92,10 +92,13 @@ string.
 `humannum.parsenum(data)`
 
 Parse humanized number string like `10.5K` to `int` or `float`.
+It also parses percentage number to `float`.
 
 ```python
 print humannum.parsenum('1.01k')
 # 10342.4
+print humannum.parsenum('10.3%')
+# 0.103
 ```
 
 **arguments**:
@@ -107,6 +110,9 @@ print humannum.parsenum('1.01k')
     `k`, `m`, `g`, `t`, `p`, `e`, `z` and `y`.
     Suffix `b` and `i` will be ignored.
     For example: `10.1K`, `10.1k`, `10.1Kb` and `10.1Ki` are all the same.
+
+    For percentage number, valid unit is `%`.
+    For example: `10.1%`.
 
 **return**:
 a `int` number or `float` number.

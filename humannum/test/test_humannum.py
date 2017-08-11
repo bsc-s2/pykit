@@ -102,6 +102,36 @@ class TestHumannum(unittest.TestCase):
                 self.assertEqual(int(_out), humannum.parseint(_in + suff),
                                  msg + '; parseint with suffix: ' + repr(suff))
 
+    def test_parse_percentage(self):
+
+        cases = (
+                ('0%',           0,        ),
+                ('-0%',          0,        ),
+                ('1%',           0.01,     ),
+                ('-1%',         -0.01,     ),
+                ('1.00%',        0.01,     ),
+                ('1.1%',         0.011,    ),
+                ('100%',         1.0,      ),
+                ('-100%',       -1.0,      ),
+                ('100.1%',       1.001,    ),
+                ('1200.123%',   12.00123,  ),
+                ('-1200.123%', -12.00123,  ),
+        )
+
+        for _in, expected in cases:
+
+            rst = humannum.parsenum(_in)
+
+            msg = 'parse: in: {_in} expect: {expected}, rst: {rst}'.format(
+                _in=repr(_in),
+                expected=repr(expected),
+                rst=repr(rst),
+            )
+
+            self.assertTrue(0.000000001 > expected - rst > -0.000000001, msg)
+
+            self.assertEqual(int(expected), humannum.parseint(_in), 'int: ' + msg)
+
     def test_specified_unit(self):
 
         cases = (
