@@ -125,6 +125,10 @@ def parsenum(data):
     if data == '':
         return 0
 
+    if data.endswith('%'):
+        fl = float(data[:-1]) / 100.0
+        return fl
+
     data = data.upper().rstrip('B').rstrip('I')
 
     unit_name = data[-1]
