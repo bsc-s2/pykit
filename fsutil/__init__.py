@@ -6,6 +6,7 @@ from .fsutil import (
     get_device,
     get_disk_partitions,
     get_mountpoint,
+    makedirs,
 
 )
 
@@ -17,4 +18,5 @@ __all__ = [
     "get_device",
     "get_disk_partitions",
     "get_mountpoint",
+    "makedirs",
 ]

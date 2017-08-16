@@ -13,6 +13,7 @@
   - [fsutil.get_device](#fsutilget_device)
   - [fsutil.get_disk_partitions](#fsutilget_disk_partitions)
   - [fsutil.get_mountpoint](#fsutilget_mountpoint)
+  - [fsutil.makedirs](#fsutilmakedirs)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -146,6 +147,39 @@ All symbolic links are resolved when looking up for mount point.
 
 **return**:
 the mount point path(one of output of command `mount` on linux)
+
+
+##  fsutil.makedirs
+
+**syntax**:
+`fsutil.makedirs(*path, mode=0755, uid=None, gid=None)`
+
+Make directory.
+If intermediate directory does not exist, create them too.
+
+**arguments**:
+
+-   `*path`:
+    is a single part path such as `/tmp/foo` or a separated path such as
+    `('/tmp', 'foo')`.
+
+-   `mode`:
+    specifies permission mode for the dir created or existed.
+
+    By defaul it is `0755`.
+
+-   `uid`:
+    and `gid` to specify another user/group for the dir to create.
+
+    By default they are `None` and the created dir inherits ownership from the
+    running python program.
+
+**return**:
+Nothing
+
+**raise**:
+`OSError` if trying to create dir with the same path of a non-dir file, or
+having other issue like permission denied.
 
 
 #   Author

@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
+import errno
 import os
 
 import psutil
@@ -52,6 +53,37 @@ def get_disk_partitions():
         by_mount_point[pt.mountpoint] = _to_dict(pt)
 
     return by_mount_point
+
+
+def makedirs(*paths, **kwargs):
+    mode = kwargs.get('mode', 0755)
+    uid = kwargs.get('uid')
+    gid = kwargs.get('uid')
+
+    path = os.path.join(*paths)
+
+    # retry to deal with concurrent check-and-then-set issue
+    for ii in range(2):
+
+        if os.path.isdir(path):
+
+            if uid is not None and gid is not None:
+                os.chown(path, uid, gid)
+
+            return
+
+        try:
+            os.makedirs(path, mode=mode)
+            if uid is not None and gid is not None:
+                os.chown(path, uid, gid)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                # concurrent if-exist and makedirs
+                pass
+            else:
+                raise
+    else:
+        raise
 
 
 def _to_dict(_namedtuple):
