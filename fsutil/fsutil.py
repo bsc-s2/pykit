@@ -20,6 +20,12 @@ def assert_mountpoint(path):
         raise NotMountPoint(path)
 
 
+def get_all_mountpoint(all=False):
+    partitions = psutil.disk_partitions(all=all)
+    mps = [x.mountpoint for x in partitions]
+    return mps
+
+
 def get_mountpoint(path):
 
     path = os.path.realpath(path)

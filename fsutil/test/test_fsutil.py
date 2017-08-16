@@ -15,6 +15,17 @@ class TestFSUtil(unittest.TestCase):
         dd('present: ', fsutil.FSUtilError)
         dd('present: ', fsutil.NotMountPoint)
 
+    def test_get_all_mountpoint(self):
+        mps = fsutil.get_all_mountpoint()
+        dd('mount points:', mps)
+        self.assertIn('/', mps)
+
+        mpsall = fsutil.get_all_mountpoint(all=True)
+        dd('all mount points:', mps)
+
+        self.assertTrue(len(mpsall) > len(mps))
+        self.assertEqual(set([]), set(mps) - set(mpsall))
+
     def test_mountpoint(self):
 
         cases = (

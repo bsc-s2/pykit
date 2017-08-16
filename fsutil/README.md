@@ -81,6 +81,25 @@ Or an error `NotMountPoint` is emitted.
 Nothing
 
 
+##  fsutil.get_all_mountpoint
+
+**syntax**:
+`fsutil.get_all_mountpoint(all=False)`
+
+Returns a list of all mount points on this host.
+
+**arguments**:
+
+-   `all`:
+    specifies if to return non-physical device mount points.
+
+    By default it is `False` thus only disk drive mount points are returned.
+    `tmpfs` or `/proc` are not returned by default.
+
+**return**:
+a list of mount point path in string.
+
+
 ##  fsutil.get_device
 
 **syntax**:
