@@ -6,6 +6,9 @@ import os
 
 import psutil
 
+READ_BLOCK = 32 * 1024 * 1024
+WRITE_BLOCK = 32 * 1024 * 1024
+
 
 class FSUtilError(Exception):
     pass
@@ -90,6 +93,21 @@ def makedirs(*paths, **kwargs):
                 raise
     else:
         raise
+
+
+def read_file(path):
+    with open(path, 'r') as f:
+        return f.read()
+
+
+def write_file(path, fcont, uid=None, gid=None):
+    with open(path, 'w') as f:
+        f.write(fcont)
+        f.flush()
+        os.fsync(f.fileno())
+
+    if uid is not None and gid is not None:
+        os.chown(path, uid, gid)
 
 
 def _to_dict(_namedtuple):
