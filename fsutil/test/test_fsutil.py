@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from pykit import fsutil
@@ -58,3 +59,58 @@ class TestFSUtil(unittest.TestCase):
             'mount | grep " on / " | grep -o "[^ ]*"')[1].strip()
 
         self.assertEqual(root_dev, rst)
+
+    def test_makedirs(self):
+
+        fn = '/tmp/pykit-ut-fsutil-foo'
+        fn_part = ('/tmp', 'pykit-ut-fsutil-foo')
+        dd('fn_part:', fn_part)
+
+        try:
+            os.rmdir(fn)
+        except:
+            pass
+
+        try:
+            os.unlink(fn)
+        except:
+            pass
+
+        def get_mode(fn):
+            mode = os.stat(fn).st_mode
+            dd('mode read:', oct(mode))
+            return mode & 0777
+
+        dd('file is not a dir')
+        with open(fn, 'w') as f:
+            f.write('a')
+        self.assertRaises(OSError, fsutil.makedirs, fn)
+        os.unlink(fn)
+
+        dd('no error if dir exist')
+        os.mkdir(fn)
+        fsutil.makedirs(fn)
+        os.rmdir(fn)
+
+        dd('single part path should be created')
+        fsutil.makedirs(fn)
+        self.assertTrue(os.path.isdir(fn))
+        os.rmdir(fn)
+
+        dd('multi part path should be created')
+        fsutil.makedirs(*fn_part)
+        self.assertTrue(os.path.isdir(fn), 'multi part path should be created')
+        os.rmdir(fn)
+
+        dd('default mode')
+        fsutil.makedirs(fn)
+        self.assertEqual(0755, get_mode(fn))
+        os.rmdir(fn)
+
+        dd('specify mode')
+        fsutil.makedirs(fn, mode=0700)
+        self.assertEqual(0700, get_mode(fn))
+        os.rmdir(fn)
+
+        dd('specify uid/gid, to change uid, you need root privilege')
+        fsutil.makedirs(fn, uid=1, gid=1)
