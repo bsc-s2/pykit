@@ -10,10 +10,13 @@
   - [NotMountPoint](#notmountpoint)
 - [Methods](#methods)
   - [fsutil.assert_mountpoint](#fsutilassert_mountpoint)
+  - [fsutil.get_all_mountpoint](#fsutilget_all_mountpoint)
   - [fsutil.get_device](#fsutilget_device)
   - [fsutil.get_disk_partitions](#fsutilget_disk_partitions)
   - [fsutil.get_mountpoint](#fsutilget_mountpoint)
   - [fsutil.makedirs](#fsutilmakedirs)
+  - [fsutil.read_file](#fsutilread_file)
+  - [fsutil.write_file](#fsutilwrite_file)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -199,6 +202,47 @@ Nothing
 **raise**:
 `OSError` if trying to create dir with the same path of a non-dir file, or
 having other issue like permission denied.
+
+
+##  fsutil.read_file
+
+**syntax**:
+`fsutil.read_file(path)`
+
+Read and return the entire file specified by `path`
+
+**arguments**:
+
+-   `path`:
+    is the file path to read.
+
+**return**:
+file content in string.
+
+
+##  fsutil.write_file
+
+**syntax**:
+`fsutil.write_file(path, content, uid=None, gid=None)`
+
+Write `content` to file `path`.
+
+**arguments**:
+
+-   `path`:
+    is the file path to write to.
+
+-   `content`:
+    specifies the content to write.
+
+-   `uid` and `gid`:
+     specifies the user_id/group_id the file belongs to.
+
+     Bedefault they are `None`, which means the file that has been written
+     inheirts ownership of the running python script.
+
+**return**:
+Nothing
 
 
 #   Author

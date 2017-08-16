@@ -125,3 +125,33 @@ class TestFSUtil(unittest.TestCase):
 
         dd('specify uid/gid, to change uid, you need root privilege')
         fsutil.makedirs(fn, uid=1, gid=1)
+
+    def test_read_write_file(self):
+
+        fn = '/tmp/pykit-ut-rw-file'
+
+        try:
+            os.unlink(fn)
+        except:
+            pass
+
+        dd('write/read file')
+        fsutil.write_file(fn, '123')
+        self.assertEqual('123', fsutil.read_file(fn))
+
+        dd('write/read 3MB file')
+        cont = '123' * (1024**2)
+
+        fsutil.write_file(fn, cont)
+        self.assertEqual(cont, fsutil.read_file(fn))
+
+        dd('write file with uid/gid')
+        fsutil.write_file(fn, '1', uid=1, gid=1)
+        stat = os.stat(fn)
+        self.assertEqual(1, stat.st_uid)
+        self.assertEqual(1, stat.st_gid)
+
+        try:
+            os.unlink(fn)
+        except:
+            pass

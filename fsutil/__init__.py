@@ -8,6 +8,8 @@ from .fsutil import (
     get_disk_partitions,
     get_mountpoint,
     makedirs,
+    write_file,
+    read_file,
 
 )
 
@@ -21,4 +23,6 @@ __all__ = [
     "get_disk_partitions",
     "get_mountpoint",
     "makedirs",
+    "write_file",
+    "read_file",
 ]
