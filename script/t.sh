@@ -43,6 +43,34 @@ done
 
 pkg="${pkg%.}"
 
+# Check if all module can be imported properly, to find uninstalled dependency
+# module.
+echo 'check if modules are importable...'
+unimportable=
+for _mod in $(find pykit -mindepth 2 -maxdepth 2 -type f -name __init__.py); do
+    mod=${_mod#pykit/}
+    mod=${mod%/__init__.py}
+    if msg=$(python -c 'import pykit.'$mod 2>&1); then
+        if [ "$verbosity" != "" ]; then
+            printf "test importing $mod: OK\n"
+        fi
+    else
+        if [ "$verbosity" != "" ]; then
+            printf "test importing $mod: ERROR:\n"
+            echo "$msg"
+        fi
+        unimportable="$unimportable\n$(printf "    %-12s" $mod): $(echo "$msg" | tail -n1)"
+    fi
+done
+
+if [ "$unimportable" != "" ] && [ "$verbosity" = "" ]; then
+    echo "!!!"
+    echo "!!! There are some module can not be imported, those might impede tests:$unimportable"
+    echo "!!!"
+    echo "!!! run t.sh with '-v' to see more info "
+    echo "!!!"
+fi
+
 # Find test from a subdir or a module.
 # Add env variable PYTHONPATH to let all modules in sub folder can find the
 # root package.
