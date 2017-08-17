@@ -67,7 +67,7 @@ def get_disk_partitions():
 def makedirs(*paths, **kwargs):
     mode = kwargs.get('mode', 0755)
     uid = kwargs.get('uid')
-    gid = kwargs.get('uid')
+    gid = kwargs.get('gid')
 
     path = os.path.join(*paths)
 
