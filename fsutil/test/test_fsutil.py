@@ -80,7 +80,7 @@ class TestFSUtil(unittest.TestCase):
         dev = out.strip()
         dd('device: ', dev)
         rst = fsutil.get_device_fs(dev)
-        self.assertTrue(rst in ('hfs', 'xfs', 'ext2', 'ext3', 'ext4'))
+        self.assertIn(rst, ('hfs', 'xfs', 'ext2', 'ext3', 'ext4'))
 
     def test_get_path_fs(self):
 
@@ -91,7 +91,7 @@ class TestFSUtil(unittest.TestCase):
 
         rst = fsutil.get_path_fs('/blabla')
         dd('fs of /blabla: ', rst)
-        self.assertTrue(rst in ('hfs', 'xfs', 'ext2', 'ext3', 'ext4'))
+        self.assertIn(rst, ('hfs', 'xfs', 'ext2', 'ext3', 'ext4'))
 
     def test_makedirs(self):
 
