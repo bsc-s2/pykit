@@ -73,7 +73,8 @@ class TestFSUtil(unittest.TestCase):
 
     def test_get_device_fs(self):
 
-        rc, out, err = proc.shell_script('mount | grep " on / " | grep -o "[^ ]*"')
+        rc, out, err = proc.shell_script(
+            'mount | grep " on / " | grep -o "[^ ]*"')
         dd('find device on /', rc, out, err)
 
         dev = out.strip()
@@ -91,7 +92,6 @@ class TestFSUtil(unittest.TestCase):
         rst = fsutil.get_path_fs('/blabla')
         dd('fs of /blabla: ', rst)
         self.assertTrue(rst in ('hfs', 'xfs', 'ext2', 'ext3', 'ext4'))
-
 
     def test_makedirs(self):
 
