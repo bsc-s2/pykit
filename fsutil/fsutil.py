@@ -25,8 +25,8 @@ def assert_mountpoint(path):
 
 def get_all_mountpoint(all=False):
     partitions = psutil.disk_partitions(all=all)
-    mps = [x.mountpoint for x in partitions]
-    return mps
+    prt_by_mp = [x.mountpoint for x in partitions]
+    return prt_by_mp
 
 
 def get_mountpoint(path):
@@ -48,6 +48,17 @@ def get_device(path):
     return prt_by_mountpoint[mp]['device']
 
 
+def get_device_fs(device):
+
+    prt_by_mp = get_disk_partitions()
+
+    for prt in prt_by_mp.values():
+        if device == prt['device']:
+            return prt['fstype']
+    else:
+        return 'unknown'
+
+
 def get_disk_partitions():
 
     partitions = psutil.disk_partitions(all=True)
@@ -62,6 +73,14 @@ def get_disk_partitions():
         by_mount_point[pt.mountpoint] = _to_dict(pt)
 
     return by_mount_point
+
+
+def get_path_fs(path):
+
+    mp = get_mountpoint(path)
+    prt_by_mp = get_disk_partitions()
+
+    return prt_by_mp[mp]['fstype']
 
 
 def makedirs(*paths, **kwargs):
