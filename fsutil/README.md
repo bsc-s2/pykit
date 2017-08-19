@@ -119,6 +119,22 @@ Get the device path(`/dev/sdb` etc) where `path` resides on.
 device path like `"/dev/sdb"` in string.
 
 
+##  fsutil.get_device_fs
+
+**syntax**:
+`fsutil.get_device_fs(device)`
+
+Return the file-system name of a device, if the device is a disk device.
+
+**arguments**:
+
+-   `device`:
+    is a path of a device, such as `/dev/sdb1`.
+
+**return**:
+the file-system name, such as `ext4` or `hfs`.
+
+
 ##  fsutil.get_disk_partitions
 
 **syntax**:
@@ -169,6 +185,22 @@ All symbolic links are resolved when looking up for mount point.
 
 **return**:
 the mount point path(one of output of command `mount` on linux)
+
+
+##  fsutil.get_path_fs
+
+**syntax**:
+`fsutil.get_path_fs(path)`
+
+Return the name of file system the `path` is on.
+
+**arguments**:
+
+-   `path`:
+    is a file path on a file system.
+
+**return**:
+the file-system name, such as `ext4` or `hfs`.
 
 
 ##  fsutil.makedirs

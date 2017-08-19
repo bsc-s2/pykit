@@ -71,6 +71,28 @@ class TestFSUtil(unittest.TestCase):
 
         self.assertEqual(root_dev, rst)
 
+    def test_get_device_fs(self):
+
+        rc, out, err = proc.shell_script('mount | grep " on / " | grep -o "[^ ]*"')
+        dd('find device on /', rc, out, err)
+
+        dev = out.strip()
+        dd('device: ', dev)
+        rst = fsutil.get_device_fs(dev)
+        self.assertTrue(rst in ('hfs', 'xfs', 'ext2', 'ext3', 'ext4'))
+
+    def test_get_path_fs(self):
+
+        rst = fsutil.get_path_fs('/dev')
+        dd('fs of /dev: ', rst)
+        self.assertNotEqual('unknown', rst)
+        self.assertTrue('dev' in rst)
+
+        rst = fsutil.get_path_fs('/blabla')
+        dd('fs of /blabla: ', rst)
+        self.assertTrue(rst in ('hfs', 'xfs', 'ext2', 'ext3', 'ext4'))
+
+
     def test_makedirs(self):
 
         fn = '/tmp/pykit-ut-fsutil-foo'

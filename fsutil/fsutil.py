@@ -53,7 +53,7 @@ def get_device_fs(device):
     prt_by_mp = get_disk_partitions()
 
     for mp, prt in prt_by_mp.items():
-        if device == mp['device']:
+        if device == prt['device']:
             return prt['fstype']
     else:
         return 'unknown'
