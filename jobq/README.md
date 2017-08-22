@@ -166,6 +166,7 @@ stat returned format is:
         {
             'name': 'example.worker_foo',
             'input': {'size': 3, 'capa': 1024},
+            'nr_worker': 2,
             'coordinator': {'size': 3, 'capa': 1024}, # presents only when keep_order=True
         },
         ...
