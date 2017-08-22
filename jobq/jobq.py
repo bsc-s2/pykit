@@ -137,7 +137,16 @@ class JobManager(object):
 
         for sess in self.sessions:
 
-            if sess['worker'] is not worker:
+            """
+            In python2, `x = X(); x.meth is x.meth` results in a `False`.
+            Every time to retrieve a method, python creates a new **bound** function.
+
+            We must use == to test function equality.
+
+            See https://stackoverflow.com/questions/15977808/why-dont-methods-have-reference-equality
+            """
+
+            if sess['worker'] != worker:
                 continue
 
             with sess['session_lock']:
@@ -228,11 +237,13 @@ def stat(probe):
     for sess in probe['sessions'][:-1]:
         o = {}
         wk = sess['worker']
-        o['name'] = wk.__module__ + ":" + wk.__name__
-
+        o['name'] = (wk.__module__ or 'builtin') + ":" + wk.__name__
         o['input'] = _q_stat(sess['input'])
         if 'queue_of_outq' in sess:
             o['coordinator'] = _q_stat(sess['queue_of_outq'])
+
+        s, e = sess['running_index_range']
+        o['nr_worker'] = e - s
 
         rst['workers'].append(o)
 

@@ -210,7 +210,7 @@ class TestJobManager(unittest.TestCase):
 
         self.assertTrue(0.09 < t1 - t0 < 0.11)
 
-    def test_probe(self):
+    def test_stat(self):
 
         def _pass(args):
             return args
@@ -231,7 +231,21 @@ class TestJobManager(unittest.TestCase):
 
         jm.join()
 
-    def test_change_nr_thread(self):
+    def test_stat_on_builtin_method(self):
+
+        rst = []
+        jm = jobq.JobManager([rst.append])
+
+        # stat() read attribute `func.__module__`.
+        # But for builtin method, there is no __module__ attribute.
+
+        # this should not raise
+        jm.stat()
+
+        jm.join()
+
+
+    def test_set_thread_num(self):
 
         def _pass(args):
             return args
@@ -260,7 +274,39 @@ class TestJobManager(unittest.TestCase):
         for i in range(n):
             self.assertEqual(i, rst[i])
 
-    def test_change_nr_thread_keep_order(self):
+    def test_set_thread_num_with_object_method(self):
+
+        """
+        In python2, `x = X(); x.meth is x.meth` results in a `False`.
+        Every time to retrieve a method, python creates a new **bound** function.
+
+        See https://stackoverflow.com/questions/15977808/why-dont-methods-have-reference-equality
+        """
+
+        class X(object):
+            def meth(self):
+                pass
+
+        x = X()
+        meth = x.meth
+
+        rst = []
+
+        jm = jobq.JobManager([meth, rst.append])
+
+        before = jm.stat()
+        self.assertEqual(1, before['workers'][0]['nr_worker'])
+
+        # This should not raise JobWorkerNotFound.
+        jm.set_thread_num(x.meth, 2)
+
+        after = jm.stat()
+        self.assertEqual(2, after['workers'][0]['nr_worker'])
+
+        jm.join()
+
+
+    def test_set_thread_num_keep_order(self):
 
         def _pass(args):
             return args
