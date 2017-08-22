@@ -2,6 +2,7 @@ import os
 import unittest
 
 from pykit import fsutil
+from pykit import humannum
 from pykit import proc
 from pykit import ututil
 
@@ -92,6 +93,42 @@ class TestFSUtil(unittest.TestCase):
         rst = fsutil.get_path_fs('/blabla')
         dd('fs of /blabla: ', rst)
         self.assertIn(rst, ('hfs', 'xfs', 'ext2', 'ext3', 'ext4'))
+
+    def test_get_path_usage(self):
+
+        path = '/'
+        rst = fsutil.get_path_usage(path)
+        dd(humannum.humannum(rst))
+
+        # check against os.statvfs.
+
+        st = os.statvfs(path)
+
+        self.assertEqual(st.f_frsize * st.f_bavail, rst['available'])
+        self.assertEqual(st.f_frsize * st.f_blocks, rst['total'])
+        self.assertEqual(st.f_frsize * (st.f_blocks - st.f_bavail), rst['used'])
+        self.assertEqual((st.f_blocks - st.f_bavail) * 100 / st.f_blocks, int(rst['percent'] * 100))
+
+        if st.f_bfree > st.f_bavail:
+            self.assertLess(rst['available'], st.f_frsize * st.f_bfree)
+        else:
+            dd('st.f_bfree == st.f_bavail')
+
+        # check against df
+
+        rc, out, err = proc.shell_script('df -m / | tail -n1')
+        # Filesystem 1M-blocks   Used Available Capacity  iused    ifree %iused  Mounted on
+        # /dev/disk1    475828 328021    147556    69% 84037441 37774557   69%   /
+        dd('space of "/" from df')
+        total_mb = out.strip().split()[1]
+
+        # "123.8M", keep int only
+        rst_total_mb = humannum.humannum(rst['total'], unit=humannum.M)
+        rst_total_mb = rst_total_mb.split('.')[0].split('M')[0]
+
+        dd('total MB from df:', total_mb, 'result total MB:', rst_total_mb)
+
+        self.assertEqual(total_mb, rst_total_mb)
 
     def test_makedirs(self):
 

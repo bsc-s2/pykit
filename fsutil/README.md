@@ -16,6 +16,7 @@
   - [fsutil.get_disk_partitions](#fsutilget_disk_partitions)
   - [fsutil.get_mountpoint](#fsutilget_mountpoint)
   - [fsutil.get_path_fs](#fsutilget_path_fs)
+  - [fsutil.get_path_usage](#fsutilget_path_usage)
   - [fsutil.makedirs](#fsutilmakedirs)
   - [fsutil.read_file](#fsutilread_file)
   - [fsutil.write_file](#fsutilwrite_file)
@@ -194,7 +195,7 @@ the mount point path(one of output of command `mount` on linux)
 **syntax**:
 `fsutil.get_path_fs(path)`
 
-Return the name of file system the `path` is on.
+Return the name of device where the `path` is mounted.
 
 **arguments**:
 
@@ -203,6 +204,43 @@ Return the name of file system the `path` is on.
 
 **return**:
 the file-system name, such as `ext4` or `hfs`.
+
+
+##  fsutil.get_path_usage
+
+**syntax**:
+`fsutil.get_path_usage(path)`
+
+Collect space usage information of the file system `path` is mounted on.
+
+**arguments**:
+
+-   `path`:
+    specifies the fs-path to collect usage info.
+    Such as `/tmp` or `/home/alice`.
+
+**return**:
+a dictionary in the following format:
+
+```
+{
+    'total':     total space in byte,
+    'used':      used space in byte(includes space reserved for super user),
+    'available': total - used,
+    'percent':   float(used) / 'total',
+}
+```
+
+There two concept for unused space: `free` and `available`
+because some file systems have a reserved(maybe 5%) for super user like `root`:
+
+- free:      with    blocks reserved for super users.
+
+- available: without blocks reserved for super users.
+
+Since most of the time an application can not run as `root`
+then it can not use the reserved space.
+Thus this function provides with the `available` bytes by default.
 
 
 ##  fsutil.makedirs

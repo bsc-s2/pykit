@@ -83,6 +83,25 @@ def get_path_fs(path):
     return prt_by_mp[mp]['fstype']
 
 
+def get_path_usage(path):
+
+    space_st = os.statvfs(path)
+
+    # f_bavail: without blocks reserved for super users
+    # f_bfree:  with    blocks reserved for super users
+    avail = space_st.f_frsize * space_st.f_bavail
+
+    capa = space_st.f_frsize * space_st.f_blocks
+    used = capa - avail
+
+    return {
+        'total': capa,
+        'used': used,
+        'available': avail,
+        'percent': float(used) / capa,
+    }
+
+
 def makedirs(*paths, **kwargs):
     mode = kwargs.get('mode', 0755)
     uid = kwargs.get('uid')
