@@ -288,11 +288,8 @@ class TestJobManager(unittest.TestCase):
                 pass
 
         x = X()
-        meth = x.meth
 
-        rst = []
-
-        jm = jobq.JobManager([meth, rst.append])
+        jm = jobq.JobManager([x.meth])
 
         before = jm.stat()
         self.assertEqual(1, before['workers'][0]['nr_worker'])
