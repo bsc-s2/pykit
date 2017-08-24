@@ -248,11 +248,7 @@ class AttrDictCopy(dict):
 
     # Allow to set attribute or key.
     # But when get attribute or key, the value is copied before returning.
-    #
     # To prevent changing original data.
-
-    def __init__(self, *args, **kwargs):
-        super(AttrDictCopy, self).__init__(*args, **kwargs)
 
     def __getattr__(self, k):
 
