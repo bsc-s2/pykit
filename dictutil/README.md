@@ -7,13 +7,14 @@
 - [Synopsis](#synopsis)
 - [Methods](#methods)
   - [dictutil.attrdict](#dictutilattrdict)
+  - [dictutil.attrdict_copy](#dictutilattrdict_copy)
   - [dictutil.depth_iter](#dictutildepth_iter)
   - [dictutil.breadth_iter](#dictutilbreadth_iter)
   - [dictutil.get](#dictutilget)
   - [dictutil.make_getter](#dictutilmake_getter)
   - [dictutil.make_setter](#dictutilmake_setter)
     - [Synopsis](#synopsis-1)
-  - [dictutil.contians](#dictutilcontains)
+  - [dictutil.contains](#dictutilcontains)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -174,6 +175,17 @@ are same as `dict()`, a dictionary or kwargs are both acceptable.
 
 **return**:
 an object provides with dictionary item access with attribute.
+
+
+##  dictutil.attrdict_copy
+
+Same as `dictutil.attrdict`, except that:
+
+-   every time to access it by an attribute or by a key,
+    the value is copied before returning.
+
+-   It does not allow to set its attribute or key, such as `a["x"]=1` or `a.x=1`.
+
 
 ## dictutil.depth_iter
 

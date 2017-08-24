@@ -354,7 +354,6 @@ class TestGetter(unittest.TestCase):
             dictutil.get({}, '$a', {}, ignore_vars_key_error=False)
 
 
-
 class TestSetter(unittest.TestCase):
 
     def test_empty_key_path(self):
@@ -634,6 +633,61 @@ class TestAttrDict(unittest.TestCase):
         self.assertEqual(4, ad.y.b.c)
         self.assertEqual(5, ad.y.d.z)
 
+    def test_writable(self):
+
+        ad = dictutil.attrdict(a={}, b={1: 2})
+        ad['x'] = 4
+        self.assertEqual(4, ad.x)
+        self.assertEqual(4, ad['x'])
+        ad.y = 5
+        self.assertEqual(5, ad.y)
+        self.assertEqual(5, ad['y'])
+
+    def test_attrdict_copy(self):
+
+        # reference type value are always copied when accessing
+
+        ad = dictutil.attrdict_copy(a={}, b={'x': {}})
+        self.assertIsNot(ad.a, ad.a)
+        self.assertIsNot(ad.b.x, ad.b.x)
+        self.assertIsNot(ad['a'], ad['a'])
+        self.assertIsNot(ad['b']['x'], ad['b']['x'])
+
+        # value got is still a AttrDictCopy instance
+
+        b = ad.b
+        self.assertIsNot(b.x, b.x)
+        self.assertIsNot(b['x'], b['x'])
+
+        # it does not change the original value
+
+        with self.assertRaises(KeyError):
+            ad['b'] = 10
+
+        with self.assertRaises(KeyError):
+            ad.b['x'] = 10
+
+        with self.assertRaises(KeyError):
+            b['x'] = 10
+
+        with self.assertRaises(AttributeError):
+            ad.b = 10
+
+        with self.assertRaises(AttributeError):
+            ad.b.x = 10
+
+        with self.assertRaises(AttributeError):
+            ad.y = 2
+
+    def test_attrdict_copy_as_dict(self):
+
+        ad = dictutil.attrdict_copy(a={}, b={'x': {}})
+        d = ad.as_dict()
+
+        b2 = d['b']
+        d['b']['x'] = 100
+        self.assertEqual(100, b2['x'])
+
     def test_attr_overriding(self):
 
         ad = dictutil.attrdict(items=1)
@@ -646,7 +700,7 @@ class TestAttrDict(unittest.TestCase):
         x = {'a': 1}
         ad = dictutil.attrdict(u=x, v=x)
 
-        self.assertTrue(ad.u is ad.v)
+        self.assertIs(ad.u, ad.v)
 
         x['x'] = x
         ad = dictutil.attrdict(x)
@@ -654,10 +708,8 @@ class TestAttrDict(unittest.TestCase):
         self.assertTrue(isinstance(ad, dictutil.AttrDict))
         self.assertTrue(isinstance(ad.x, dictutil.AttrDict))
         self.assertTrue(ad.x is not ad, 'attrdict does create a new dict')
-        self.assertTrue(
-            ad.x.x is ad.x, 'circular references work for all dict items.')
-        self.assertTrue(ad.x.x.x is ad.x.x,
-                        'circular references work for all dict items.(2)')
+        self.assertTrue(ad.x.x is ad.x, 'circular references work for all dict items.')
+        self.assertTrue(ad.x.x.x is ad.x.x, 'circular references work for all dict items.(2)')
 
 
 class TestIsSubDict(unittest.TestCase):

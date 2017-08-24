@@ -1,6 +1,7 @@
 #!/bin/env python2
 # coding: utf-8
 
+import copy
 import types
 from collections import defaultdict
 
@@ -74,7 +75,7 @@ def get(dic, key_path, vars=None, default=0, ignore_vars_key_error=None):
                     return _default
                 else:
                     raise KeyError('{k} does not exist in vars: {vars}'.format(
-                            k=k, vars=vars))
+                        k=k, vars=vars))
         else:
             key = k
 
@@ -205,6 +206,7 @@ def _contains(a, b, ref_table):
 def contains(a, b):
     return _contains(a, b, defaultdict(dict))
 
+
 class AttrDict(dict):
 
     '''
@@ -242,6 +244,56 @@ class AttrDict(dict):
         self.__dict__ = self
 
 
+class AttrDictCopy(dict):
+
+    # Allow to set attribute or key.
+    # But when get attribute or key, the value is copied before returning.
+    #
+    # To prevent changing original data.
+
+    def __init__(self, *args, **kwargs):
+        super(AttrDictCopy, self).__init__(*args, **kwargs)
+
+    def __getattr__(self, k):
+
+        if k not in self:
+            raise AttributeError(repr(k) + ' not found')
+
+        return self[k]
+
+    def __setattr__(self, k, v):
+        raise AttributeError('AttrDictCopy does not allow to set attribute')
+
+    def __getitem__(self, k):
+
+        if k not in self:
+            raise KeyError(repr(k) + ' not found')
+
+        v = super(AttrDictCopy, self).__getitem__(k)
+        if isinstance(v, AttrDictCopy):
+            # reduce it to a normal dict, or deepcopy can not set items to the new instance
+            v = dict(v)
+            v = copy.deepcopy(v)
+            return _attrdict(AttrDictCopy, v, {})
+        else:
+            return copy.deepcopy(v)
+
+    def __setitem__(self, k, v):
+        raise KeyError('AttrDictCopy does not allow to set key')
+
+    def as_dict(self):
+        d = {}
+
+        for k in self.keys():
+            v = super(AttrDictCopy, self).__getitem__(k)
+            if isinstance(v, AttrDictCopy):
+                v = v.as_dict()
+
+            d[k] = v
+
+        return d
+
+
 def attrdict(*args, **kwargs):
     """
     Make a dict-like object whose keys can also be accessed with attribute.
@@ -249,28 +301,33 @@ def attrdict(*args, **kwargs):
     """
 
     d = dict(*args, **kwargs)
-    ref = {}
-
-    return _attrdict(d, ref)
+    return _attrdict(AttrDict, d, {})
 
 
-def _attrdict(d, ref):
+def attrdict_copy(*args, **kwargs):
+
+    d = dict(*args, **kwargs)
+    return _attrdict(AttrDictCopy, d, {})
+
+
+def _attrdict(attrdict_clz, d, ref):
 
     if not isinstance(d, dict):
         return d
 
-    if isinstance(d, AttrDict):
+    if isinstance(d, attrdict_clz):
         return d
 
     if id(d) in ref:
         return ref[id(d)]
 
     # id() is the memory address of an object, thus it is unique.
-    ad = AttrDict(d)
+    ad = attrdict_clz(d)
     ref[id(d)] = ad
 
     for k in d.keys():
-        ad[k] = _attrdict(d[k], ref)
+        sub_ad = _attrdict(attrdict_clz, d[k], ref)
+        super(attrdict_clz, ad).__setitem__(k, sub_ad)
 
     return ad
 

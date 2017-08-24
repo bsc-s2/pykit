@@ -1,5 +1,6 @@
 from .dictutil import (
     attrdict,
+    attrdict_copy,
     breadth_iter,
     depth_iter,
     get,
@@ -9,10 +10,12 @@ from .dictutil import (
     contains,
 
     AttrDict,
+    AttrDictCopy,
 )
 
 __all__ = [
     "attrdict",
+    "attrdict_copy",
     "breadth_iter",
     "depth_iter",
     "get",
@@ -22,4 +25,5 @@ __all__ = [
     "contains",
 
     "AttrDict",
+    "AttrDictCopy",
 ]
