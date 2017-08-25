@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
+import errno
 import logging
 import os
 import subprocess
@@ -77,4 +78,58 @@ def start_daemon(cmd, target, env, *args):
         args.append(env)
         os.execlpe(cmd, cmd, target, *args)
     else:
-        os.wait()
+        while True:
+            try:
+                os.waitpid(pid, 0)
+                break
+            except OSError as e:
+                # In case we encountered an OSError due to EINTR (which is
+                # caused by a SIGINT or SIGTERM signal during
+                # os.waitpid()), we simply ignore it and enter the next
+                # iteration of the loop, waiting for the child to end.  In
+                # any other case, this is some other unexpected OS error,
+                # which we don't want to catch, so we re-raise those ones.
+                if e.errno != errno.EINTR:
+                    raise
+
+
+def _close_fds():
+    try:
+        max_fd = os.sysconf("SC_OPEN_MAX")
+    except ValueError:
+        max_fd = 65536
+
+    for i in range(max_fd):
+        try:
+            os.close(i)
+        except OSError:
+            pass
+
+
+def start_process(cmd, target, env, *args):
+
+    try:
+        pid = os.fork()
+    except OSError as e:
+        logger.error(repr(e) + ' while fork')
+        raise
+
+    if pid == 0:
+        _close_fds()
+        args = list(args)
+        args.append(env)
+        os.execlpe(cmd, cmd, target, *args)
+    else:
+        while True:
+            try:
+                os.waitpid(pid, 0)
+                break
+            except OSError as e:
+                # In case we encountered an OSError due to EINTR (which is
+                # caused by a SIGINT or SIGTERM signal during
+                # os.waitpid()), we simply ignore it and enter the next
+                # iteration of the loop, waiting for the child to end.  In
+                # any other case, this is some other unexpected OS error,
+                # which we don't want to catch, so we re-raise those ones.
+                if e.errno != errno.EINTR:
+                    raise
