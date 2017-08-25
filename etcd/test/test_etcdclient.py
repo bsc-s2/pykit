@@ -281,11 +281,12 @@ class TestClient(unittest.TestCase):
                 c = etcd.Client(host=HOSTS)
                 res = c.get('', recursive=True)
                 for n in res._children:
-                    c.delete(n['key'], dir='dir' in n and n['dir']
-                             == True, recursive=True)
+                    c.delete(n['key'], dir='dir' in n and n['dir'],
+                             recursive=True)
                 break
             except Exception as e:
                 dd(repr(e))
+                time.sleep(1)
 
     def test_machine_cache(self):
 
@@ -362,13 +363,15 @@ class TestClient(unittest.TestCase):
         utdocker.stop_container(*ETCD_NAMES)
         c = etcd.Client(host=HOSTS, read_timeout=1)
         self.assertRaises(etcd.EtcdReadTimeoutError, c.api_execute,
-                          '/v2/keys/abc', 'GET', timeout=1, raise_read_timeout=True)
+                          '/v2/keys/abc', 'GET', timeout=1,
+                          raise_read_timeout=True)
 
     def test_etcdrequestserror_exception(self):
 
         c = etcd.Client(host=HOSTS)
         self.assertRaises(etcd.EtcdRequestError, c._request,
-                          'http://192.168.52.30:3379/v2/keys/abc', 'GETTT', None, None, None)
+                          'http://192.168.52.30:3379/v2/keys/abc',
+                          'GETTT', None, None, None)
         self.assertRaises(etcd.EtcdRequestError, c.write,
                           dir=True, value='val', key='key')
 
@@ -409,11 +412,48 @@ class TestClient(unittest.TestCase):
         )
 
         cli = etcd.Client(host=HOSTS)
-
         for key, val in cases:
             cli.set(key, val)
             res = cli.get(key)
             self.assertEqual(val, res.value)
+
+    def test_decode(self):
+
+        cases = (
+            ('key1', utfjson.dump(u'我', encoding=None), '"\\u6211"'),
+
+            # when save '"\xb6\xd4"' with etcd but the etcd cannot
+            # convert them, so the default '\ufffd\ufffd' was saved.
+            # when get it from etcd, '\ufffd\ufffd' was converted into
+            # '"\xef\xbf\xbd\xef\xbf\xbd"'.
+            ('key2', utfjson.dump(u'对', encoding='gbk'),
+             '"\xef\xbf\xbd\xef\xbf\xbd"'),
+
+            ('key3', utfjson.dump(u'我', encoding='utf-8'), '"\xe6\x88\x91"'),
+
+            ('key4', utfjson.dump(u'我'), '"\xe6\x88\x91"'),
+            ('key5', utfjson.dump('我'), '"\xe6\x88\x91"'),
+
+            ('key6', utfjson.dump({"我": "我"}),
+             '{"\xe6\x88\x91": "\xe6\x88\x91"}'),
+
+            ('key7', utfjson.dump({"我": u"我"}),
+             '{"\xe6\x88\x91": "\xe6\x88\x91"}'),
+
+            ('key8', utfjson.dump({u"我": "我"}),
+             '{"\xe6\x88\x91": "\xe6\x88\x91"}'),
+
+            ('key9', utfjson.dump({u"我": u"我"}),
+             '{"\xe6\x88\x91": "\xe6\x88\x91"}'),
+
+            ('key10', utfjson.dump((u"我",)), '["\xe6\x88\x91"]'),
+        )
+
+        cli = etcd.Client(host=HOSTS)
+        for key, val, expected in cases:
+            cli.set(key, val)
+            res = cli.get(key)
+            self.assertEqual(expected, res.value)
 
     def test_ttl(self):
 
@@ -496,7 +536,8 @@ class TestClient(unittest.TestCase):
             end_index = res.modifiedIndex
 
         result = []
-        for res in c.eternal_watch('abc', waitindex=start_index + 1, until=end_index):
+        for res in c.eternal_watch('abc', waitindex=start_index + 1,
+                                   until=end_index):
             result.append(res.value)
 
         self.assertListEqual(['val0', 'val1', 'val2', 'val3'], result)
@@ -842,14 +883,20 @@ class TestClient(unittest.TestCase):
         cases = ('r1', 'r2', 'r3', 'r4')
 
         # default role cannot delete
-        all_roles = [{'role': 'root',
-                      'permissions': {'kv': {'read': ['/*'], 'write': ['/*']}}}]
+        all_roles = [
+            {'role': 'root',
+             'permissions': {'kv': {'read': ['/*'], 'write': ['/*']}}}
+        ]
+
         try:
             for r in cases:
                 c.create_role(r, '')
                 res = c.get_role(r, '')
-                self.assertEqual({'role': r, 'permissions': {'kv': {'read': None, 'write': None}}},
-                                 res)
+                expected = {
+                    'role': r,
+                    'permissions': {'kv': {'read': None, 'write': None}}
+                }
+                self.assertEqual(expected, res)
 
                 all_roles.insert(-1, res)
                 res = c.get_role(None, '')
