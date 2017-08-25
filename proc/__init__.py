@@ -4,6 +4,7 @@ from .proc import (
     command_ex,
     shell_script,
     start_daemon,
+    start_process,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     'command_ex',
     'shell_script',
     'start_daemon',
+    'start_process',
 ]

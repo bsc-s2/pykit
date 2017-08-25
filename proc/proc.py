@@ -78,3 +78,33 @@ def start_daemon(cmd, target, env, *args):
         os.execlpe(cmd, cmd, target, *args)
     else:
         os.wait()
+
+
+def _close_fds():
+    try:
+        max_fd = os.sysconf("SC_OPEN_MAX")
+    except ValueError:
+        max_fd = 65536
+
+    for i in range(max_fd):
+        try:
+            os.close(i)
+        except OSError:
+            pass
+
+
+def start_process(cmd, target, env, *args):
+
+    try:
+        pid = os.fork()
+    except OSError as e:
+        logger.error(repr(e) + ' while fork')
+        raise
+
+    if pid == 0:
+        _close_fds()
+        args = list(args)
+        args.append(env)
+        os.execlpe(cmd, cmd, target, *args)
+    else:
+        os.wait()
