@@ -109,17 +109,14 @@ class EcodeInscientPermissions(EtcdException):
 
 
 def list_type(x):
-    return type(x) in (type(()), type([]))
+    if isinstance(x, (list, tuple)):
+        return True
+
+    return False
 
 
 def _get_default_logger():
     return logging.getLogger(__name__)
-
-
-def unicode2str(s):
-    if type(s) == type(u''):
-        s = s.encode('utf-8')
-    return s
 
 
 class EtcdError(object):
@@ -150,17 +147,17 @@ class EtcdError(object):
     @classmethod
     def handle(cls, response):
 
-        resp = response.data.decode('utf-8')
+        body = response.data
 
         e = {}
         e['status'] = response.status
         e['headers'] = response.headers
-        e['response'] = resp
+        e['response'] = body
 
         try:
-            r = utfjson.load(resp)
+            r = utfjson.load(body)
         except ValueError:
-            r = {"message": "response body is not json", "cause": str(resp)}
+            r = {"message": "response body is not json", "cause": str(body)}
 
         ecode = r.get('errorCode')
         default_exc = EtcdException
@@ -173,8 +170,8 @@ class EtcdError(object):
 
         exc = cls.error_exceptions.get(ecode, default_exc)
         if ecode in cls.error_exceptions:
-            msg = "{msg} : {cause}".format(
-                msg=r.get('message'), cause=r.get('cause'))
+            msg = "{msg} : {cause}".format(msg=r.get('message'),
+                                           cause=r.get('cause'))
         else:
             msg = "Unable to decode server response"
 
@@ -199,7 +196,7 @@ class EtcdKeysResult(object):
     def __init__(self, action=None, node=None, prevNode=None, **argkv):
 
         self.action = action
-        for (key, default) in self._node_props.items():
+        for key, default in self._node_props.items():
             if node is not None and key in node:
                 setattr(self, key, node[key])
             else:
@@ -253,7 +250,7 @@ class EtcdKeysResult(object):
 
     def __eq__(self, other):
 
-        if not (type(self) is type(other)):
+        if not isinstance(other, EtcdKeysResult):
             return False
 
         for k in self._node_props.keys():
@@ -278,7 +275,8 @@ class Response(object):
 
     REDIRECT_STATUSES = (301, 302, 303, 307, 308)
 
-    def __init__(self, conn=None, status=0, version=0, reason=None, headers=None, body=''):
+    def __init__(self, conn=None, status=0, version=0,
+                 reason=None, headers=None, body=''):
 
         self._conn = conn
         self.status = status
@@ -355,8 +353,8 @@ class Client(object):
                     _h, _p = (list(h) + [int(port)])[:2]
                 else:
                     _h, _p = h, int(port)
-                self._machines_cache.append(
-                    '%s://%s:%d' % (self._protocol, _h, _p))
+                self._machines_cache.append('%s://%s:%d' % (self._protocol,
+                                                            _h, _p))
 
             self._base_uri = self._machines_cache.pop(0)
             _, self._host, self._port = self._extract_base_uri()
@@ -407,40 +405,44 @@ class Client(object):
 
     @property
     def machines(self):
-        return [
-            node.strip() for node in self.api_execute(
-                self.version_prefix + '/machines',
-                self._MGET, need_refresh_machines=False).data.decode('utf-8').split(',')
-        ]
+        res = self.api_execute(self.version_prefix + '/machines',
+                               self._MGET,
+                               need_refresh_machines=False)
+
+        nodes = res.data.split(',')
+
+        return [n.strip() for n in nodes]
 
     @property
     def members(self):
-        return utfjson.load(self.api_execute(
-            self._mem_path,
-            self._MGET).data.decode('utf-8'))['members']
+        res = self.api_execute(self._mem_path, self._MGET)
+
+        return utfjson.load(res.data)['members']
 
     @property
     def leader(self):
-        selfst = utfjson.load(self.api_execute(
-            self._stats_path + '/self',
-            self._MGET).data.decode('utf-8'))
+        res = self.api_execute(self._stats_path + '/self', self._MGET)
+        self_st = utfjson.load(res.data)
 
-        leaderid = selfst.get('leaderInfo', {}).get('leader')
-        if leaderid is None:
+        leader_id = self_st.get('leaderInfo', {}).get('leader')
+        if leader_id is None:
             return None
 
-        for member in self.members:
-            if member['id'] == leaderid:
-                return member.copy()
+        mems = self.members
+        for mem in mems:
+            if mem['id'] != leader_id:
+                continue
+
+            return mem.copy()
 
     @property
     def version(self):
-        return utfjson.load(self.api_execute(
-            '/version', self._MGET).data.decode('ascii'))
+        res = self.api_execute('/version', self._MGET)
+
+        return utfjson.load(res.data)
 
     @property
     def st_leader(self):
-
         leader = self.leader
         if leader is None:
             return None
@@ -515,53 +517,60 @@ class Client(object):
     def _generate_params(self, options, argkv):
 
         params = {}
-        for (k, v) in argkv.items():
-            if k in options:
-                if type(v) == bool:
-                    params[k] = v and "true" or "false"
-                else:
-                    params[k] = v
+        for k, v in argkv.items():
+            if k not in options:
+                continue
+
+            if isinstance(v, bool):
+                params[k] = v and "true" or "false"
+                continue
+
+            params[k] = v
 
         return params
 
     def _st(self, st_path):
         st_path = self._sanitize_key(st_path)
-        response = self.api_execute(
-            self._stats_path + st_path, self._MGET)
+        response = self.api_execute(self._stats_path + st_path, self._MGET)
         return self._to_dict(response)
 
     def _to_keysresult(self, response):
 
         try:
-            res = utfjson.load(response.data.decode('utf-8'))
-            res = [(unicode2str(k), unicode2str(v)) for k, v in res.items()]
-            res = dict(res)
+            res = utfjson.load(response.data)
             r = EtcdKeysResult(**res)
             r.parse_response(response)
             return r
-        except ValueError:
-            raise EtcdIncompleteRead('cannot decode: %s' % response.data)
+        except ValueError as e:
+            self.logger.error(repr(e) + ' while decode {data}'.format(
+                                        data=response.data))
+            raise EtcdIncompleteRead('failed to decode %s' % response.data)
         except Exception as e:
-            raise EtcdResponseError(
-                'Unable to decode server response: %s' % repr(e))
+            self.logger.error(repr(e) + ' while decode {data}'.format(
+                                        data=response.data))
+            raise EtcdResponseError('failed to decode %s' % response.data)
 
     def _to_dict(self, response):
 
         try:
-            return utfjson.load(response.data.decode('utf-8'))
-        except ValueError:
-            raise EtcdIncompleteRead('cannot decode: %s' % response.data)
+            return utfjson.load(response.data)
+        except ValueError as e:
+            self.logger.error(repr(e) + ' while decode {data}'.format(
+                                        data=response.data))
+            raise EtcdIncompleteRead('failed to decode %s' % response.data)
         except Exception as e:
-            raise EtcdResponseError(
-                'Unable to decode server response: %s' % repr(e))
+            self.logger.error(repr(e) + ' while decode {data}'.format(
+                                        data=response.data))
+            raise EtcdResponseError('failed to decode %s' % response.data)
 
     def _handle_server_response(self, response):
 
-        if response.status in (httplib.OK, httplib.CREATED, httplib.NO_CONTENT):
+        if response.status in (httplib.OK, httplib.CREATED,
+                               httplib.NO_CONTENT):
             return response
 
-        resp = response.data.decode('utf-8')
-        self.logger.debug('error resp: ' + repr((response.status, resp)))
+        self.logger.debug('invalid response status:{st} body:{body}'.format(
+                          st=response.status, body=response.data))
 
         EtcdError.handle(response)
 
@@ -591,11 +600,13 @@ class Client(object):
                                     'Content-Length': len(body)})
                 else:
                     body = urllib.urlencode(params or {})
-                    headers.update({'Content-Type': 'application/x-www-form-urlencoded',
-                                    'Content-Length': len(body)})
+                    headers.update(
+                        {'Content-Type': 'application/x-www-form-urlencoded',
+                         'Content-Length': len(body)}
+                    )
             else:
-                raise EtcdRequestError(
-                    'HTTP method {method} not supported'.format(method=method))
+                raise EtcdRequestError('HTTP method {method} not supported'
+                                       ''.format(method=method))
 
             if len(qs) > 0:
                 if '?' in path:
@@ -605,12 +616,16 @@ class Client(object):
 
             if self.basic_auth_account is not None:
                 auth = {
-                    'Authorization': 'Basic ' + self.basic_auth_account.encode('base64').strip(),
+                    'Authorization': 'Basic {ant}'.format(
+                        ant=self.basic_auth_account.encode('base64').strip()),
                 }
                 headers.update(auth)
 
-            self.logger.debug('connect  -> '
-                              + repr((method, '%s://%s:%d%s' % (self.protocol, host, port, path), timeout)))
+            self.logger.debug('connect -> {mtd} {url}{path} {timeout}'.format(
+                              mtd=method,
+                              url=self._base_uri,
+                              path=path,
+                              timeout=timeout))
 
             h = http.Client(host, port, timeout)
             h.send_request(path, method, headers)
@@ -619,16 +634,18 @@ class Client(object):
 
             resp = Response.from_http(h)
 
-            if self.allow_redirect and resp.status in Response.REDIRECT_STATUSES:
-                url = resp.get_redirect_location()
-                if url is None:
-                    raise EtcdResponseError('not found location in response headers, '
-                                            + repr(resp.headers))
+            if not self.allow_redirect:
+                return resp
 
-                self.logger.debug('redirect -> ' + url)
-                continue
+            if resp.status not in Response.REDIRECT_STATUSES:
+                return resp
 
-            return resp
+            url = resp.get_redirect_location()
+            if url is None:
+                raise EtcdResponseError('location not found in {header}'
+                                        ''.format(header=resp.headers))
+
+            self.logger.debug('redirect -> ' + url)
 
     def _api_execute_with_retry(self,
                                 path,
@@ -646,9 +663,8 @@ class Client(object):
             url = self._base_uri + path
 
             try:
-                response = self._request(
-                    url, method, params, timeout, bodyinjson)
-
+                response = self._request(url, method, params,
+                                         timeout, bodyinjson)
                 break
             except (socket.error,
                     http.HttpError) as e:
@@ -661,9 +677,10 @@ class Client(object):
                     self._base_uri = self._machines_cache.pop(0)
                     self._protocol, self._host, self._port = self._extract_base_uri()
 
-                    self.logger.info(repr(e)
-                                     + ' while connect {cur}, will try connect {next}'.
-                                     format(cur=url, next=self._base_uri))
+                    self.logger.info('{err} while connect {cur}, try connect '
+                                     '{nxt}'.format(err=repr(e), cur=url,
+                                                    nxt=self._base_uri))
+
                 else:
                     self.logger.info('no more host to retry')
 
@@ -698,18 +715,19 @@ class Client(object):
 
             try:
 
-                return self._api_execute_with_retry(path,
-                                                    method,
-                                                    params=params,
-                                                    timeout=timeout,
-                                                    bodyinjson=bodyinjson,
-                                                    raise_read_timeout=raise_read_timeout,
-                                                    **request_kw)
+                return self._api_execute_with_retry(
+                    path,
+                    method,
+                    params=params,
+                    timeout=timeout,
+                    bodyinjson=bodyinjson,
+                    raise_read_timeout=raise_read_timeout,
+                    **request_kw)
 
             except NoMoreMachineError as e:
 
-                self.logger.info(repr(e) + ' while send_request path:{path}, method:{method}'
-                                           .format(path=path, method=method))
+                self.logger.info(repr(e) + ' while send_request path:{path}, '
+                                 'method:{mtd}'.format(path=path, mtd=method))
 
                 if i == 1 or not need_refresh_machines or not self._allow_reconnect:
                     raise
@@ -732,14 +750,15 @@ class Client(object):
 
         timeout = argkv.get('timeout')
 
-        response = self.api_execute(
-            self._keys_path + key, self._MGET, params=params, timeout=timeout)
+        response = self.api_execute(self._keys_path + key, self._MGET,
+                                    params=params, timeout=timeout)
 
         return self._to_keysresult(response)
 
     get = read
 
-    def write(self, key, value=None, ttl=None, dir=False, append=False, refresh=False, **argkv):
+    def write(self, key, value=None, ttl=None,
+              dir=False, append=False, refresh=False, **argkv):
 
         key = self._sanitize_key(key)
 
@@ -758,8 +777,7 @@ class Client(object):
         if refresh:
             params['refresh'] = "true"
 
-        params.update(self._generate_params(
-            self._write_conditions, argkv))
+        params.update(self._generate_params(self._write_conditions, argkv))
 
         method = append and self._MPOST or self._MPUT
         if '_endpoint' in argkv:
@@ -804,8 +822,8 @@ class Client(object):
 
         params.update(self._generate_params(self._del_conditions, argkv))
 
-        response = self.api_execute(
-            self._keys_path + key, self._MDELETE, params=params)
+        response = self.api_execute(self._keys_path + key, self._MDELETE,
+                                    params=params)
 
         return self._to_keysresult(response)
 
@@ -839,7 +857,8 @@ class Client(object):
         while True and timeout == 0:
             try:
                 response = self.api_execute(self._keys_path + key,
-                                            self._MGET, params=params, timeout=timeout)
+                                            self._MGET, params=params,
+                                            timeout=timeout)
                 return self._to_keysresult(response)
             except EtcdIncompleteRead:
                 pass
@@ -850,7 +869,8 @@ class Client(object):
             st = time.time()
             try:
                 response = self.api_execute(self._keys_path + key, self._MGET,
-                                            params=params, timeout=timeout, raise_read_timeout=True)
+                                            params=params, timeout=timeout,
+                                            raise_read_timeout=True)
                 return self._to_keysresult(response)
             except (EtcdIncompleteRead, EtcdReadTimeoutError):
                 timeout = timeout - (time.time() - st)
@@ -866,6 +886,7 @@ class Client(object):
                 if res.modifiedIndex >= until:
                     yield res
                     return
+
             if local_index is not None:
                 local_index = (res.modifiedIndex or local_index) + 1
 
@@ -897,15 +918,15 @@ class Client(object):
             raise EtcdException('no peer url found')
 
         data = {'peerURLs': peerurls}
-        response = self.api_execute(
-            self._mem_path, self._MPOST, params=data, bodyinjson=True)
+        response = self.api_execute(self._mem_path, self._MPOST,
+                                    params=data, bodyinjson=True)
 
         return self._to_dict(response)
 
     def del_member(self, mid):
         if mid not in self.ids:
-            self.logger.info('delete machine: ' + mid +
-                             ' is not in the cluster')
+            self.logger.info('{mid} not in the cluster when delete member'
+                             ''.format(mid=mid))
             return
 
         mid = self._sanitize_key(mid)
@@ -913,8 +934,8 @@ class Client(object):
 
     def change_peerurls(self, mid, *peerurls):
         if mid not in self.ids:
-            self.logger.info('machine: ' + mid +
-                             ' is not in the cluster')
+            self.logger.info('{mid} not in the cluster when change peerurls'
+                             ''.format(mid=mid))
             return
 
         if len(peerurls) == 0:
@@ -934,8 +955,8 @@ class Client(object):
         path = self._user_path + '/root'
         params = {'user': 'root', 'password': password}
 
-        res = self.api_execute(
-            path, self._MPUT, params=params, bodyinjson=True)
+        res = self.api_execute(path, self._MPUT,
+                               params=params, bodyinjson=True)
         return self._to_dict(res)
 
     def enable_auth(self, root_password):
@@ -968,8 +989,8 @@ class Client(object):
         else:
             params = {"role": name}
 
-        res = self.api_execute(
-            path, self._MPUT, params=params, bodyinjson=True)
+        res = self.api_execute(path, self._MPUT,
+                               params=params, bodyinjson=True)
         return self._to_dict(res)
 
     def get_user(self, name, root_password):
@@ -1000,8 +1021,8 @@ class Client(object):
         path = self._user_path + self._sanitize_key(name)
         params = {'user': name, 'grant': roles}
 
-        res = self.api_execute(
-            path, self._MPUT, params=params, bodyinjson=True)
+        res = self.api_execute(path, self._MPUT,
+                               params=params, bodyinjson=True)
         return self._to_dict(res)
 
     def revoke_user_roles(self, name, root_password, roles):
@@ -1010,8 +1031,8 @@ class Client(object):
         path = self._user_path + self._sanitize_key(name)
         params = {'user': name, 'revoke': roles}
 
-        res = self.api_execute(
-            path, self._MPUT, params=params, bodyinjson=True)
+        res = self.api_execute(path, self._MPUT,
+                               params=params, bodyinjson=True)
         return self._to_dict(res)
 
     def grant_role_permissions(self, name, root_password, permissions):
@@ -1020,8 +1041,8 @@ class Client(object):
         path = self._role_path + self._sanitize_key(name)
         params = {"role": name, "grant": {"kv": permissions}}
 
-        res = self.api_execute(
-            path, self._MPUT, params=params, bodyinjson=True)
+        res = self.api_execute(path, self._MPUT,
+                               params=params, bodyinjson=True)
         return self._to_dict(res)
 
     def revoke_role_permissions(self, name, root_password, permissions):
@@ -1030,8 +1051,8 @@ class Client(object):
         path = self._role_path + self._sanitize_key(name)
         params = {"role": name, "revoke": {"kv": permissions}}
 
-        res = self.api_execute(
-            path, self._MPUT, params=params, bodyinjson=True)
+        res = self.api_execute(path, self._MPUT,
+                               params=params, bodyinjson=True)
         return self._to_dict(res)
 
     def delete_user(self, user_name, root_password):
