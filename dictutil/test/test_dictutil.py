@@ -647,7 +647,7 @@ class TestAttrDict(unittest.TestCase):
 
         # reference type value are always copied when accessing
 
-        ad = dictutil.attrdict_copy(a={}, b={'x': {}})
+        ad = dictutil.attrdict_copy(a={}, b={'x': {'foo': 'bar'}})
         self.assertIsNot(ad.a, ad.a)
         self.assertIsNot(ad.b.x, ad.b.x)
         self.assertIsNot(ad['a'], ad['a'])

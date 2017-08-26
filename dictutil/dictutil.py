@@ -268,7 +268,7 @@ class AttrDictCopy(dict):
         v = super(AttrDictCopy, self).__getitem__(k)
         if isinstance(v, AttrDictCopy):
             # reduce it to a normal dict, or deepcopy can not set items to the new instance
-            v = dict(v)
+            v = v.as_dict()
             v = copy.deepcopy(v)
             return _attrdict(AttrDictCopy, v, {})
         else:
