@@ -11,6 +11,8 @@ import urlparse
 from pykit import http
 from pykit import utfjson
 
+logger = logging.getLogger(__name__)
+
 
 class EtcdException(Exception):
     pass
@@ -113,10 +115,6 @@ def list_type(x):
         return True
 
     return False
-
-
-def _get_default_logger():
-    return logging.getLogger(__name__)
 
 
 class EtcdError(object):
@@ -334,7 +332,6 @@ class Client(object):
                  protocol='http',
                  allow_reconnect=True,
                  basic_auth_account=None,
-                 logger=None,
                  ):
 
         self._protocol = protocol
@@ -369,7 +366,6 @@ class Client(object):
         self._allow_redirect = allow_redirect
         self._allow_reconnect = allow_reconnect
         self.basic_auth_account = basic_auth_account
-        self.logger = logger or _get_default_logger()
 
         if self._allow_reconnect:
             if len(self._machines_cache) <= 0:
@@ -542,12 +538,12 @@ class Client(object):
             r.parse_response(response)
             return r
         except ValueError as e:
-            self.logger.error(repr(e) + ' while decode {data}'.format(
-                                        data=response.data))
+            logger.error(repr(e) + ' while decode {data}'.format(
+                                   data=response.data))
             raise EtcdIncompleteRead('failed to decode %s' % response.data)
         except Exception as e:
-            self.logger.error(repr(e) + ' while decode {data}'.format(
-                                        data=response.data))
+            logger.error(repr(e) + ' while decode {data}'.format(
+                                   data=response.data))
             raise EtcdResponseError('failed to decode %s' % response.data)
 
     def _to_dict(self, response):
@@ -555,12 +551,12 @@ class Client(object):
         try:
             return utfjson.load(response.data)
         except ValueError as e:
-            self.logger.error(repr(e) + ' while decode {data}'.format(
-                                        data=response.data))
+            logger.error(repr(e) + ' while decode {data}'.format(
+                                   data=response.data))
             raise EtcdIncompleteRead('failed to decode %s' % response.data)
         except Exception as e:
-            self.logger.error(repr(e) + ' while decode {data}'.format(
-                                        data=response.data))
+            logger.error(repr(e) + ' while decode {data}'.format(
+                                   data=response.data))
             raise EtcdResponseError('failed to decode %s' % response.data)
 
     def _handle_server_response(self, response):
@@ -569,8 +565,8 @@ class Client(object):
                                httplib.NO_CONTENT):
             return response
 
-        self.logger.debug('invalid response status:{st} body:{body}'.format(
-                          st=response.status, body=response.data))
+        logger.debug('invalid response status:{st} body:{body}'.format(
+                     st=response.status, body=response.data))
 
         EtcdError.handle(response)
 
@@ -621,11 +617,11 @@ class Client(object):
                 }
                 headers.update(auth)
 
-            self.logger.debug('connect -> {mtd} {url}{path} {timeout}'.format(
-                              mtd=method,
-                              url=self._base_uri,
-                              path=path,
-                              timeout=timeout))
+            logger.debug('connect -> {mtd} {url}{path} {timeout}'.format(
+                         mtd=method,
+                         url=self._base_uri,
+                         path=path,
+                         timeout=timeout))
 
             h = http.Client(host, port, timeout)
             h.send_request(path, method, headers)
@@ -645,7 +641,7 @@ class Client(object):
                 raise EtcdResponseError('location not found in {header}'
                                         ''.format(header=resp.headers))
 
-            self.logger.debug('redirect -> ' + url)
+            logger.debug('redirect -> ' + url)
 
     def _api_execute_with_retry(self,
                                 path,
@@ -677,15 +673,15 @@ class Client(object):
                     self._base_uri = self._machines_cache.pop(0)
                     self._protocol, self._host, self._port = self._extract_base_uri()
 
-                    self.logger.info('{err} while connect {cur}, try connect '
-                                     '{nxt}'.format(err=repr(e), cur=url,
-                                                    nxt=self._base_uri))
+                    logger.info('{err} while connect {cur}, try connect {nxt}'
+                                .format(err=repr(e), cur=url,
+                                        nxt=self._base_uri))
 
                 else:
-                    self.logger.info('no more host to retry')
+                    logger.info('no more host to retry')
 
             except Exception as e:
-                self.logger.exception(repr(e))
+                logger.exception(repr(e) + ' while send request to etcd')
                 raise EtcdException(e)
 
         else:
@@ -726,8 +722,8 @@ class Client(object):
 
             except NoMoreMachineError as e:
 
-                self.logger.info(repr(e) + ' while send_request path:{path}, '
-                                 'method:{mtd}'.format(path=path, mtd=method))
+                logger.info(repr(e) + ' while send_request path:{path}, '
+                            'method:{mtd}'.format(path=path, mtd=method))
 
                 if i == 1 or not need_refresh_machines or not self._allow_reconnect:
                     raise
@@ -925,8 +921,8 @@ class Client(object):
 
     def del_member(self, mid):
         if mid not in self.ids:
-            self.logger.info('{mid} not in the cluster when delete member'
-                             ''.format(mid=mid))
+            logger.info('{mid} not in the cluster when delete member'.format(
+                        mid=mid))
             return
 
         mid = self._sanitize_key(mid)
@@ -934,8 +930,8 @@ class Client(object):
 
     def change_peerurls(self, mid, *peerurls):
         if mid not in self.ids:
-            self.logger.info('{mid} not in the cluster when change peerurls'
-                             ''.format(mid=mid))
+            logger.info('{mid} not in the cluster when change peerurls'.format(
+                        mid=mid))
             return
 
         if len(peerurls) == 0:
