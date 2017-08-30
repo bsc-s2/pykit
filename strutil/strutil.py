@@ -2,9 +2,10 @@
 # coding: utf-8
 
 
+import sys
 import types
 
-listtype = (type(()), type([]))
+listtype = (types.TupleType, types.ListType)
 
 
 def tokenize(line):
@@ -103,7 +104,7 @@ def format_line(items, sep=' ', aligns=''):
             elt = items[j][i]
 
             actualWidth = elt.__len__()
-            elt = to_output_format(elt)
+            elt = utf8str(elt)
 
             if actualWidth < width:
                 padding = ' ' * (width - actualWidth)
@@ -173,7 +174,7 @@ def struct_repr(data, key=None):
 
         return lines
 
-    elif type(data) == type({}):
+    elif type(data) == types.DictType:
 
         if len(data) == 0:
             return ['{}']
@@ -228,7 +229,7 @@ def _get_key_and_headers(keys, rows):
         else:
             r0 = rows[0]
 
-            if type(r0) == type({}):
+            if type(r0) == types.DictType:
                 keys = r0.keys()
                 keys.sort()
             elif type(r0) in listtype:
@@ -302,7 +303,7 @@ def format_table(rows,
         if row_sep is not None:
             lns.append([[None] for k in keys])
 
-        if type(row) == type({}):
+        if type(row) == types.DictType:
 
             ln = [struct_repr(row.get(k, ''))
                   for k in keys]
@@ -371,7 +372,7 @@ def colorize(v, total, ptn='{0}'):
 class ColoredString(object):
 
     def __init__(self, v, color=None, prompt=True):
-        if type(color) == type(''):
+        if type(color) in types.StringTypes:
             color = _named_colors[color]
 
         if isinstance(v, ColoredString):
@@ -419,42 +420,6 @@ class ColoredString(object):
         return c
 
 
-def blue(v): return ColoredString(v, 'blue')
-
-
-def cyan(v): return ColoredString(v, 'cyan')
-
-
-def green(v): return ColoredString(v, 'green')
-
-
-def yellow(v): return ColoredString(v, 'yellow')
-
-
-def red(v): return ColoredString(v, 'red')
-
-
-def purple(v): return ColoredString(v, 'purple')
-
-
-def white(v): return ColoredString(v, 'white')
-
-
-def optimal(v): return ColoredString(v, 'optimal')
-
-
-def normal(v): return ColoredString(v, 'normal')
-
-
-def loaded(v): return ColoredString(v, 'loaded')
-
-
-def warn(v): return ColoredString(v, 'warn')
-
-
-def danger(v): return ColoredString(v, 'danger')
-
-
 def fading_color(v, total):
     return _clrs[_fading_idx(v, total)]
 
@@ -490,12 +455,14 @@ _named_colors = {
     'white': 255,
 }
 
+def _make_colored_function(name):
+    def _colored(v):
+        return ColoredString(v, name)
 
-def to_output_format(s):
+    _colored.__name__ = name
 
-    if type(s) == type(u''):
-        s = s.encode('utf-8')
-    else:
-        s = str(s)
+    return _colored
 
-    return s
+for _func_name in _named_colors:
+    setattr(sys.modules[__name__],
+            _func_name, _make_colored_function(_func_name))
