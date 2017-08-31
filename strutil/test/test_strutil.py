@@ -379,3 +379,22 @@ class TestColoredString(unittest.TestCase):
 
         c = self.cs(c, 'warn')
         print 'colorize with "warn"  :', c
+
+    def test_colored_prompt(self):
+
+        s = '[colored prompt]# '
+
+        prompt = self.cs(s, color='optimal', prompt=True)
+        not_prompt = self.cs(s, color='optimal', prompt=False)
+
+        self.assertEqual(str(prompt)[0], '\001')
+        self.assertEqual(str(prompt)[-1], '\002')
+        self.assertEqual(len(str(prompt)), len(str(not_prompt)) + 4)
+
+        prompt += 'whatever'
+        not_prompt += 'whatever'
+        self.assertEqual(len(str(prompt)), len(str(not_prompt)) + 4)
+
+        prompt *= 3
+        not_prompt *= 3
+        self.assertEqual(len(str(prompt)), len(str(not_prompt)) + 4*3)

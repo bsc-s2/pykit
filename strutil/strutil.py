@@ -407,7 +407,11 @@ class ColoredString(object):
                     for x in self.elts])
 
     def __add__(self, other):
-        c = ColoredString(0)
+        prompt = self._prompt
+        if isinstance(other, ColoredString):
+            prompt = prompt or other._prompt
+
+        c = ColoredString('', prompt=prompt)
         if isinstance(other, ColoredString):
             c.elts = self.elts + other.elts
         else:
@@ -415,7 +419,7 @@ class ColoredString(object):
         return c
 
     def __mul__(self, num):
-        c = ColoredString(0)
+        c = ColoredString('', prompt=self._prompt)
         c.elts = self.elts * num
         return c
 
