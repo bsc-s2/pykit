@@ -443,6 +443,39 @@ for l in strutil.format_table(inp, keys=[['bucket', 'Bkt'],
 **return**:
 a list of string.
 
+## strutil.tokenize
+
+tokenize a line with one space.
+
+**syntax**:
+`strutil.tokenize(linestr)`
+
+```python
+from pykit.strutil import tokenize
+
+# ['ab']
+print tokenize('ab')
+
+# ['a', 'b']
+print tokenize('a b')
+
+# ['a', '', 'b']
+print tokenize('a  b')
+
+# ['a', '"x x"', 'b']
+print tokenize('a "x x" b')
+
+# ['a', '"x x"', 'b']
+print tokenize('a "x x" b "x') # the last `"x` has no pair, discard
+```
+
+**arguments**:
+-   `linestr`:
+    the line to tokenize, double quoted segment is preseverd.
+
+**return**:
+A list of string.
+
 #   Author
 
 Zhang Yanpo (张炎泼) <drdr.xp@gmail.com>
