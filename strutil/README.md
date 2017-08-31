@@ -5,15 +5,18 @@
 - [Name](#name)
 - [Status](#status)
 - [Synopsis](#synopsis)
-  - [colored string:](#colored-string)
-  - [colored command prompt:](#colored-command-prompt)
-- [Description](#description)
+  - [colored string](#colored-string)
+  - [colored command prompt](#colored-command-prompt)
+- [Classes](#classes)
+  - [strutil.ColoredString](#strutilcoloredstring)
 - [Methods](#methods)
+  - [strutil.color](#strutilcolor)
+  - [strutil.colorize](#strutilcolorize)
   - [strutil.line_pad](#strutilline_pad)
   - [strutil.format_line](#strutilformat_line)
-  - [strutil.color](#strutilcolor)
   - [strutil.struct_repr](#strutilstruct_repr)
   - [strutil.format_table](#strutilformat_table)
+  - [strutil.tokenize](#strutiltokenize)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -68,7 +71,7 @@ strutil.format_line(items, sep=' | ', aligns = 'llllll')
 #          |              |      |    |             | 2010 other
 ```
 
-## colored string:
+## colored string
 
 ```python
 from pykit.strutil import blue
@@ -80,7 +83,7 @@ The above snippet will output colored text on a terminal:
 
 ![](res/colored-string.png)
 
-## colored command prompt:
+## colored command prompt
 
 If you are going to use colored string as terminal prompt,
 the terminal prompt is not wrapping correctly with very long commands.
