@@ -33,7 +33,9 @@ def get_mountpoint(path):
 
     path = os.path.realpath(path)
 
-    while not os.path.ismount(path):
+    prt_by_mountpoint = get_disk_partitions()
+
+    while path != '/' and path not in prt_by_mountpoint:
         path = os.path.dirname(path)
 
     return path
