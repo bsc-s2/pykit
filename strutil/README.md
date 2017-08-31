@@ -185,6 +185,57 @@ Supported color names:
 -   `warn` same as `dark yellow`
 -   `danger` same as `red`
 
+## strutil.colorize
+
+colorize a percent number.
+
+**syntax**:
+`strutil.colorize(percent, total=100, ptn='{0}')`
+
+```python
+from pykit.strutil import colorize
+
+# the color of p printed: blue -> green -> yellow -> red
+for p in xrange(0, 100):
+        print colorize(p, 100),
+        print
+
+# the color of p printed: red -> yellow -> green -> blue
+for p in xrange(0, 100):
+        print colorize(p, -100),
+        print
+
+# the color of p printed is red if p>=10
+for p in xrange(0, 100):
+        print colorize(p, 10),
+        print
+
+# the color of p printed is blue if p>=10
+for p in xrange(0, 100):
+        print colorize(p, -10),
+        print
+
+# 'the percent is: 100' with red
+print colorize(100, 100, 'the percent is: {0}')
+
+# ' 22%' with green
+print colorize(22, 100, '{0:>3}%')
+```
+
+**arguments**:
+-   `percent`:
+    the percent to colour.
+
+-   `total`:
+    the limitation of **percent** to colour.
+    negative integer means to reverse.
+
+-   `ptn`:
+    the format of **percent**.
+
+**return**:
+A colored formatted percent string.
+
 ## strutil.line_pad
 
 **syntax**:

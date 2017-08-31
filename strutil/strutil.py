@@ -361,12 +361,12 @@ def utf8str(s):
         return str(s)
 
 
-def colorize(v, total, ptn='{0}'):
+def colorize(percent, total=100, ptn='{0}'):
     if total > 0:
-        color = fading_color(v, total)
+        color = fading_color(percent, total)
     else:
-        color = fading_color(-total - v, -total)
-    return ColoredString(ptn.format(v), color)
+        color = fading_color(-total - percent, -total)
+    return ColoredString(ptn.format(percent), color)
 
 
 class ColoredString(object):
