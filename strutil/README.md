@@ -71,7 +71,8 @@ strutil.format_line(items, sep=' | ', aligns = 'llllll')
 ## colored string:
 
 ```python
-from pykit.strutil import blue, green, yellow
+from pykit.strutil import blue
+from pykit.strutil import green
 blue("blue") + " and " + green("green")
 ```
 
@@ -116,11 +117,73 @@ Those screenshots show this issue, the cursor is box.
 
 ![](res/colored-true-prompt-end-key.png)
 
-#   Description
+#   Classes
 
-It provides with several string operation functions.
+## strutil.ColoredString
+
+**syntax**:
+`strutil.ColoredString(normal_string, color=None, prompt=True)`
+
+It provides the colored string in terminal on Unix.
+
+**arguments**:
+-   `normal_string`:
+    the string to colour.
+
+-   `color`:
+    the color of **normal_string**,
+    named color are:
+    `blue` `cyan` `green` `purple` `red` `white` `yellow`
+    `optimal` `normal` `loaded` `warn` `danger`,
+
+    you can colour string with integer [0-256].
+
+**return**:
+An instance of strutil.ColoredString.
 
 #   Methods
+
+##  strutil.color
+
+**syntax**:
+`strutil.<color>(str)`
+
+Create colored string to use in terminal.
+
+```python
+t = strutil.blue("blue-text")
+```
+
+Supported operation on colored string `t`:
+
+```python
+# concatenate with other colored string:
+t + strutil.green("green-text")
+
+# concatenate with plain string:
+t + "a"
+
+# repeat:
+t * 3
+
+# length:
+len(t)
+```
+
+Supported color names:
+
+-   `blue`
+-   `cyan`
+-   `green`
+-   `yellow`
+-   `red`
+-   `purple`
+-   `white`
+-   `optimal` same as `blue`
+-   `normal` no color
+-   `loaded` same as `green`
+-   `warn` same as `dark yellow`
+-   `danger` same as `red`
 
 ## strutil.line_pad
 
@@ -181,45 +244,6 @@ strutil.format_line([["name:", "age:"], ["drdrxp", "18"], "wow"], sep=" | ", ali
 
 **return**:
 formatted string.
-
-##  strutil.color
-
-**syntax**:
-`strutil.<color>(str)`
-
-Create colored string for use in terminal.
-
-```python
-t = strutil.blue("blue-text")
-```
-
-Supported operation on colored string `t`:
-
-```python
-# concatenate with plain string:
-t + "a"
-
-# repeat:
-t * 3
-
-# length:
-len(t)
-```
-
-Supported color names:
-
--   `blue`
--   `cyan`
--   `green`
--   `yellow`
--   `red`
--   `purple`
--   `white`
--   `optimal` same as `blue`
--   `normal` no color
--   `loaded` same as `green`
--   `warn` same as `dark yellow`
--   `danger` same as `red`
 
 ##  strutil.struct_repr
 
