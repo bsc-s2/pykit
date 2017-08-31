@@ -268,6 +268,8 @@ class TestStrutil(unittest.TestCase):
 
 class TestColoredString(unittest.TestCase):
 
+    cs = strutil.ColoredString
+
     def test_colorize_input(self):
 
         cases = (
@@ -286,50 +288,21 @@ class TestColoredString(unittest.TestCase):
                 (100, -100),
         )
 
+        print
+
         for v, total in cases:
             print strutil.colorize(v, total, str(v) + '/' + str(total))
 
-    def test_all(self):
+    def test_show_all_colors(self):
 
-        print '--- colorized string ---'
-
-        cc = strutil.ColoredString
-
-        # list all fading color
-        for i in range(0, 100, 5):
-            print strutil.colorize(i, 100),
-        print
-
-        # concat colored string with '+', like normal string
-        s = cc('danger', 'danger') + cc('warn', 'warn')
-        self.assertEqual(len('danger' 'warn'), len(s))
-
-        print s + 'jfksdl'
-
-        # list all colors
         for c in range(256):
             if c % 16 == 0:
                 print
-            print cc('{0:>3}'.format(c), c),
+            print self.cs('{0:>3}'.format(c), c),
+
+    def test_named_color(self):
+
         print
-
-        # colored string can be duplicated with '*', like normal string
-        p = (cc('danger', 'danger')
-             + cc('warn', 'warn')
-             + cc(' normal')) * 3
-        plen = len('danger' 'warn' ' normal') * 3
-        self.assertEqual(plen, len(p))
-        print p
-        print 'p*2:', p * 2
-
-        # re-render strutil.ColoredString
-        c = cc(p, 'warn')
-        print 'colorize with "warn":', c
-        print 'c*2:', c * 2
-        self.assertEqual(plen, len(c), 'original c does not change after *')
-
-        # no-color
-        print 'de-colored:', cc(p)
 
         # named color shortcuts
         print strutil.blue('blue'),
@@ -347,3 +320,62 @@ class TestColoredString(unittest.TestCase):
         print strutil.normal('normal'),
         print strutil.optimal('optimal'),
         print
+
+    def test_pading(self):
+
+        print
+        for i in range(0, 100, 5):
+            print strutil.colorize(i, 100),
+        print
+
+        for i in range(0, 100, 5):
+            print strutil.colorize(i, -100),
+        print
+
+    def test_length(self):
+
+        cases = (
+                '',
+                'string',
+                '幾時何時',
+                '\xf3',
+        )
+
+        for v in cases:
+            self.assertEqual(len(self.cs(v, 'warn')), len(v))
+
+    def test_add(self):
+
+        # concat colored string with '+', like normal string
+        s = self.cs('danger', 'danger') + self.cs('warn', 'warn')
+        self.assertEqual(len('danger' + 'warn'), len(s))
+
+        s += 'extra_string'
+        self.assertEqual(len('danger' + 'warn' + 'extra_string'), len(s))
+
+    def test_mul(self):
+
+        # colored string can be duplicated with '*', like normal string
+        s = (self.cs('danger', 'danger')
+             + self.cs('warn', 'warn')
+             + self.cs(' normal')) * 3
+
+        slen = len('danger' + 'warn' + ' normal') * 3
+        self.assertEqual(slen, len(s))
+
+        s *= 10
+        slen *= 10
+        self.assertEqual(slen, len(s))
+
+    def test_rerender(self):
+
+        print
+
+        # re-render strutil.ColoredString
+        s = 'danger rerender to warn'
+
+        c = self.cs(s, 'danger')
+        print 'colorize with "danger":', c
+
+        c = self.cs(c, 'warn')
+        print 'colorize with "warn"  :', c
