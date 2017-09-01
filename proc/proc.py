@@ -75,6 +75,7 @@ def start_daemon(cmd, target, env, *args):
         d = daemonize.Daemon(close_fds=True)
         d.daemonize()
         args = list(args)
+        env['LC_CTYPE'] = os.environ.get('LC_CTYPE')
         args.append(env)
         os.execlpe(cmd, cmd, target, *args)
     else:
@@ -117,6 +118,7 @@ def start_process(cmd, target, env, *args):
     if pid == 0:
         _close_fds()
         args = list(args)
+        env['LC_CTYPE'] = os.environ.get('LC_CTYPE')
         args.append(env)
         os.execlpe(cmd, cmd, target, *args)
     else:
