@@ -22,6 +22,20 @@ class TestProcError(unittest.TestCase):
         except EnvironmentError:
             return None
 
+    def _clean(self):
+
+        # remove written file
+        try:
+            os.unlink(self.foo_fn)
+        except EnvironmentError:
+            pass
+
+    def setUp(self):
+        self._clean()
+
+    def tearDown(self):
+        self._clean()
+
     def test_procerror(self):
         ex_args = (1, 'out', 'err', 'ls', ('a', 'b'), {"close_fds": True})
         ex = proc.ProcError(*ex_args)
@@ -157,3 +171,20 @@ class TestProcError(unittest.TestCase):
             proc.start_process(cmd, target, os.environ, *args)
             time.sleep(1)
             self.assertEqual(expected, self._read_file(self.foo_fn))
+
+    def test_env_lc_ctype(self):
+        cmd = 'python2'
+        target = this_base + '/write.py'
+        args = ['foo']
+
+        os.environ.clear()
+        env = {}
+        env['LC_CTYPE'] = None
+        proc.start_process(cmd, target, env, *args)
+        time.sleep(1)
+        self.assertIsNone(self._read_file(self.foo_fn))
+
+        env = {}
+        proc.start_process(cmd, target, env, *args)
+        time.sleep(1)
+        self.assertEqual('foo', self._read_file(self.foo_fn))
