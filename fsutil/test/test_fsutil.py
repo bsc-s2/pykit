@@ -8,6 +8,11 @@ from pykit import ututil
 
 dd = ututil.dd
 
+# xx/pykit/fsutil/test/
+this_base = os.path.dirname(__file__)
+
+pyt = 'python2'
+
 
 class TestFSUtil(unittest.TestCase):
 
@@ -146,11 +151,6 @@ class TestFSUtil(unittest.TestCase):
         except:
             pass
 
-        def get_mode(fn):
-            mode = os.stat(fn).st_mode
-            dd('mode read:', oct(mode))
-            return mode & 0777
-
         dd('file is not a dir')
         with open(fn, 'w') as f:
             f.write('a')
@@ -185,14 +185,24 @@ class TestFSUtil(unittest.TestCase):
         dd('specify uid/gid, to change uid, you need root privilege')
         fsutil.makedirs(fn, uid=1, gid=1)
 
+    def test_makedirs_with_config(self):
+
+        fn = '/tmp/pykit-ut-fsutil-foo'
+        force_remove(fn)
+
+        rc, out, err = proc.shell_script(pyt + ' ' + this_base + '/makedirs_with_config.py ' + fn,
+                                         env=dict(PYTHONPATH=this_base + ':' + os.environ.get('PYTHONPATH'))
+                                         )
+
+        dd('run makedirs_with_config.py: ', rc, out, err)
+
+        self.assertEqual(0, rc, 'normal exit')
+        self.assertEqual('2,3', out, 'uid,gid is defined in test/pykitconfig.py')
+
     def test_read_write_file(self):
 
         fn = '/tmp/pykit-ut-rw-file'
-
-        try:
-            os.unlink(fn)
-        except:
-            pass
+        force_remove(fn)
 
         dd('write/read file')
         fsutil.write_file(fn, '123')
@@ -210,7 +220,39 @@ class TestFSUtil(unittest.TestCase):
         self.assertEqual(1, stat.st_uid)
         self.assertEqual(1, stat.st_gid)
 
-        try:
-            os.unlink(fn)
-        except:
-            pass
+        force_remove(fn)
+
+    def test_write_file_with_config(self):
+
+        fn = '/tmp/pykit-ut-fsutil-foo'
+        force_remove(fn)
+
+        rc, out, err = proc.shell_script(pyt + ' ' + this_base + '/write_with_config.py ' + fn,
+                                         env=dict(PYTHONPATH=this_base + ':' + os.environ.get('PYTHONPATH'))
+                                         )
+
+        dd('run write_with_config.py: ', rc, out, err)
+
+        self.assertEqual(0, rc, 'normal exit')
+        self.assertEqual('2,3', out, 'uid,gid is defined in test/pykitconfig.py')
+
+        force_remove(fn)
+
+
+def force_remove(fn):
+
+    try:
+        os.rmdir(fn)
+    except:
+        pass
+
+    try:
+        os.unlink(fn)
+    except:
+        pass
+
+
+def get_mode(fn):
+    mode = os.stat(fn).st_mode
+    dd('mode read:', oct(mode))
+    return mode & 0777
