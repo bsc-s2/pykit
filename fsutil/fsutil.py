@@ -6,6 +6,8 @@ import os
 
 import psutil
 
+from pykit import config
+
 READ_BLOCK = 32 * 1024 * 1024
 WRITE_BLOCK = 32 * 1024 * 1024
 
@@ -106,8 +108,8 @@ def get_path_usage(path):
 
 def makedirs(*paths, **kwargs):
     mode = kwargs.get('mode', 0755)
-    uid = kwargs.get('uid')
-    gid = kwargs.get('gid')
+    uid = kwargs.get('uid') or config.uid
+    gid = kwargs.get('gid') or config.gid
 
     path = os.path.join(*paths)
 
@@ -141,6 +143,10 @@ def read_file(path):
 
 
 def write_file(path, fcont, uid=None, gid=None):
+
+    uid = uid or config.uid
+    gid = gid or config.gid
+
     with open(path, 'w') as f:
         f.write(fcont)
         f.flush()

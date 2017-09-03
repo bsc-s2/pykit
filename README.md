@@ -8,6 +8,8 @@
   - [Module List](#module-list)
 - [Install](#install)
 - [Usage](#usage)
+- [Configuration](#configuration)
+  - [Supported config](#supported-config)
 - [Test](#test)
 - [For developer](#for-developer)
 - [Author](#author)
@@ -84,6 +86,29 @@ jobq.run([0, 1, 2], [add1, printarg])
 # > 2
 # > 3
 ```
+
+
+#   Configuration
+
+`pykit` provides a way to setup config for it.
+Some module tries to import `pykitconfig` in which a user sets config.
+Example:
+
+```
+> cat pykitconfig.py
+uid = 2
+gid = 3
+
+> cat foo.py
+from pykit import fsutil
+fsutil.write_file('bar', '123') # write_file sets file uid and gid to 2 and 3.
+```
+
+##  Supported config
+
+-   `uid`: specifies default user-id  when file created, directory made.
+-   `gid`: specifies default group-id when file created, directory made.
+
 
 See the `README.md` of sub modules for detail.
 
