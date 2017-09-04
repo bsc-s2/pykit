@@ -535,31 +535,59 @@ class TestSetter(unittest.TestCase):
 
         cases = (
 
-                ('a', 1,  {'a': 1},
+                ('a', 1, {},
+                 {'a': 1},
+                 ),
+
+                ('a', 1, {'a': 1},
                  {'a': 2},
                  ),
 
-                ('$a.$foo', 1,  {},
+                ('a', 'foo', {},
+                 {'a': 'foo'},
+                 ),
+
+                ('a', 'foo', {'a': 'bar'},
+                 {'a': 'barfoo'},
+                 ),
+
+                ('a', (1, 2), {},
+                 {'a': (1, 2)},
+                 ),
+
+                ('a', (1, 2), {'a': (0, 1)},
+                 {'a': (0, 1, 1, 2)},
+                 ),
+
+                ('a', [1, 2], {},
+                 {'a': [1, 2]},
+                 ),
+
+                ('a', [1, 2], {'a': [0, 1]},
+                 {'a': [0, 1, 1, 2]},
+                 ),
+
+                ('$a.$foo', 1, {},
                  {'aa': {'bar': 1}},
                  ),
 
-                ('$a.$foo', 1.1,  {},
+                ('$a.$foo', 1.1, {},
                  {'aa': {'bar': 1.1}},
                  ),
 
-                ('$a.$foo', 'suffix',  {'aa': {'bar': 'prefix-'}},
+                ('$a.$foo', 'suffix', {'aa': {'bar': 'prefix-'}},
                  {'aa': {'bar': 'prefix-suffix'}},
                  ),
 
-                ('$a.$foo', ('b', ),  {'aa': {}},
+                ('$a.$foo', ('b',), {'aa': {}},
                  {'aa': {'bar': ('b',)}},
                  ),
 
-                ('$a.$foo', ('b', ),  {'aa': {'bar': ('a',)}},
+                ('$a.$foo', ('b',), {'aa': {'bar': ('a',)}},
                  {'aa': {'bar': ('a', 'b',)}},
                  ),
 
-                ('$a.$foo', ['b', ],  {'aa': {'bar': ['a', ]}},
+                ('$a.$foo', ['b', ], {'aa': {'bar': ['a', ]}},
                  {'aa': {'bar': ['a', 'b', ]}},
                  ),
 
@@ -571,8 +599,11 @@ class TestSetter(unittest.TestCase):
 
         for _key_path, _default, _dic, _expect in cases:
 
+            dd(_key_path, _default, _dic, _expect)
+
             _set = dictutil.make_setter(_key_path, value=_default, incr=True)
             rst = _set(_dic, vars=_vars)
+            dd('rst:', rst)
 
             self.assertEqual(_expect, _dic,
                              'input: {_key_path}, {_dic}; expected dict: {_expect}, actual: {rst}'.format(

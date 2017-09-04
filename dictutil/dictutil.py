@@ -2,7 +2,6 @@
 # coding: utf-8
 
 import copy
-import types
 from collections import defaultdict
 
 
@@ -155,7 +154,8 @@ def make_setter(key_path, value=None, incr=False):
             val_to_set = val_to_set(vars)
 
         if k not in _node:
-            _node[k] = _get_zero_value_of(val_to_set)
+            # use the default constructor to get a default "zero" value
+            _node[k] = type(val_to_set)()
 
         if incr:
             _node[k] += val_to_set
@@ -326,23 +326,3 @@ def _attrdict(attrdict_clz, d, ref):
         super(attrdict_clz, ad).__setitem__(k, sub_ad)
 
     return ad
-
-
-def _get_zero_value_of(val):
-
-    if type(val) in types.StringTypes:
-        zero_val = ''
-    elif type(val) in (types.IntType, types.LongType):
-        zero_val = 0
-    elif type(val) is types.FloatType:
-        zero_val = 0.0
-    elif type(val) is types.BooleanType:
-        zero_val = False
-    elif type(val) is types.TupleType:
-        zero_val = ()
-    elif type(val) is types.ListType:
-        zero_val = []
-    else:
-        raise ValueError('invalid type: {v}'.format(v=repr(val)))
-
-    return zero_val

@@ -141,15 +141,7 @@ class TestFSUtil(unittest.TestCase):
         fn_part = ('/tmp', 'pykit-ut-fsutil-foo')
         dd('fn_part:', fn_part)
 
-        try:
-            os.rmdir(fn)
-        except:
-            pass
-
-        try:
-            os.unlink(fn)
-        except:
-            pass
+        force_remove(fn)
 
         dd('file is not a dir')
         with open(fn, 'w') as f:
