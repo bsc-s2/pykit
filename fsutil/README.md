@@ -295,7 +295,7 @@ file content in string.
 ##  fsutil.write_file
 
 **syntax**:
-`fsutil.write_file(path, content, uid=None, gid=None)`
+`fsutil.write_file(path, content, uid=None, gid=None, atomic=False)`
 
 Write `content` to file `path`.
 
@@ -312,6 +312,15 @@ Write `content` to file `path`.
 
      Bedefault they are `None`, which means the file that has been written
      inheirts ownership of the running python script.
+
+-   `atomic`:
+    atomically write content to the path.
+
+    Write content to a temporary file, then rename to the path.
+    The temporary file names of same path in one process distinguish with
+    `timeutil.ns()`, it is not atomic if the temporary files of same path
+    created at the same nanosecond.
+    The renaming will be an atomic operation (this is a POSIX requirement).
 
 **return**:
 Nothing

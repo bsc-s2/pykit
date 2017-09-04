@@ -7,6 +7,7 @@ import os
 import psutil
 
 from pykit import config
+from pykit import timeutil
 
 READ_BLOCK = 32 * 1024 * 1024
 WRITE_BLOCK = 32 * 1024 * 1024
@@ -142,7 +143,22 @@ def read_file(path):
         return f.read()
 
 
-def write_file(path, fcont, uid=None, gid=None):
+def write_file(path, fcont, uid=None, gid=None, atomic=False):
+
+    if not atomic:
+        return _write_file(path, fcont, uid, gid)
+
+    tmp_path = '{path}._tmp_.{pid}_{timestamp}'.format(
+                path=path,
+                pid=os.getpid(),
+                timestamp=timeutil.ns(),
+                )
+    _write_file(tmp_path, fcont, uid, gid)
+
+    os.rename(tmp_path, path)
+
+
+def _write_file(path, fcont, uid=None, gid=None):
 
     uid = uid or config.uid
     gid = gid or config.gid

@@ -1,4 +1,6 @@
 import os
+import threading
+import time
 import unittest
 
 from pykit import fsutil
@@ -232,6 +234,83 @@ class TestFSUtil(unittest.TestCase):
         self.assertEqual(0, rc, 'normal exit')
         self.assertEqual('2,3', out, 'uid,gid is defined in test/pykitconfig.py')
 
+        force_remove(fn)
+
+    def test_write_file_atomically(self):
+
+        fn = '/tmp/pykit-ut-fsutil-write-atomic'
+
+        dd('atomically write file')
+
+        cont_thread1 = 'cont_thread1'
+        cont_thread2 = 'cont_thread2'
+
+        os_fsync = os.fsync
+
+        def _wait_fsync(fildes):
+            time.sleep(3)
+
+            os_fsync(fildes)
+
+        os.fsync = _wait_fsync
+
+        def _thread(target, args):
+            th = threading.Thread(target=target, args=args)
+            th.daemon = True
+            th.start()
+
+            return th
+
+        assert_ok = {'ok': True}
+
+        def _write_wait(cont_write, cont_read, start_after, atomic):
+
+            time.sleep(start_after)
+
+            fsutil.write_file(fn, cont_write, atomic=atomic)
+
+            if cont_read != fsutil.read_file(fn):
+                assert_ok['ok'] = False
+
+        force_remove(fn)
+        # atomic=False
+        #  time     file    thread1     thread2
+        #   0      cont_1   w_cont_1    sleep()
+        #  1.5     cont_2   sleep()     w_cont_2
+        #   3      cont_2   return      sleep()
+        #  4.5     cont_2    None       return
+
+        ths = []
+        th = _thread(_write_wait, (cont_thread1, cont_thread2, 0, False))
+        ths.append(th)
+
+        th = _thread(_write_wait, (cont_thread2, cont_thread2, 1.5, False))
+        ths.append(th)
+
+        for th in ths:
+            th.join()
+        self.assertTrue(assert_ok['ok'])
+
+        force_remove(fn)
+        # atomic=True
+        #  time     file    thread1     thread2
+        #   0       None    w_cont_1    sleep()
+        #  1.5      None    sleep()     w_cont_2
+        #   3      cont_1   return      sleep()
+        #  4.5     cont_2    None       return
+
+        ths = []
+        th = _thread(_write_wait, (cont_thread1, cont_thread1, 0, True))
+        ths.append(th)
+
+        th = _thread(_write_wait, (cont_thread2, cont_thread2, 1.5, True))
+        ths.append(th)
+
+        for th in ths:
+            th.join()
+        self.assertTrue(assert_ok['ok'])
+
+        os.fsync = os_fsync
         force_remove(fn)
 
 
