@@ -130,6 +130,7 @@ Those screenshots show this issue, the cursor is box.
 It provides the colored string in terminal on Unix.
 
 **arguments**:
+
 -   `normal_string`:
     the string to colour.
 
@@ -144,7 +145,9 @@ It provides the colored string in terminal on Unix.
 **return**:
 An instance of strutil.ColoredString.
 
+
 #   Methods
+
 
 ##  strutil.color
 
@@ -190,10 +193,12 @@ Supported color names:
 
 ## strutil.colorize
 
-colorize a percent number.
-
 **syntax**:
 `strutil.colorize(percent, total=100, ptn='{0}')`
+
+Colorize a percentage number.
+
+Synopsis:
 
 ```python
 from pykit.strutil import colorize
@@ -226,6 +231,7 @@ print colorize(22, 100, '{0:>3}%')
 ```
 
 **arguments**:
+
 -   `percent`:
     the percent to colour.
 
@@ -238,6 +244,7 @@ print colorize(22, 100, '{0:>3}%')
 
 **return**:
 A colored formatted percent string.
+
 
 ## strutil.line_pad
 
@@ -446,12 +453,15 @@ for l in strutil.format_table(inp, keys=[['bucket', 'Bkt'],
 **return**:
 a list of string.
 
-## strutil.tokenize
 
-tokenize a line with one space.
+## strutil.tokenize
 
 **syntax**:
 `strutil.tokenize(linestr)`
+
+Tokenize a line with one space.
+
+Synopsis:
 
 ```python
 from pykit.strutil import tokenize
@@ -473,11 +483,12 @@ print tokenize('a "x x" b "x') # the last `"x` has no pair, discard
 ```
 
 **arguments**:
+
 -   `linestr`:
     the line to tokenize, double quoted segment is preseverd.
 
 **return**:
-A list of string.
+a list of string.
 
 #   Author
 
