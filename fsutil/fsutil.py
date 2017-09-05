@@ -1,8 +1,11 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
+import binascii
 import errno
+import hashlib
 import os
+import time
 
 import psutil
 
@@ -170,6 +173,62 @@ def _write_file(path, fcont, uid=None, gid=None):
 
     if uid is not None and gid is not None:
         os.chown(path, uid, gid)
+
+
+def calc_checksums(path, sha1=False, md5=False, crc32=False,
+        block_size=READ_BLOCK, io_limit=READ_BLOCK):
+
+    checksums = {
+        'sha1': None,
+        'md5': None,
+        'crc32': None,
+    }
+
+    if (sha1 or md5 or crc32) is False:
+        return checksums
+
+    if block_size <= 0:
+        raise FSUtilError('block_size must be positive integer')
+
+    if io_limit == 0:
+        raise FSUtilError('io_limit shoud not be zero')
+
+    min_io_time = float(block_size) / io_limit
+
+    sum_sha1 = hashlib.sha1()
+    sum_md5 = hashlib.md5()
+    sum_crc32 = 0
+
+    with open(path, 'rb') as f_path:
+
+        while True:
+            t0 = time.time()
+
+            buf = f_path.read(block_size)
+            if buf == '':
+                break
+
+            t1 = time.time()
+
+            time_sleep = max(0, min_io_time - (t1 - t0))
+            if time_sleep > 0:
+                time.sleep(time_sleep)
+
+            if sha1:
+                sum_sha1.update(buf)
+            if md5:
+                sum_md5.update(buf)
+            if crc32:
+                sum_crc32 = binascii.crc32(buf, sum_crc32)
+
+    if sha1:
+        checksums['sha1'] = sum_sha1.hexdigest()
+    if md5:
+        checksums['md5'] = sum_md5.hexdigest()
+    if crc32:
+        checksums['crc32'] = '%08x' % (sum_crc32 & 0xffffffff)
+
+    return checksums
 
 
 def _to_dict(_namedtuple):

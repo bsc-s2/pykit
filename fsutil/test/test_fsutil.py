@@ -1,3 +1,6 @@
+#!/usr/bin/env python2
+# coding: utf-8
+
 import os
 import threading
 import time
@@ -313,6 +316,221 @@ class TestFSUtil(unittest.TestCase):
         os.fsync = os_fsync
         force_remove(fn)
 
+    def test_calc_checksums(self):
+
+        M = 1024**2
+
+        fn = '/tmp/pykit-ut-fsutil-calc_checksums'
+        force_remove(fn)
+
+        cases = (
+            (   '',
+                {
+                    'sha1'      : True,
+                    'md5'       : True,
+                    'crc32'     : True,
+                    'block_size': M,
+                    'io_limit'  : M,
+                },
+                {
+                    'sha1'      : 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+                    'md5'       : 'd41d8cd98f00b204e9800998ecf8427e',
+                    'crc32'     : '00000000',
+                },
+                None,
+            ),
+
+            (   '',
+                {
+                    'sha1'      : True,
+                    'md5'       : True,
+                    'block_size': M,
+                    'io_limit'  : M,
+                },
+                {
+                    'sha1'      : 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+                    'md5'       : 'd41d8cd98f00b204e9800998ecf8427e',
+                    'crc32'     : None,
+                },
+                None,
+            ),
+
+            (   '',
+                {
+                    'md5'       : True,
+                    'crc32'     : True,
+                },
+                {
+                    'sha1'      : None,
+                    'md5'       : 'd41d8cd98f00b204e9800998ecf8427e',
+                    'crc32'     : '00000000',
+                },
+                None,
+            ),
+
+            (   '',
+                {
+                },
+                {
+                    'sha1'      : None,
+                    'md5'       : None,
+                    'crc32'     : None,
+                },
+                None,
+            ),
+
+            (   'It  바로 とても 氣!',
+                {
+                    'sha1'      : True,
+                    'md5'       : True,
+                    'crc32'     : True,
+                    'block_size': M,
+                    'io_limit'  : M,
+                },
+                {
+                    'sha1'      : 'e22fa5446cb33d0c32221d89ee270dff23e32847',
+                    'md5'       : '9d245fca88360be492c715253d68ba6f',
+                    'crc32'     : '7c3becdb',
+                },
+                None,
+            ),
+
+            (   'It  바로 とても 氣!',
+                {
+                    'sha1'      : False,
+                    'md5'       : True,
+                    'crc32'     : True,
+                    'block_size': M,
+                    'io_limit'  : M,
+                },
+                {
+                    'sha1'      : None,
+                    'md5'       : '9d245fca88360be492c715253d68ba6f',
+                    'crc32'     : '7c3becdb',
+                },
+                None,
+            ),
+
+            (   'It  바로 とても 氣!',
+                {
+                    'sha1'      : True,
+                    'md5'       : False,
+                    'crc32'     : True,
+                    'block_size': M,
+                    'io_limit'  : M,
+                },
+                {
+                    'sha1'      : 'e22fa5446cb33d0c32221d89ee270dff23e32847',
+                    'md5'       : None,
+                    'crc32'     : '7c3becdb',
+                },
+                None,
+            ),
+
+            (   'It  바로 とても 氣!',
+                {
+                    'sha1'      : True,
+                    'md5'       : False,
+                    'crc32'     : False,
+                },
+                {
+                    'sha1'      : 'e22fa5446cb33d0c32221d89ee270dff23e32847',
+                    'md5'       : None,
+                    'crc32'     : None,
+                },
+                None,
+            ),
+
+            (   'It  바로 とても 氣!',
+                {
+                    'sha1'      : False,
+                    'md5'       : False,
+                    'crc32'     : False,
+                    'block_size': M,
+                    'io_limit'  : M,
+                },
+                {
+                    'sha1'      : None,
+                    'md5'       : None,
+                    'crc32'     : None,
+                },
+                None,
+            ),
+
+            (   '!' * M * 10,
+                {
+                    'sha1'      : False,
+                    'md5'       : False,
+                    'crc32'     : False,
+                    'block_size': M,
+                    'io_limit'  : M,
+                },
+                {
+                    'sha1'      : None,
+                    'md5'       : None,
+                    'crc32'     : None,
+                },
+                (0, 0.5),
+            ),
+
+            (   '!' * M * 10,
+                {
+                    'sha1'      : True,
+                    'md5'       : True,
+                    'crc32'     : True,
+                    'block_size': M*10,
+                    'io_limit'  : M*10,
+                },
+                {
+                    'sha1'      : 'c5430d624c498024d0f3371670227a201e910054',
+                    'md5'       : '8f499b17375fc678c7256f3c0054db79',
+                    'crc32'     : 'f0af209f',
+                },
+                (1, 1.5),
+            ),
+
+            (   '!' * M * 10,
+                {
+                    'sha1'      : True,
+                    'block_size': M,
+                    'io_limit'  : M*5,
+                },
+                None,
+                (2, 2.5),
+            ),
+
+            (   '!' * M * 10,
+                {
+                    'sha1'      : True,
+                    'block_size': M,
+                    'io_limit'  : -M*5,
+                },
+                None,
+                (0, 0.5),
+            ),
+        )
+
+        for cont, args, exp_checksums, min_time in cases:
+
+            force_remove(fn)
+            fsutil.write_file(fn, cont)
+
+            t0 = time.time()
+            checksums = fsutil.calc_checksums(fn, **args)
+            spend_time = time.time() - t0
+
+            if exp_checksums is not None:
+                for k in checksums:
+                    self.assertEqual(exp_checksums[k], checksums[k],
+                            'except: {exp}, actuality: {act}'.format(
+                                exp=exp_checksums[k],
+                                act=checksums[k],
+                            ))
+
+            if min_time is not None:
+                self.assertTrue(min_time[0] < spend_time < min_time[1])
+
+        force_remove(fn)
 
 def force_remove(fn):
 

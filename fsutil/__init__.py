@@ -3,6 +3,7 @@ from .fsutil import (
     NotMountPoint,
 
     assert_mountpoint,
+    calc_checksums,
     get_all_mountpoint,
     get_device,
     get_device_fs,
@@ -11,8 +12,8 @@ from .fsutil import (
     get_path_fs,
     get_path_usage,
     makedirs,
-    write_file,
     read_file,
+    write_file,
 
 )
 
@@ -21,6 +22,7 @@ __all__ = [
     "NotMountPoint",
 
     "assert_mountpoint",
+    "calc_checksums",
     "get_all_mountpoint",
     "get_device",
     "get_device_fs",
@@ -29,6 +31,6 @@ __all__ = [
     "get_path_fs",
     "get_path_usage",
     "makedirs",
-    "write_file",
     "read_file",
+    "write_file",
 ]

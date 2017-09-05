@@ -20,6 +20,7 @@
   - [fsutil.makedirs](#fsutilmakedirs)
   - [fsutil.read_file](#fsutilread_file)
   - [fsutil.write_file](#fsutilwrite_file)
+  - [fsutil.calc_checksums](#fsutilcalc_checksums)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -324,6 +325,48 @@ Write `content` to file `path`.
 
 **return**:
 Nothing
+
+
+##  fsutil.calc_checksums
+
+**syntax**:
+`fsutil.calc_checksums(path, sha1=False, md5=False, crc32=False,
+    block_size=32*1024**2, io_limit=32*1024**2)`
+
+Calculate checksums of `path`, like: `sha1` `md5` `crc32`.
+
+```python
+from pykit import fsutil
+
+file_name = 'test.file'
+
+fsutil.write_file(file_name, '')
+print fsutil.calc_checksums(file_name, sha1=True, md5=True, crc32=False)
+#{
+# 'sha1': 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+# 'md5': 'd41d8cd98f00b204e9800998ecf8427e',
+# 'crc32': None
+#}
+```
+
+**arguments**:
+
+-   `path`:
+    is the file path to calculate.
+
+-   `sha1` and `md5` and `crc32`:
+    are checksum types to calculate. Default is `False`.
+
+    The result of this type is `None` if the checksum type is `False`.
+
+-   `block_size`:
+     is the buffer size while reading content of `path`.
+
+-   `io_limit`:
+    is the IO limitation per second while reading content of `path`.
+
+**return**:
+a dict with keys `sha1` and `md5` and `crc32`.
 
 
 #   Author
