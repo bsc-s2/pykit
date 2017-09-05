@@ -72,15 +72,17 @@ class TestFSUtil(unittest.TestCase):
 
         rst = fsutil.get_device('/inexistent')
 
+        # GNU "grep -o" split items into several lines
         root_dev = proc.shell_script(
-            'mount | grep " on / " | grep -o "[^ ]*"')[1].strip()
+            'mount | grep " on / " | grep -o "[^ ]*" | head -n1')[1].strip()
 
         self.assertEqual(root_dev, rst)
 
     def test_get_device_fs(self):
 
+        # GNU "grep -o" split items into several lines
         rc, out, err = proc.shell_script(
-            'mount | grep " on / " | grep -o "[^ ]*"')
+            'mount | grep " on / " | grep -o "[^ ]*" | head -n1')
         dd('find device on /', rc, out, err)
 
         dev = out.strip()
@@ -103,16 +105,18 @@ class TestFSUtil(unittest.TestCase):
 
         path = '/'
         rst = fsutil.get_path_usage(path)
-        dd(humannum.humannum(rst))
 
         # check against os.statvfs.
-
         st = os.statvfs(path)
 
-        self.assertEqual(st.f_frsize * st.f_bavail, rst['available'])
-        self.assertEqual(st.f_frsize * st.f_blocks, rst['total'])
-        self.assertEqual(st.f_frsize * (st.f_blocks - st.f_bavail), rst['used'])
-        self.assertEqual((st.f_blocks - st.f_bavail) * 100 / st.f_blocks, int(rst['percent'] * 100))
+        dd(humannum.humannum(rst))
+
+        # space is changing..
+
+        self.assertAlmostEqual(st.f_frsize * st.f_bavail, rst['available'], delta=4*1024**2)
+        self.assertAlmostEqual(st.f_frsize * st.f_blocks, rst['total'], delta=4*1024**2)
+        self.assertAlmostEqual(st.f_frsize * (st.f_blocks - st.f_bavail), rst['used'], delta=4*1024**2)
+        self.assertAlmostEqual((st.f_blocks - st.f_bavail) * 100 / st.f_blocks, int(rst['percent'] * 100), delta=4*1024**2)
 
         if st.f_bfree > st.f_bavail:
             self.assertLess(rst['available'], st.f_frsize * st.f_bfree)
@@ -133,7 +137,7 @@ class TestFSUtil(unittest.TestCase):
 
         dd('total MB from df:', total_mb, 'result total MB:', rst_total_mb)
 
-        self.assertEqual(total_mb, rst_total_mb)
+        self.assertAlmostEqual(int(total_mb), int(rst_total_mb), delta=4)
 
     def test_makedirs(self):
 
