@@ -5,44 +5,30 @@ import os
 import sys
 import unittest
 
-from pykit import dictutil
 from pykit import modutil
+from pykit import ututil
+
+dd = ututil.dd
 
 class TestModutil(unittest.TestCase):
 
     def setUp(self):
 
         sys.path.append(os.path.dirname(__file__))
+        module_tree = [
+                'root0',
+                'root0.mod0',
+                'root0.mod0.mod00',
+                'root0.mod0.mod01',
+                'root0.mod1',
+                'root0.mod1.mod10',
+                'root0.mod2',
+                'root1',
+                'root2',
+                ]
 
-        self.module_tree = {
-                    'root0': {
-                        'mod0': {
-                            'mod00': {
-                                    '__init__.py': True,
-                                },
-                            '__init__.py': True,
-                            'mod01.py': False,
-                        },
-                        'mod1': {
-                            '__init__.py': True,
-                            'mod10.py': False,
-                        },
-                        '__init__.py': True,
-                        'mod2.py': False,
-                        },
-                    'root1': {
-                        '__init__.py': True,
-                        },
-                    'root2.py': False,
-                }
-
-        for _path, _init in dictutil.depth_iter(self.module_tree):
-            if _init is True:
-                mod_name = '.'.join(_path[:-1])
-            else:
-                mod_name = '.'.join(_path)[:-3]
-
-            __import__(mod_name)
+        for module in module_tree:
+            __import__(module)
 
     def tearDown(self):
         sys.path.remove(os.path.dirname(__file__))
@@ -61,11 +47,14 @@ class TestModutil(unittest.TestCase):
 
         for root, rst_expected, error in test_cases:
 
+            dd('case: ', root, rst_expected, error)
+
             try:
                 rst = modutil.submodules(root)
             except error as e:
                 self.assertEqual(type(e), error)
             else:
+                dd('rst: ', rst)
                 self.assertEqual(rst, rst_expected)
 
     def test_submodule_tree(self):
@@ -108,11 +97,14 @@ class TestModutil(unittest.TestCase):
 
         for root, rst_expected, error in test_cases:
 
+            dd('case: ', root, rst_expected, error)
+
             try:
                 rst = modutil.submodule_tree(root)
             except error as e:
                 self.assertEqual(type(e), error)
             else:
+                dd('rst: ', rst)
                 self.assertEqual(rst, rst_expected)
 
     def test_submodule_leaf_tree(self):
@@ -140,9 +132,12 @@ class TestModutil(unittest.TestCase):
 
         for root, rst_expected, error in test_cases:
 
+            dd('case: ', root, rst_expected, error)
+
             try:
                 rst = modutil.submodule_leaf_tree(root)
             except error as e:
                 self.assertEqual(type(e), error)
             else:
+                dd('rst: ', rst)
                 self.assertEqual(rst, rst_expected)
