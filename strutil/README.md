@@ -10,6 +10,7 @@
 - [Classes](#classes)
   - [strutil.ColoredString](#strutilcoloredstring)
 - [Methods](#methods)
+  - [strutil.break_line](#strutilbreak_line)
   - [strutil.color](#strutilcolor)
   - [strutil.colorize](#strutilcolorize)
   - [strutil.line_pad](#strutilline_pad)
@@ -148,6 +149,39 @@ An instance of strutil.ColoredString.
 
 #   Methods
 
+
+##  strutil.break_line
+
+**syntax**:
+`strutil.break_line(linestr, width)`
+
+Split a string `linestr` to lines by one space or line break
+to make length of every line no greater than `width`.
+Only one space or line break is replaced at a time. Any others stay.
+
+Examples:
+```
+strutil.break_line('foo bar bar.', 9)
+
+#['foo bar', 'bar.']
+
+print strutil.break_line('one   two  three', 4)
+
+#['one ', ' two', '', 'three']
+```
+
+**arguments**:
+
+-   `linestr`:
+    is a string.
+
+-   `width`:
+    is the longest line length expected after being split.
+    If `width` is negative, get the same result as `width` is 0.
+    And if `width` is a float, just integer part is used.
+
+**return**:
+A list filled with lines of split `linestr`.
 
 ##  strutil.color
 

@@ -265,6 +265,37 @@ class TestStrutil(unittest.TestCase):
 
             self.assertEqual(expected, rst)
 
+    def test_break_line(self):
+        case = [
+            ('a quick brown fox jumps over the lazy dog',        13,    ['a quick brown', 'fox jumps', 'over the lazy', 'dog']),
+            ('a quick\nbrown fox jumps over the lazy dog',       13,    ['a quick', 'brown fox', 'jumps over', 'the lazy dog']),
+            ('a quick\rbrown fox jumps over the lazy dog',       13,    ['a quick', 'brown fox', 'jumps over', 'the lazy dog']),
+            ('a quick brown fox jumps\r\nover the lazy dog',     13,    ['a quick brown', 'fox jumps', 'over the lazy', 'dog']),
+            ('a quick\nbrown\rfox jumps\r\nover the lazy dog',   13,    ['a quick', 'brown', 'fox jumps', 'over the lazy', 'dog']),
+            ('aquickbrownfoxjumpsoverthelazydog',                9,     ['aquickbrownfoxjumpsoverthelazydog']),
+            ('aquickbro',                                        9,     ['aquickbro']),
+            (' aquickbro',                                       9,     ['', 'aquickbro']),
+            ('  aquickbro',                                      9,     [' ', 'aquickbro']),
+            ('aquickbro ',                                       9,     ['aquickbro']),
+            ('aquickbro  ',                                      9,     ['aquickbro', ' ']),
+            ('aqu ick br',                                       9,     ['aqu ick', 'br']),
+            ('aqu ick br',                                       9.34,  ['aqu ick', 'br']),
+            ('apu   ick  br',                                    5,     ['apu  ', 'ick ', 'br']),
+            ('aqu ick br',                                       0,     ['aqu', 'ick', 'br']),
+            ('aqu ick br',                                       -1,    ['aqu', 'ick', 'br']),
+            ('',                                                 2,     []),
+            (' ',                                                2,     [' ']),
+            ('  ',                                               2,     ['  ']),
+            ('   ',                                              2,     ['  ']),
+            ('    ',                                             2,     ['  ', ' ']),
+        ]
+
+        for linestr, width, expected in case:
+            rst = strutil.break_line(linestr, width)
+            dd('case: ', linestr, width, expected)
+            dd('rst: ', rst)
+            self.assertEqual(rst, expected)
+
 
 class TestColoredString(unittest.TestCase):
 

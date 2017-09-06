@@ -2,6 +2,7 @@
 # coding: utf-8
 
 
+import re
 import sys
 import types
 
@@ -470,3 +471,25 @@ def _make_colored_function(name):
 for _func_name in _named_colors:
     setattr(sys.modules[__name__],
             _func_name, _make_colored_function(_func_name))
+
+
+def break_line(linestr, width):
+    lines = re.split('\n|\r', linestr)
+    rst = []
+
+    for line in lines:
+        words = line.split(' ')
+
+        buf = words[0]
+        for word in words[1:]:
+            if len(word) + len(buf) + 1 > width:
+                rst.append(buf)
+                buf = word
+            else:
+                buf += ' ' + word
+
+        if buf != '':
+            rst.append(buf)
+
+    return rst
+

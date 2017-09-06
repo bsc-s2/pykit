@@ -2,6 +2,7 @@ from .strutil import (
     format_line,
     line_pad,
     tokenize,
+    break_line,
 
     ColoredString,
     colorize,
@@ -32,6 +33,7 @@ __all__ = [
     'format_line',
     'line_pad',
     'tokenize',
+    'break_line',
 
     'ColoredString',
     'colorize',
