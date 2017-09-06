@@ -2,13 +2,13 @@
 # coding: utf-8
 
 import os
-import threading
 import time
 import unittest
 
 from pykit import fsutil
 from pykit import humannum
 from pykit import proc
+from pykit import threadutil
 from pykit import ututil
 
 dd = ututil.dd
@@ -257,13 +257,6 @@ class TestFSUtil(unittest.TestCase):
 
         os.fsync = _wait_fsync
 
-        def _thread(target, args):
-            th = threading.Thread(target=target, args=args)
-            th.daemon = True
-            th.start()
-
-            return th
-
         assert_ok = {'ok': True}
 
         def _write_wait(cont_write, cont_read, start_after, atomic):
@@ -284,10 +277,12 @@ class TestFSUtil(unittest.TestCase):
         #  4.5     cont_2    None       return
 
         ths = []
-        th = _thread(_write_wait, (cont_thread1, cont_thread2, 0, False))
+        th = threadutil.start_daemon_thread(_write_wait,
+                        args=(cont_thread1, cont_thread2, 0, False))
         ths.append(th)
 
-        th = _thread(_write_wait, (cont_thread2, cont_thread2, 1.5, False))
+        th = threadutil.start_daemon_thread(_write_wait,
+                        args=(cont_thread2, cont_thread2, 1.5, False))
         ths.append(th)
 
         for th in ths:
@@ -303,10 +298,12 @@ class TestFSUtil(unittest.TestCase):
         #  4.5     cont_2    None       return
 
         ths = []
-        th = _thread(_write_wait, (cont_thread1, cont_thread1, 0, True))
+        th = threadutil.start_daemon_thread(_write_wait,
+                        args=(cont_thread1, cont_thread1, 0, True))
         ths.append(th)
 
-        th = _thread(_write_wait, (cont_thread2, cont_thread2, 1.5, True))
+        th = threadutil.start_daemon_thread(_write_wait,
+                        args=(cont_thread2, cont_thread2, 1.5, True))
         ths.append(th)
 
         for th in ths:
@@ -342,21 +339,6 @@ class TestFSUtil(unittest.TestCase):
 
             (   '',
                 {
-                    'sha1'      : True,
-                    'md5'       : True,
-                    'block_size': M,
-                    'io_limit'  : M,
-                },
-                {
-                    'sha1'      : 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
-                    'md5'       : 'd41d8cd98f00b204e9800998ecf8427e',
-                    'crc32'     : None,
-                },
-                None,
-            ),
-
-            (   '',
-                {
                     'md5'       : True,
                     'crc32'     : True,
                 },
@@ -415,42 +397,10 @@ class TestFSUtil(unittest.TestCase):
                 {
                     'sha1'      : True,
                     'md5'       : False,
-                    'crc32'     : True,
-                    'block_size': M,
-                    'io_limit'  : M,
-                },
-                {
-                    'sha1'      : 'e22fa5446cb33d0c32221d89ee270dff23e32847',
-                    'md5'       : None,
-                    'crc32'     : '7c3becdb',
-                },
-                None,
-            ),
-
-            (   'It  바로 とても 氣!',
-                {
-                    'sha1'      : True,
-                    'md5'       : False,
                     'crc32'     : False,
                 },
                 {
                     'sha1'      : 'e22fa5446cb33d0c32221d89ee270dff23e32847',
-                    'md5'       : None,
-                    'crc32'     : None,
-                },
-                None,
-            ),
-
-            (   'It  바로 とても 氣!',
-                {
-                    'sha1'      : False,
-                    'md5'       : False,
-                    'crc32'     : False,
-                    'block_size': M,
-                    'io_limit'  : M,
-                },
-                {
-                    'sha1'      : None,
                     'md5'       : None,
                     'crc32'     : None,
                 },
@@ -503,7 +453,7 @@ class TestFSUtil(unittest.TestCase):
                 {
                     'sha1'      : True,
                     'block_size': M,
-                    'io_limit'  : -M*5,
+                    'io_limit'  : -1,
                 },
                 None,
                 (0, 0.5),

@@ -365,6 +365,8 @@ print fsutil.calc_checksums(file_name, sha1=True, md5=True, crc32=False)
 -   `io_limit`:
     is the IO limitation per second while reading content of `path`.
 
+    There is no limitation if `io_limit` is negative number.
+
 **return**:
 a dict with keys `sha1` and `md5` and `crc32`.
 
