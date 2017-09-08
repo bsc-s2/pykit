@@ -11,26 +11,39 @@ listtype = (types.TupleType, types.ListType)
 def tokenize(line):
     # double quoted segment is preseverd
 
-    tokens = line.split(' ')
+    rst = []
+    n = len(line)
+    i = 0
 
-    stck = [[]]
+    while i < n:
 
-    for t in tokens:
+        while i < n and line[i] == ' ':
+            rst.append('')
+            i += 1
+        if i == n:
+            break
 
-        sp = t.split('"')
-        n = len(sp)
+        j = i
 
-        if n % 2 == 0:
-            if len(stck) == 1:
-                stck.append([t])
-            else:
-                stck[-1].append(t)
-                sss = stck.pop()
-                stck[-1].append(' '.join(sss))
-        else:
-            stck[-1].append(t)
+        if line[j] == '"':
+            i += 1
+            while i < n and line[i] != '"':
+                i += 1
+            if i == n:
+                break
 
-    return stck[0]
+        i += 1
+        while i < n and line[i] != ' ':
+            i += 1
+
+        rst.append(line[j:i])
+
+        i += 1
+
+    if n == 0 or line[n-1] == ' ':
+        rst.append('')
+
+    return rst
 
 
 def line_pad(linestr, padding=''):
