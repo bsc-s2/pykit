@@ -491,9 +491,9 @@ a list of string.
 ## strutil.tokenize
 
 **syntax**:
-`strutil.tokenize(linestr)`
+`strutil.tokenize(linestr, sep=None, quote='', preserve=False)`
 
-Tokenize a line with one space.
+Tokenize a line.
 
 Synopsis:
 
@@ -506,20 +506,53 @@ print tokenize('ab')
 # ['a', 'b']
 print tokenize('a b')
 
-# ['a', '', 'b']
-print tokenize('a  b')
+# ['a', 'b']
+print tokenize(' a  b ')
 
-# ['a', '"x x"', 'b']
-print tokenize('a "x x" b')
+# ['a', 'b']
+print tokenize(' a\t b\n c\r ')
 
-# ['a', '"x x"', 'b']
-print tokenize('a "x x" b "x') # the last `"x` has no pair, discard
+# ['a b', 'c d']
+print tokenize('a bxyc d', sep='xy')
+
+# ['a', 'x x', 'b']
+print tokenize('a "x x" b', quote='"')
+
+# ['a', 'x x', 'b']
+print tokenize('a "x x" b "x', quote='"') # the last `"x` has no pair, discard
+
+# ['a', 'a b', 'c d']
+print tokenize(' a  xa bx yc dy ', quote='xy')
+
+# ['a', 'xa bx', 'yc dy']
+print tokenize('a xa bx yc dy', quote='xy', preserve=True)
+
+# ['', 'a', 'xa bx', 'yc dy', '']
+print tokenize(' a xa bx yc dy ', sep=' ', quote='xy', preserve=True)
 ```
 
 **arguments**:
 
 -   `linestr`:
-    the line to tokenize, double quoted segment is preseverd.
+    the line to tokenize.
+
+-   `sep`:
+    is None or a non-empty string separator to tokenize with.
+    If sep is None, runs of consecutive whitespace are regarded as a single
+    separator, and the result will contain no empty strings at the start or end
+    if the string has leading or trailing whitespace. Consequently, splitting
+    an empty string or a string consisting of just whitespace with a None
+    separator returns `[]`. Just like `str.split(None)`.
+    By default, `sep` is None.
+
+-   `quote`:
+    Every character in `quote` is regarded as a quote. Add a `\` prefix to make
+    an exception. Segment between the same quotes is preserved.
+    By default, `quote` is `''`.
+
+-   `preserve`:
+    preserve the quote itself if `preserve` is `True`.
+    By default, `preserve` is `False`.
 
 **return**:
 a list of string.

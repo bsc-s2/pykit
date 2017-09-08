@@ -3,35 +3,110 @@
 
 
 import re
+import string
 import sys
 import types
 
 listtype = (types.TupleType, types.ListType)
 
+def _findquote(line, quote):
+    if len(quote) == 0:
+        return -1, -1, []
 
-def tokenize(line):
-    # double quoted segment is preseverd
+    i = 0
+    n = len(line)
+    escape = []
+    while i < n:
+        if line[i] == '\\':
+            escape.append(i)
+            i += 2
+            continue
 
-    tokens = line.split(' ')
+        if line[i] in quote:
+            quote_s = i - len(escape)
 
-    stck = [[]]
+            j = i
+            i += 1
+            while i < n and line[i] != line[j]:
+                if line[i] == '\\':
+                    escape.append(i)
+                    i += 2
+                    continue
 
-    for t in tokens:
+                i += 1
 
-        sp = t.split('"')
-        n = len(sp)
-
-        if n % 2 == 0:
-            if len(stck) == 1:
-                stck.append([t])
+            if i < n:
+                quote_e = i - len(escape)
+                return quote_s, quote_e, escape
             else:
-                stck[-1].append(t)
-                sss = stck.pop()
-                stck[-1].append(' '.join(sss))
-        else:
-            stck[-1].append(t)
+                return quote_s, -1, escape
 
-    return stck[0]
+        i += 1
+
+    return -1, -1, escape
+
+def tokenize(line, sep=None, quote='', preserve=False):
+    if sep == quote:
+        raise ValueError, 'diffrent sep and quote is required'
+
+    if sep is None:
+        if len(line) == 0:
+            return []
+        line = line.strip()
+
+    rst = ['']
+    n = len(line)
+    i = 0
+    while i < n:
+        quote_s, quote_e, escape = _findquote(line[i:], quote)
+
+        if len(escape) > 0:
+            lines = []
+            x = 0
+            for e in escape:
+                lines.append(line[x:i+e])
+                x = i+e+1
+            lines.append(line[x:])
+            line = ''.join(lines)
+            n = len(line)
+
+        if quote_s < 0:
+            sub = n
+        else:
+            sub = i + quote_s
+
+        if i < sub:
+            sub_rst = line[i:sub].split(sep)
+            if sep is None:
+                if line[sub-1] in string.whitespace:
+                    sub_rst.append('')
+                if line[i] in string.whitespace:
+                    sub_rst.insert(0, '')
+
+            head = rst.pop()
+            sub_rst[0] = head + sub_rst[0]
+            rst += sub_rst
+
+        if quote_s < 0:
+            break
+
+        # discard incomplete
+        # 'a b"c'  ->  ['a']
+        if quote_e < 0:
+            rst.pop()
+            break
+
+        head = rst.pop()
+
+        if preserve:
+            head += line[i+quote_s:i+quote_e+1]
+        else:
+            head += line[i+quote_s+1:i+quote_e]
+
+        rst.append(head)
+        i += quote_e + 1
+
+    return rst
 
 
 def line_pad(linestr, padding=''):
