@@ -48,6 +48,7 @@ There is a `README.md` for each module.
 | [humannum](humannum)           | Convert number to human readable number string                                        |
 | [jobq](jobq)                   | Process serial of input elements with several functions concurrently and sequentially |
 | [logutil](logutil)             | Utility functions to create logger or make log message                                |
+| [modutil](modutil)             | Submodule Utilities                                                                   |
 | [mysqlconnpool](mysqlconnpool) | Mysql connection pool with MySQLdb in python                                          |
 | [net](net)                     | Network utility                                                                       |
 | [portlock](portlock)           | cross process lock                                                                    |
