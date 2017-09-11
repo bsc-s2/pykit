@@ -119,14 +119,15 @@ class RangeSet(list):
             return
 
         i = bisect_left(self, rng)
-        self.insert(i, rng)
 
-        while i + 1 < len(self):
-            if self[i].cmp(self[i + 1]) == 0:
-                self[i] = merge_range(self[i], self[i + 1])
-                self.pop(i + 1)
+        while i < len(self):
+            if rng.cmp(self[i]) == 0:
+                rng = merge_range(rng, self[i])
+                self.pop(i)
             else:
                 break
+
+        self.insert(i, rng)
 
     def has(self, val):
         rng = Range(val, val, element_type=self.element_type)
