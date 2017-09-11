@@ -11,6 +11,12 @@ logger = logging.getLogger(__name__)
 
 class TestRange(unittest.TestCase):
 
+    def test_init(self):
+        a = rangeset.Range(1, 2)
+        dd(a)
+        a = rangeset.Range(1, 1)
+        dd(a)
+
     def test_has(self):
         cases = (
                 ([None, None], 0, True),
@@ -37,29 +43,115 @@ class TestRange(unittest.TestCase):
 
             self.assertEqual(expected, rst)
 
-    def test_element_type_detection(self):
+    def test_is_adjacent(self):
         cases = (
-                (None, None, int),
-                (1,    None, int),
-                (None, 1,    int),
-                (1,    1,    int),
-                (None, 1.0,  float),
-                (1.0,  None, float),
-                (1.0,  1.0,  float),
-                ('',   None, str),
-                (None, '',   str),
-                ('',   '',   str),
-                (None, (),   tuple),
-                ((),   None, tuple),
-                ((),   (),   tuple),
-                (None, [],   list),
-                ([],   None, list),
-                ([],   [],   list),
+                ([None, None], [None, None], False),
+                ([None, 0],    [0,    None], True),
+                ([None, 1],    [1,    None], True),
+                ([None, 1],    [2,    None], False),
+                ([None, 1],    [None, 2],    False),
+                ([1,    None], [1,    None], False),
+                ([0,    1],    [1,    3],    True),
+                ([1,    1],    [1,    1],    True),
+                ([0,    1],    [2,    3],    False),
         )
-        dd()
-        for l, r, expected in cases:
-            a = rangeset.Range(l, r)
-            self.assertEqual(expected, a.element_type)
+
+        for a, b, expected in cases:
+            dd('case:', a, b, expected)
+
+            a = rangeset.Range(*a)
+            b = rangeset.Range(*b)
+
+            rst = a.is_adjacent(b)
+            dd('rst:', rst)
+
+            self.assertEqual(expected, rst)
+
+    def test_cmp(self):
+
+        cases = (
+                ([None, None], [None, None], 0),
+                ([None, 1], [1, None], 0),
+                ([None, 1], [1, 2], 0),
+                ([None, 1], [2, 3], -1),
+                ([1, None], [None, 1], 0),
+                ([1, None], [None, 0], 1),
+                ([1, None], [-1, 0], 1),
+
+                ([0, 1], [1, None], 0),
+                ([0, 2], [1, None], 0),
+                ([-1, 0], [1, None], -1),
+        )
+
+        for a, b, expected in cases:
+
+            dd('case:', a, b, expected)
+
+            a = rangeset.Range(*a)
+            b = rangeset.Range(*b)
+
+            rst = a.cmp(b)
+            dd('rst:', rst)
+            self.assertEqual(expected, rst)
+
+    def test_substract(self):
+        cases = (
+            ([None, None], [None, None], [None,      None]),
+            ([None, None], [1,    None], [[None, 1], None]),
+            ([None, None], [None, 1],    [None,      [1, None]]),
+            ([None, None], [1,    3],    [[None, 1], [3, None]]),
+            ([None, 5],    [5,    8],    [[None, 5], None]),
+            ([None, 5],    [4,    8],    [[None, 4], None]),
+            ([None, 5],    [1,    2],    [[None, 1], [2, 5]]),
+            ([None, 5],    [None, 2],    [None,      [2, 5]]),
+            ([None, 5],    [None, 5],    [None,      None]),
+            ([5,    None], [1,    2],    [None,      [5, None]]),
+            ([5,    None], [1,    8],    [None,      [8, None]]),
+            ([5,    None], [5,    8],    [None,      [8, None]]),
+            ([5,    None], [6,    8],    [[5, 6],    [8, None]]),
+            ([5,    None], [6,    None], [[5, 6],    None]),
+            ([5,    None], [5,    None], [None,      None]),
+            ([5,    None], [4,    None], [None,      None]),
+            ([5,    10],   [5,    None], [None,      None]),
+            ([5,    10],   [6,    None], [[5, 6],    None]),
+            ([5,    10],   [6,    7],    [[5, 6],    [7, 10]]),
+            ([5,    10],   [6,    10],   [[5, 6],    None]),
+        )
+
+        for a, b, expected in cases:
+            dd('case:', a, b, expected)
+
+            a = rangeset.Range(*a)
+            b = rangeset.Range(*b)
+
+            rst = rangeset.substract_range(a, b)
+            dd('rst:', rst)
+
+            self.assertEqual(expected, rst)
+
+    def test_length(self):
+        inf = float('inf')
+        cases = (
+            ([None, None], inf),
+            ([1, None], inf),
+            ([None, 1], inf),
+            ([None, ''], inf),
+            ([None, ()], inf),
+            ([None, []], inf),
+
+            ([1, 2], 1),
+            ([1.0, 2.2], 1.2),
+        )
+
+        for rng, expected in cases:
+            dd('case:', rng, expected)
+
+            rst = rangeset.Range(*rng).length()
+            dd('rst:', rst)
+
+            self.assertAlmostEqual(expected, rst)
+
+        self.assertRaises(TypeError, rangeset.Range('', 'a').length)
 
 
 class TestRangeSet(unittest.TestCase):
@@ -70,14 +162,10 @@ class TestRangeSet(unittest.TestCase):
 
         self.assertIsInstance(a, list)
         self.assertEqual(0, len(a))
-        self.assertIs(int, a.element_type)
 
         a = rangeset.RangeSet([])
 
         self.assertEqual(0, len(a))
-
-        a = rangeset.RangeSet([], element_type=float)
-        self.assertIs(float, a.element_type)
 
     def test_invalid_element_type(self):
 
@@ -88,8 +176,8 @@ class TestRangeSet(unittest.TestCase):
         dd()
         for typ in cases:
             dd('test valid type: ', typ)
-            rangeset.Range(typ(), typ(), element_type=typ)
-            rangeset.RangeSet([[typ(), typ()]], element_type=typ)
+            rangeset.Range(typ(), typ())
+            rangeset.RangeSet([[typ(), typ()]])
 
         cases = (
             lambda x: 1,
@@ -99,10 +187,8 @@ class TestRangeSet(unittest.TestCase):
         dd()
         for val in cases:
             dd('test invalid type: ', typ)
-            self.assertRaises(TypeError, rangeset.Range, [], element_type=type(val))
             self.assertRaises(TypeError, rangeset.Range, [val, val])
 
-            self.assertRaises(TypeError, rangeset.RangeSet, [], element_type=type(val))
             self.assertRaises(TypeError, rangeset.RangeSet, [[val, val]])
 
         # incompatible type
@@ -136,33 +222,6 @@ class TestRangeSet(unittest.TestCase):
                 dd(repr(e))
             self.assertRaises(ValueError, rangeset.RangeSet, rs)
 
-    def test_range_cmp(self):
-
-        cases = (
-                ([None, None], [None, None], 0),
-                ([None, 1], [1, None], 0),
-                ([None, 1], [1, 2], 0),
-                ([None, 1], [2, 3], -1),
-                ([1, None], [None, 1], 0),
-                ([1, None], [None, 0], 1),
-                ([1, None], [-1, 0], 1),
-
-                ([0, 1], [1, None], 0),
-                ([0, 2], [1, None], 0),
-                ([-1, 0], [1, None], -1),
-        )
-
-        for a, b, expected in cases:
-
-            dd('case:', a, b, expected)
-
-            a = rangeset.Range(*a)
-            b = rangeset.Range(*b)
-
-            rst = a.cmp(b)
-            dd('rst:', rst)
-            self.assertEqual(expected, rst)
-
     def test_int_add_error(self):
 
         cases = (
@@ -179,7 +238,7 @@ class TestRangeSet(unittest.TestCase):
         for init, ins, err in cases:
             dd('case: ', init, ins, err)
 
-            a = rangeset.RangeSet(init, element_type=int)
+            a = rangeset.RangeSet(init)
             self.assertRaises(err, a.add, ins)
 
     def test_int_add(self):
@@ -231,7 +290,7 @@ class TestRangeSet(unittest.TestCase):
 
             dd('cases: ', init, ins, expected)
 
-            a = rangeset.RangeSet(init, element_type=int)
+            a = rangeset.RangeSet(init)
 
             a.add(ins)
 
@@ -266,3 +325,252 @@ class TestRangeSet(unittest.TestCase):
             dd('rst:', rst)
 
             self.assertEqual(expected, rst)
+
+    def test_union(self):
+
+        cases = (
+            ([[None, 10], [20, 30], [40, None]], [[None, None]],  [[None, None]]),
+
+            ([[None, 10], [20, 30], [40, None]], [[None, 1]],  [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[None, 10]], [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[None, 11]], [[None, 11],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[9,    11]], [[None, 11],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[10,   11]], [[None, 11],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[11,   12]], [[None, 10], [11, 12], [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[19,   20]], [[None, 10],           [19, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[19,   21]], [[None, 10],           [19, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[20,   21]], [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[24,   25]], [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[29,   30]], [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[29,   31]], [[None, 10],           [20, 31],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[30,   31]], [[None, 10],           [20, 31],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[31,   32]], [[None, 10],           [20, 30], [31, 32], [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[39,   40]], [[None, 10],           [20, 30],           [39, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[39,   41]], [[None, 10],           [20, 30],           [39, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[40,   41]], [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[41,   42]], [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[41,   None]], [[None, 10],           [20, 30],           [40, None]]),
+
+            ([[None, 10], [20, 30], [40, None]], [[8, 25], [35, 40]], [[None, 30], [35, None]]),
+        )
+
+        dd()
+        for a, b, expected in cases:
+            dd('case:', a, b, expected)
+
+            a = rangeset.RangeSet(a)
+            b = rangeset.RangeSet(b)
+
+            rst = rangeset.union(a, b)
+
+            dd('rst:', rst)
+
+            self.assertEqual(expected, rst)
+
+    def test_substract(self):
+
+        cases = (
+            ([[None, 10], [20, 30], [40, None]], [[None, None]],  []),
+
+            ([[None, 10], [20, 30], [40, None]], [[None, 1]],    [[1,    10], [20, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[None, 10]],   [[20,   30],                               [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[None, 11]],   [[20,   30],                               [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[9,    11]],   [[None,  9], [20, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[10,   11]],   [[None, 10], [20, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[11,   12]],   [[None, 10], [20, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[19,   20]],   [[None, 10], [20, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[19,   21]],   [[None, 10], [21, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[20,   21]],   [[None, 10], [21, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[24,   25]],   [[None, 10], [20, 24], [25, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[29,   30]],   [[None, 10], [20, 29],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[29,   31]],   [[None, 10], [20, 29],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[30,   31]],   [[None, 10], [20, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[31,   32]],   [[None, 10], [20, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[39,   40]],   [[None, 10], [20, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[39,   41]],   [[None, 10], [20, 30],                     [41, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[40,   41]],   [[None, 10], [20, 30],                     [41, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[41,   42]],   [[None, 10], [20, 30],           [40, 41], [42, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[41,   None]], [[None, 10], [20, 30],           [40, 41], ]),
+
+            ([[20, 30]], [[20, 24], [25, 30]], [[24, 25]]),
+            ([[None, 10], [20, 30], [40, None]], [[20, 24], [25, 30]], [[None, 10], [24, 25], [40, None], ]),
+            ([[None, 10], [20, 30], [40, None]], [[1, 2], [8, 25], [35, 45]], [[None, 1], [2, 8], [25, 30], [45, None]]),
+        )
+
+        dd()
+        for a, b, expected in cases:
+            dd('case:', a, b, expected)
+
+            a = rangeset.RangeSet(a)
+            b = rangeset.RangeSet(b)
+
+            rst = rangeset.substract(a, b)
+
+            dd('rst:', rst)
+
+            self.assertEqual(expected, rst)
+
+    def test_intersect(self):
+
+        cases = (
+            ([[None, 10], [20, 30], [40, None]], [[None, None]],  [[None, 10], [20, 30], [40, None]]),
+
+            ([[None, 10], [20, 30], [40, None]], [[None, 1]],    [[None, 1]]),
+            ([[None, 10], [20, 30], [40, None]], [[None, 10]],   [[None, 10]]),
+            ([[None, 10], [20, 30], [40, None]], [[None, 11]],   [[None, 10]]),
+            ([[None, 10], [20, 30], [40, None]], [[9,    11]],   [[9, 10]]),
+            ([[None, 10], [20, 30], [40, None]], [[10,   11]],   []),
+            ([[None, 10], [20, 30], [40, None]], [[11,   12]],   []),
+            ([[None, 10], [20, 30], [40, None]], [[19,   20]],   []),
+            ([[None, 10], [20, 30], [40, None]], [[19,   21]],   [[20, 21]]),
+            ([[None, 10], [20, 30], [40, None]], [[20,   21]],   [[20, 21]]),
+            ([[None, 10], [20, 30], [40, None]], [[24,   25]],   [[24, 25]]),
+            ([[None, 10], [20, 30], [40, None]], [[29,   30]],   [[29, 30]]),
+            ([[None, 10], [20, 30], [40, None]], [[29,   31]],   [[29, 30]]),
+            ([[None, 10], [20, 30], [40, None]], [[30,   31]],   []),
+            ([[None, 10], [20, 30], [40, None]], [[31,   32]],   []),
+            ([[None, 10], [20, 30], [40, None]], [[39,   40]],   []),
+            ([[None, 10], [20, 30], [40, None]], [[39,   41]],   [[40, 41]]),
+            ([[None, 10], [20, 30], [40, None]], [[40,   41]],   [[40, 41]]),
+            ([[None, 10], [20, 30], [40, None]], [[41,   42]],   [[41, 42]]),
+            ([[None, 10], [20, 30], [40, None]], [[41,   None]], [[41, None]]),
+
+            ([[None, 10], [20, 30], [40, None]], [[1, 2], [8, 25], [35, 45]], [[1, 2], [8, 10], [20, 25], [40, 45]]),
+        )
+
+        dd()
+        for a, b, expected in cases:
+            dd('case:', a, b, expected)
+
+            a = rangeset.RangeSet(a)
+            b = rangeset.RangeSet(b)
+
+            rst = rangeset.intersect(a, b)
+
+            dd('rst:', rst)
+
+            self.assertEqual(expected, rst)
+
+    def test_length(self):
+        rst = rangeset.RangeSet([[1, 2], [5, 8]]).length()
+        self.assertEqual(4, rst)
+
+        self.assertRaises(TypeError, rangeset.RangeSet([['', 'a']]).length)
+
+
+class TestIntIncRangeSet(unittest.TestCase):
+
+    def test_int_inc_substract(self):
+
+        cases = (
+            ([[None, 10], [20, 30], [40, None]], [[None, None]],  []),
+
+            ([[None, 10], [20, 30], [40, None]], [[None, 1]],    [[2,    10], [20, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[None, 10]],   [[20,   30],                               [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[None, 11]],   [[20,   30],                               [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[9,    11]],   [[None,  8], [20, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[10,   11]],   [[None,  9], [20, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[11,   12]],   [[None, 10], [20, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[19,   20]],   [[None, 10], [21, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[19,   21]],   [[None, 10], [22, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[20,   21]],   [[None, 10], [22, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[24,   25]],   [[None, 10], [20, 23], [26, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[29,   30]],   [[None, 10], [20, 28],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[29,   31]],   [[None, 10], [20, 28],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[30,   31]],   [[None, 10], [20, 29],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[31,   32]],   [[None, 10], [20, 30],                     [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[39,   40]],   [[None, 10], [20, 30],                     [41, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[39,   41]],   [[None, 10], [20, 30],                     [42, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[40,   41]],   [[None, 10], [20, 30],                     [42, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[41,   42]],   [[None, 10], [20, 30],           [40, 40], [43, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[41,   None]], [[None, 10], [20, 30],           [40, 40], ]),
+
+            ([[20, 30]], [[20, 23], [25, 30]], [[24, 24]]),
+            ([[20, 30]], [[20, 22], [27, 30]], [[23, 26]]),
+            ([[None, 10], [20, 30], [40, None]], [[20, 23], [26, 30]], [[None, 10], [24, 25], [40, None], ]),
+            ([[None, 10], [20, 30], [40, None]], [[1, 2], [8, 25], [35, 45]], [[None, 0], [3, 7], [26, 30], [46, None]]),
+        )
+
+        dd()
+        for a, b, expected in cases:
+            dd('case:', a, b, expected)
+
+            a = rangeset.RangeSet(a, range_clz=rangeset.IntIncRange)
+            b = rangeset.RangeSet(b, range_clz=rangeset.IntIncRange)
+
+            rst = rangeset.substract(a, b)
+
+            dd('rst:', rst)
+
+            self.assertEqual(expected, rst)
+
+    def test_int_inc_union(self):
+
+        cases = (
+            ([[None, 10], [20, 30], [40, None]], [[None, None]],  [[None, None]]),
+
+            ([[None, 10], [20, 30], [40, None]], [[None, 1]],  [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[None, 10]], [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[None, 11]], [[None, 11],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[9,    11]], [[None, 11],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[10,   11]], [[None, 11],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[11,   12]], [[None, 12],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[12,   13]], [[None, 10], [12, 13], [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[18,   19]], [[None, 10],           [18, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[19,   21]], [[None, 10],           [19, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[20,   21]], [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[24,   25]], [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[29,   30]], [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[29,   31]], [[None, 10],           [20, 31],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[30,   31]], [[None, 10],           [20, 31],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[31,   32]], [[None, 10],           [20, 32],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[32,   33]], [[None, 10],           [20, 30], [32, 33], [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[39,   39]], [[None, 10],           [20, 30],           [39, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[39,   40]], [[None, 10],           [20, 30],           [39, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[39,   41]], [[None, 10],           [20, 30],           [39, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[40,   41]], [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[41,   42]], [[None, 10],           [20, 30],           [40, None]]),
+            ([[None, 10], [20, 30], [40, None]], [[41, None]], [[None, 10],           [20, 30],           [40, None]]),
+
+            ([[None, 10], [20, 30], [40, None]], [[8, 25], [35, 40]], [[None, 30], [35, None]]),
+        )
+
+        dd()
+        for a, b, expected in cases:
+            dd('case:', a, b, expected)
+
+            a = rangeset.RangeSet(a, range_clz=rangeset.IntIncRange)
+            b = rangeset.RangeSet(b, range_clz=rangeset.IntIncRange)
+
+            rst = rangeset.union(a, b)
+
+            dd('rst:', rst)
+
+            self.assertEqual(expected, rst)
+
+    def test_int_inc_length(self):
+
+        rst = rangeset.IntIncRangeSet([[1, 2], [5, 8]]).length()
+        self.assertEqual(6, rst)
+
+    def test_inherit_range_clz(self):
+
+        a = rangeset.IntIncRangeSet([[1, 2]])
+        b = rangeset.IntIncRangeSet([[2, 3], [5, 6]])
+
+        cases = (
+            rangeset.union,
+            rangeset.substract,
+            rangeset.intersect,
+        )
+
+        dd()
+
+        for func in cases:
+            dd('func:', func)
+
+            rst = func(a, b)
+            self.assertIs(a[0].__class__, rst[0].__class__)
+            rst = func(b, a)
+            self.assertIs(a[0].__class__, rst[0].__class__)
+

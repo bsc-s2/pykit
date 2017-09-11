@@ -1,15 +1,16 @@
 
 
+int_types = (int, long)
 list_like = (type([]), type(()))
 
 compatible_types = {
-    type(None): [type(None)],
-    int:        [type(None), int, ],
-    long:       [type(None), int,   long, ],
-    float:      [type(None), int,   long, float, ],
-    str:        [type(None), str, ],
-    tuple:      [type(None), tuple, ],
-    list:       [type(None), list, ],
+    type(None): (type(None), ),
+    int:        (type(None), int, ),
+    long:       (type(None), int,   long, ),
+    float:      (type(None), int,   long, float, ),
+    str:        (type(None), str,),
+    tuple:      (type(None), tuple, ),
+    list:       (type(None), list,),
 }
 
 
@@ -23,33 +24,11 @@ class Unmergeable(RangeException):
 
 class Range(list):
 
-    def __init__(self, left, right, element_type=None):
+    def __init__(self, left, right):
 
-        if element_type is None:
-            val = left
-            if val is None:
-                val = right
-            if val is None:
-                val = 1
-            element_type = type(val)
+        assert_compatible(left, right)
 
-        assert_type_valid(element_type)
-
-        self.element_type = element_type
-
-        compatible = compatible_types[self.element_type]
-
-        if type(left) not in compatible:
-            raise TypeError('left {l} is incompatible with {typ}'.format(
-                l=type(left), typ=self.element_type))
-
-        if type(right) not in compatible:
-            raise TypeError('right {r} is incompatible with {typ}'.format(
-                r=type(right), typ=self.element_type))
-
-        if (left is not None
-            and right is not None
-                and left > right):
+        if cmp_boundary(left, right) > 0:
             raise ValueError('left not smaller or equal right: {left}, {right}'.format(
                 left=left, right=right))
 
@@ -59,36 +38,111 @@ class Range(list):
 
         # if a and b can be merged into one range, we say a == b
 
-        if (self[0] is not None
-            and b[1] is not None
-                and self[0] > b[1]):
+        if cmp_boundary(self[0], b[1]) > 0:
             return 1
 
-        if (self[1] is not None
-            and b[0] is not None
-                and self[1] < b[0]):
+        if cmp_boundary(b[0], self[1]) > 0:
+            return -1
+
+        # incomparable: overlapping or adjacent ranges
+        return 0
+
+    def cmp_left(self, b):
+        # left is None means it is negative infinite
+        return cmp_val(self[0], b[0], none_cmp_finite=-1)
+
+    def cmp_right(self, b):
+        # right is None means it is positive infinite
+        return cmp_val(self[1], b[1], none_cmp_finite=1)
+
+    def is_adjacent(self, b):
+        return cmp_boundary(b[0], self[1]) == 0
+
+    def has(self, val):
+        return (cmp_val(self[0], val, none_cmp_finite=-1) <= 0
+                and cmp_val(val, self[1], none_cmp_finite=1) < 0)
+
+    def length(self):
+        if self[0] is None or self[1] is None:
+            return float('inf')
+
+        return self[1] - self[0]
+
+    def dup(self):
+        return self.__class__(self[0], self[1])
+
+    def next_left(self):
+        return self[1]
+
+    def prev_right(self):
+        return self[0]
+
+
+class IntIncRange(Range):
+
+    def __init__(self, left, right):
+
+        if left is not None and type(left) not in int_types:
+            raise TypeError('{l} {ltyp} is not int or None'.format(
+                l=left, ltyp=type(left)))
+
+        if right is not None and type(right) not in int_types:
+            raise TypeError('{r} {rtyp} is not int or None'.format(
+                r=right, rtyp=type(right)))
+
+        if cmp_boundary(left, right) > 0:
+            raise ValueError('left not smaller or equal right: {left}, {right}'.format(
+                left=left, right=right))
+
+        list.__init__(self, [left, right])
+
+    def cmp(self, b):
+
+        # if a and b can be merged into one range, we say a == b
+
+        if None not in (self[0], b[1]) and self[0] - b[1] > 1:
+            return 1
+
+        if None not in (b[0], self[1]) and b[0] - self[1] > 1:
             return -1
 
         # incomparable: overlapping or adjacent ranges
         return 0
 
     def is_adjacent(self, b):
-        return self[1] == b[0]
+        return (None not in (b[0], self[1])
+                and self[1] + 1 == b[0])
 
     def has(self, val):
-        return (self[0] is None or self[0] <= val) and (self[1] is None or self[1] > val)
+        return (cmp_val(self[0], val, none_cmp_finite=-1) <= 0
+                and cmp_val(val, self[1], none_cmp_finite=1) <= 0
+                and type(val) in int_types)
+
+    def length(self):
+        if None in self:
+            return float('inf')
+
+        return self[1] - self[0] + 1
+
+    def next_left(self):
+        return self[1] + 1
+
+    def prev_right(self):
+        return self[0] - 1
 
 
 class RangeSet(list):
 
-    def __init__(self, iterable=None, element_type=int):
+    default_range_clz = Range
 
-        assert_type_valid(element_type)
+    def __init__(self, iterable=None, range_clz=None):
 
         if iterable is None:
             iterable = []
 
-        super(RangeSet, self).__init__([Range(x[0], x[1], element_type=element_type)
+        self.range_clz = range_clz or self.default_range_clz
+
+        super(RangeSet, self).__init__([self.range_clz(x[0], x[1])
                                         for x in iterable])
 
         for i in range(0, len(self) - 1):
@@ -100,29 +154,15 @@ class RangeSet(list):
                     ripp=self[i + 1],
                 ))
 
-        self.element_type = element_type
-
     def add(self, rng):
 
-        if not isinstance(rng, (list, tuple, Range)):
-            raise TypeError('invalid range {rng} of type {typ}'.format(
-                rng=rng, typ=type(rng)))
-
-        if len(rng) != 2:
-            raise ValueError('range length is not 2 but {l}: {rng}'.format(
-                l=len(rng), rng=rng))
-
-        rng = Range(rng[0], rng[1], element_type=self.element_type)
-
-        if len(self) == 0:
-            self.insert(0, rng)
-            return
+        rng = _to_range(rng)
 
         i = bisect_left(self, rng)
 
         while i < len(self):
             if rng.cmp(self[i]) == 0:
-                rng = merge_range(rng, self[i])
+                rng = union_range(rng, self[i])
                 self.pop(i)
             else:
                 break
@@ -130,7 +170,7 @@ class RangeSet(list):
         self.insert(i, rng)
 
     def has(self, val):
-        rng = Range(val, val, element_type=self.element_type)
+        rng = Range(val, val)
         i = bisect_left(self, rng)
 
         if i == len(self):
@@ -138,15 +178,175 @@ class RangeSet(list):
 
         return self[i].has(val)
 
+    def length(self):
+        rst = 0
+        for rng in self:
+            rst += rng.length()
+
+        return rst
+
+
+class IntIncRangeSet(RangeSet):
+    default_range_clz = IntIncRange
+
+
+def union(a, *bs):
+    u = a
+    for b in bs:
+        u = _union(u, b)
+    return u
+
+
+def _union(a, b):
+
+    if len(a) == 0:
+        return RangeSet(b, range_clz=b.range_clz)
+
+    if len(b) == 0:
+        return RangeSet(a, range_clz=b.range_clz)
+
+    rst = []
+    i, j = 1, 0
+
+    rng = a[0]
+
+    while i < len(a) or j < len(b):
+
+        a_ge_b = None
+
+        if i == len(a):
+            a_ge_b = True
+        elif j == len(b):
+            a_ge_b = False
+        else:
+            a_ge_b = a[i].cmp_left(b[j]) >= 0
+
+        if a_ge_b:
+            nxt = b[j]
+            j += 1
+        else:
+            nxt = a[i]
+            i += 1
+
+        if rng.cmp(nxt) == 0:
+            rng = union_range(rng, nxt)
+        else:
+            assert rng.cmp(nxt) < 0
+            rst.append(rng)
+            rng = nxt
+
+    rst.append(rng)
+
+    return RangeSet(rst, range_clz=b.range_clz)
+
+
+def substract(a, *bs):
+    s = a
+    for b in bs:
+        s = _substract(s, b)
+    return s
+
+
+def _substract(a, b):
+
+    if len(a) == 0:
+        return RangeSet([], range_clz=b.range_clz)
+
+    if len(b) == 0:
+        return RangeSet(a, range_clz=b.range_clz)
+
+    rst = []
+
+    for ra in a:
+
+        sb = a.range_clz(*ra)
+
+        j = bisect_left(b, ra)
+
+        while j < len(b) and sb.cmp(b[j]) == 0:
+            u1, u2 = substract_range(sb, b[j])
+
+            if u1 is not None:
+                rst.append(u1)
+
+            sb = u2
+
+            if sb is None:
+                break
+
+            j += 1
+
+        if sb is not None:
+            rst.append(sb)
+
+    return RangeSet(rst, range_clz=b.range_clz)
+
+
+def intersect(a, b):
+    return substract(a, substract(a, b))
+
 
 def assert_type_valid(typ):
     if typ not in compatible_types:
         raise TypeError('{typ} is not comparable'.format(typ=typ))
 
 
-def merge_range(a, b):
+def _to_range(rng):
 
-    assert a.element_type == b.element_type
+    if not isinstance(rng, (list, tuple, Range)):
+        raise TypeError('invalid range {rng} of type {typ}'.format(
+            rng=rng, typ=type(rng)))
+
+    if len(rng) != 2:
+        raise ValueError('range length is not 2 but {l}: {rng}'.format(
+            l=len(rng), rng=rng))
+
+    return Range(rng[0], rng[1])
+
+
+def cmp_boundary(l, r):
+
+    if l is None:
+        # left is -inf
+        return -1
+
+    if r is None:
+        # right is inf
+        return -1
+
+    if l < r:
+        return -1
+    elif l > r:
+        return 1
+    else:
+        return 0
+
+
+def cmp_val(a, b, none_cmp_finite=1):
+
+    # compare two value. any of them can be None.
+    # None means positive infinite or negative infinite, defined by none_cmp_finite
+
+    if a is None:
+        if b is None:
+            return 0
+        else:
+            # compare(none, b)
+            return none_cmp_finite
+    else:
+        if b is None:
+            # compare(b, none) = -compare(none, b)
+            return -none_cmp_finite
+        else:
+            if a < b:
+                return -1
+            elif a > b:
+                return 1
+            else:
+                return 0
+
+
+def union_range(a, b):
 
     if a.cmp(b) != 0:
         raise Unmergeable(a, b)
@@ -161,7 +361,26 @@ def merge_range(a, b):
     else:
         right = max([a[1], b[1]])
 
-    return Range(left, right, element_type=a.element_type)
+    return a.__class__(left, right)
+
+
+def substract_range(a, b):
+
+    if a.cmp(b) > 0:
+        return [None, a.dup()]
+
+    if a.cmp(b) < 0:
+        return [a.dup(), None]
+
+    rst = [None, None]
+
+    if a.cmp_left(b) < 0:
+        rst[0] = a.__class__(a[0], b.prev_right())
+
+    if b.cmp_right(a) < 0:
+        rst[1] = a.__class__(b.next_left(), a[1])
+
+    return rst
 
 
 def bisect_left(a, x, lo=0, hi=None):
@@ -182,3 +401,22 @@ def bisect_left(a, x, lo=0, hi=None):
         else:
             hi = mid
     return lo
+
+
+def assert_compatible(l, r):
+    if not is_compatible(l, r):
+        raise TypeError('{l} {ltyp} is incompatible with {r} {rtyp}'.format(
+            l=l, ltyp=type(l), r=r, rtyp=type(r)))
+
+
+def is_compatible(l, r):
+    if l is None or r is None:
+        return True
+
+    if type(l) in compatible_types.get(type(r), ()):
+        return True
+
+    if type(r) in compatible_types.get(type(l), ()):
+        return True
+
+    return False

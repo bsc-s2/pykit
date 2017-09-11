@@ -7,12 +7,20 @@
 - [Description](#description)
 - [Synopsis](#synopsis)
 - [Classes](#classes)
+  - [rangeset.IntIncRange](#rangesetintincrange)
+  - [rangeset.IntIncRangeSet](#rangesetintincrangeset)
   - [rangeset.Range](#rangesetrange)
     - [Range.cmp](#rangecmp)
+    - [Range.has(val)](#rangehasval)
     - [Range.is_adjacent](#rangeis_adjacent)
+    - [Range.length](#rangelength)
   - [rangeset.RangeSet](#rangesetrangeset)
     - [RangeSet.add](#rangesetadd)
     - [RangeSet.has](#rangesethas)
+- [Methods](#methods)
+  - [rangeset.union](#rangesetunion)
+  - [rangeset.substract](#rangesetsubstract)
+  - [rangeset.intersect](#rangesetintersect)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -45,10 +53,24 @@ a.add([5, 7]) # [[1, 7], [10, 20]]
 
 #   Classes
 
+
+## rangeset.IntIncRange
+
+`IntIncRange` is similiar to `Range` and shares the same set of API, except it
+limits value types to int or long, and its right boundary is closed, thus unlike
+`Range`(right boundary is open), 2 is in `[1, 2]`.
+
+
+## rangeset.IntIncRangeSet
+
+It is similiar to `RangeSet` and shares the same set of API, except the default
+class for element in it is `IntIncRange`, not `Range`.
+
+
 ##  rangeset.Range
 
 **syntax**:
-`rangeset.Range(left, right, element_type=None)`
+`rangeset.Range(left, right)`
 
 A continuous range.
 Range is left-close and right-open.
@@ -62,12 +84,6 @@ E.g. a range `[1, 3]` has 2 elements `1` and `2`, but `3` is not in this range.
 -   `right`:
     specifies the right open boundary, which means `right` is **NOT** in this
     range.
-
--   `element_type`:
-    specifies the data type of value in this range.
-    If it is `None`, `element_type` is detected by one of the non-None `left` or
-    `right`.
-    If `element_type`, `left` and `right` are all `None`, use `int` by default.
 
 **return**:
 a `rangeset.Range` instance.
@@ -94,6 +110,23 @@ Compare this range with `other`.
     -   `Range(0, 1)`: adjacent.
     -   `Range(3, 4)`: adjacent.
 
+
+###  Range.has(val)
+
+**syntax**:
+`Range.has(val)`
+
+Return True if `val` is in this range. Otherwise `False`.
+
+**arguments**:
+
+-   `val`:
+    is the value to check.
+
+**return**:
+`bool`
+
+
 ###  Range.is_adjacent
 
 **syntax**:
@@ -110,6 +143,21 @@ merged into one range.
 **return**:
 `True` for `[1, 2] and [2, 3]`
 `Fales` for `[1, 2] and [3, 4]` or `[1, 2] and [1, 3]`
+
+
+###  Range.length
+
+**syntax**:
+`Range.length()`
+
+Return range length if it is a numeric range such as `int`, `float`
+
+**return**:
+length in the same type of one of its boundary.
+
+If one of left and right boundary is `None`, in which case it is an infite
+range, `float('inf')` is returned.
+
 
 ##  rangeset.RangeSet
 
@@ -173,6 +221,85 @@ RangeSet([[10, 20], [30, 40]]).has(50) # False
 
 **return**:
 `True` if `val` is in it. Or `False`.
+
+
+#   Methods
+
+##  rangeset.union
+
+**syntax**:
+`rangeset.union(a, *others)`
+
+Return a new union set `RangeSet` of all `a` and `others`.
+
+```
+rangeset.union(
+    rangeset.RangeSet([[None, 10], [20, 30], [40, None]]),
+    rangeset.RangeSet([[11, 22]])
+)
+# [[None, 10], [11, 30], [40, None]]
+```
+
+**arguments**:
+
+-   `a`:
+    a `RangeSet` instance.
+
+-   `others`:
+    `RangeSet` instances
+
+**return**:
+a new `RangeSet` instance.
+
+
+##  rangeset.substract
+
+**syntax**:
+`rangeset.substract(a, *others)`
+
+Return a new `RangeSet` with all ranges in `others` removed from `a`.
+
+```
+rangeset.substract(
+    rangeset.RangeSet([[None, 10], [20, 30], [40, None]]),
+    rangeset.RangeSet([[25, 45]])
+)
+# [[None, 10], [20, 25], [45, None]]
+```
+
+**arguments**:
+
+-   `a`:
+    a `RangeSet` instance.
+
+-   `others`:
+    `RangeSet` instances
+
+**return**:
+a new `RangeSet` instance.
+
+
+##  rangeset.intersect
+
+**syntax**:
+`rangeset.intersect(a, *others)`
+
+Return a new intersection set `RangeSet` of all `a` and `others`.
+
+> intersect(a, b): a^b is defined with substraction: a^b = a - (a - b)
+
+
+**arguments**:
+
+-   `a`:
+    a `RangeSet` instance.
+
+-   `others`:
+    `RangeSet` instances.
+
+**return**:
+a new `RangeSet` instance.
+
 
 #   Author
 
