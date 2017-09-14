@@ -51,6 +51,7 @@ There is a `README.md` for each module.
 | [logutil](logutil)             | Utility functions to create logger or make log message                                |
 | [modutil](modutil)             | Submodule Utilities                                                                   |
 | [mysqlconnpool](mysqlconnpool) | Mysql connection pool with MySQLdb in python                                          |
+| [mysqlutil](mysqlutil)         | Mysql related datatype, operations                                                    |
 | [net](net)                     | Network utility                                                                       |
 | [portlock](portlock)           | cross process lock                                                                    |
 | [proc](proc)                   | Utility to create sub process                                                         |
