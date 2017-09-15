@@ -158,7 +158,11 @@ def write_file(path, fcont, uid=None, gid=None, atomic=False):
                 )
     _write_file(tmp_path, fcont, uid, gid)
 
-    os.rename(tmp_path, path)
+    try:
+        os.rename(tmp_path, path)
+    except EnvironmentError:
+        os.remove(tmp_path)
+        raise
 
 
 def _write_file(path, fcont, uid=None, gid=None):
