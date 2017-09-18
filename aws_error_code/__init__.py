@@ -1,7 +1,7 @@
-from .error_codes import (
-    error_codes,
+from .error_code import (
+    error_code,
 )
 
 __all__ = [
-    'error_codes',
+    'error_code',
 ]

@@ -1,6 +1,11 @@
+import os
+
 import yaml
 
-with open('pykit/aws_error_codes/error_codes.yaml', 'r') as f:
+dir_name = os.path.dirname(__file__)
+file_name = os.path.join(dir_name, 'error_code.yaml')
+
+with open(file_name, 'r') as f:
     file_content = f.read()
 
-error_codes = yaml.load(file_content)
+error_code = yaml.safe_load(file_content)
