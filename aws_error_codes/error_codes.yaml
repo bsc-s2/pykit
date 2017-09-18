@@ -1,0 +1,308 @@
+AccessDenied:
+  description: Access Denied
+  error_code: AccessDenied
+  status_code: 403
+AccountProblem:
+  description: There is a problem with your AWS account that prevents the operation
+    from completing successfully. Please contact customer service at webservices@amazon.com.
+  error_code: AccountProblem
+  status_code: 403
+AmbiguousGrantByEmailAddress:
+  description: The e-mail address you provided is associated with more than one account.
+  error_code: AmbiguousGrantByEmailAddress
+  status_code: 400
+BadDigest:
+  description: The Content-MD5 you specified did not match what we received.
+  error_code: BadDigest
+  status_code: 400
+BucketAlreadyExists:
+  description: The requested bucket name is not available. The bucket namespace is
+    shared by all users of the system. Please select a different name and try again.
+  error_code: BucketAlreadyExists
+  status_code: 409
+BucketAlreadyOwnedByYou:
+  description: Your previous request to create the named bucket succeeded and you
+    already own it.
+  error_code: BucketAlreadyOwnedByYou
+  status_code: 409
+BucketNotEmpty:
+  description: The bucket you tried to delete is not empty.
+  error_code: BucketNotEmpty
+  status_code: 409
+CredentialsNotSupported:
+  description: This request does not support credentials.
+  error_code: CredentialsNotSupported
+  status_code: 400
+CrossLocationLoggingProhibited:
+  description: Cross location logging not allowed. Buckets in one geographic location
+    cannot log information to a bucket in another location.
+  error_code: CrossLocationLoggingProhibited
+  status_code: 403
+DownloadSourceException:
+  description: Donwload source exception can not download file
+  error_code: DownloadSourceException
+  status_code: 400
+DownloadedFileDamaged:
+  description: Donwloaded file content is damaged
+  error_code: DownloadedFileDamaged
+  status_code: 400
+EntityTooLarge:
+  description: Your proposed upload exceeds the maximum allowed object size.
+  error_code: EntityTooLarge
+  status_code: 400
+EntityTooSmall:
+  description: Your proposed upload is smaller than the minimum allowed object size.
+  error_code: EntityTooSmall
+  status_code: 400
+ExpiredToken:
+  description: The provided token has expired.
+  error_code: ExpiredToken
+  status_code: 400
+IncompleteBody:
+  description: You did not provide the number of bytes specified by the Content-Length
+    HTTP header
+  error_code: IncompleteBody
+  status_code: 400
+IncorrectNumberOfFilesInPostRequest:
+  description: POST requires exactly one file upload per request.
+  error_code: IncorrectNumberOfFilesInPostRequest
+  status_code: 400
+InlineDataTooLarge:
+  description: Inline data exceeds the maximum allowed size.
+  error_code: InlineDataTooLarge
+  status_code: 400
+InternalError:
+  description: We encountered an internal error. Please try again.
+  error_code: InternalError
+  status_code: 500
+InvalidAccessKeyId:
+  description: The AWS Access Key Id you provided does not exist in our records.
+  error_code: InvalidAccessKeyId
+  status_code: 403
+InvalidAddressingHeader:
+  description: You must specify the Anonymous role.
+  error_code: InvalidAddressingHeader
+  status_code: 400
+InvalidArgument:
+  description: Invalid Argument
+  error_code: InvalidArgument
+  status_code: 400
+InvalidBucketName:
+  description: The specified bucket is not valid.
+  error_code: InvalidBucketName
+  status_code: 400
+InvalidDigest:
+  description: The Content-MD5 you specified was an invalid.
+  error_code: InvalidDigest
+  status_code: 400
+InvalidLocationConstraint:
+  description: The specified location constraint is not valid.
+  error_code: InvalidLocationConstraint
+  status_code: 400
+InvalidPart:
+  description: One or more of the specified parts could not be found.The part might
+    not have been uploaded, or the specified entity tag might not have matched the
+    part's entity tag.
+  error_code: InvalidPart
+  status_code: 400
+InvalidPartOrder:
+  description: The list of parts was not in ascendingorder. Parts list must specified
+    in order by part number.
+  error_code: InvalidPartOrder
+  status_code: 400
+InvalidPayer:
+  description: All access to this object has been disabled.
+  error_code: InvalidPayer
+  status_code: 403
+InvalidPolicyDocument:
+  description: The content of the form does not meet the conditions specified in the
+    policy document.
+  error_code: InvalidPolicyDocument
+  status_code: 400
+InvalidRange:
+  description: The requested range cannot be satisfied.
+  error_code: InvalidRange
+  status_code: 416
+InvalidSOAPRequest:
+  description: The SOAP request body is invalid.
+  error_code: InvalidSOAPRequest
+  status_code: 400
+InvalidSecurity:
+  description: The provided security credentials are not valid.
+  error_code: InvalidSecurity
+  status_code: 403
+InvalidStorageClass:
+  description: The storage class you specified is not valid.
+  error_code: InvalidStorageClass
+  status_code: 400
+InvalidTargetBucketForLogging:
+  description: The target bucket for logging does not exist, is not owned by you,
+    or does not have the appropriate grants for the log-delivery group.
+  error_code: InvalidTargetBucketForLogging
+  status_code: 400
+InvalidToken:
+  description: The provided token is malformed or otherwise invalid.
+  error_code: InvalidToken
+  status_code: 400
+InvalidURI:
+  description: Couldn't parse the specified URI.
+  error_code: InvalidURI
+  status_code: 400
+KeyTooLong:
+  description: Your key is too long.
+  error_code: KeyTooLong
+  status_code: 400
+MalformedACLError:
+  description: The XML you provided was not well-formed or did not validate against
+    our published schema.
+  error_code: MalformedACLError
+  status_code: 400
+MalformedPOSTRequest:
+  description: The body of your POST request is not well-formed multipart/form-data.
+  error_code: MalformedPOSTRequest
+  status_code: 400
+MalformedXML:
+  description: This happens when the user sends a malformed xml (xml that doesn't
+    conform to the published xsd) for the configuration. The error message is, "The
+    XML you provided was not well-formed or did not validate against our published
+    schema."
+  error_code: MalformedXML
+  status_code: 400
+MaxMessageLengthExceeded:
+  description: Your request was too big.
+  error_code: MaxMessageLengthExceeded
+  status_code: 400
+MaxPostPreDataLengthExceededError:
+  description: Your POST request fields preceding the upload file were too large.
+  error_code: MaxPostPreDataLengthExceededError
+  status_code: 400
+MetadataTooLarge:
+  description: Your metadata headers exceed the maximum allowed metadata size.
+  error_code: MetadataTooLarge
+  status_code: 400
+MethodNotAllowed:
+  description: The specified method is not allowed against this resource.
+  error_code: MethodNotAllowed
+  status_code: 405
+MissingAttachment:
+  description: A SOAP attachment was expected, but none were found.
+  error_code: MissingAttachment
+  status_code: 400
+MissingContentLength:
+  description: You must provide the Content-Length HTTP header.
+  error_code: MissingContentLength
+  status_code: 411
+MissingRequestBodyError:
+  description: This happens when the user sends an empty xml document as a request.
+    The error message is, "Request body is empty."
+  error_code: MissingRequestBodyError
+  status_code: 400
+MissingSecurityElement:
+  description: The SOAP 1.1 request is missing a security element.
+  error_code: MissingSecurityElement
+  status_code: 400
+MissingSecurityHeader:
+  description: Your request was missing a required header.
+  error_code: MissingSecurityHeader
+  status_code: 400
+NoLoggingStatusForKey:
+  description: There is no such thing as a logging status sub-resource for a key.
+  error_code: NoLoggingStatusForKey
+  status_code: 400
+NoSuchBucket:
+  description: The specified bucket does not exist.
+  error_code: NoSuchBucket
+  status_code: 404
+NoSuchDownloadSource:
+  description: The specified download source does not exist
+  error_code: NoSuchDownloadSource
+  status_code: 404
+NoSuchKey:
+  description: The specified key does not exist.
+  error_code: NoSuchKey
+  status_code: 404
+NoSuchUpload:
+  description: The specified multipart upload does not exist. The upload ID might
+    be invalid, or the multipart upload might have been aborted or completed.
+  error_code: NoSuchUpload
+  status_code: 404
+NotImplemented:
+  description: A header you provided implies functionality that is not implemented.
+  error_code: NotImplemented
+  status_code: 501
+NotSignedUp:
+  description: 'Your account is not signed up for the Amazon?S3 service. You must
+    sign up before you can use Amazon?S3. You can sign up at the following URL: http://aws.amazon.com/s3'
+  error_code: NotSignedUp
+  status_code: 403
+OperationAborted:
+  description: A conflicting conditional operation is currently in progress against
+    this resource. Please try again.
+  error_code: OperationAborted
+  status_code: 409
+PermanentRedirect:
+  description: The bucket you are attempting to access must be addressed using the
+    specified endpoint. Please send all future requests to this endpoint.
+  error_code: PermanentRedirect
+  status_code: 301
+PreconditionFailed:
+  description: At least one of the pre-conditions you specified did not hold.
+  error_code: PreconditionFailed
+  status_code: 412
+Redirect:
+  description: Temporary redirect.
+  error_code: Redirect
+  status_code: 307
+RequestIsNotMultiPartContent:
+  description: Bucket POST must be of the enclosure-type multipart/form-data.
+  error_code: RequestIsNotMultiPartContent
+  status_code: 400
+RequestTimeTooSkewed:
+  description: The difference between the request time and the server's time is too
+    large.
+  error_code: RequestTimeTooSkewed
+  status_code: 403
+RequestTimeout:
+  description: Your socket connection to the server was not read from or written to
+    within the timeout period.
+  error_code: RequestTimeout
+  status_code: 400
+RequestTorrentOfBucketError:
+  description: Requesting the torrent file of a bucket is not permitted.
+  error_code: RequestTorrentOfBucketError
+  status_code: 400
+SignatureDoesNotMatch:
+  description: The request signature we calculated does not match the signature you
+    provided. Check your AWS Secret Access Key and signing method. For more information,
+    see Authenticating REST Requests and Authenticating SOAP Requests for details.
+  error_code: SignatureDoesNotMatch
+  status_code: 403
+SlowDown:
+  description: Please reduce your request rate.
+  error_code: SlowDown
+  status_code: 503
+TemporaryRedirect:
+  description: You are being redirected to the bucket while DNS updates.
+  error_code: TemporaryRedirect
+  status_code: 307
+TokenRefreshRequired:
+  description: The provided token must be refreshed.
+  error_code: TokenRefreshRequired
+  status_code: 400
+TooManyBuckets:
+  description: You have attempted to create more buckets than allowed.
+  error_code: TooManyBuckets
+  status_code: 400
+UnexpectedContent:
+  description: This request does not support content.
+  error_code: UnexpectedContent
+  status_code: 400
+UnresolvableGrantByEmailAddress:
+  description: The e-mail address you provided does not match any account on record.
+  error_code: UnresolvableGrantByEmailAddress
+  status_code: 400
+UserKeyMustBeSpecified:
+  description: The bucket POST must contain the specified field name. If it is specified,
+    please check the order of the fields.
+  error_code: UserKeyMustBeSpecified
+  status_code: 400
