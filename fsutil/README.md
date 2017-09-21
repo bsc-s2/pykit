@@ -27,6 +27,7 @@
   - [fsutil.get_path_usage](#fsutilget_path_usage)
   - [fsutil.makedirs](#fsutilmakedirs)
   - [fsutil.read_file](#fsutilread_file)
+  - [fsutil.remove](#fsutilremove)
   - [fsutil.write_file](#fsutilwrite_file)
   - [fsutil.calc_checksums](#fsutilcalc_checksums)
 - [Author](#author)
@@ -454,6 +455,31 @@ Read and return the entire file specified by `path`
 
 **return**:
 file content in string.
+
+
+##  fsutil.remove
+
+**syntax**:
+`fsutil.remove(path, ignore_errors=False, onerror=None)`
+
+Recursively delete `path`, the `path` is one of *file*, *directory* or *symbolic link*.
+
+**arguments**:
+
+-   `path`:
+    is the path to remove.
+
+-   `ignore_errors`:
+    whether ignore *os.error* while deleting the `path`.
+
+-   `onerror`:
+    If `ignore_errors` is set to `True`, errors(os.error) are ignored;
+    otherwise, if `onerror` is set, it is called to handle the error with
+    arguments `(func, path, exc_info)` where func is *os.listdir*,
+    *os.remove*, *os.rmdir* or *os.path.isdir*.
+
+**return**:
+Nothing
 
 
 ##  fsutil.write_file
