@@ -314,6 +314,122 @@ class TestFSUtil(unittest.TestCase):
         os.fsync = os_fsync
         force_remove(fn)
 
+    def test_remove_normal_file(self):
+
+        fn = '/tmp/pykit-ut-fsutil-remove-file-normal'
+        force_remove(fn)
+
+        fsutil.write_file(fn, '', atomic=True)
+        self.assertTrue(os.path.isfile(fn))
+
+        fsutil.remove(fn)
+        self.assertFalse(os.path.exists(fn))
+
+    def test_remove_link_file(self):
+
+        src_fn = '/tmp/pykit-ut-fsutil-remove-file-normal'
+        force_remove(src_fn)
+
+        fsutil.write_file(src_fn, '', atomic=True)
+        self.assertTrue(os.path.isfile(src_fn))
+
+        link_fn = '/tmp/pykit-ut-fsutil-remove-file-link'
+        force_remove(link_fn)
+
+        os.link(src_fn, link_fn)
+        self.assertTrue(os.path.isfile(link_fn))
+
+        fsutil.remove(link_fn)
+        self.assertFalse(os.path.exists(link_fn))
+
+        symlink_fn = '/tmp/pykit-ut-fsutil-remove-file-symlink'
+        force_remove(symlink_fn)
+
+        os.symlink(src_fn, symlink_fn)
+        self.assertTrue(os.path.islink(symlink_fn))
+
+        fsutil.remove(symlink_fn)
+        self.assertFalse(os.path.exists(symlink_fn))
+
+        force_remove(src_fn)
+
+    def test_remove_dir(self):
+
+        dirname = '/tmp/pykit-ut-fsutil-remove-dir'
+
+        fsutil.makedirs(dirname)
+        self.assertTrue(os.path.isdir(dirname))
+
+        for is_dir, file_path in (
+                (False, ('normal_file',)),
+                (True,  ('sub_dir',)),
+                (False, ('sub_dir', 'sub_file1')),
+                (False, ('sub_dir', 'sub_file2')),
+                (True,  ('sub_empty_dir',)),
+                (True,  ('sub_dir', 'sub_sub_dir')),
+                (False, ('sub_dir', 'sub_sub_dir', 'sub_sub_file')),
+                ):
+
+            path = os.path.join(dirname, *file_path)
+
+            if is_dir:
+                fsutil.makedirs(path)
+                self.assertTrue(os.path.isdir(path))
+            else:
+                fsutil.write_file(path, '')
+                self.assertTrue(os.path.isfile(path))
+
+        fsutil.remove(dirname)
+        self.assertFalse(os.path.exists(dirname))
+
+    def test_remove_dir_with_link(self):
+
+        dirname = '/tmp/pykit-ut-fsutil-remove-dir'
+
+        fsutil.makedirs(dirname)
+        self.assertTrue(os.path.isdir(dirname))
+
+        normal_file = 'normal_file'
+        normal_path = os.path.join(dirname, normal_file)
+
+        fsutil.write_file(normal_path, '')
+        self.assertTrue(os.path.isfile(normal_path))
+
+        hard_link = 'hard_link'
+        hard_path = os.path.join(dirname, hard_link)
+
+        os.link(normal_path, hard_path)
+        self.assertTrue(os.path.isfile(hard_path))
+
+        symbolic_link = 'symbolic_link'
+        symbolic_path = os.path.join(dirname, symbolic_link)
+
+        os.symlink(hard_path, symbolic_path)
+        self.assertTrue(os.path.islink(symbolic_path))
+
+        fsutil.remove(dirname)
+        self.assertFalse(os.path.exists(dirname))
+
+    def test_remove_error(self):
+
+        dirname = '/tmp/pykit-ut-fsutil-remove-on-error'
+        if os.path.isdir(dirname):
+            fsutil.remove(dirname)
+
+        # OSError
+        self.assertRaises(os.error, fsutil.remove, dirname, False)
+
+        # ignore errors
+        fsutil.remove(dirname, ignore_errors=True)
+
+        def assert_error(exp_func):
+            def onerror(func, path, exc_info):
+                self.assertEqual(func, exp_func)
+            return onerror
+
+        # on error
+        fsutil.remove(dirname, onerror=assert_error(os.remove))
+
     def test_calc_checksums(self):
 
         M = 1024**2
