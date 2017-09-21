@@ -5,6 +5,7 @@ import binascii
 import errno
 import hashlib
 import os
+import sys
 import time
 
 import psutil
@@ -177,6 +178,51 @@ def _write_file(path, fcont, uid=None, gid=None):
 
     if uid is not None and gid is not None:
         os.chown(path, uid, gid)
+
+
+def remove(path, ignore_errors=False, onerror=None):
+
+    if onerror is None:
+        onerror = _on_error_raise
+
+    if ignore_errors:
+        onerror = _on_error_pass
+
+    try:
+        is_dir = os.path.isdir(path)
+    except os.error:
+        onerror(os.path.isdir, path, sys.exc_info())
+        return
+
+    if not is_dir:
+        try:
+            os.remove(path)
+        except os.error:
+            onerror(os.remove, path, sys.exc_info())
+        return
+
+    names = []
+    try:
+        names = os.listdir(path)
+    except os.error:
+        onerror(os.listdir, path, sys.exc_info())
+
+    for name in names:
+        fullname = os.path.join(path, name)
+        remove(fullname, ignore_errors, onerror)
+
+    try:
+        os.rmdir(path)
+    except os.error:
+        onerror(os.rmdir, path, sys.exc_info())
+
+
+def _on_error_pass(*args, **kwargs):
+    pass
+
+
+def _on_error_raise(*args, **kwargs):
+    raise
 
 
 def calc_checksums(path, sha1=False, md5=False, crc32=False,

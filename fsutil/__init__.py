@@ -13,8 +13,8 @@ from .fsutil import (
     get_path_usage,
     makedirs,
     read_file,
+    remove,
     write_file,
-
 )
 
 from .cat import (
@@ -40,6 +40,7 @@ __all__ = [
     "get_path_usage",
     "makedirs",
     "read_file",
+    "remove",
     "write_file",
 
 
