@@ -38,6 +38,7 @@ There is a `README.md` for each module.
 
 | name                           | description                                                                           |
 | :--                            | :--                                                                                   |
+| [aws](aws)                     | AWS error codes and so on                                                             |
 | [cacheable](cacheable)         | Cache data which access frequently                                                    |
 | [cachepool](cachepool)         | Reusable object cache in process                                                      |
 | [daemonize](daemonize)         | Start, stop or restart a daemon process                                               |
