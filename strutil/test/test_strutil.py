@@ -58,7 +58,7 @@ class TestStrutil(unittest.TestCase):
         )
 
         for _in, _out, _mes in base_cases:
-            rst = strutil.tokenize(_in, sep=' ', quote='"', preserve=True)
+            rst = strutil.tokenize(_in, sep=' ', preserve=True)
             self.assertEqual(_out, rst,
                              ('input: {_in}, output: {_out}, expected: {rst},'
                               ' message: {_mes}').format(

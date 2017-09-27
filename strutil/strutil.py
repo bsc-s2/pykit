@@ -45,7 +45,7 @@ def _findquote(line, quote):
 
     return -1, -1, escape
 
-def tokenize(line, sep=None, quote='', preserve=False):
+def tokenize(line, sep=None, quote='"\'', preserve=False):
     if sep == quote:
         raise ValueError, 'diffrent sep and quote is required'
 

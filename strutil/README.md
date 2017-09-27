@@ -491,7 +491,7 @@ a list of string.
 ## strutil.tokenize
 
 **syntax**:
-`strutil.tokenize(linestr, sep=None, quote='', preserve=False)`
+`strutil.tokenize(linestr, sep=None, quote='"\'', preserve=False)`
 
 Tokenize a line.
 
@@ -516,10 +516,10 @@ print tokenize(' a\t b\n c\r ')
 print tokenize('a bxyc d', sep='xy')
 
 # ['a', 'x x', 'b']
-print tokenize('a "x x" b', quote='"')
+print tokenize('a "x x" b')
 
 # ['a', 'x x', 'b']
-print tokenize('a "x x" b "x', quote='"') # the last `"x` has no pair, discard
+print tokenize("a 'x x' b 'x") # the last `'x` has no pair, discard
 
 # ['a', 'a b', 'c d']
 print tokenize(' a  xa bx yc dy ', quote='xy')
@@ -548,7 +548,7 @@ print tokenize(' a xa bx yc dy ', sep=' ', quote='xy', preserve=True)
 -   `quote`:
     Every character in `quote` is regarded as a quote. Add a `\` prefix to make
     an exception. Segment between the same quotes is preserved.
-    By default, `quote` is `''`.
+    By default, `quote` is `'"\''`.
 
 -   `preserve`:
     preserve the quote itself if `preserve` is `True`.
