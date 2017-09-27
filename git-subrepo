@@ -235,6 +235,30 @@ git_head_branch()
     git symbolic-ref --short HEAD
 }
 
+git_commit_date()
+{
+
+    # git_commit_date author|commit <ref> [date-format]
+
+    # by default output author-date
+    local what_date="%ad"
+    if [ "$1" = "commit" ]; then
+        # commit date instead of author date
+        what_date="%cd"
+    fi
+    shift
+
+    local ref=$1
+    shift
+
+    local fmt="%Y-%m-%d %H:%M:%S"
+    if [ "$#" -gt 0 ]; then
+        fmt="$1"
+    fi
+    shift
+
+    git log -n1 --format="$what_date" --date=format:"$fmt" "$ref"
+}
 git_commit_copy()
 {
     # We're going to set some environment vars here, so
@@ -280,22 +304,42 @@ git_diff_ln_new()
     # 307 309
     # 350 350
     #
-    # add lines:
+    # Usage:
+    #
+    #   diff working tree with HEAD:
+    #       git_diff_ln_new HEAD -- <fn>
+    #
+    #   diff working tree with staged:
+    #       git_diff_ln_new -- <fn>
+    #
+    #   diff staged(cached) with HEAD:
+    #       git_diff_ln_new --cached -- <fn>
+    #
+    # in git-diff output:
+    # for add lines:
     # @@ -53 +72,8
-    # remove lines:
+    #
+    # for remove lines:
     # @@ -155 +179,0
 
     git diff -U0 "$@" \
         | grep '^@@' \
         | awk '{
-    l=$3
+
+    # @@ -155 +179,0
+    # $1 $2   $3
+
+    l = $3
     gsub("^+", "", l)
+
+    # add default offset: ",1"
     split(l",1", x, ",")
 
-    # inclusive line range: 
-    x[2]=x[1]+x[2]-1
+    # inclusive line range:
+    x[2] = x[1] + x[2] - 1
 
-    # line remove: @@ -155, +179,0
+    # line remove format: @@ -155, +179,0
+    # do need to output line range for removed.
     if (x[2] >= x[1]) {
         print x[1] " " x[2]
     }
@@ -476,6 +520,7 @@ main()
 
 
         local tag_hash=$(git_hash "$localtag") || die get hash of $localtag
+        local tag_author_date=$(git_commit_date author "$localtag") || die get authoer date of $localtag
         local head_hash=$(git_hash HEAD)
 
         dd "tag_hash:   $tag_hash"
@@ -519,19 +564,33 @@ main()
             continue
         fi
 
+        local changes=
+        local latest_hash=$(find_latest_squash "$prefix") || die find_latest_squash of "$prefix"
+
+        if [ -n "$latest_hash" ]; then
+            info "latest commit of $prefix: $latest_hash ($(git_commit_date author "$latest_hash"))"
+            # add 4 space indent
+            changes="$(git --no-pager shortlog $latest_hash..$tag_hash | awk '{print "    "$0}')"
+        else
+            info "latest commit of $prefix: not found"
+        fi
+
         local commit=$(
         {
             cat <<-END
-		Squashed $prefix $ref:$dir ${tag_hash:0:9}
-		
+		Squashed $prefix $ref:$dir ${tag_hash:0:9} (${tag_author_date})
+
 		url:      $url
 		ref:      $ref
 		sub-dir:  $dir
-		
+
 		localtag: $localtag $tag_hash
-		
+
 		git-subrepo-dir: $prefix
 		git-subrepo-hash: $tag_hash
+
+		changes: from ${latest_hash:0:9} ($(git_commit_date author "$latest_hash"))
+		$changes
 		END
         } | git commit-tree $tree -p $head_hash
         ) || die commit
@@ -551,6 +610,22 @@ main()
     done<".gitsubrepo_refs"
 
     rm .gitsubrepo_refs
+}
+
+find_latest_squash()
+{
+    # learned from git-subtree: find_latest_squash
+
+    git log --grep="^Squashed $prefix " \
+        --pretty=format:'START %H%n%b%nEND%n' HEAD |
+    while read a b junk; do
+        case $a in
+            git-subrepo-hash:)
+                echo $b
+                return 0
+                ;;
+            esac
+    done
 }
 
 fetch_remote()
