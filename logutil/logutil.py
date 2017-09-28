@@ -8,6 +8,7 @@ from stat import ST_DEV
 from stat import ST_INO
 
 import __main__
+from pykit import config
 
 logger = logging.getLogger(__name__)
 
@@ -124,13 +125,16 @@ def get_root_log_fn():
         return '__instant_command__.' + log_suffix
 
 
-def make_logger(base_dir, log_name=None, log_fn=None,
+def make_logger(base_dir=None, log_name=None, log_fn=None,
                 level=logging.DEBUG, fmt=None,
                 datefmt=None):
 
     # if log_name is None, get the root logger
     logger = logging.getLogger(log_name)
     logger.setLevel(level)
+
+    if base_dir is None:
+        base_dir = config.log_dir
 
     # do not add 2 handlers to one logger by default
     if len(logger.handlers) == 0:
@@ -147,8 +151,12 @@ def make_logger(base_dir, log_name=None, log_fn=None,
     return logger
 
 
-def make_file_handler(base_dir, log_fn, fmt=None, datefmt=None):
+def make_file_handler(base_dir=None, log_fn=None, fmt=None, datefmt=None):
 
+    if base_dir is None:
+        base_dir = config.log_dir
+    if log_fn is None:
+        log_fn = get_root_log_fn()
     file_path = os.path.join(base_dir, log_fn)
 
     handler = FixedWatchedFileHandler(file_path)

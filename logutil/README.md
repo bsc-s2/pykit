@@ -239,7 +239,7 @@ log file name.
 ##  logutil.make_file_handler
 
 **syntax**:
-`logutil.make_file_handler(base_dir, log_fn, fmt=None, datefmt=None)`
+`logutil.make_file_handler(base_dir=None, log_fn=None, fmt=None, datefmt=None)`
 
 It creates a rolling log file handler.
 
@@ -252,9 +252,11 @@ log file.
 
 -   `base_dir`:
     specifies the dir of log file.
+    If it is `None`, use `config.log_dir` as default.
 
 -   `log_fn`:
     specifies the log file name.
+    If it is `None`, use `logutil.get_root_log_fn` to make a log file name.
 
 -   `fmt`:
     specifies log format.
@@ -294,7 +296,7 @@ an `logging.Formatter` instance.
 ##  logutil.make_logger
 
 **syntax**:
-`logutil.make_logger(base_dir, log_name=None, log_fn=None,
+`logutil.make_logger(base_dir=None, log_name=None, log_fn=None,
                      level=logging.DEBUG, fmt=None,
                      datefmt=None)`
 
@@ -304,6 +306,7 @@ It creates a logger with a rolling file hander and specified formats.
 
 -   `base_dir`:
     specifies the dir of log file.
+    If it is `None`, use `config.log_dir` as default.
 
 -   `log_name`:
     is the name of the logger to create.
