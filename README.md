@@ -113,6 +113,7 @@ fsutil.write_file('bar', '123') # write_file sets file uid and gid to 2 and 3.
 
 -   `uid`: specifies default user-id  when file created, directory made.
 -   `gid`: specifies default group-id when file created, directory made.
+-   `log_dir`: specifies default base_dir when logger created.
 
 
 See the `README.md` of sub modules for detail.

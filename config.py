@@ -12,11 +12,14 @@ except ImportError:
                 ' Using default config.'
                 ' You can create file "pykitconf.py" to define default config for pykit.')
 
+
 def _get(key, default=None):
     v = getattr(pykitconfig, key, default)
 
     logger.debug('set pykit config: {key}={v}'.format(key=key, v=v))
     return v
 
+
 uid = _get('uid')
 gid = _get('gid')
+log_dir = _get('log_dir')
