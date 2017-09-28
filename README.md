@@ -49,6 +49,7 @@ There is a `README.md` for each module.
 | [humannum](humannum)           | Convert number to human readable number string                                        |
 | [jobq](jobq)                   | Process serial of input elements with several functions concurrently and sequentially |
 | [logutil](logutil)             | Utility functions to create logger or make log message                                |
+| [mime](mime)                   | Utility functions to handle mime type                                                 |
 | [modutil](modutil)             | Submodule Utilities                                                                   |
 | [mysqlconnpool](mysqlconnpool) | Mysql connection pool with MySQLdb in python                                          |
 | [mysqlutil](mysqlutil)         | Mysql related datatype, operations                                                    |
