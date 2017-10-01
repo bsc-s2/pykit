@@ -35,6 +35,8 @@ def command(cmd, *arguments, **options):
     close_fds = options.get('close_fds', True)
     cwd = options.get('cwd', None)
     env = options.get('env', None)
+    if env is not None:
+        env = dict(os.environ, **env)
     stdin = options.get('stdin', None)
 
     subproc = subprocess.Popen([cmd] + list(arguments),
@@ -65,37 +67,20 @@ def shell_script(script_str, **options):
     return command('sh', **options)
 
 
-def start_daemon(cmd, target, env, *args):
-
-    try:
-        pid = os.fork()
-    except OSError as e:
-        logger.error(repr(e) + ' while fork')
-        raise
-
-    if pid == 0:
-        d = daemonize.Daemon(close_fds=True)
-        d.daemonize()
-        args = list(args)
-        ctype = os.environ.get('LC_CTYPE')
-        if ctype is not None and 'LC_CTYPE' not in env:
-            env['LC_CTYPE'] = ctype
-        args.append(env)
-        os.execlpe(cmd, cmd, target, *args)
-    else:
-        while True:
-            try:
-                os.waitpid(pid, 0)
-                break
-            except OSError as e:
-                # In case we encountered an OSError due to EINTR (which is
-                # caused by a SIGINT or SIGTERM signal during
-                # os.waitpid()), we simply ignore it and enter the next
-                # iteration of the loop, waiting for the child to end.  In
-                # any other case, this is some other unexpected OS error,
-                # which we don't want to catch, so we re-raise those ones.
-                if e.errno != errno.EINTR:
-                    raise
+def _waitpid(pid):
+    while True:
+        try:
+            os.waitpid(pid, 0)
+            break
+        except OSError as e:
+            # In case we encountered an OSError due to EINTR (which is
+            # caused by a SIGINT or SIGTERM signal during
+            # os.waitpid()), we simply ignore it and enter the next
+            # iteration of the loop, waiting for the child to end.  In
+            # any other case, this is some other unexpected OS error,
+            # which we don't want to catch, so we re-raise those ones.
+            if e.errno != errno.EINTR:
+                raise
 
 
 def _close_fds():
@@ -122,22 +107,8 @@ def start_process(cmd, target, env, *args):
     if pid == 0:
         _close_fds()
         args = list(args)
-        ctype = os.environ.get('LC_CTYPE')
-        if ctype is not None and 'LC_CTYPE' not in env:
-            env['LC_CTYPE'] = ctype
+        env = dict(os.environ, **env)
         args.append(env)
         os.execlpe(cmd, cmd, target, *args)
     else:
-        while True:
-            try:
-                os.waitpid(pid, 0)
-                break
-            except OSError as e:
-                # In case we encountered an OSError due to EINTR (which is
-                # caused by a SIGINT or SIGTERM signal during
-                # os.waitpid()), we simply ignore it and enter the next
-                # iteration of the loop, waiting for the child to end.  In
-                # any other case, this is some other unexpected OS error,
-                # which we don't want to catch, so we re-raise those ones.
-                if e.errno != errno.EINTR:
-                    raise
+        _waitpid(pid)

@@ -12,7 +12,6 @@
   - [proc.command](#proccommand)
   - [proc.command_ex](#proccommand_ex)
   - [proc.shell_script](#procshell_script)
-  - [proc.start_daemon](#procstart_daemon)
   - [proc.start_process](#procstart_process)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
@@ -156,37 +155,6 @@ It is just a shortcut of:
 options['stdin'] = script_str
 return command('sh', **options)
 ```
-
-##  proc.start_daemon
-
-**syntax**:
-`proc.start_daemon(cmd, target, env, *args)`
-
-Create a deamon process and replace it with `cmd`.
-Besides `stdin`, `stdout` and `stderr`, all file
-descriptors from parent process will be closed in
-the daemon process.
-
-**arguments**:
-
--   `cmd`:
-    The path of executable to run.
-    Such as `sh`, `bash`, `python`.
-
--   `target`:
-    The path of the script.
-
--   `env`:
-    It is a dictionary to pass environment variables
-    to the daemon process.
-
--   `*args`:
-    Type is `tuple` or `list`.
-    The arguments passed to the script.
-    Type of every element must be `str`.
-
-**return**:
-nothing
 
 ##  proc.start_process
 
