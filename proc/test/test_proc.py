@@ -72,6 +72,11 @@ class TestProcError(unittest.TestCase):
         else:
             self.fail('expect proc.ProcError to be raised')
 
+        returncode, out, err = proc.command_ex('python2', subproc, '0')
+        self.assertEqual(0, returncode)
+        self.assertEqual('out-1\nout-2\n', out)
+        self.assertEqual('err-1\nerr-2\n', err)
+
         returncode, out, err = proc.command('python2', subproc, '0')
 
         self.assertEqual(0, returncode)

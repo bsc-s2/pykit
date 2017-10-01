@@ -57,6 +57,8 @@ def command_ex(cmd, *arguments, **options):
     if returncode != 0:
         raise ProcError(returncode, out, err, cmd, arguments, options)
 
+    return returncode, out, err
+
 
 def shell_script(script_str, **options):
     options['stdin'] = script_str
