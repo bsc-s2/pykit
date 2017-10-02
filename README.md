@@ -56,6 +56,7 @@ There is a `README.md` for each module.
 | [mysqlutil](mysqlutil)         | Mysql related datatype, operations                                                    |
 | [net](net)                     | Network utility                                                                       |
 | [portlock](portlock)           | cross process lock                                                                    |
+| [priorityqueue](priorityqueue) | Priority queue                                                                        |
 | [proc](proc)                   | Utility to create sub process                                                         |
 | [rangeset](rangeset)           | Segmented range.                                                                      |
 | [redisutil](redisutil)         | For using redis more easily.                                                          |
