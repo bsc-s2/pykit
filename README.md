@@ -45,6 +45,7 @@ There is a `README.md` for each module.
 | [dictutil](dictutil)           | Dictionary helper utility                                                             |
 | [etcd](etcd)                   | etcd client                                                                           |
 | [fsutil](fsutil)               | File-system Utilities                                                                 |
+| [heap](heap)                   | Min heap                                                                              |
 | [http](http)                   | HTTP/1.1 client                                                                       |
 | [humannum](humannum)           | Convert number to human readable number string                                        |
 | [jobq](jobq)                   | Process serial of input elements with several functions concurrently and sequentially |
