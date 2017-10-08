@@ -23,12 +23,13 @@ class Timer(object):
 
     def __enter__(self):
         self.start = time.time()
+        return self
 
     def __exit__(self, errtype, errval, _traceback):
         self.end = time.time()
 
     def spent(self):
-        return self.end - self.start
+        return (self.end or time.time()) - self.start
 
 
 class ContextFilter(logging.Filter):
