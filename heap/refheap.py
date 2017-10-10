@@ -26,6 +26,10 @@ class Empty(HeapError):
     pass
 
 
+class Duplicate(HeapError):
+    pass
+
+
 class Node(list):
 
     # node in heap:
@@ -118,7 +122,7 @@ class RefHeap(object):
         obj_id = id(obj)
 
         if obj_id in self.userdata_map:
-            raise ValueError('object is already in heap')
+            raise Duplicate('object is already in heap')
 
         node = Node(obj)
         self.userdata_map[obj_id] = node

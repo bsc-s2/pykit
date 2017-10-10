@@ -182,7 +182,7 @@ class TestRefHeap(unittest.TestCase):
         x = X(1)
         h = heap.RefHeap([x])
 
-        self.assertRaises(ValueError, h.push, x)
+        self.assertRaises(heap.Duplicate, h.push, x)
 
         h.push(X(1))
         dd(str(h))
@@ -196,7 +196,7 @@ class TestRefHeap(unittest.TestCase):
 
             h = heap.RefHeap()
             h.push(inp)
-            self.assertRaises(ValueError, h.push, inp)
+            self.assertRaises(heap.Duplicate, h.push, inp)
 
     def test_pop_from_empty(self):
         h = heap.RefHeap()

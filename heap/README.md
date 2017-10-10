@@ -89,6 +89,14 @@ Indicates that a heap is empty when `get()`.
 `Empty()`
 
 
+##  Duplicate
+
+Indicates that an non-primitive object is already in a heap when `push()`.
+
+**syntax**:
+`Duplicate()`
+
+
 #   Classes
 
 ##  Node
