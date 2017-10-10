@@ -1,13 +1,15 @@
 from .refheap import (
-    Empty,
     Duplicate,
+    Empty,
+    NotFound,
     RefHeap,
 
     index_level,
 )
 __all__ = [
-    "Empty",
     "Duplicate",
+    "Empty",
+    "NotFound",
     "RefHeap",
 
     "index_level",

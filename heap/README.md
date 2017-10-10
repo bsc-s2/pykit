@@ -7,7 +7,9 @@
 - [Synopsis](#synopsis)
 - [Description](#description)
 - [Exceptions](#exceptions)
+  - [Duplicate](#duplicate)
   - [Empty](#empty)
+  - [NotFound](#notfound)
 - [Classes](#classes)
   - [Node](#node)
     - [Node.__lt__](#node__lt__)
@@ -55,7 +57,7 @@ its parent.
 
 `RefHeap` is not thread safe.
 
-##  Why do we need it since python provides with module `heapq`
+**Why do we need it since python provides with module `heapq`**.
 
 -   `heapq` does not support changing heap node key, after heap created.
     But sometimes we need to adjust heap node key to bubble up a node or push
@@ -81,6 +83,15 @@ h.push([]) # OK
 
 #   Exceptions
 
+
+##  Duplicate
+
+Indicates that an non-primitive object is already in a heap when `push()`.
+
+**syntax**:
+`Duplicate()`
+
+
 ##  Empty
 
 Indicates that a heap is empty when `get()`.
@@ -89,12 +100,12 @@ Indicates that a heap is empty when `get()`.
 `Empty()`
 
 
-##  Duplicate
+##  NotFound
 
-Indicates that an non-primitive object is already in a heap when `push()`.
+Indicates that an object is not found in a heap when `sift()` or `remove()`.
 
 **syntax**:
-`Duplicate()`
+`NotFound()`
 
 
 #   Classes

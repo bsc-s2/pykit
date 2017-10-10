@@ -22,11 +22,15 @@ class HeapError(Exception):
     pass
 
 
+class Duplicate(HeapError):
+    pass
+
+
 class Empty(HeapError):
     pass
 
 
-class Duplicate(HeapError):
+class NotFound(HeapError):
     pass
 
 
@@ -157,7 +161,7 @@ class RefHeap(object):
         return rst
 
     def remove(self, obj):
-        node = self.userdata_map[id(obj)]
+        node = self._get_object_node(obj)
         return self.remove_node(node)
 
     def remove_node(self, node):
@@ -179,8 +183,15 @@ class RefHeap(object):
         if isinstance(obj, primitive_types):
             raise ValueError('primitive type does not support sift, just replace it')
 
-        node = self.userdata_map[id(obj)]
+        node = self._get_object_node(obj)
         return self._sift(node)
+
+    def _get_object_node(self, obj):
+        if id(obj) not in self.userdata_map:
+            raise NotFound('object is not found in heap, id:' + str(obj))
+
+        node = self.userdata_map[id(obj)]
+        return node
 
     def _sift(self, node):
 

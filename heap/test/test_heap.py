@@ -107,7 +107,7 @@ class TestRefHeap(unittest.TestCase):
         h.sift(b)
         self.assertIs(a, h.get())
 
-        self.assertRaises(KeyError, h.sift, [])
+        self.assertRaises(heap.NotFound, h.sift, [])
 
     def test_sift(self):
 
@@ -165,6 +165,18 @@ class TestRefHeap(unittest.TestCase):
             expected.sort()
 
             self.assertEqual(expected, rst)
+
+    def test_remove_not_found(self):
+
+        h = heap.RefHeap()
+        self.assertRaises(heap.NotFound, h.remove, X(0))
+
+        a = X(1)
+        h.push(a)
+        h.remove(a)
+
+        self.assertRaises(heap.NotFound, h.remove, a)
+        self.assertRaises(heap.NotFound, h.remove, X(0))
 
     def test_pop_all(self):
 
