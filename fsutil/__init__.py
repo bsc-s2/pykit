@@ -17,6 +17,14 @@ from .fsutil import (
 
 )
 
+from .cat import (
+    CatError,
+    LockTimeout,
+    NoData,
+    NoSuchFile,
+    Cat
+)
+
 __all__ = [
     "FSUtilError",
     "NotMountPoint",
@@ -33,4 +41,11 @@ __all__ = [
     "makedirs",
     "read_file",
     "write_file",
+
+
+    "CatError",
+    "LockTimeout",
+    "NoData",
+    "NoSuchFile",
+    "Cat"
 ]

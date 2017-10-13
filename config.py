@@ -20,6 +20,8 @@ def _get(key, default=None):
     return v
 
 
-uid = _get('uid')
-gid = _get('gid')
-log_dir = _get('log_dir')
+uid                  = _get('uid')
+gid                  = _get('gid')
+log_dir              = _get('log_dir')
+
+cat_stat_dir         = _get('cat_stat_dir')

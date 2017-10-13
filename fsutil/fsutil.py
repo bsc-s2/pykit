@@ -152,10 +152,10 @@ def write_file(path, fcont, uid=None, gid=None, atomic=False):
         return _write_file(path, fcont, uid, gid)
 
     tmp_path = '{path}._tmp_.{pid}_{timestamp}'.format(
-                path=path,
-                pid=os.getpid(),
-                timestamp=timeutil.ns(),
-                )
+        path=path,
+        pid=os.getpid(),
+        timestamp=timeutil.ns(),
+    )
     _write_file(tmp_path, fcont, uid, gid)
 
     try:
@@ -180,7 +180,7 @@ def _write_file(path, fcont, uid=None, gid=None):
 
 
 def calc_checksums(path, sha1=False, md5=False, crc32=False,
-        block_size=READ_BLOCK, io_limit=READ_BLOCK):
+                   block_size=READ_BLOCK, io_limit=READ_BLOCK):
 
     checksums = {
         'sha1': None,

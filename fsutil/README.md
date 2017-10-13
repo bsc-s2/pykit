@@ -7,7 +7,15 @@
 - [Description](#description)
 - [Synopsis](#synopsis)
 - [Exceptions](#exceptions)
+  - [NoData](#nodata)
+  - [LockTimeout](#locktimeout)
   - [NotMountPoint](#notmountpoint)
+  - [NoSuchFile](#nosuchfile)
+- [Classes](#classes)
+  - [fsutil.Cat](#fsutilcat)
+    - [Cat.iterate](#catiterate)
+    - [Cat.cat](#catcat)
+    - [Cat.stat_path](#catstat_path)
 - [Methods](#methods)
   - [fsutil.assert_mountpoint](#fsutilassert_mountpoint)
   - [fsutil.get_all_mountpoint](#fsutilget_all_mountpoint)
@@ -64,9 +72,164 @@ fsutil.get_disk_partitions()
 
 # Exceptions
 
+## NoData
+
+Raises when there is no data to scan before timeout, when `Cat.cat()` or
+`Cat.iterate()`.
+
+## LockTimeout
+
+Raises when there are more than one exclusive `Cat` instances(with the same id)
+trying to scan a same file.
+
 ## NotMountPoint
 
 Raises when trying to use an invalid mount point path.
+
+## NoSuchFile
+
+Raises when there is no file present before timeout, when `Cat.cat()` or
+`Cat.iterate()`.
+
+
+# Classes
+
+##  fsutil.Cat
+
+**Synopsis**: continuously tail nginx log and print it. If there is no more data
+for 1 hour, it quits.
+
+
+```python
+from pykit import fsutil
+
+fn = '/var/log/nginx/access.log'
+for l in fsutil.Cat(fn).iterate(timeout=3600):
+    print l
+```
+
+Just like nix command cat or tail, it continuously scan a file line by line.
+
+It provides with two way for user to handle lines: as a generator or specifying
+a handler function.
+
+It also remembers the offset of the last scanning in a file in `/tmp/`.
+If a file does not change(inode number does not change), it scans from the last
+offset, or it scan from the first byte.
+
+
+**syntax**:
+`Cat(fn, handler=None, file_end_handler=None, exclusive=True, id=None, strip=False)`
+
+**arguments**:
+
+-   `fn`:
+    specifies the file to scan.
+
+-   `handler`:
+    specifies a callable to handle each line, if `Cat()` is not used in
+    generator mode.
+    It can be a callable or a list of callable.
+    See method `Cat.cat()`.
+
+-   `file_end_handler`:
+    specifies a callable when file end reached.
+    Every time it scans to end of file, `file_end_handler` is called, but it is still
+    able to not quit and to wait for new data for a while.
+    Thus `file_end_handler` will be called more than one time.
+
+-   `exclusive`:
+    is `True` means at the same time there can be only one same progress
+    scanning a same file, which means, `Cat` with the same `id` and the same
+    `fn`.
+    Two `Cat` instances with different id are able to scan a same file at the
+    same time and they record their own offset in separate file.
+
+    By default it is `True`.
+
+-   `id`:
+    specifies the instance id.
+    `id` is used to identify a `Cat` instance and is used as part of offset
+    record file(in `/tmp/`) and is used to exclude other instance.
+    See `exclusive`.
+
+    By default `id` is the file name of the currently running python script.
+    Thus normally a user does not need to specify `id` explicitly.
+
+-   `strip`:
+    is `True` or `False` to specifies if to strip blank chars(space, tab, `\r`
+    and `\n`) before returning each line.
+
+    By default it is `False`.
+
+**config**:
+
+-   `cat_stat_dir`:
+    specifies base dir to store offset recording file.
+
+    By default it is `/tmp`.
+
+    ```sh
+    # cat pykitconfig
+    cat_stat_dir = '/'
+
+    # cat usage.py
+    from pykit import fsutil
+    fn = '/var/log/nginx/access.log'
+    for l in fsutil.Cat(fn).iterate(timeout=3600):
+        print l
+    ```
+
+
+###  Cat.iterate
+
+Make a generator to yield every line.
+
+**syntax**:
+`Cat.iterate(timeout=None)`
+
+**arguments**:
+
+-   `timeout`:
+    specifies the time in second to wait for new data.
+
+    If timeout is `0` or smaller than `0`, it means to scan a file no more than one time:
+
+    -   If it sees any data, it returning them until it reaches file end.
+    -   If there is not any data, it raises `NoData` error.
+
+    By default it is 3600.
+
+**return**:
+a generator.
+
+**raise**:
+
+-   `NoSuchFile`: if file does not present before `timeout`.
+-   `NoData`: if file does not have un-scanned data before `timeout`.
+
+
+###  Cat.cat
+
+Similar to `Cat.iterate` except it blocks until timeout or reaches file end and
+let `Cat.handler` to deal with each line.
+
+**syntax**:
+`Cat.cat(timeout=None)`
+
+**return**:
+Nothing.
+
+
+###  Cat.stat_path
+
+Returns the full path of the file to store scanning offset.
+
+**syntax**:
+`Cat.stat_path()`
+
+**return**:
+string
 
 
 # Methods
