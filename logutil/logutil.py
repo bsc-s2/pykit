@@ -165,6 +165,21 @@ def make_file_handler(base_dir=None, log_fn=None, fmt=None, datefmt=None):
     return handler
 
 
+def set_logger_level(level=logging.INFO, name_prefixes=None):
+    if name_prefixes is None:
+        name_prefixes = ('',)
+
+    root_logger = logging.getLogger()
+
+    loggers = root_logger.manager.loggerDict.items()
+    loggers.sort()
+
+    for name, _ in loggers:
+        if name.startswith(name_prefixes):
+            name_logger = logging.getLogger(name)
+            name_logger.setLevel(level)
+
+
 def add_std_handler(logger, stream=None, fmt=None, datefmt=None):
 
     stream = stream or sys.stdout

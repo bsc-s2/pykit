@@ -17,6 +17,7 @@
   - [logutil.make_file_handler](#logutilmake_file_handler)
   - [logutil.make_formatter](#logutilmake_formatter)
   - [logutil.make_logger](#logutilmake_logger)
+  - [logutil.set_logger_level](#logutilset_logger_level)
   - [logutil.stack_format](#logutilstack_format)
   - [logutil.stack_list](#logutilstack_list)
   - [logutil.stack_str](#logutilstack_str)
@@ -332,6 +333,22 @@ It creates a logger with a rolling file hander and specified formats.
 
 **return**:
 a `logging.Logger` instance.
+
+##  logutil.set_logger_level
+
+**syntax**:
+`logutil.set_logger_level(level=logging.INFO, name_prefixes=None)`
+
+**arguments**:
+
+-   `level`:
+    specifies log level.
+    It could be int value such as `logging.DEBUG` or string such as `DEBUG`.
+
+-   `name_prefixes`:
+    specifies log prefixes which is operated.
+    It can be None, str or a tuple of str.
+    If `name_prefixes` is None, set the log level for all logger.
 
 ##  logutil.stack_format
 

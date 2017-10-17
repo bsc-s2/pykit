@@ -249,3 +249,41 @@ class TestLogutil(unittest.TestCase):
             'python stdlog.py', cwd=os.path.dirname(__file__))
         self.assertEqual(0, code)
         self.assertEqual('stdlog', out.strip())
+
+    def test_set_logger_level(self):
+
+        cases = (
+            (None,                      'debug1\ndebug2'),
+            ('1_prefix',                'debug1\ndebug2\ndebug2'),
+            (('1_prefix', '2_prefix'),  'debug1\ndebug2'),
+            (('not_exist',),            'debug1\ndebug2\ndebug1\ndebug2'),
+            (('not_exist', '1_prefix'), 'debug1\ndebug2\ndebug2'),
+        )
+
+        for inp, expected in cases:
+            rm_file('/tmp/ss')
+
+            logger1 = logutil.make_logger(base_dir='/tmp',
+                                          log_name='1_prefix_1',
+                                          log_fn='ss',
+                                          level='DEBUG',
+                                          fmt='%(message)s',
+                                          datefmt='%H%M%S')
+
+            logger2 = logutil.make_logger(base_dir='/tmp',
+                                          log_name='2_prefix_1',
+                                          log_fn='ss',
+                                          level='DEBUG',
+                                          fmt='%(message)s',
+                                          datefmt='%H%M%S')
+            logger1.debug('debug1')
+            logger2.debug('debug2')
+
+            logutil.set_logger_level(level='INFO', name_prefixes=inp)
+
+            logger1.debug('debug1')
+            logger2.debug('debug2')
+
+            content = read_file('/tmp/ss')
+
+            self.assertEqual(expected, content.strip())
