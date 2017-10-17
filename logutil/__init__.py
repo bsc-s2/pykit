@@ -7,6 +7,7 @@ from .logutil import (
     make_file_handler,
     make_formatter,
     make_logger,
+    set_logger_level,
     stack_format,
     stack_list,
     stack_str,
@@ -21,6 +22,7 @@ __all__ = [
     'make_file_handler',
     'make_formatter',
     'make_logger',
+    'set_logger_level',
     'stack_format',
     'stack_list',
     'stack_str',  # used
