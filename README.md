@@ -12,10 +12,15 @@
   - [Supported config](#supported-config)
 - [Test](#test)
 - [For developer](#for-developer)
+  - [Config](#config)
+    - [How it works](#how-it-works)
+    - [How to use](#how-to-use)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
 
 #   Name
 
@@ -98,7 +103,7 @@ jobq.run([0, 1, 2], [add1, printarg])
 #   Configuration
 
 `pykit` provides a way to setup config for it.
-Some module tries to import `pykitconfig` in which a user sets config.
+Config module tries to import `pykitconfig` in which a user sets config.
 Example:
 
 ```
@@ -137,6 +142,40 @@ Run one of following to test all, a module, a TestCase or a function.
 
 There are several scripts for developers.
 See [script](script).
+
+##  Config
+
+`pykit.config` is used internally by `pykit` modules.
+
+### How it works
+
+It try to load `pykitconfig` from a top level module of the project.
+
+Then it load predefined config via ```getattr(pykitconfig, key, default)```.
+
+So module can get config via config.xxx by import it.
+
+### How to use
+
+- Add predefined config in config.py
+
+    ```
+    uid=_get('uid')
+    gid=_get('gid')
+    ```
+
+- Import config in you own module
+
+    ```
+    from pykit import config
+    ```
+
+- Handle user define config in you code
+
+    ```
+    uid=uid or config.uid
+    gid=gid or config.gid
+    ```
 
 #   Author
 
