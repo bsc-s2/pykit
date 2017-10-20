@@ -368,7 +368,7 @@ class TestFSUtil(unittest.TestCase):
                 (True,  ('sub_empty_dir',)),
                 (True,  ('sub_dir', 'sub_sub_dir')),
                 (False, ('sub_dir', 'sub_sub_dir', 'sub_sub_file')),
-                ):
+        ):
 
             path = os.path.join(dirname, *file_path)
 

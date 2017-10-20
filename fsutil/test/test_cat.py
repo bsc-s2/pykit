@@ -62,7 +62,7 @@ class TestCat(unittest.TestCase):
 
     def test_offset_record_when_destory(self):
 
-        expected = [ x * 32 for x in 'qwertyuiop' ]
+        expected = [x * 32 for x in 'qwertyuiop']
         rst = []
 
         append_lines(self.fn, expected)
