@@ -56,7 +56,7 @@ if [ "$check_dep" = "1" ]; then
     for _mod in $(find pykit -mindepth 2 -maxdepth 2 -type f -name __init__.py); do
         mod=${_mod#pykit/}
         mod=${mod%/__init__.py}
-        if msg=$(python -c 'import pykit.'$mod 2>&1); then
+        if msg=$(python2 -c 'import pykit.'$mod 2>&1); then
             if [ "$verbosity" != "" ]; then
                 printf "test importing $mod: OK\n"
             fi
@@ -86,7 +86,7 @@ fi
 # UT_DEBUG controls if dd() should output debug log to stdout.
 # see ututil.py
 
-if python -c 'import '$pkg 2>/dev/null; then
+if python2 -c 'import '$pkg 2>/dev/null; then
     # it is a module
     PYTHONPATH="$(pwd)" UT_DEBUG=$ut_debug python2 -m unittest discover -c $flag --failfast -s "$pkg"
 else
