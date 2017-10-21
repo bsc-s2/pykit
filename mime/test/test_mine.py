@@ -4,6 +4,9 @@
 import unittest
 
 from pykit import mime
+from pykit import ututil
+
+dd = ututil.dd
 
 
 class TestMime(unittest.TestCase):
@@ -19,6 +22,9 @@ class TestMime(unittest.TestCase):
         )
 
         for inp, expected in cases:
-            output = mime.get_by_filename(inp)
+            dd('inp, expected:', inp, ' ', expected)
+            rst = mime.get_by_filename(inp)
 
-            self.assertEqual(expected, output)
+            dd('rst:', rst)
+
+            self.assertEqual(expected, rst)

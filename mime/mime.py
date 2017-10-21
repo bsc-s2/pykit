@@ -8,7 +8,7 @@ import os
 OCTET_STREAM = 'application/octet-stream'
 
 dir_name = os.path.dirname(__file__)
-resource = os.path.join(dir_name, 'mimes.json')
+resource = os.path.join(dir_name, 'thirdpart', 'mimes.json')
 
 
 def _init():
