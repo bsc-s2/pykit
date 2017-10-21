@@ -3,3 +3,6 @@
 
 git-subrepo             baishancloud/git-subrepo            master   git-subrepo
 stopwatch.py            baishancloud/stopwatch              master   stopwatch.py
+
+[ base: mime ]
+thirdpart/mimes.json    baishancloud/mimetype               master   mimes.json
