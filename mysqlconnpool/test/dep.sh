@@ -2,9 +2,6 @@
 
 yum install -y \
     docker \
-    docker-python
-
-# pip install docker-py
 
 service docker start
 

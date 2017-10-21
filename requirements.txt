@@ -1,0 +1,18 @@
+# usage:
+#   pip2 install -r requirements.txt
+
+
+# fsutil
+# wsjobd
+
+psutil==4.3.1
+
+
+# mysqlconnpool.test
+# etcd.test
+# redisutil.test
+
+docker-py==1.10.6
+
+
+# numpy==1.7.1
