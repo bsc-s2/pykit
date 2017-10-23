@@ -23,7 +23,7 @@ def rr(lst):
 # range of resource required for each node
 required_range = [ (.2, .5), (1.1, 1.5), ]
 
-# uncomment to see: equal loads but either can be fully satisfied
+# uncomment to see: equal loads but neither can be fully satisfied
 # required_range = [ (1.2, 1.5), (1.2, 1.5), ]
 
 # uncomment to see: equal loads and both can be satisfied
@@ -38,13 +38,13 @@ accesses = [rand_n_times(n_rounds, lft, rt)
             for lft, rt in required_range]
 
 # uncomment to customize required resource.
-accesses = [
-        [.1] * 10 + [2.0] * 10 + [0.1] * 10,
-        [.2] * 10 + [1.0] * 10 + [0.5] * 10,
-]
 # accesses = [
-        # [1] * 30,
-        # [1] * 30,
+#         [.1] * 10 + [2.0] * 10 + [0.1] * 10,
+#         [.2] * 10 + [1.0] * 10 + [0.5] * 10,
+# ]
+# accesses = [
+#         [1] * 30,
+#         [1] * 30,
 # ]
 
 nodes_allocated = [init_res] * n_nodes
