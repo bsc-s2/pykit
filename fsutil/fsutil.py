@@ -111,6 +111,22 @@ def get_path_usage(path):
     }
 
 
+def get_path_inode_usage(path):
+
+    inode_st = os.statvfs(path)
+
+    available = inode_st.f_favail
+    total = inode_st.f_files
+    used = total - available
+
+    return {
+        'total': total,
+        'used': used,
+        'available': available,
+        'percent': float(used) / total,
+    }
+
+
 def makedirs(*paths, **kwargs):
     mode = kwargs.get('mode', 0755)
     uid = kwargs.get('uid') or config.uid

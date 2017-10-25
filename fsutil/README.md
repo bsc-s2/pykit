@@ -24,6 +24,7 @@
   - [fsutil.get_disk_partitions](#fsutilget_disk_partitions)
   - [fsutil.get_mountpoint](#fsutilget_mountpoint)
   - [fsutil.get_path_fs](#fsutilget_path_fs)
+  - [fsutil.get_path_inode_usage](#fsutilget_path_inode_usage)
   - [fsutil.get_path_usage](#fsutilget_path_usage)
   - [fsutil.makedirs](#fsutilmakedirs)
   - [fsutil.read_file](#fsutilread_file)
@@ -369,6 +370,32 @@ Return the name of device where the `path` is mounted.
 
 **return**:
 the file-system name, such as `ext4` or `hfs`.
+
+
+##  fsutil.get_path_inode_usage
+
+**syntax**:
+`fsutil.get_path_inode_usage(path)`
+
+Collect inode usage information of the file system `path` is mounted on.
+
+**arguments**:
+
+- `path`:
+specifies the fs - path to collect usage info.
+Such as `/tmp` or `/home/alice`.
+
+**return**:
+a dictionary in the following format:
+
+```json
+{
+    'total':     total number of inode,
+    'used':      used inode(includes inode reserved for super user),
+    'available': total - used,
+    'percent':   float(used) / 'total'
+}
+```
 
 
 ##  fsutil.get_path_usage

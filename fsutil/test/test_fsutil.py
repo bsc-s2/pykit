@@ -145,6 +145,17 @@ class TestFSUtil(unittest.TestCase):
 
         self.assertAlmostEqual(int(total_mb), int(rst_total_mb), delta=4)
 
+    def test_get_path_inode_usage(self):
+
+        inode_st = fsutil.get_path_inode_usage('/')
+
+        self.assertGreaterEqual(inode_st['percent'], 0.0, '')
+        self.assertLessEqual(inode_st['percent'], 1.0, '')
+        self.assertLessEqual(inode_st['used'], inode_st['total'])
+
+        total = inode_st['used'] + inode_st['available']
+        self.assertEqual(inode_st['total'], total)
+
     def test_makedirs(self):
 
         fn = '/tmp/pykit-ut-fsutil-foo'
