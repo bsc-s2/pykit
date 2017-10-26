@@ -79,7 +79,7 @@ It has the same `__init__` arguments with
 ##  logutil.add_std_handler
 
 **syntax**:
-`logutil.add_std_handler(logger, stream=None, fmt=None, datefmt=None)`
+`logutil.add_std_handler(logger, stream=None, fmt=None, datefmt=None, level=None)`
 
 It adds a `stdout` or `stderr` steam handler to the `logger`.
 
@@ -104,6 +104,12 @@ It adds a `stdout` or `stderr` steam handler to the `logger`.
     It can be an alias name(like `time`) that can be used in
     `logutil.get_datefmt()`.
     By default it is `None`.
+
+-   `level`:
+    is the log level.
+    It can be int value such as `logging.DEBUG` or string such as `DEBUG`.
+    By default it is the logger's level.
+
 
 **return**:
 the `logger` argument.
