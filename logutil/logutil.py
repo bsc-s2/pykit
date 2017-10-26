@@ -180,7 +180,7 @@ def set_logger_level(level=logging.INFO, name_prefixes=None):
             name_logger.setLevel(level)
 
 
-def add_std_handler(logger, stream=None, fmt=None, datefmt=None):
+def add_std_handler(logger, stream=None, fmt=None, datefmt=None, level=None):
 
     stream = stream or sys.stdout
 
@@ -192,6 +192,8 @@ def add_std_handler(logger, stream=None, fmt=None, datefmt=None):
 
     stdhandler = logging.StreamHandler(stream)
     stdhandler.setFormatter(make_formatter(fmt=fmt, datefmt=datefmt))
+    if level is not None:
+        stdhandler.setLevel(level)
 
     logger.addHandler(stdhandler)
 

@@ -244,11 +244,12 @@ class TestLogutil(unittest.TestCase):
         self.assertEqual(out.strip(), 'info')
 
     def test_add_std_handler(self):
+        rm_file('/tmp/stdlog')
 
         code, out, err = subproc(
             'python stdlog.py', cwd=os.path.dirname(__file__))
         self.assertEqual(0, code)
-        self.assertEqual('stdlog', out.strip())
+        self.assertEqual('error', out.strip())
 
     def test_set_logger_level(self):
 
