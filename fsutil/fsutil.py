@@ -241,16 +241,17 @@ def _on_error_raise(*args, **kwargs):
     raise
 
 
-def calc_checksums(path, sha1=False, md5=False, crc32=False,
+def calc_checksums(path, sha1=False, md5=False, crc32=False, sha256=False,
                    block_size=READ_BLOCK, io_limit=READ_BLOCK):
 
     checksums = {
         'sha1': None,
         'md5': None,
         'crc32': None,
+        'sha256': None
     }
 
-    if (sha1 or md5 or crc32) is False:
+    if (sha1 or md5 or crc32 or sha256) is False:
         return checksums
 
     if block_size <= 0:
@@ -264,6 +265,7 @@ def calc_checksums(path, sha1=False, md5=False, crc32=False,
     sum_sha1 = hashlib.sha1()
     sum_md5 = hashlib.md5()
     sum_crc32 = 0
+    sum_sha256 = hashlib.sha256()
 
     with open(path, 'rb') as f_path:
 
@@ -286,6 +288,8 @@ def calc_checksums(path, sha1=False, md5=False, crc32=False,
                 sum_md5.update(buf)
             if crc32:
                 sum_crc32 = binascii.crc32(buf, sum_crc32)
+            if sha256:
+                sum_sha256.update(buf)
 
     if sha1:
         checksums['sha1'] = sum_sha1.hexdigest()
@@ -293,6 +297,8 @@ def calc_checksums(path, sha1=False, md5=False, crc32=False,
         checksums['md5'] = sum_md5.hexdigest()
     if crc32:
         checksums['crc32'] = '%08x' % (sum_crc32 & 0xffffffff)
+    if sha256:
+        checksums['sha256'] = sum_sha256.hexdigest()
 
     return checksums
 

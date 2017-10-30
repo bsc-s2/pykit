@@ -546,8 +546,8 @@ Nothing
 ##  fsutil.calc_checksums
 
 **syntax**:
-`fsutil.calc_checksums(path, sha1=False, md5=False, crc32=False,
-    block_size=32*1024**2, io_limit=32*1024**2)`
+`fsutil.calc_checksums(path, sha1=False, md5=False, crc32=False, sha256=False,
+                   block_size=READ_BLOCK, io_limit=READ_BLOCK):`
 
 Calculate checksums of `path`, like: `sha1` `md5` `crc32`.
 
@@ -557,11 +557,12 @@ from pykit import fsutil
 file_name = 'test.file'
 
 fsutil.write_file(file_name, '')
-print fsutil.calc_checksums(file_name, sha1=True, md5=True, crc32=False)
+print fsutil.calc_checksums(file_name, sha1=True, md5=True, crc32=False, sha256=False)
 #{
 # 'sha1': 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
 # 'md5': 'd41d8cd98f00b204e9800998ecf8427e',
-# 'crc32': None
+# 'crc32': None,
+# 'sha256':'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 #}
 ```
 
@@ -570,7 +571,7 @@ print fsutil.calc_checksums(file_name, sha1=True, md5=True, crc32=False)
 -   `path`:
     is the file path to calculate.
 
--   `sha1` and `md5` and `crc32`:
+-   `sha1` and `md5` and `crc32` and `sha256`:
     are checksum types to calculate. Default is `False`.
 
     The result of this type is `None` if the checksum type is `False`.
@@ -584,7 +585,7 @@ print fsutil.calc_checksums(file_name, sha1=True, md5=True, crc32=False)
     There is no limitation if `io_limit` is negative number.
 
 **return**:
-a dict with keys `sha1` and `md5` and `crc32`.
+a dict with keys `sha1` and `md5` and `crc32` and `sha256`.
 
 
 #   Author
