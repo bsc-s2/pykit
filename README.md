@@ -121,6 +121,7 @@ fsutil.write_file('bar', '123') # write_file sets file uid and gid to 2 and 3.
 -   `uid`: specifies default user-id  when file created, directory made.
 -   `gid`: specifies default group-id when file created, directory made.
 -   `log_dir`: specifies default base_dir when logger created.
+-   `cat_stat_dir`: specifies default stat_dir for all log cat class instances.
 
 
 See the `README.md` of sub modules for detail.
@@ -153,7 +154,7 @@ It try to load `pykitconfig` from a top level module of the project.
 
 Then it load predefined config via ```getattr(pykitconfig, key, default)```.
 
-So module can get config via config.xxx by import it.
+So module can get config via `config.xxx` by import it.
 
 ### How to use
 
@@ -176,6 +177,8 @@ So module can get config via config.xxx by import it.
     uid=uid or config.uid
     gid=gid or config.gid
     ```
+
+- Update the configuration supported config in this doc
 
 #   Author
 
