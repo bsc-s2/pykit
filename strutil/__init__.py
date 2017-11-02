@@ -1,4 +1,5 @@
 from .strutil import (
+    common_prefix,
     format_line,
     line_pad,
     tokenize,
@@ -30,6 +31,7 @@ from .strutil import (
 )
 
 __all__ = [
+    'common_prefix',
     'format_line',
     'line_pad',
     'tokenize',

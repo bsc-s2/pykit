@@ -437,6 +437,53 @@ def utf8str(s):
         return str(s)
 
 
+def common_prefix(a, *others):
+
+    for b in others:
+        if type(a) != type(b):
+            raise TypeError('a and b has different type: ' + repr((a, b)))
+        a = _common_prefix(a, b)
+
+    return a
+
+
+def _common_prefix(a, b):
+
+    rst = []
+    for i, elt in enumerate(a):
+        if i == len(b):
+            break
+
+        if type(elt) != type(b[i]):
+            raise TypeError('a and b has different type: ' + repr((elt, b[i])))
+
+        if elt == b[i]:
+            rst.append(elt)
+        else:
+            break
+
+    # Find common prefix of the last different element.
+    #
+    # string does not support nesting level reduction. It infinitely recurses
+    # down.
+    # And non-iterable element is skipped, such as int.
+    i = len(rst)
+    if i < len(a) and i < len(b) and not isinstance(a, basestring) and hasattr(a[i], '__len__'):
+
+        last_prefix = _common_prefix(a[i], b[i])
+
+        # discard empty tuple, list or string
+        if len(last_prefix) > 0:
+            rst.append(last_prefix)
+
+    if isinstance(a, tuple):
+        return tuple(rst)
+    elif isinstance(a, list):
+        return rst
+    else:
+        return ''.join(rst)
+
+
 def colorize(percent, total=100, ptn='{0}'):
     if total > 0:
         color = fading_color(percent, total)

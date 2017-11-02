@@ -13,6 +13,7 @@
   - [strutil.break_line](#strutilbreak_line)
   - [strutil.color](#strutilcolor)
   - [strutil.colorize](#strutilcolorize)
+  - [strutil.common_prefix](#strutilcommon_prefix)
   - [strutil.line_pad](#strutilline_pad)
   - [strutil.format_line](#strutilformat_line)
   - [strutil.struct_repr](#strutilstruct_repr)
@@ -278,6 +279,36 @@ print colorize(22, 100, '{0:>3}%')
 
 **return**:
 A colored formatted percent string.
+
+
+##  strutil.common_prefix
+
+Find common prefix of several `string`s, tuples of string, or other nested
+structure, recursively.
+It returns the shortest prefix: empty string or empty tuple is removed.
+
+**Synopsis**:
+
+```python
+from pykit import strutil
+
+strutil.common_prefix('abc', 'abd')                   # 'ab'
+strutil.common_prefix((1, 2, 'abc'), (1, 2, 'abd'))   # (1, 2, 'ab')
+strutil.common_prefix((1, 2, 'abc'), (1, 2, 'xyz'))   # (1, 2); empty prefix of 'abc' and 'xyz' is removed
+strutil.common_prefix((1, 2, (5, 6)), (1, 2, (5, 7))) # (1, 2, (5,) )
+strutil.common_prefix('abc', 'abd', 'abe')            # 'ab'; common prefix of more than two
+```
+
+**syntax**:
+`strutil.common_prefix(a, *others)`
+
+**arguments**:
+
+-   `a` and element in `others`:
+    are `string`, `tuple` or `list` to find common prefix of them.
+
+**return**:
+a common prefix of the same type of `a`.
 
 
 ## strutil.line_pad
