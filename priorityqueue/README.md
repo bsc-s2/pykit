@@ -140,13 +140,16 @@ Nothing
 Remove a producer by its id.
 
 **syntax**:
-`PriorityQueue.remove_producer(producer_id)`
+`PriorityQueue.remove_producer(producer_id, ignore_not_found=False)`
 
 **arguments**:
 
 -   `producer_id`:
     specifies the id of a producer to remove.
-    If such a `producer_id` not found, `KeyError` is emitted.
+
+-   `ignore_not_found`:
+    if it is `False`, raies a `KeyError` when such a `producer_id` not found.
+    Defaults to `False`.
 
 **return**:
 Nothing
@@ -187,7 +190,7 @@ Thus a smaller `Producer` means it is less consumed and should be consumed first
     specifies an id for this producer.
 
 -   `priority`:
-    specifies priority of this queue. 
+    specifies priority of this queue.
     Every time `get()` is called, the counter attribute `consumed` increments by
     `default_priority/priority`.
 

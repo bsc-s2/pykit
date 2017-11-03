@@ -163,6 +163,7 @@ class TestPriorityQueue(unittest.TestCase):
     def test_remove_queue_inexistent(self):
         pq = priorityqueue.PriorityQueue()
         self.assertRaises(KeyError, pq.remove_producer, 1)
+        pq.remove_producer(1, ignore_not_found=True)
 
     def test_bench(self):
 

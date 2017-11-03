@@ -6,8 +6,6 @@ import logging
 import os
 import subprocess
 
-from pykit import daemonize
-
 logger = logging.getLogger(__name__)
 
 
