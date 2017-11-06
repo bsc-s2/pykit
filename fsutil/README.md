@@ -557,7 +557,7 @@ from pykit import fsutil
 file_name = 'test.file'
 
 fsutil.write_file(file_name, '')
-print fsutil.calc_checksums(file_name, sha1=True, md5=True, crc32=False, sha256=False)
+print fsutil.calc_checksums(file_name, sha1=True, md5=True, crc32=False, sha256=True)
 #{
 # 'sha1': 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
 # 'md5': 'd41d8cd98f00b204e9800998ecf8427e',
