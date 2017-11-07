@@ -7,7 +7,9 @@ import string
 import sys
 import types
 
+
 listtype = (types.TupleType, types.ListType)
+
 
 def _findquote(line, quote):
     if len(quote) == 0:
@@ -45,6 +47,7 @@ def _findquote(line, quote):
 
     return -1, -1, escape
 
+
 def tokenize(line, sep=None, quote='"\'', preserve=False):
     if sep == quote:
         raise ValueError, 'diffrent sep and quote is required'
@@ -64,8 +67,8 @@ def tokenize(line, sep=None, quote='"\'', preserve=False):
             lines = []
             x = 0
             for e in escape:
-                lines.append(line[x:i+e])
-                x = i+e+1
+                lines.append(line[x:i + e])
+                x = i + e + 1
             lines.append(line[x:])
             line = ''.join(lines)
             n = len(line)
@@ -78,7 +81,7 @@ def tokenize(line, sep=None, quote='"\'', preserve=False):
         if i < sub:
             sub_rst = line[i:sub].split(sep)
             if sep is None:
-                if line[sub-1] in string.whitespace:
+                if line[sub - 1] in string.whitespace:
                     sub_rst.append('')
                 if line[i] in string.whitespace:
                     sub_rst.insert(0, '')
@@ -99,9 +102,9 @@ def tokenize(line, sep=None, quote='"\'', preserve=False):
         head = rst.pop()
 
         if preserve:
-            head += line[i+quote_s:i+quote_e+1]
+            head += line[i + quote_s:i + quote_e + 1]
         else:
-            head += line[i+quote_s+1:i+quote_e]
+            head += line[i + quote_s + 1:i + quote_e]
 
         rst.append(head)
         i += quote_e + 1
@@ -582,6 +585,7 @@ _named_colors = {
     'white': 255,
 }
 
+
 def _make_colored_function(name):
     def _colored(v):
         return ColoredString(v, name)
@@ -614,4 +618,3 @@ def break_line(linestr, width):
             rst.append(buf)
 
     return rst
-

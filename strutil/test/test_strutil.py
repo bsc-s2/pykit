@@ -4,6 +4,7 @@
 import unittest
 
 from pykit import strutil
+from pykit import dictutil
 from pykit import ututil
 
 dd = ututil.dd

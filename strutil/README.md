@@ -9,13 +9,20 @@
   - [colored command prompt](#colored-command-prompt)
 - [Classes](#classes)
   - [strutil.ColoredString](#strutilcoloredstring)
+  - [strutil.TrieNode](#strutiltrienode)
+    - [TrieNode.n](#trienoden)
+    - [TrieNode.char](#trienodechar)
+    - [TrieNode.outstanding](#trienodeoutstanding)
+    - [TrieNode.is_outstanding](#trienodeis_outstanding)
 - [Methods](#methods)
   - [strutil.break_line](#strutilbreak_line)
   - [strutil.color](#strutilcolor)
   - [strutil.colorize](#strutilcolorize)
   - [strutil.common_prefix](#strutilcommon_prefix)
   - [strutil.line_pad](#strutilline_pad)
+  - [strutil.make_trie](#strutilmake_trie)
   - [strutil.format_line](#strutilformat_line)
+  - [strutil.sharding](#strutilsharding)
   - [strutil.struct_repr](#strutilstruct_repr)
   - [strutil.format_table](#strutilformat_table)
   - [strutil.tokenize](#strutiltokenize)
@@ -146,6 +153,44 @@ It provides the colored string in terminal on Unix.
 
 **return**:
 An instance of strutil.ColoredString.
+
+
+##  strutil.TrieNode
+
+**syntax**:
+`strutil.TrieNode()`
+
+`TrieNode` is a sub class of `dict` to represent a node in trie.
+
+It has the same `__init__` as `dict`.
+
+See `strutil.make_trie`.
+
+
+### TrieNode.n
+
+Total number of items with the prefix represented by this node.  `None` means
+there might be more items with this prefix thus its number can not be decided
+yet.
+
+
+### TrieNode.char
+
+Trie branch key, a single char
+
+
+### TrieNode.outstanding
+
+An outstanding node is a node that there might be more following input string
+which has its corresponding prefix.
+
+This attribute points to the last added child node.
+
+
+### TrieNode.is_outstanding
+
+If this node is an outstanding node to its parent node.  When created, a node
+must be an outstanding node.
 
 
 #   Methods
@@ -330,6 +375,72 @@ a common prefix of the same type of `a`.
 **return**:
 multiple line string with `\n` as line separator, with left padding added.
 
+
+##  strutil.make_trie
+
+**syntax**:
+`strutil.make_trie(sorted_strings, node_max_num=1)`
+
+Make a [trie](https://en.wikipedia.org/wiki/Trie) from a series of strings.
+It also tries to squash (at most `node_max_num`) leaf nodes to an ancestor to
+reduce memory usage.
+Thus when using it to calculate strings distribution, it achieves accuracy in
+the unit of `node_max_num`.
+
+Building a trie is in `O(n)` time cost, where `n` is total numbers of chars in
+the input.
+
+**Synopsis**:
+
+```python
+from pykit import strutil
+t = strutil.make_trie(
+        (
+            'abc',
+            'abcdef',
+            'abcdeg',
+            'abcdfg',
+            'abd',
+            'abe',
+            'axy',
+            'b11',
+            'b12',
+            'b123',
+            'b14',
+        ), node_max_num=3)
+
+print str(t)
+# 11:  a,7:  b,6:  c,4:  end,1
+#                        d,3
+#                  d,1
+#                  e,1
+#            x,1
+#      b,4:  1,4:  1,1
+#                  2,2
+#                  4,1
+print str(t['a'])
+# a,7:  b,6:  c,4:  end,1
+#                   d,3
+#             d,1
+#             e,1
+#       x,1
+```
+
+**arguments**:
+
+-   `sorted_strings`:
+    is an iterable of strings.
+    Strings in it must be sorted ascending or descending.
+
+-   `node_max_num`:
+    specifies the maximum number of strings a leaf node can have.
+    If total number of all the leaf nodes of a parent node smaller or equal
+    `node_max_num`, it squash leaf nodes to their parent.
+
+**return**:
+a `TrieNode` instance, which is the root of a trie.
+
+
 ## strutil.format_line
 
 **syntax**:
@@ -370,6 +481,73 @@ strutil.format_line([["name:", "age:"], ["drdrxp", "18"], "wow"], sep=" | ", ali
 
 **return**:
 formatted string.
+
+
+##  strutil.sharding
+
+**syntax**:
+`strutil.sharding(sorted_strings, size, accuracy=None)`
+
+Split `sorted_strings` into segments, each one of those contains
+`size` to `size + accuracy` strings, except the last one.
+
+Time complexity is `O(n)`, where `n` is the total number of chars in all strings.
+It uses a trie as underlying storage to track string distribution.
+See `strutil.make_trie`.
+
+It returns a list of tuples contains start key and segment size.
+
+-   The start key is a string or a prefix in `sorted_strings`.
+
+-   A start key are always shortened to the minimal size.
+
+-   The first start key is always empty string `""`.
+
+-   The smaller `accuracy` is, the more memory is cost, because it need to track
+    more distribution information during scanning the strings.
+    `accuracy=1` let it track every single char in all strings.
+
+```python
+from pykit import strutil
+with open('words.txt') as f:
+    lines=f.readlines()
+    lines=[x.strip() for x in lines]
+
+print strutil.sharding(lines, size=200, accuracy=20)
+# [
+#     (''      , 209, ),
+#     ('M'     , 202, ),
+#     ('TestU' , 202, ),
+#     ('br'    , 202, ),
+#     ('dc'    , 201, ),
+#     ('exi'   , 202, ),
+#     ('inf'   , 204, ),
+#     ('may'   , 205, ),
+#     ('pf'    , 200, ),
+#     ('rew'   , 208, ),
+#     ('suc'   , 204, ),
+#     ('wh'    , 56,  ),
+# ]
+```
+
+**arguments**:
+
+-   `sorted_strings`:
+    an iterable of strings, it can be a `list`, `tuple` or `generator`.
+    **All strings in it must be sorted**.
+
+-   `size`:
+    specifies the expected minimal segment size.
+
+-   `accuracy`:
+    specifies the acceptable variance of segment size.
+    The result segment size is between `size` and `size + accuracy`.
+
+    By default it is `size / 10`
+
+**return**:
+a list of tuple.
+
 
 ##  strutil.struct_repr
 
