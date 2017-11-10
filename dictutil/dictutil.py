@@ -5,11 +5,14 @@ import copy
 from collections import defaultdict
 
 
-def depth_iter(mydict, ks=None, maxdepth=10240, intermediate=False):
+def depth_iter(mydict, ks=None, maxdepth=10240, intermediate=False, empty_as_leaf=False):
 
     ks = ks or []
 
-    for k, v in mydict.items():
+    dickeys = sorted(mydict.keys())
+    for k in dickeys:
+
+        v = mydict[k]
 
         ks.append(k)
 
@@ -18,11 +21,14 @@ def depth_iter(mydict, ks=None, maxdepth=10240, intermediate=False):
         else:
             if isinstance(v, dict):
 
-                if intermediate:
+                if intermediate or (empty_as_leaf and len(v) == 0):
                     yield ks, v
 
-                for _ks, v in depth_iter(v, ks, maxdepth=maxdepth,
-                                         intermediate=intermediate):
+                for _ks, v in depth_iter(v, ks,
+                                         maxdepth=maxdepth,
+                                         intermediate=intermediate,
+                                         empty_as_leaf=empty_as_leaf,
+                                         ):
                     yield _ks, v
             else:
                 yield ks, v

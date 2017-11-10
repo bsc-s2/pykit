@@ -190,7 +190,7 @@ Same as `dictutil.attrdict`, except that:
 ## dictutil.depth_iter
 
 **syntax**:
-`dictutil.depth_iter(mydict, ks=None, maxdepth=10240, intermediate=False)`
+`dictutil.depth_iter(mydict, ks=None, maxdepth=10240, intermediate=False, empty_as_leaf=False)`
 
 **arguments**:
 
@@ -250,6 +250,11 @@ Same as `dictutil.attrdict`, except that:
     #     ['a', 'a.c', 'a.c.a', 'a.c.a.a']
 
     ```
+
+-   `empty_as_leaf`:
+    treat empty dict as a leaf node.
+
+    By default it is `False`, thus only non-dict elements are yielded.
 
 **return**:
 an iterator. Each element it yields is a tuple of keys and value.
