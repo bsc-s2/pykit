@@ -273,7 +273,7 @@ class Client(object):
             try:
                 self.recv_iter.close()
             except Exception as e:
-                logger.Exception(repr(e) + ' while close recv_iter')
+                logger.exception(repr(e) + ' while close recv_iter')
 
         self.recv_iter = None
 
@@ -281,7 +281,7 @@ class Client(object):
             try:
                 self.sock.close()
             except Exception as e:
-                logger.Exception(repr(e) + ' while close sock')
+                logger.exception(repr(e) + ' while close sock')
 
         self.sock = None
 
