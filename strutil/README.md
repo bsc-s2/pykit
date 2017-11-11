@@ -1,35 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-#   Table of Content
-
-- [Name](#name)
-- [Status](#status)
-- [Synopsis](#synopsis)
-  - [colored string](#colored-string)
-  - [colored command prompt](#colored-command-prompt)
-- [Classes](#classes)
-  - [strutil.ColoredString](#strutilcoloredstring)
-  - [strutil.TrieNode](#strutiltrienode)
-    - [TrieNode.n](#trienoden)
-    - [TrieNode.char](#trienodechar)
-    - [TrieNode.outstanding](#trienodeoutstanding)
-    - [TrieNode.is_outstanding](#trienodeis_outstanding)
-- [Methods](#methods)
-  - [strutil.break_line](#strutilbreak_line)
-  - [strutil.color](#strutilcolor)
-  - [strutil.colorize](#strutilcolorize)
-  - [strutil.common_prefix](#strutilcommon_prefix)
-  - [strutil.line_pad](#strutilline_pad)
-  - [strutil.make_trie](#strutilmake_trie)
-  - [strutil.format_line](#strutilformat_line)
-  - [strutil.sharding](#strutilsharding)
-  - [strutil.struct_repr](#strutilstruct_repr)
-  - [strutil.format_table](#strutilformat_table)
-  - [strutil.tokenize](#strutiltokenize)
-- [Author](#author)
-- [Copyright and License](#copyright-and-license)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 #   Name
 
@@ -154,6 +122,85 @@ It provides the colored string in terminal on Unix.
 **return**:
 An instance of strutil.ColoredString.
 
+### ColoredString.split
+
+**syntax**:
+`ColoredString.split([sep[, maxsplit]])`
+
+Return a list of the colored words in the ColoredString. If `maxsplit` is given, at most
+`maxsplit` splits are done. If `maxsplit` is not specified or -1, then there is
+no limit on the number of splits.
+
+If `sep` is given, consecutive delimiters are not grouped together and are
+deemed to delimit empty strings. The `sep` argument may consist of multiple
+characters. Splitting an empty ColoredString with a specified separator returns
+`[ColoredString('')]`.
+
+If `sep` is not specified or is `None`, a diffrent splitting algorithm is
+applied: runs of consecutive whitespace are regarded as a single separator, and
+the result will contain no empty strings at the start or end if the string has
+leading or trailing whitespace. Consequently, splitting an empty string or a
+string consisting of just whitespace with a `None` separator returns `[]`.
+
+Works just like `str.split`.
+
+For example:
+```
+#[ColoredString('hello'), ColoredString('pykit')]
+ColoredString(' hello  pykit ').split()
+
+#[ColoredString('hello', 'red'), ColoredString('pykit', 'blue')]
+color = ColoredString('hello<', 'red') + ColoredString('>pykit', 'blue')
+color.split('<>')
+
+#[ColoredString('hel', 'red'), ColoredString('lo<', 'red')+ColoredString('>pykit', 'blue')]
+color = ColoredString('hel<>lo<', 'red') + ColoredString('>pykit', 'blue')
+color.split('<>', 1)
+```
+
+**arguments**:
+
+-   `sep`:
+    is the delimiter to split the ColoredString. Optional. If `sep` is not
+    specified or is None, then runs of consecutive whitespace are regarded as
+    a single separator.
+
+-   `maxsplit`:
+    is the number of splits. Optional. If `maxsplit` is not specified or -1, then there is
+    no limit on the number of splits.
+
+**return**:
+a list of the colored words.
+
+### ColoredString.splitlines
+
+**syntax**:
+`ColoredString.splitlines([keepend])`
+
+Return a list of the lines in the ColoredString, breaking at line boundaries.
+This method recognizes `"\r"`, `"\n"` and `"\r\n"` as line boundaries. Line
+breaks are not included in the resulting list unless `keepend` is given and true.
+
+Works just like `str.splitlines`.
+
+For example:
+```
+#[ColoredString('hello'), ColoredString('pykit')]
+ColoredString('hello\npykit').splitlines()
+
+#[ColoredString('hello\n', 'red'), ColoredString('pykit\n', 'blue')]
+color = ColoredString('hello\n', 'red') + ColoredString('pykit\n', 'blue')
+color.splitlines(true)
+```
+
+**arguments**:
+
+-   `keepend`:
+    is a bool. If `keepend` is given and true, then line breaks are included in
+    the resulting list. Optional.
+
+**return**:
+a list of the lines in the ColoredString, breaking at line boundaries.
 
 ##  strutil.TrieNode
 

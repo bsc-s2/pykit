@@ -607,3 +607,179 @@ class TestColoredString(unittest.TestCase):
         prompt *= 3
         not_prompt *= 3
         self.assertEqual(len(str(prompt)), len(str(not_prompt)) + 4*3)
+
+    def test_split(self):
+        color_cases = [
+            ([('asd ', 'red'), ('fer ', 'blue'),  ('fg', 'white')],
+             (' ', 0),
+             [[('asd ', 'red'), ('fer ', 'blue'),  ('fg', 'white')]],
+             'test maxsplit',
+             ),
+
+            ([('asd ', 'red'), ('fer ', 'blue'),  ('fg', 'white')],
+             (' ', 1),
+             [[('asd', 'red')], [('fer ', 'blue'),  ('fg', 'white')]],
+             'test maxsplit',
+             ),
+
+            ([('asd ', 'red'), ('fer ', 'blue'),  ('fg', 'white')],
+             (' ', -1),
+             [[('asd', 'red')], [('fer', 'blue')],  [('fg', 'white')]],
+             'test maxsplit',
+             ),
+
+            ([('asdx', 'red'), ('yferx', 'blue'),  ('yfg', 'white')],
+             ('xy', -1),
+             [[('asd', 'red')], [('fer', 'blue')], [('fg', 'white')]],
+             'diff color separator',
+             ),
+
+            ([('asdx', 'red'), ('yferx', 'blue'),  ('yfg', 'white')],
+             ('xy', 1),
+             [[('asd', 'red')], [('ferx', 'blue'), ('yfg', 'white')]],
+             'diff color separator and maxsplit',
+             ),
+
+            ([('asdx', 'red'), ('yferx', 'blue'),  ('yfg', 'white')],
+             ('xyz', -1),
+             [[('asdx', 'red'), ('yferx', 'blue'), ('yfg', 'white')]],
+             'no separator in ColoredString',
+             ),
+
+            ([('  asd ', 'red'), (' fer ', 'blue'),  (' fg ', 'white')],
+             (None, -1),
+             [[('asd', 'red')], [('fer', 'blue')], [('fg', 'white')]],
+             'separator is None',
+             ),
+
+            ([('  asd ', 'red'), (' fer ', 'blue'),  (' fg ', 'white')],
+             (None, 1),
+             [[('asd', 'red')], [('fer ', 'blue'), (' fg ', 'white')]],
+             'separator is None and test maxsplit',
+             ),
+
+            ([('  ', 'red'), (' \r', 'blue'), ('\n  ', 'white')],
+             [None, -1],
+             [],
+             'whitespace string and separator is None',
+             ),
+
+            ([('  ', 'red'), (' \r', 'blue'), ('\n  ', 'white')],
+             [' ', -1],
+             [[('', 'red')], [('', 'red')], [('', 'red')],
+              [('\r', 'blue'), ('\n', 'white')], [('', 'red')], [('', 'red')]],
+             'consecutive separator string',
+             ),
+
+            ([('', 'red')],
+             [' ', 1],
+             [[('', None)]],
+             'blank string',
+             ),
+        ]
+
+        for _in, args, expected, msg in color_cases:
+            dd('msg: ', msg)
+
+            expect_rsts = []
+            for elts in expected:
+                cs = strutil.ColoredString('')
+                for elt in elts:
+                    cs += strutil.ColoredString(elt[0], elt[1])
+                expect_rsts.append(cs)
+
+            color_in = strutil.ColoredString('')
+
+            for elt in _in:
+                color_in += strutil.ColoredString(elt[0], elt[1])
+
+            rst = color_in.split(*args)
+
+            dd('rst: ', rst)
+            dd('expected: ', expect_rsts)
+            self.assertEqual(rst, expect_rsts)
+
+    def test_splitlines(self):
+        color_cases = [
+            ([('asd\r', 'red'), ('fer\n', 'blue'),  ('fg\r\n', 'white')],
+             [True],
+             [[('asd\r', 'red')], [('fer\n', 'blue')], [('fg\r\n', 'white')]],
+             'test keepend',
+             ),
+
+            ([('asd\r', 'red'), ('fer\n', 'blue'),  ('fg\r\n', 'white')],
+             [False],
+             [[('asd', 'red')], [('fer', 'blue')], [('fg', 'white')]],
+             'test keepend',
+             ),
+
+            ([('asd\r', 'red'), ('\nfer', 'blue'),  ('fg', 'white')],
+             [True],
+             [[('asd\r\n', 'red')], [('fer', 'blue'), ('fg', 'white')]],
+             '\r\n in diff color and keepend',
+             ),
+
+            ([('asd\r', 'red'), ('\nfer', 'blue'),  ('fg', 'white')],
+             [False],
+             [[('asd', 'red')], [('fer', 'blue'), ('fg', 'white')]],
+             '\r\n in diff color and not keepend',
+             ),
+
+            ([('\nasd\r', 'red'), ('\nfer', 'blue'),  ('fg\r\n', 'white')],
+             [True],
+             [[('\n', 'red')], [('asd\r\n', 'red')], [
+                 ('fer', 'blue'), ('fg\r\n', 'white')]],
+             'line break at the start and the end and keepend',
+             ),
+
+            ([('\nasd\r', 'red'), ('\nfer', 'blue'),  ('fg\r\n', 'white')],
+             [False],
+             [[('', 'red')], [('asd', 'red')], [
+                 ('fer', 'blue'), ('fg', 'white')]],
+             'line break at the start and the end and not keepend',
+             ),
+
+            ([('\n', 'red'), ('\r\n', 'blue'), ('\r\n', 'white')],
+             [True],
+             [[('\n', 'red')], [('\r\n', 'blue')], [('\r\n', 'white')]],
+             'colored string consisted of all line breaks and keepend',
+             ),
+
+            ([('\n', 'red'), ('\r\n', 'blue'), ('\r\n', 'white')],
+             [False],
+             [[('', 'red')], [('', 'blue')], [('', 'white')]],
+             'colored string consisted of all line breaks and not keepend',
+             ),
+
+            ([('asd ', 'red'), ('fer ', 'blue'),  ('fg', 'white')],
+             [True],
+             [[('asd ', 'red'), ('fer ', 'blue'),  ('fg', 'white')]],
+             'no line break',
+             ),
+
+            ([('', 'red')],
+             [True],
+             [],
+             'blank string',
+             ),
+        ]
+
+        for _in, args, expected, msg in color_cases:
+            dd('msg: ', msg)
+
+            expect_rsts = []
+            for elts in expected:
+                cs = strutil.ColoredString('')
+                for elt in elts:
+                    cs += strutil.ColoredString(elt[0], elt[1])
+                expect_rsts.append(cs)
+
+            color_in = strutil.ColoredString('')
+            for elt in _in:
+                color_in += strutil.ColoredString(elt[0], elt[1])
+
+            rst = color_in.splitlines(*args)
+
+            dd('rst: ', rst)
+            dd('expected: ', expect_rsts)
+            self.assertEqual(rst, expect_rsts)
