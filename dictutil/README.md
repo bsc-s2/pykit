@@ -190,7 +190,7 @@ Same as `dictutil.attrdict`, except that:
 ## dictutil.depth_iter
 
 **syntax**:
-`dictutil.depth_iter(mydict, ks=None, maxdepth=10240, intermediate=False, empty_as_leaf=False)`
+`dictutil.depth_iter(mydict, ks=None, maxdepth=10240, intermediate=False, empty_leaf=False, is_allowed=None)`
 
 **arguments**:
 
@@ -251,10 +251,37 @@ Same as `dictutil.attrdict`, except that:
 
     ```
 
--   `empty_as_leaf`:
+-   `empty_leaf`:
     treat empty dict as a leaf node.
 
     By default it is `False`, thus only non-dict elements are yielded.
+
+-   `is_allowed`:
+    specifies a user - customized `callable` to choose what `keys` and `value` to
+    yield.
+    If `is_allowed` is specified, `intermediate` and `empty_leaf` are ignored
+    for `dict` value.
+
+    It accepts two argument `keys` and `value`.
+    It should return `True` or `False`.
+
+    By defaul it is `None`.
+
+    Example: choose only string leaf values:
+
+    ```python
+    mydict={'a':
+            {'a.a': 'v-a.a',
+             'a.b': {},
+             }
+            }
+    for keys, vals in dictutil.depth_iter(mydict,
+                                          is_allowed=lambda ks, v: isinstance(v, str)):
+        print keys, vals
+
+    # output:
+    #     ['a', 'a.a'], v-a.a
+    ```
 
 **return**:
 an iterator. Each element it yields is a tuple of keys and value.

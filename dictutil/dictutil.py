@@ -5,7 +5,9 @@ import copy
 from collections import defaultdict
 
 
-def depth_iter(mydict, ks=None, maxdepth=10240, intermediate=False, empty_as_leaf=False):
+def depth_iter(mydict, ks=None, maxdepth=10240,
+               intermediate=False, empty_leaf=False,
+               is_allowed=None):
 
     ks = ks or []
 
@@ -17,21 +19,28 @@ def depth_iter(mydict, ks=None, maxdepth=10240, intermediate=False, empty_as_lea
         ks.append(k)
 
         if len(ks) >= maxdepth:
-            yield ks, v
+            if is_allowed is None or is_allowed(ks, v):
+                yield ks, v
         else:
             if isinstance(v, dict):
 
-                if intermediate or (empty_as_leaf and len(v) == 0):
-                    yield ks, v
+                if is_allowed is not None:
+                    if is_allowed(ks, v):
+                        yield ks, v
+                else:
+                    if intermediate or (empty_leaf and len(v) == 0):
+                        yield ks, v
 
                 for _ks, v in depth_iter(v, ks,
                                          maxdepth=maxdepth,
                                          intermediate=intermediate,
-                                         empty_as_leaf=empty_as_leaf,
+                                         empty_leaf=empty_leaf,
+                                         is_allowed=is_allowed,
                                          ):
                     yield _ks, v
             else:
-                yield ks, v
+                if is_allowed is None or is_allowed(ks, v):
+                    yield ks, v
 
         ks.pop(-1)
 

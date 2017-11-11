@@ -161,7 +161,7 @@ class TestDictDeepIter(unittest.TestCase):
         ]
 
         idx = 0
-        for rst in dictutil.depth_iter(_in, empty_as_leaf=True):
+        for rst in dictutil.depth_iter(_in, empty_leaf=True):
             self.assertEqual(_out[idx], rst)
             idx = idx + 1
 
@@ -189,11 +189,63 @@ class TestDictDeepIter(unittest.TestCase):
         ]
 
         idx = 0
-        for rst in dictutil.depth_iter(_in, intermediate=True, empty_as_leaf=True):
+        for rst in dictutil.depth_iter(_in, intermediate=True, empty_leaf=True):
             self.assertEqual(_out[idx], rst)
             idx = idx + 1
 
         self.assertEqual(len(_out), idx)
+
+    def test_depth_iter_is_allowed(self):
+
+        _in = {
+            'k1': {
+                'k11': {
+                    'k111': {
+                        'k1111': 'v1111'
+                    },
+                    'empty': {},
+                },
+            },
+        }
+
+        cases = (
+                ({'is_allowed': lambda ks, v: isinstance(v, dict) and len(v) == 0,
+                  },
+                 ['k1', 'k11', 'empty'], {},
+                 'choose only empty dict value',
+                 ),
+
+                ({'is_allowed': lambda ks, v: isinstance(v, str),
+                  },
+                 ['k1', 'k11', 'k111', 'k1111'], 'v1111',
+                 'choose only string value',
+                 ),
+
+                ({'is_allowed': lambda ks, v: isinstance(v, str),
+                  'intermediate': True,
+                  },
+                 ['k1', 'k11', 'k111', 'k1111'], 'v1111',
+                 'is_allowed should override intermediate',
+                 ),
+
+                ({'is_allowed': lambda ks, v: isinstance(v, str),
+                  'empty_leaf': True,
+                  },
+                 ['k1', 'k11', 'k111', 'k1111'], 'v1111',
+                 'is_allowed should override empty_leaf',
+                 ),
+
+        )
+
+        for kwargs, expected_ks, expected_v, msg in cases:
+
+            dd(msg)
+            dd(kwargs)
+            dd('expected:', expected_ks, expected_v)
+
+            for ks, v in dictutil.depth_iter(_in, **kwargs):
+                self.assertEqual(expected_ks, ks)
+                self.assertEqual(expected_v, v)
 
 
 class TestDictBreadthIter(unittest.TestCase):
