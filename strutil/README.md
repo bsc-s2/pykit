@@ -1,3 +1,37 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+#   Table of Content
+
+- [Name](#name)
+- [Status](#status)
+- [Synopsis](#synopsis)
+  - [colored string](#colored-string)
+  - [colored command prompt](#colored-command-prompt)
+- [Classes](#classes)
+  - [strutil.ColoredString](#strutilcoloredstring)
+    - [ColoredString.split](#coloredstringsplit)
+    - [ColoredString.splitlines](#coloredstringsplitlines)
+  - [strutil.TrieNode](#strutiltrienode)
+    - [TrieNode.n](#trienoden)
+    - [TrieNode.char](#trienodechar)
+    - [TrieNode.outstanding](#trienodeoutstanding)
+    - [TrieNode.is_outstanding](#trienodeis_outstanding)
+- [Methods](#methods)
+  - [strutil.break_line](#strutilbreak_line)
+  - [strutil.color](#strutilcolor)
+  - [strutil.colorize](#strutilcolorize)
+  - [strutil.common_prefix](#strutilcommon_prefix)
+  - [strutil.line_pad](#strutilline_pad)
+  - [strutil.make_trie](#strutilmake_trie)
+  - [strutil.format_line](#strutilformat_line)
+  - [strutil.sharding](#strutilsharding)
+  - [strutil.struct_repr](#strutilstruct_repr)
+  - [strutil.format_table](#strutilformat_table)
+  - [strutil.tokenize](#strutiltokenize)
+- [Author](#author)
+- [Copyright and License](#copyright-and-license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 #   Name
 

@@ -516,7 +516,7 @@ class ColoredString(object):
                 continue
 
             if e[1] is None:
-                val = str(e[0])
+                val = e[0]
             else:
                 _clr = '\033[38;5;' + str(e[1]) + 'm'
                 _rst = '\033[0m'
@@ -557,123 +557,106 @@ class ColoredString(object):
             return False
         return str(self) == str(other) and self._prompt == other._prompt
 
-    def __findlinebreak(self, line, color, *args):
+    def _find_linebreak(self, line, *args):
         r = line.find('\r')
         n = line.find('\n')
 
+
+        if r < 0 and n < 0:
+            return -1, 0
+
         # \r\n
         if r > -1 and r + 1 == n:
-            s, e = r, r + 2
+            return r, r + 2
+
         # \r
-        elif r > -1 and (r < n or n < 0):
-            s, e = r, r + 1
+        if r > -1 and (r < n or n < 0):
+            return r, r + 1
+
         # \n
-        else:
-            s, e = n, n + 1
+        return n, n + 1
 
-        if s > -1:
-            k = self.__finddiffcolor(line[:s], color[:s])
-        else:
-            k = self.__finddiffcolor(line[:], color[:])
-
-        if k > -1:
-            return k, -1
-
-        return s, e
-
-    def __findblanksep(self, line, color, *args):
+    def _find_None_sep(self, line, *args):
         i = 0
         n = len(line)
         while i < n:
-            if color[i] != color[0]:
-                return i, -1
 
             if line[i] in string.whitespace:
                 s = i
                 i += 1
                 while i < n and line[i] in string.whitespace:
                     i += 1
-                e = i
-                return s, e
+                return s, i
 
             i += 1
 
         return -1, 0
 
-    def __findsep(self, line, color, sep):
+    def _find_sep(self, line, sep):
         i = line.find(sep)
-
-        if i < 0:
-            k = self.__finddiffcolor(line[:], color[:])
-        else:
-            k = self.__finddiffcolor(line[:i], color[:i])
-
-        # diff color
-        if -1 < k:
-            return k, -1
-
-        # miss
-        if i < 0:
-            return -1, 0
 
         return i, i + len(sep)
 
-    def __finddiffcolor(self, line, color):
-        k = 0
-        n = len(line)
-        while k < n:
-            if color[k] != color[0]:
-                return k
-            k += 1
-        return -1
+    def _recover_colored_str(self, colored_chars):
+        rst = ColoredString('')
+        n = len(colored_chars)
+        if n == 0:
+            return rst
 
-    def __split(self, line, color, find, sep, maxsplit, keep):
+        head = list(colored_chars[0])
+        i = 1
+        while i < n:
+            if head[1] == colored_chars[i][1]:
+                head[0] += colored_chars[i][0]
+            else:
+                rst += ColoredString(head[0], head[1])
+                head = list(colored_chars[i])
+            i += 1
+        rst += ColoredString(head[0], head[1])
+
+        return rst
+
+    def _split(self, line, colored_chars, findsep, sep, maxsplit, keep):
         rst = []
-        head = ColoredString('')
         n = len(line)
         i = 0
         while i < n:
             if maxsplit == 0:
                 break
 
-            s, e = find(line[i:], color[i:], sep)
+            s, e = findsep(line[i:], sep)
 
             if s < 0:
                 break
 
-            # diff color
-            if e < 0:
-                head += ColoredString(line[i:i + s], color[i])
-                i += s
-                continue
-
+            edge = s
             if keep:
-                head += ColoredString(line[i:i + e], color[i])
-            else:
-                head += ColoredString(line[i:i + s], color[i])
+                edge = e
 
-            rst.append(head)
+            rst.append(self._recover_colored_str(colored_chars[i:i+edge]))
+
             maxsplit -= 1
-            head = ColoredString('')
             i += e
 
         if i < n:
-            while i < n:
-                s = self.__finddiffcolor(line[i:], color[i:])
-                if -1 < s:
-                    head += ColoredString(line[i:i + s], color[i])
-                    i += s
-                else:
-                    head += ColoredString(line[i:], color[i])
-                    rst.append(head)
-                    break
+            rst.append(self._recover_colored_str(colored_chars[i:]))
 
         # sep in the end
         # 'a b '  ->  ['a', 'b', '']
         elif sep is not None:
-            rst.append(head)
+            rst.append(ColoredString(''))
 
         return rst
+
+    def _extract_str_and_chars_from_cs(self):
+        colored_char = []
+        line = ''
+        for elt in self.elts:
+            for c in elt[0]:
+                colored_char.append((c, elt[1]))
+            line += elt[0]
+
+        return line, colored_char
 
     def splitlines(self, *args):
         ''.splitlines(*args)
@@ -682,13 +665,9 @@ class ColoredString(object):
         if len(args) > 0:
             keep = args[0]
 
-        color = []
-        line = ''
-        for elt in self.elts:
-            color += [elt[1]] * len(elt[0])
-            line += elt[0]
+        line, colored_chars = self._extract_str_and_chars_from_cs()
 
-        return self.__split(line, color, self.__findlinebreak, None, -1, keep)
+        return self._split(line, colored_chars, self._find_linebreak, None, -1, keep)
 
     def split(self, *args):
         ''.split(*args)
@@ -697,22 +676,19 @@ class ColoredString(object):
         if maxsplit is None:
             maxsplit = -1
 
-        color = []
-        line = ''
-        for elt in self.elts:
-            color += [elt[1]] * len(elt[0])
-            line += elt[0]
+        line, colored_chars = self._extract_str_and_chars_from_cs()
 
-        find = self.__findsep
+        find = self._find_sep
         i = 0
         if sep is None:
-            find = self.__findblanksep
+            find = self._find_None_sep
 
+            # line.strip()
             n = len(line)
             while i < n and line[i] in string.whitespace:
                 i += 1
 
-        return self.__split(line[i:], color[i:], find, sep, maxsplit, False)
+        return self._split(line[i:], colored_chars[i:], find, sep, maxsplit, False)
 
 
 def fading_color(v, total):
