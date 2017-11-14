@@ -557,45 +557,12 @@ class ColoredString(object):
             return False
         return str(self) == str(other) and self._prompt == other._prompt
 
-    def _find_linebreak(self, line, *args):
-        r = line.find('\r')
-        n = line.find('\n')
-
-
-        if r < 0 and n < 0:
+    def _find_sep(self, line, sep):
+        ma = re.search(sep, line)
+        if ma is None:
             return -1, 0
 
-        # \r\n
-        if r > -1 and r + 1 == n:
-            return r, r + 2
-
-        # \r
-        if r > -1 and (r < n or n < 0):
-            return r, r + 1
-
-        # \n
-        return n, n + 1
-
-    def _find_None_sep(self, line, *args):
-        i = 0
-        n = len(line)
-        while i < n:
-
-            if line[i] in string.whitespace:
-                s = i
-                i += 1
-                while i < n and line[i] in string.whitespace:
-                    i += 1
-                return s, i
-
-            i += 1
-
-        return -1, 0
-
-    def _find_sep(self, line, sep):
-        i = line.find(sep)
-
-        return i, i + len(sep)
+        return ma.span()
 
     def _recover_colored_str(self, colored_chars):
         rst = ColoredString('')
@@ -604,19 +571,17 @@ class ColoredString(object):
             return rst
 
         head = list(colored_chars[0])
-        i = 1
-        while i < n:
-            if head[1] == colored_chars[i][1]:
-                head[0] += colored_chars[i][0]
+        for ch in colored_chars[1:]:
+            if head[1] == ch[1]:
+                head[0] += ch[0]
             else:
                 rst += ColoredString(head[0], head[1])
-                head = list(colored_chars[i])
-            i += 1
+                head = list(ch)
         rst += ColoredString(head[0], head[1])
 
         return rst
 
-    def _split(self, line, colored_chars, findsep, sep, maxsplit, keep):
+    def _split(self, line, colored_chars, sep, maxsplit, keep, use_end_sep):
         rst = []
         n = len(line)
         i = 0
@@ -624,7 +589,7 @@ class ColoredString(object):
             if maxsplit == 0:
                 break
 
-            s, e = findsep(line[i:], sep)
+            s, e = self._find_sep(line[i:], sep)
 
             if s < 0:
                 break
@@ -643,7 +608,7 @@ class ColoredString(object):
 
         # sep in the end
         # 'a b '  ->  ['a', 'b', '']
-        elif sep is not None:
+        elif use_end_sep:
             rst.append(ColoredString(''))
 
         return rst
@@ -659,36 +624,44 @@ class ColoredString(object):
         return line, colored_char
 
     def splitlines(self, *args):
+        # to verify arguments
         ''.splitlines(*args)
 
+        sep = '\r(\n)?|\n'
+        maxsplit = -1
+        use_end_sep = False
         keep = False
         if len(args) > 0:
             keep = args[0]
 
         line, colored_chars = self._extract_str_and_chars_from_cs()
 
-        return self._split(line, colored_chars, self._find_linebreak, None, -1, keep)
+        return self._split(line, colored_chars, sep, maxsplit, keep, use_end_sep)
 
     def split(self, *args):
+        # to verify arguments
         ''.split(*args)
 
         sep, maxsplit = (list(args) + [None, None])[:2]
         if maxsplit is None:
             maxsplit = -1
+        use_end_sep = True
+        keep = False
 
         line, colored_chars = self._extract_str_and_chars_from_cs()
 
-        find = self._find_sep
         i = 0
         if sep is None:
-            find = self._find_None_sep
+            sep = '\s+'
+            use_end_sep = False
 
-            # line.strip()
+            # to skip whitespaces at the beginning
+            # ' a b'.split() -> ['a', 'b']
             n = len(line)
             while i < n and line[i] in string.whitespace:
                 i += 1
 
-        return self._split(line[i:], colored_chars[i:], find, sep, maxsplit, False)
+        return self._split(line[i:], colored_chars[i:], sep, maxsplit, keep, use_end_sep)
 
 
 def fading_color(v, total):
