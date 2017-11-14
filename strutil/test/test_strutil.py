@@ -783,3 +783,165 @@ class TestColoredString(unittest.TestCase):
             dd('rst: ', rst)
             dd('expected: ', expect_rsts)
             self.assertEqual(rst, expect_rsts)
+
+    def test_join(self):
+        string_case = [
+            ('ab',
+
+             [('x', 'red'), ('y', 'blue')],
+
+             [('a', None), ('x', 'red'), ('y', 'blue'), ('b', None)],
+
+             'string iter and string element',
+            ),
+
+            ({'a':1, 'b':2},
+
+             [('x', 'red'), ('y', 'blue')],
+
+             [('a', None), ('x', 'red'), ('y', 'blue'), ('b', None)],
+
+             'dict iter and string element',
+            ),
+
+            (['a', 'b', 'c'],
+
+             [('x', 'red'), ('y', 'blue')],
+
+             [('a', None), ('x', 'red'), ('y', 'blue'), ('b', None), ('x', 'red'), ('y', 'blue'), ('c', None)],
+
+             'list iter and string element',
+            ),
+
+            (['a', 'b', 'c'],
+
+             [('', None)],
+
+             [('a', None), ('b', None), ('c', None)],
+
+             'no separator',
+            ),
+
+            (['a'],
+
+             [(' ', None)],
+
+             [('a', None)],
+
+             'iter with just 1 element',
+            ),
+
+            ([],
+
+             [(' ', None)],
+
+             [],
+
+             'iter with no element',
+            ),
+
+        ]
+
+        for iterable, sep, expected, msg in string_case:
+            dd('msg: ', msg)
+
+            color_sep = strutil.ColoredString('')
+            for elt in sep:
+                color_sep += strutil.ColoredString(elt[0], elt[1])
+
+            rst = color_sep.join(iterable)
+
+            color_expected = strutil.ColoredString('')
+            for elt in expected:
+                color_expected += strutil.ColoredString(elt[0], elt[1])
+
+            dd('rst: ', rst)
+            dd('expected: ', color_expected)
+            self.assertEqual(rst, color_expected)
+
+
+        ColoredString_case = [
+            ([[('a', 'red'), ('b', 'blue')]],
+
+             [('x', 'red'), ('y', 'blue')],
+
+             [('a', 'red'), ('b', 'blue')],
+
+             '1 ColoredString element',
+            ),
+
+            ([[('a', 'red')], [('b', 'blue'), ('c', 'white')]],
+
+             [('x', 'red'), ('y', 'blue')],
+
+             [('a', 'red'), ('x', 'red'), ('y', 'blue'), ('b', 'blue'), ('c', 'white')],
+
+             '2 ColoredString elements',
+             ),
+
+            (['a', [('b', 'blue'), ('c', 'white')], 'd'],
+
+             [('x', 'red'), ('y', 'blue')],
+
+             [('a', None), ('x', 'red'), ('y', 'blue'), ('b', 'blue'), ('c', 'white'),
+                 ('x', 'red'), ('y', 'blue'), ('d', None)],
+
+             'ColoredString and string',
+            ),
+
+            ([[('a', 'red')], [('b', 'blue'), ('c', 'white')]],
+
+             [(' ', None)],
+
+             [('a', 'red'), (' ', None), ('b', 'blue'), ('c', 'white')],
+
+             'with colored blank space',
+            ),
+
+            ([[('a', 'red')], [('b', 'blue')], [('c', 'white')]],
+
+             [('', None)],
+
+             [('a', 'red'), ('b', 'blue'), ('c', 'white')],
+
+             'with no separator',
+            ),
+
+            ([[(' ', 'red')], [(' ', 'blue')]],
+
+             [(' ', 'white')],
+
+             [(' ', 'red'), (' ', 'white'),  (' ', 'blue')],
+
+             'colored blank space element with blank space separator',
+            ),
+
+        ]
+
+        for _in, sep, expected, msg in ColoredString_case:
+            dd('msg: ', msg)
+
+            color_in = []
+            for l in _in:
+                if type(l) != type([]):
+                    color_in.append(l)
+                    continue
+
+                cs = strutil.ColoredString('')
+                for elt in l:
+                    cs += strutil.ColoredString(elt[0], elt[1])
+                color_in.append(cs)
+
+            color_sep = strutil.ColoredString('')
+            for elt in sep:
+                color_sep += strutil.ColoredString(elt[0], elt[1])
+
+            rst = color_sep.join(color_in)
+
+            color_expected = strutil.ColoredString('')
+            for elt in expected:
+                color_expected += strutil.ColoredString(elt[0], elt[1])
+
+            dd('rst: ', rst)
+            dd('expected: ', color_expected)
+            self.assertEqual(rst, color_expected)

@@ -9,6 +9,7 @@
   - [colored command prompt](#colored-command-prompt)
 - [Classes](#classes)
   - [strutil.ColoredString](#strutilcoloredstring)
+    - [ColoredString.join](#coloredstringjoin)
     - [ColoredString.split](#coloredstringsplit)
     - [ColoredString.splitlines](#coloredstringsplitlines)
   - [strutil.TrieNode](#strutiltrienode)
@@ -152,6 +153,23 @@ It provides the colored string in terminal on Unix.
     `optimal` `normal` `loaded` `warn` `danger`,
 
     you can colour string with integer [0-256].
+
+**return**:
+An instance of strutil.ColoredString.
+
+### ColoredString.join
+
+**syntax**:
+`ColoredString.join(iterable)`
+
+Return a ColoredString instance which is the concatenation of the elements in
+`iterable`, the separator between elements is the instance providing this method.
+It does not change color of the element. String element has no color in the result.
+
+**arguments**:
+
+-   `iterable`:
+    an iterable whose elements are string values or ColoredString instances.
 
 **return**:
 An instance of strutil.ColoredString.

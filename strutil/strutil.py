@@ -663,6 +663,15 @@ class ColoredString(object):
 
         return self._split(line[i:], colored_chars[i:], sep, maxsplit, keep_sep, keep_empty)
 
+    def join(self, iterable):
+        rst = ColoredString('')
+        for i in iterable:
+            if len(rst) == 0:
+                rst += i
+            else:
+                rst += self + i
+        return rst
+
 
 def fading_color(v, total):
     return _clrs[_fading_idx(v, total)]
