@@ -29,12 +29,12 @@ class TestRateLimiter(unittest.TestCase):
         time.sleep(1)
         r.set_permits(10)
         self.assertEqual(10, r.permits)
-        self.assertEqual(20, r.max_capacity)
+        self.assertEqual(20, r.capacity)
         self.assertAlmostEqual(1, r.stored / 10, places=1)
 
-    def test_consume_and_left(self):
+    def test_consume_and_get_stored(self):
         r = ratelimiter.RateLimiter(1, 2)
         r.consume(1)
-        self.assertAlmostEqual(-1, r.left(), places=1)
+        self.assertAlmostEqual(-1, r.get_stored(), places=1)
         time.sleep(1)
-        self.assertAlmostEqual(0, r.left(), places=1)
+        self.assertAlmostEqual(0, r.get_stored(), places=1)

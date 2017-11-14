@@ -9,7 +9,7 @@ class RateLimiter(object):
     def __init__(self, permits, max_burst=1):
         self.permits = permits
         self.max_burst = max_burst
-        self.max_capacity = max_burst * permits
+        self.capacity = max_burst * permits
         self.stored = 0.0
         self.sync_time = time.time()
 
@@ -34,16 +34,16 @@ class RateLimiter(object):
             self.sync_time = now
 
             new_tokens = duration * self.permits
-            self.stored = min(self.max_capacity, self.stored + new_tokens)
+            self.stored = min(self.capacity, self.stored + new_tokens)
 
     def set_permits(self, permits):
         with self.lock:
             self._resync()
-            old_max_capacity = self.max_capacity
+            old_capacity = self.capacity
             self.permits = permits
-            self.max_capacity = permits * self.max_burst
-            self.stored = self.stored * self.max_capacity / old_max_capacity
+            self.capacity = permits * self.max_burst
+            self.stored = self.stored * self.capacity / old_capacity
 
-    def left(self):
+    def get_stored(self):
         self._resync()
         return self.stored

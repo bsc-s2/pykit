@@ -27,8 +27,9 @@ This library is considered not test well.
 
 #   Synopsis
 This module has two usages.
+
 One is pre consume and get left capacity, another is request and wait mode.
-Here is the example
+Here is the example:
 
 ```python
 import time
@@ -38,21 +39,20 @@ from pykit import ratelimiter
 # pre consume and get left capacity
 r = throttle.RateLimiter(100, 2)
 r.consume(1000)
-if r.left() < 0:
-   # do wait or other thing
+if r.get_stored() < 0:
+   print "not enough permits"
 else:
-   # assign left capacity
+   print "can assign permits is %s" % r.get_stored()
 
 # request and wait
 r = throttle.RateLimiter(100, 2)
 # this will request 100 and need wait 1 second.
 r.wait_available(100)
-
 ```
 
 #   Description
 
-A module that provide a way for rate limit and throttle.
+A module that provides a way for rate limit and throttle.
 
 
 # Classes
@@ -68,11 +68,13 @@ A module that provide a way for rate limit and throttle.
 
 -   `permits`:
     specifies the permits per second.
+    It can be a int, float, long value.
+    If permits is 1, it means we can get 1 permit one second.
 
 -   `max_burst`
     specifies the permits that can max stored in second.
     Default is 1 second.
-    If permits is 2/s, and max_burst is specified as 2 seconds ,
+    If permits is 2/s, and max_burst is specified as 2 seconds,
     the max capacity we can hold is 2 * 2 = 4 permits.
 
 ### RateLimiter.consume
@@ -119,14 +121,14 @@ set the permits in second.
 **return**:
 Nothing.
 
-### RateLimiter.left
-get the left permits in RateLimiter.
+### RateLimiter.get_stored
+get the stored permits in RateLimiter.
 
 **syntax**:
-`RateLimiter.left`
+`RateLimiter.get_stored`
 
 **return**:
-the left permits in RateLimiter.
+the stored permits in RateLimiter.
 It can be a negative value for debt.
 
 #   Author
