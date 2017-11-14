@@ -581,7 +581,7 @@ class ColoredString(object):
 
         return rst
 
-    def _split(self, line, colored_chars, sep, maxsplit, keep, use_end_sep):
+    def _split(self, line, colored_chars, sep, maxsplit, keep_sep, keep_empty):
         rst = []
         n = len(line)
         i = 0
@@ -595,7 +595,7 @@ class ColoredString(object):
                 break
 
             edge = s
-            if keep:
+            if keep_sep:
                 edge = e
 
             rst.append(self._recover_colored_str(colored_chars[i:i+edge]))
@@ -608,7 +608,7 @@ class ColoredString(object):
 
         # sep in the end
         # 'a b '  ->  ['a', 'b', '']
-        elif use_end_sep:
+        elif keep_empty:
             rst.append(ColoredString(''))
 
         return rst
@@ -629,14 +629,14 @@ class ColoredString(object):
 
         sep = '\r(\n)?|\n'
         maxsplit = -1
-        use_end_sep = False
-        keep = False
+        keep_empty = False
+        keep_sep = False
         if len(args) > 0:
-            keep = args[0]
+            keep_sep = args[0]
 
         line, colored_chars = self._extract_str_and_chars_from_cs()
 
-        return self._split(line, colored_chars, sep, maxsplit, keep, use_end_sep)
+        return self._split(line, colored_chars, sep, maxsplit, keep_sep, keep_empty)
 
     def split(self, *args):
         # to verify arguments
@@ -645,15 +645,15 @@ class ColoredString(object):
         sep, maxsplit = (list(args) + [None, None])[:2]
         if maxsplit is None:
             maxsplit = -1
-        use_end_sep = True
-        keep = False
+        keep_empty = True
+        keep_sep = False
 
         line, colored_chars = self._extract_str_and_chars_from_cs()
 
         i = 0
         if sep is None:
             sep = '\s+'
-            use_end_sep = False
+            keep_empty = False
 
             # to skip whitespaces at the beginning
             # ' a b'.split() -> ['a', 'b']
@@ -661,7 +661,7 @@ class ColoredString(object):
             while i < n and line[i] in string.whitespace:
                 i += 1
 
-        return self._split(line[i:], colored_chars[i:], sep, maxsplit, keep, use_end_sep)
+        return self._split(line[i:], colored_chars[i:], sep, maxsplit, keep_sep, keep_empty)
 
 
 def fading_color(v, total):
