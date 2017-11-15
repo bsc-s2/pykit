@@ -613,7 +613,7 @@ class ColoredString(object):
 
         return rst
 
-    def _extract_str_and_chars_from_cs(self):
+    def _extract_str_and_chars(self):
         colored_char = []
         line = ''
         for elt in self.elts:
@@ -634,7 +634,7 @@ class ColoredString(object):
         if len(args) > 0:
             keep_sep = args[0]
 
-        line, colored_chars = self._extract_str_and_chars_from_cs()
+        line, colored_chars = self._extract_str_and_chars()
 
         return self._split(line, colored_chars, sep, maxsplit, keep_sep, keep_empty)
 
@@ -648,7 +648,7 @@ class ColoredString(object):
         keep_empty = True
         keep_sep = False
 
-        line, colored_chars = self._extract_str_and_chars_from_cs()
+        line, colored_chars = self._extract_str_and_chars()
 
         i = 0
         if sep is None:
@@ -723,8 +723,12 @@ for _func_name in _named_colors:
 
 
 def break_line(linestr, width):
-    lines = re.split('\n|\r', linestr)
+    lines = linestr.splitlines()
     rst = []
+
+    space = ' '
+    if isinstance(linestr, ColoredString):
+        space = ColoredString(' ')
 
     for line in lines:
         words = line.split(' ')
@@ -735,7 +739,7 @@ def break_line(linestr, width):
                 rst.append(buf)
                 buf = word
             else:
-                buf += ' ' + word
+                buf += space + word
 
         if buf != '':
             rst.append(buf)

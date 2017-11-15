@@ -300,25 +300,29 @@ must be an outstanding node.
 **syntax**:
 `strutil.break_line(linestr, width)`
 
-Split a string `linestr` to lines by one space or line break
+Split `linestr` to lines by one space or line break
 to make length of every line no greater than `width`.
+
 Only one space or line break is replaced at a time. Any others stay.
+
+If `linestr` is a ColoredString instance, color of non-blank chars do not change.
 
 Examples:
 ```
+#['foo bar', 'bar.']
 strutil.break_line('foo bar bar.', 9)
 
-#['foo bar', 'bar.']
-
+#['one ', ' two', '', 'three']
 print strutil.break_line('one   two  three', 4)
 
-#['one ', ' two', '', 'three']
+#[ColoredString('foo', 'blue') + ColoredString(' ') + ColoredString('bar', 'blue'), ColoredString('bar.', 'red')]
+strutil.break_line(ColoredString('foo bar ', 'blue') + ColoredString('bar.', 'red'), 9)
 ```
 
 **arguments**:
 
 -   `linestr`:
-    is a string.
+    is a string or a ColoredString instance.
 
 -   `width`:
     is the longest line length expected after being split.

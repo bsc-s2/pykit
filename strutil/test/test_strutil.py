@@ -474,6 +474,65 @@ class TestStrutil(unittest.TestCase):
             dd('rst: ', rst)
             self.assertEqual(rst, expected)
 
+        colored_string_cases = [
+            ([('asd ', 'red'), ('fer ', 'blue'), ('fg', 'white')],
+             8,
+             [[('asd', 'red'), (' ', None), ('fer', 'blue')],  [('fg', 'white')]],
+             'base test',
+             ),
+
+            ([('asd ', 'red'), ('fer ', 'blue'),  ('fg', 'white')],
+             -1,
+             [[('asd', 'red')], [('fer', 'blue')],  [('fg', 'white')]],
+             'test width',
+             ),
+
+            ([('asd   ', 'red'), ('fer  ', 'blue'),  ('fg', 'white')],
+             5,
+             [[('asd', 'red'), (' ', None), (' ', None)],
+              [('fer', 'blue'), (' ', None)], [('fg', 'white')]],
+             'test consecutive blank spaces',
+             ),
+
+            ([('  asd', 'red'), (' fer', 'blue'), ('fg   ', 'white')],
+             4,
+             [[(' ', None)], [('asd', 'red')], [('fer', 'blue'), ('fg', 'white')],
+              [(' ', None), (' ', None)]],
+             'consecutive blank spaces in the end and beginning',
+             ),
+
+            ([('asd\n', 'red'), ('f er ', 'blue'),  ('fg', 'white')],
+             5,
+             [[('asd', 'red')], [('f', 'blue'), (' ', None), ('er', 'blue')], [('fg', 'white')]],
+             'test line break',
+             ),
+
+            ([('', None)],
+             2,
+             [],
+             'test empty string',
+             ),
+        ]
+
+        for _in, width, expected, msg in colored_string_cases:
+            dd('msg: ', msg)
+
+            color_in = strutil.ColoredString('')
+            for elt in _in:
+                color_in += strutil.ColoredString(elt[0], elt[1])
+            color_expected = []
+            for l in expected:
+                buf = strutil.ColoredString('')
+                for elt in l:
+                    buf += strutil.ColoredString(elt[0], elt[1])
+                color_expected.append(buf)
+
+            rst = strutil.break_line(color_in, width)
+
+            dd('rst: ', rst)
+            dd('expected: ', color_expected)
+            self.assertEqual(rst, color_expected)
+
 
 class TestColoredString(unittest.TestCase):
 
