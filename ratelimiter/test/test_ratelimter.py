@@ -9,26 +9,20 @@ from pykit import ratelimiter
 
 
 class TestRateLimiter(unittest.TestCase):
-    def test_wait_available(self):
+    def test_try_acquire(self):
         r = ratelimiter.RateLimiter(1, 2)
 
-        # init empty ,wait for available permits
-        with ututil.Timer() as t:
-            r.wait_available(1)
-            self.assertAlmostEqual(1, t.spent(), places=1)
-
-        # wait for free permits
-        time.sleep(2)
-        with ututil.Timer() as t:
-            r.wait_available(2)
-            self.assertAlmostEqual(0, t.spent(), places=1)
-
-    def test_set_permits(self):
-        r = ratelimiter.RateLimiter(1, 2)
-        self.assertEqual(1, r.permits)
+        self.assertEqual(False, r.try_acquire(1, timeout=0))
         time.sleep(1)
-        r.set_permits(10)
-        self.assertEqual(10, r.permits)
+        self.assertEqual(True, r.try_acquire(1, timeout=0))
+        self.assertEqual(False, r.try_acquire(100, timeout=10))
+
+    def test_set_token_per_second(self):
+        r = ratelimiter.RateLimiter(1, 2)
+        self.assertEqual(1, r.token_per_second)
+        time.sleep(1)
+        r.set_token_per_second(10)
+        self.assertEqual(10, r.token_per_second)
         self.assertEqual(20, r.capacity)
         self.assertAlmostEqual(1, r.stored / 10, places=1)
 

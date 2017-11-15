@@ -6,10 +6,10 @@ import threading
 
 
 class RateLimiter(object):
-    def __init__(self, permits, max_burst=1):
-        self.permits = permits
+    def __init__(self, token_per_second, max_burst=1):
+        self.token_per_second = token_per_second
         self.max_burst = max_burst
-        self.capacity = max_burst * permits
+        self.capacity = max_burst * token_per_second
         self.stored = 0.0
         self.sync_time = time.time()
 
@@ -19,13 +19,21 @@ class RateLimiter(object):
         with self.lock:
             self.stored = self.stored - consumed
 
-    def wait_available(self, request):
+    def try_acquire(self, request, timeout=0):
         with self.lock:
             self._resync()
-            self.stored = self.stored - request
-            time_to_sleep = -self.stored / self.permits
-            if time_to_sleep > 0:
-                time.sleep(time_to_sleep)
+            left = self.stored - request
+            if left >= 0:
+                self.stored = left
+                return True
+            else:
+                next_free_time = -left / self.token_per_second
+                if next_free_time > timeout:
+                    return False
+                else:
+                    self.stored = left
+        time.sleep(next_free_time)
+        return True
 
     def _resync(self):
         with self.lock:
@@ -33,15 +41,15 @@ class RateLimiter(object):
             duration = now - self.sync_time
             self.sync_time = now
 
-            new_tokens = duration * self.permits
+            new_tokens = duration * self.token_per_second
             self.stored = min(self.capacity, self.stored + new_tokens)
 
-    def set_permits(self, permits):
+    def set_token_per_second(self, token_per_second):
         with self.lock:
             self._resync()
             old_capacity = self.capacity
-            self.permits = permits
-            self.capacity = permits * self.max_burst
+            self.token_per_second = token_per_second
+            self.capacity = token_per_second * self.max_burst
             self.stored = self.stored * self.capacity / old_capacity
 
     def get_stored(self):

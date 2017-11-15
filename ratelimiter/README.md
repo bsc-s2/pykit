@@ -9,8 +9,8 @@
 - [Classes](#classes)
   - [ratelimiter.RateLimiter](#ratelimiterratelimiter)
     - [RateLimiter.consume](#ratelimiterconsume)
-    - [RateLimiter.wait_available](#ratelimiterwait_available)
-    - [RateLimiter.set_permits](#ratelimiterset_permits)
+    - [RateLimiter.try_acquire](#ratelimitertry_acquire)
+    - [RateLimiter.set_token_per_second](#ratelimiterset_token_per_second)
     - [RateLimiter.get_stored](#ratelimiterget_stored)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
@@ -28,7 +28,7 @@ This library is considered not test well.
 #   Synopsis
 This module has two usages.
 
-One is pre consume and get left capacity, another is request and wait mode.
+One is pre consume and get left capacity, another is request and wait timeout mode.
 Here is the example:
 
 ```python
@@ -44,10 +44,11 @@ if r.get_stored() < 0:
 else:
    print "can assign permits is %s" % r.get_stored()
 
-# request and wait
+# request and wait timeout
 r = throttle.RateLimiter(100, 2)
-# this will request 100 and need wait 1 second.
-r.wait_available(100)
+# this will request 100 and wait 1 second.
+print r.try_acquire(100,timeout=2)
+# True
 ```
 
 #   Description
@@ -62,23 +63,23 @@ A module that provides a way for rate limit and throttle.
 **Synopsis**:
 
 **syntax**:
-`RateLimiter(permits, max_burst=1)`
+`RateLimiter(token_per_second, max_burst=1)`
 
 **arguments**:
 
--   `permits`:
-    specifies the permits per second.
+-   `token_per_second`:
+    specifies the tokens can assign per second.
     It can be a int, float, long value.
-    If permits is 1, it means we can get 1 permit one second.
+    If token is 1, it means we can get 1 token per second.
 
 -   `max_burst`
-    specifies the permits that can max stored in second.
+    specifies the tokens that can max stored in second.
     Default is 1 second.
-    If permits is 2/s, and max_burst is specified as 2 seconds,
-    the max capacity we can hold is 2 * 2 = 4 permits.
+    If `token_per_second` is 2/s, and max_burst is specified as 2 seconds,
+    the max capacity we can hold is 2 * 2 = 4 tokens.
 
 ### RateLimiter.consume
-Reduce the permits capacity according to consumed permits.
+Reduce the permits capacity according to consumed tokens.
 
 **syntax**:
 `RateLimiter.consume(consumed)`
@@ -86,49 +87,53 @@ Reduce the permits capacity according to consumed permits.
 **arguments**:
 
 -   `consumed`:
-    specifies already consumed permits.
+    specifies already consumed tokens.
 
 **return**:
 Nothing.
 
-### RateLimiter.wait_available
-Wait util the request permits is available.
+### RateLimiter.try_acquire
+Wait the request tokens with timeout.
 
 **syntax**:
-`RateLimiter.wait_available(request)`
+`RateLimiter.try_acquire(request,timeout=0)`
 
 **arguments**:
 
 -   `request`:
-    specifies the request permits.
-    This will lead to a time sleep if stored permits is not enough.
+    specifies the request tokens.
+    This will lead to a time sleep if stored tokens is not enough.
+-   `timeout`:
+    specifies the request timeout.
+    If
+    Default is 0, means it should return immediately.
 
 **return**:
 Nothing.
 
-### RateLimiter.set_permits
-set the permits in second.
+### RateLimiter.set_token_per_second
+set the tokens in second.
 
 **syntax**:
-`RateLimiter.set_permits(permits)`
+`RateLimiter.set_token_per_second(token_per_second)`
 
 **arguments**:
 
--   `permits`:
-    specifies the permits per second.
-    This will lead to stored permits and max stored permits resize.
+-   `token_per_second`:
+    specifies the tokens per second.
+    This will lead to stored tokens and max stored tokens resize.
 
 **return**:
 Nothing.
 
 ### RateLimiter.get_stored
-get the stored permits in RateLimiter.
+get the stored tokens in RateLimiter.
 
 **syntax**:
 `RateLimiter.get_stored`
 
 **return**:
-the stored permits in RateLimiter.
+the stored tokens in RateLimiter.
 It can be a negative value for debt.
 
 #   Author
