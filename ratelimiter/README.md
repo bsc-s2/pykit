@@ -9,7 +9,6 @@
 - [Classes](#classes)
   - [ratelimiter.RateLimiter](#ratelimiterratelimiter)
     - [RateLimiter.consume](#ratelimiterconsume)
-    - [RateLimiter.try_acquire](#ratelimitertry_acquire)
     - [RateLimiter.set_token_per_second](#ratelimiterset_token_per_second)
     - [RateLimiter.get_stored](#ratelimiterget_stored)
 - [Author](#author)
@@ -88,25 +87,6 @@ Reduce the permits capacity according to consumed tokens.
 
 -   `consumed`:
     specifies already consumed tokens.
-
-**return**:
-Nothing.
-
-### RateLimiter.try_acquire
-Wait the request tokens with timeout.
-
-**syntax**:
-`RateLimiter.try_acquire(request,timeout=0)`
-
-**arguments**:
-
--   `request`:
-    specifies the request tokens.
-    This will lead to a time sleep if stored tokens is not enough.
--   `timeout`:
-    specifies the request timeout.
-    If
-    Default is 0, means it should return immediately.
 
 **return**:
 Nothing.

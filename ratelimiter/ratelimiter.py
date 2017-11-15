@@ -19,22 +19,6 @@ class RateLimiter(object):
         with self.lock:
             self.stored = self.stored - consumed
 
-    def try_acquire(self, request, timeout=0):
-        with self.lock:
-            self._resync()
-            left = self.stored - request
-            if left >= 0:
-                self.stored = left
-                return True
-            else:
-                next_free_time = -left / self.token_per_second
-                if next_free_time > timeout:
-                    return False
-                else:
-                    self.stored = left
-        time.sleep(next_free_time)
-        return True
-
     def _resync(self):
         with self.lock:
             now = time.time()
