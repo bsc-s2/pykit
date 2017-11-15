@@ -11,7 +11,7 @@
     - [RateLimiter.consume](#ratelimiterconsume)
     - [RateLimiter.wait_available](#ratelimiterwait_available)
     - [RateLimiter.set_permits](#ratelimiterset_permits)
-    - [RateLimiter.left](#ratelimiterleft)
+    - [RateLimiter.get_stored](#ratelimiterget_stored)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
