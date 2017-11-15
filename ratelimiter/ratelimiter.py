@@ -10,7 +10,7 @@ class RateLimiter(object):
         self.token_per_second = token_per_second
         self.max_burst = max_burst
         self.capacity = max_burst * token_per_second
-        self.stored = 0.0
+        self.stored = float(token_per_second)
         self.sync_time = time.time()
 
         self.lock = threading.RLock()
