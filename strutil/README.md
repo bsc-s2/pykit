@@ -309,14 +309,14 @@ If `linestr` is a ColoredString instance, color of non-blank chars do not change
 
 Examples:
 ```
-#['foo bar', 'bar.']
 strutil.break_line('foo bar bar.', 9)
+#['foo bar', 'bar.']
 
-#['one ', ' two', '', 'three']
 print strutil.break_line('one   two  three', 4)
+#['one ', ' two', '', 'three']
 
-#[ColoredString('foo', 'blue') + ColoredString(' ') + ColoredString('bar', 'blue'), ColoredString('bar.', 'red')]
 strutil.break_line(ColoredString('foo bar ', 'blue') + ColoredString('bar.', 'red'), 9)
+#[ColoredString('foo', 'blue') + ColoredString(' ') + ColoredString('bar', 'blue'), ColoredString('bar.', 'red')]
 ```
 
 **arguments**:

@@ -613,7 +613,7 @@ class ColoredString(object):
 
         return rst
 
-    def _extract_str_and_chars(self):
+    def _separator_str_and_colors(self):
         colored_char = []
         line = ''
         for elt in self.elts:
@@ -634,7 +634,7 @@ class ColoredString(object):
         if len(args) > 0:
             keep_sep = args[0]
 
-        line, colored_chars = self._extract_str_and_chars()
+        line, colored_chars = self._separator_str_and_colors()
 
         return self._split(line, colored_chars, sep, maxsplit, keep_sep, keep_empty)
 
@@ -648,7 +648,7 @@ class ColoredString(object):
         keep_empty = True
         keep_sep = False
 
-        line, colored_chars = self._extract_str_and_chars()
+        line, colored_chars = self._separator_str_and_colors()
 
         i = 0
         if sep is None:
