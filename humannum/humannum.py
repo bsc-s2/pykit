@@ -110,11 +110,16 @@ def humannum(data, unit=None, include=None, exclude=None):
         return data
 
 
-def parseint(data):
-    return int(parsenum(data))
+def parseint(data, safe=None):
+    return int(parsenum(data, safe=safe))
 
 
-def parsenum(data):
+def parsenum(data, safe=None):
+
+    if safe is None:
+        safe = False
+
+    original = data
 
     if isinstance(data, integer_types):
         return data
@@ -133,12 +138,19 @@ def parsenum(data):
 
     unit_name = data[-1]
 
-    if unit_name in unit_to_value:
-        val = float(data[:-1]) * unit_to_value[unit_name]
-    else:
-        val = float(data)
+    try:
+        if unit_name in unit_to_value:
+            val = float(data[:-1]) * unit_to_value[unit_name]
+        else:
+            val = float(data)
 
-    if val == int(val):
-        val = int(val)
+        if val == int(val):
+            val = int(val)
+
+    except ValueError:
+        if safe:
+            val = original
+        else:
+            raise
 
     return val

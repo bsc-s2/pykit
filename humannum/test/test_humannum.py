@@ -1,3 +1,4 @@
+import types
 import unittest
 
 from pykit import humannum
@@ -131,6 +132,38 @@ class TestHumannum(unittest.TestCase):
             self.assertTrue(0.000000001 > expected - rst > -0.000000001, msg)
 
             self.assertEqual(int(expected), humannum.parseint(_in), 'int: ' + msg)
+
+    def test_safe_parse(self):
+
+        cases = (
+                ('1%',    0.01,),
+                ('1%x',   '1%x',),
+                ('x1%x',  'x1%x',),
+                ('1',     1,),
+                ('1-',    '1-',),
+                ('x1y',   'x1y',),
+                ('1K',    1024,),
+                ('1Kqq',  '1Kqq',),
+                ('1.01',  1.01,),
+                ('1..01', '1..01',),
+        )
+
+        for _in, expected in cases:
+
+            rst = humannum.parsenum(_in, safe=True)
+
+            msg = 'parse: in: {_in} expect: {expected}, rst: {rst}'.format(
+                _in=repr(_in),
+                expected=repr(expected),
+                rst=repr(rst),
+            )
+            dd(msg)
+
+            self.assertEqual(expected, rst)
+
+            if not isinstance(expected, types.StringTypes):
+                rst = humannum.parseint(_in, safe=True)
+                self.assertEqual(int(expected), rst)
 
     def test_specified_unit(self):
 

@@ -89,7 +89,7 @@ string.
 ##  humannum.parsenum
 
 **syntax**:
-`humannum.parsenum(data)`
+`humannum.parsenum(data, safe=None)`
 
 Parse humanized number string like `10.5K` to `int` or `float`.
 It also parses percentage number to `float`.
@@ -114,13 +114,20 @@ print humannum.parsenum('10.3%')
     For percentage number, valid unit is `%`.
     For example: `10.1%`.
 
+-   `safe`:
+    if `safe` is `True` and data is not a valid number string, it silently
+    returns the original `data`, instead of raising an `ValueError`.
+
+    By default it is `False`.
+
 **return**:
 a `int` number or `float` number.
+
 
 ## humannum.parseint
 
 **syntax**:
-`humannum.parseint(data)`
+`humannum.parseint(data, safe=None)`
 
 Same as `humannum.parsenum` but it always casts result to a `int` number.
 
