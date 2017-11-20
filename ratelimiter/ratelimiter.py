@@ -6,10 +6,10 @@ import threading
 
 
 class RateLimiter(object):
-    def __init__(self, token_per_second, max_burst=1):
+    def __init__(self, token_per_second, burst_second=1):
         self.token_per_second = token_per_second
-        self.max_burst = max_burst
-        self.capacity = max_burst * token_per_second
+        self.burst_second = burst_second
+        self.capacity = burst_second * token_per_second
         self.stored = float(token_per_second)
         self.sync_time = time.time()
 
@@ -17,9 +17,10 @@ class RateLimiter(object):
 
     def consume(self, consumed):
         with self.lock:
+            self._resynchronize()
             self.stored = self.stored - consumed
 
-    def _resync(self):
+    def _resynchronize(self):
         with self.lock:
             now = time.time()
             duration = now - self.sync_time
@@ -30,12 +31,12 @@ class RateLimiter(object):
 
     def set_token_per_second(self, token_per_second):
         with self.lock:
-            self._resync()
+            self._resynchronize()
             old_capacity = self.capacity
             self.token_per_second = token_per_second
-            self.capacity = token_per_second * self.max_burst
+            self.capacity = token_per_second * self.burst_second
             self.stored = self.stored * self.capacity / old_capacity
 
     def get_stored(self):
-        self._resync()
+        self._resynchronize()
         return self.stored

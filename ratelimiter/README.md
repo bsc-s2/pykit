@@ -71,10 +71,10 @@ A module that provides a way for rate limit and throttle.
     It can be a int, float, long value.
     If token is 1, it means we can get 1 token per second.
 
--   `max_burst`
-    specifies the tokens that can max stored in second.
-    Default is 1 second.
-    If `token_per_second` is 2/s, and max_burst is specified as 2 seconds,
+-   `burst_second`
+    specifies the maximum number of tokens that can be saved in terms of time.
+    Default is 1.
+    If `token_per_second` is 2/s, and burst_second is specified as 2 seconds,
     the max capacity we can hold is 2 * 2 = 4 tokens.
 
 ### RateLimiter.consume
