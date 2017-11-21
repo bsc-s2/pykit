@@ -25,9 +25,9 @@ ratelimiter
 This library is considered not test well.
 
 #   Synopsis
-This module has two usages.
+This module provides a way for rate limit and throttle.
 
-One is pre consume and get left capacity, another is request and wait timeout mode.
+We use a pre consume and get left capacity mode.
 Here is the example:
 
 ```python
@@ -35,19 +35,16 @@ import time
 
 from pykit import ratelimiter
 
-# pre consume and get left capacity
-r = throttle.RateLimiter(100, 2)
+r = throttle.RateLimiter(100, 200)
+
+# pre consume
 r.consume(1000)
+
+# get left capacity
 if r.get_stored() < 0:
    print "not enough permits"
 else:
    print "can assign permits is %s" % r.get_stored()
-
-# request and wait timeout
-r = throttle.RateLimiter(100, 2)
-# this will request 100 and wait 1 second.
-print r.try_acquire(100,timeout=2)
-# True
 ```
 
 #   Description
@@ -71,11 +68,8 @@ A module that provides a way for rate limit and throttle.
     It can be a int, float, long value.
     If token is 1, it means we can get 1 token per second.
 
--   `burst_second`
-    specifies the maximum number of tokens that can be saved in terms of time.
-    Default is 1.
-    If `token_per_second` is 2/s, and burst_second is specified as 2 seconds,
-    the max capacity we can hold is 2 * 2 = 4 tokens.
+-   `capacity`
+    specifies the maximum number of tokens that can be saved.
 
 ### RateLimiter.consume
 Reduce the permits capacity according to consumed tokens.

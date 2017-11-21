@@ -12,12 +12,9 @@ class TestRateLimiter(unittest.TestCase):
         r = ratelimiter.RateLimiter(1, 2)
 
         self.assertEqual(1, r.token_per_second)
-        time.sleep(1)
         r.set_token_per_second(10)
 
         self.assertEqual(10, r.token_per_second)
-        self.assertEqual(20, r.capacity)
-        self.assertAlmostEqual(2, r.stored / 10, places=1)
 
     def test_consume_and_get_stored(self):
         r = ratelimiter.RateLimiter(1, 2)

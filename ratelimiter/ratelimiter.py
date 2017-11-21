@@ -1,15 +1,14 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import time
 import threading
+import time
 
 
 class RateLimiter(object):
-    def __init__(self, token_per_second, burst_second=1):
+    def __init__(self, token_per_second, capacity):
         self.token_per_second = token_per_second
-        self.burst_second = burst_second
-        self.capacity = burst_second * token_per_second
+        self.capacity = capacity
         self.stored = float(token_per_second)
         self.sync_time = time.time()
 
@@ -32,10 +31,7 @@ class RateLimiter(object):
     def set_token_per_second(self, token_per_second):
         with self.lock:
             self._resynchronize()
-            old_capacity = self.capacity
             self.token_per_second = token_per_second
-            self.capacity = token_per_second * self.burst_second
-            self.stored = self.stored * self.capacity / old_capacity
 
     def get_stored(self):
         self._resynchronize()
