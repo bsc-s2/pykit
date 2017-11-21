@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
+import operator
 import unittest
 
 from pykit import dictutil
@@ -937,3 +938,142 @@ class TestIsSubDict(unittest.TestCase):
         b['k'][0] = b
 
         self.assertEqual(dictutil.contains(a, b), True)
+
+
+class TestAdd(unittest.TestCase):
+
+    def test_add(self):
+        cases = (
+            ({}, None, None, None, {}),
+            ({}, 'foo', None, None, {}),
+            ({}, 123, None, None, {}),
+            ({}, {}, None, None, {}),
+            ({'a': 1}, {}, None, None, {'a': 1}),
+            ({'a': 1}, {'a': 2}, None, None, {'a': 3}),
+            ({'a': '1'}, {'a': '2'}, None, None, {'a': '12'}),
+            ({'a': '1'}, {'b': '2'}, None, None, {'a': '1', 'b': '2'}),
+            ({'a': '1'}, {'b': {}}, None, None, {'a': '1', 'b': {}}),
+            ({'a': {}}, {'b': {}}, None, None, {'a': {}, 'b': {}}),
+            ({'a': {}}, {'a': {}}, None, None, {'a': {}}),
+
+            ({'a': {'k1': 1}},
+             {'a': {}},
+             None,
+             None,
+             {'a': {'k1': 1}}),
+
+            ({'a': {'k1': 1}},
+             {'a': {'k2': 1}},
+             None,
+             None,
+             {'a': {'k1': 1, 'k2': 1}}),
+
+            ({'a': {'k1': 1}},
+             {'a': {'k1': 1}},
+             None,
+             None,
+             {'a': {'k1': 2}}),
+
+            ({'a': {'k1': 1}},
+             {'a': {'k1': 1}},
+             {'a': True},
+             None,
+             {'a': {'k1': 1}}),
+
+            ({'a': {'k1': 1}},
+             {'a': {'k1': 1}},
+             {'a': {}},
+             None,
+             {'a': {'k1': 2}}),
+
+            ({'a': {}},
+             {'a': {'k1': 1}},
+             {'a': {}},
+             None,
+             {'a': {'k1': 1}}),
+
+            ({'a': {}},
+             {'a': {'k1': 1}},
+             {'a': True},
+             None,
+             {'a': {}}),
+
+            ({'a': {'k1': 1}},
+             {'a': {'k1': 1}},
+             {'a': 'foo'},
+             None,
+             {'a': {'k1': 2}}),
+
+            ({'a': {'k1': 1}},
+             {'a': {'k1': 1}},
+             {'b': True},
+             None,
+             {'a': {'k1': 2}}),
+
+            ({'a': {'k1': 1}},
+             {'a': {'k1': 1}},
+             {'b': True},
+             None,
+             {'a': {'k1': 2}}),
+
+            ({'a': {'k1': 1}},
+             {'a': {'k1': 1}},
+             {'a': {'k1': True}},
+             True,
+             {'a': {'k1': 1}}),
+
+            ({'a': {'k1': 1}},
+             {'a': {'k1': 1}},
+             {'a': {'k2': True}},
+             True,
+             {'a': {'k1': 2}}),
+
+            ({'a': {'k1': 1}, 'b': 1},
+             {'a': {'k1': 1, 'k2': 1}, 'b': 1},
+             None,
+             False,
+             {'a': {'k1': 1}, 'b': 2}),
+        )
+
+        for a, b, exclude, recursive, expected in cases:
+            result = dictutil.add(a, b, exclude=exclude,
+                                  recursive=recursive)
+            self.assertIsNot(a, result)
+            self.assertDictEqual(expected, result,
+                                 repr([a, b, exclude, expected, result]))
+
+            result = dictutil.addto(a, b, exclude=exclude,
+                                    recursive=recursive)
+
+            self.assertIs(a, result)
+            self.assertDictEqual(expected, result,
+                                 repr([a, b, exclude, expected, result]))
+
+
+class TestCombine(unittest.TestCase):
+
+    def test_combine(self):
+        cases = (
+            ({'a': 2},
+             {'a': 3},
+             operator.mul,
+             None,
+             {'a': 6}),
+
+            ({'a': 2},
+             {'a': 3},
+             operator.mul,
+             {'a': True},
+             {'a': 2}),
+        )
+
+        for a, b, op, exclude, expected in cases:
+            result = dictutil.combine(a, b, op, exclude=exclude)
+            self.assertIsNot(a, result)
+            self.assertDictEqual(expected, result,
+                                 repr([a, b, op, exclude, expected, result]))
+
+            result = dictutil.combineto(a, b, op, exclude=exclude)
+            self.assertIs(a, result)
+            self.assertDictEqual(expected, result,
+                                 repr([a, b, op, exclude, expected, result]))

@@ -8,6 +8,10 @@ from .dictutil import (
     make_setter,
     make_getter_str,
     contains,
+    combineto,
+    combine,
+    addto,
+    add,
 
     AttrDict,
     AttrDictCopy,
@@ -23,6 +27,10 @@ __all__ = [
     "make_setter",
     "make_getter_str",
     "contains",
+    "combineto",
+    "combine",
+    "addto",
+    "add",
 
     "AttrDict",
     "AttrDictCopy",
