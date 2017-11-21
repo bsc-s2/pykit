@@ -16,10 +16,10 @@ class RateLimiter(object):
 
     def consume(self, consumed):
         with self.lock:
-            self._resynchronize()
+            self._sync()
             self.stored = self.stored - consumed
 
-    def _resynchronize(self):
+    def _sync(self):
         with self.lock:
             now = time.time()
             duration = now - self.sync_time
@@ -30,9 +30,9 @@ class RateLimiter(object):
 
     def set_token_per_second(self, token_per_second):
         with self.lock:
-            self._resynchronize()
+            self._sync()
             self.token_per_second = token_per_second
 
     def get_stored(self):
-        self._resynchronize()
+        self._sync()
         return self.stored
