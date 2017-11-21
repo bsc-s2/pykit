@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import copy
+import operator
 from collections import defaultdict
 
 
@@ -341,3 +342,49 @@ def _attrdict(attrdict_clz, d, ref):
         super(attrdict_clz, ad).__setitem__(k, sub_ad)
 
     return ad
+
+
+def combineto(a, b, op, exclude=None, recursive=True):
+    if not isinstance(b, dict):
+        return a
+
+    if not isinstance(exclude, dict):
+        exclude = {}
+
+    for k, v in b.iteritems():
+        sub_exclude = exclude.get(k)
+
+        if sub_exclude is True:
+            continue
+
+        if isinstance(v, dict) and recursive == False:
+            continue
+
+        if k not in a:
+            a[k] = copy.deepcopy(v)
+            continue
+
+        if isinstance(a[k], dict):
+            combineto(a[k], v, op, exclude=sub_exclude, recursive=recursive)
+            continue
+
+        a[k] = op(a[k], v)
+
+    return a
+
+
+def combine(a, b, op, exclude=None, recursive=True):
+    r = copy.deepcopy(a)
+    combineto(r, b, op, exclude=exclude, recursive=recursive)
+    return r
+
+
+def addto(a, b, exclude=None, recursive=True):
+    op = operator.add
+    return combineto(a, b, op, exclude=exclude, recursive=recursive)
+
+
+def add(a, b, exclude=None, recursive=True):
+    r = copy.deepcopy(a)
+    addto(r, b, exclude=exclude, recursive=recursive)
+    return r

@@ -15,6 +15,10 @@
   - [dictutil.make_setter](#dictutilmake_setter)
     - [Synopsis](#synopsis-1)
   - [dictutil.contains](#dictutilcontains)
+  - [dictutil.combineto](#dictutilcombineto)
+  - [dictutil.combine](#dictutilcombine)
+  - [dictutil.addto](#dictutiladdto)
+  - [dictutil.add](#dictutiladd)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -583,6 +587,84 @@ Algorithm:
 
     Thus we record every pair of `a` tree node and `b` tree node that we have
     compared in the traversal.
+
+## dictutil.combineto
+
+**syntax**:
+`dictutil.combineto(a, b, op, exclude=None, recursive=True)`
+
+**arguments**:
+
+-   `a`:
+    the dict to combine to, must be a dict.
+
+-   `b`:
+    the dict to combine with, if it is not a dict, it will be ignored.
+
+-   `op`:
+    the operation to take when combining common keys, such as `operator.add`.
+
+-   `exclude`:
+    a dict used to specify keys than should not be combined,
+    if exclude = {'k1': {'k2': True}}, then b['k1']['k2'] will be ignored,
+    if exclude = {'k1': True}, then b['k1'] will be ignored totally.
+
+-   `recursive`:
+    a bool value, if set to `False`, will not dive into sub dict.
+
+    ```python
+    import operator
+    from pykit import dictutil
+
+    a = {
+        'k1': 1,
+        'k3': {'s2': 'foo'},
+    }
+    b = {
+        'k1': 2,
+        'k2': 3,
+        'k3': {'s1': 'foo', 's2': 'bar'},
+        'k4': {'s1': 'bar'},
+    }
+    exclude = {
+        'k4': True,
+        'k3': {'s1': True},
+    }
+    r = dictutil.combineto(a, b, operator.add, exclude=exclude)
+
+    # r is a
+    #a:
+    #{
+    #    'k1': 3,
+    #    'k2': 3,
+    #    'k3': {'s2': 'foobar'},
+    #}
+    ```
+**return**:
+the combined dict.
+
+## dictutil.combine
+
+same as dictutil.combineto, but the first dict will not be modified,
+it will return a new dict.
+
+**syntax**:
+`dictutil.combine(a, b, op, exclude=None, recursive=True)`
+
+## dictutil.addto
+
+same as dictutil.combineto, but only use operator `operator.add`.
+
+**syntax**:
+`dictutil.addto(a, b, exclude=None, recursive=True)`
+
+## dictutil.add
+
+same as dictutil.addto, but the first dict will not be modified,
+it will return a new dict.
+
+**syntax**:
+`dictutil.add(a, b, exclude=None, recursive=True)`
 
 #   Author
 
