@@ -482,7 +482,7 @@ multiple line string with `\n` as line separator, with left padding added.
 ##  strutil.make_trie
 
 **syntax**:
-`strutil.make_trie(sorted_strings, node_max_num=1)`
+`strutil.make_trie(sorted_iterable, node_max_num=1)`
 
 Make a [trie](https://en.wikipedia.org/wiki/Trie) from a series of strings.
 It also tries to squash (at most `node_max_num`) leaf nodes to an ancestor to
@@ -529,9 +529,25 @@ print str(t['a'])
 
 **arguments**:
 
--   `sorted_strings`:
-    is an iterable of strings.
-    Strings in it must be sorted ascending or descending.
+-   `sorted_iterable`:
+    is an iterable(`list`, `tuple`, `generator` or else) of strings or other
+    comparable elements.
+    Sample of valid `sorted_iterable`:
+
+    ```
+    sorted_iterable = ['abc', 'abd', ]
+
+    sorted_iterable = ('abc', 'abd', )
+
+    sorted_iterable = [(1, 'x'), (1, 'y'), ]
+
+    def gen():
+        for i in range(3):
+            yield (i,)
+    sorted_iterable = gen()
+    ```
+
+    Elements in it must be sorted ascending or descending.
 
 -   `node_max_num`:
     specifies the maximum number of strings a leaf node can have.
@@ -587,9 +603,9 @@ formatted string.
 ##  strutil.sharding
 
 **syntax**:
-`strutil.sharding(sorted_strings, size, accuracy=None)`
+`strutil.sharding(sorted_iterable, size, accuracy=None, joiner=''.join)`
 
-Split `sorted_strings` into segments, each one of those contains
+Split `sorted_iterable` into segments, each one of those contains
 `size` to `size + accuracy` strings, except the last one.
 
 Time complexity is `O(n)`, where `n` is the total number of chars in all strings.
@@ -598,11 +614,13 @@ See `strutil.make_trie`.
 
 It returns a list of tuples contains start key and segment size.
 
--   The start key is a string or a prefix in `sorted_strings`.
+-   The start key is a prefix of one of `sorted_iterable`.
+    If `sorted_iterable` is a list of strings, start key is a prefix string.
+    If `joiner` is specified, start key is constructed with `joiner`.
 
 -   A start key are always shortened to the minimal size.
 
--   The first start key is always empty string `""`.
+-   The first start key is always `None`.
 
 -   The smaller `accuracy` is, the more memory is cost, because it need to track
     more distribution information during scanning the strings.
@@ -616,7 +634,7 @@ with open('words.txt') as f:
 
 print strutil.sharding(lines, size=200, accuracy=20)
 # [
-#     (''      , 209, ),
+#     (None    , 209, ),
 #     ('M'     , 202, ),
 #     ('TestU' , 202, ),
 #     ('br'    , 202, ),
@@ -633,7 +651,7 @@ print strutil.sharding(lines, size=200, accuracy=20)
 
 **arguments**:
 
--   `sorted_strings`:
+-   `sorted_iterable`:
     an iterable of strings, it can be a `list`, `tuple` or `generator`.
     **All strings in it must be sorted**.
 
@@ -645,6 +663,13 @@ print strutil.sharding(lines, size=200, accuracy=20)
     The result segment size is between `size` and `size + accuracy`.
 
     By default it is `size / 10`
+
+-   `joiner`:
+    specifies what function to use to reconstructe a sharding key from trie-node-path.
+
+    By default it reconstruct a string from a list of chars.
+
+    To generate `tuple` sharding keys: use `strutil.sharding(.., joiner=tuple)`.
 
 **return**:
 a list of tuple.

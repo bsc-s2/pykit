@@ -1,5 +1,6 @@
 from pykit import dictutil
 
+
 class TrieNode(dict):
 
     def __init__(self, *args, **kwargs):
@@ -36,7 +37,7 @@ class TrieNode(dict):
             mark = ' '
 
         if self.char != '':
-            c = self.char + ','
+            c = str(self.char) + ','
         else:
             c = ''
 
@@ -66,11 +67,11 @@ def _trie_node(parent, char):
     return n
 
 
-def make_trie(sorted_strings, node_max_num=1):
+def make_trie(sorted_iterable, node_max_num=1):
 
     t = TrieNode()
 
-    for _s in sorted_strings:
+    for _s in sorted_iterable:
 
         # find longest common prefix of _s and any seen string
         node = t
@@ -102,15 +103,15 @@ def make_trie(sorted_strings, node_max_num=1):
     return t
 
 
-def sharding(sorted_strings, size, accuracy=None):
+def sharding(sorted_iterable, size, accuracy=None, joiner=''.join):
 
     if accuracy is None:
         accuracy = size / 10
 
-    t = make_trie(sorted_strings, node_max_num=accuracy)
+    t = make_trie(sorted_iterable, node_max_num=accuracy)
 
     n = 0
-    prev_key = ''
+    prev_key = None
     rst = []
 
     for ks, node in dictutil.depth_iter(t, is_allowed=lambda ks, v: v.is_eol or len(v) == 0):
@@ -120,7 +121,7 @@ def sharding(sorted_strings, size, accuracy=None):
             rst.append((prev_key, n))
 
             prev_key = ks
-            prev_key = ''.join(prev_key)
+            prev_key = joiner(prev_key)
             n = 0
 
         if len(node) == 0:
