@@ -25,7 +25,7 @@ def command(**kwargs):
 
             if callable(node):
                 try:
-                    logger.debug("command: " + repr(cmd) + ' args ' + repr(args) + 'cwd: ' + repr(os.getcwd()))
+                    logger.debug("command: " + repr(cmd) + ' args: ' + repr(args) + ' cwd: ' + repr(os.getcwd()))
                     rc = node(*args)
                     sys.exit(0
                               if rc is True or rc is 0 or rc is None
