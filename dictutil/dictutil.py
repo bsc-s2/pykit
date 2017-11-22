@@ -348,7 +348,7 @@ def combineto(a, b, op, exclude=None, recursive=True):
     if not isinstance(b, dict):
         return a
 
-    if not isinstance(exclude, dict):
+    if exclude is None:
         exclude = {}
 
     for k, v in b.iteritems():

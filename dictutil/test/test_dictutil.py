@@ -1000,7 +1000,7 @@ class TestAdd(unittest.TestCase):
 
             ({'a': {'k1': 1}},
              {'a': {'k1': 1}},
-             {'a': 'foo'},
+             {'a': {}},
              None,
              {'a': {'k1': 2}}),
 
