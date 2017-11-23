@@ -4,15 +4,21 @@
 
 # fsutil
 # wsjobd
-
 psutil==4.3.1
 
 
 # mysqlconnpool.test
 # etcd.test
 # redisutil.test
-
 docker-py==1.10.6
+
+
+# logutil
+# mysqlconnpool
+# p3json
+# proc
+# strutil
+subprocess32==3.2.7
 
 
 # numpy==1.7.1
