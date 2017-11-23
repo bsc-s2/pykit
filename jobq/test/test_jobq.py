@@ -244,7 +244,6 @@ class TestJobManager(unittest.TestCase):
 
         jm.join()
 
-
     def test_set_thread_num(self):
 
         def _pass(args):
@@ -275,7 +274,6 @@ class TestJobManager(unittest.TestCase):
             self.assertEqual(i, rst[i])
 
     def test_set_thread_num_with_object_method(self):
-
         """
         In python2, `x = X(); x.meth is x.meth` results in a `False`.
         Every time to retrieve a method, python creates a new **bound** function.
@@ -284,6 +282,7 @@ class TestJobManager(unittest.TestCase):
         """
 
         class X(object):
+
             def meth(self):
                 pass
 
@@ -301,7 +300,6 @@ class TestJobManager(unittest.TestCase):
         self.assertEqual(2, after['workers'][0]['nr_worker'])
 
         jm.join()
-
 
     def test_set_thread_num_keep_order(self):
 

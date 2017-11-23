@@ -30,6 +30,162 @@ class JobWorkerNotFound(JobWorkerError):
     pass
 
 
+class WorkerGroup(object):
+
+    def __init__(self, index, worker, n_thread,
+                 input_queue,
+                 dispatcher,
+                 probe, keep_order):
+
+        self.index        = index
+        self.worker       = worker
+        self.n_thread     = n_thread
+        self.input_queue  = input_queue
+        self.output_queue = _make_q()
+        self.dispatcher   = dispatcher
+        self.probe        = probe
+        self.keep_order   = keep_order
+
+        self.threads = {}
+
+        # When exiting, it is not allowed to change thread number.
+        # Because we need to send a `Finish` to each thread.
+        self.exiting = False
+
+        self.running = True
+
+        # left close, right open: 0 running, n not.
+        # Indicate what thread should have been running.
+        self.running_index_range = [0, self.n_thread]
+
+        # protect reading/writing worker_group info
+        self.worker_group_lock = threading.RLock()
+
+        if self.dispatcher is not None:
+            # self.
+            self.dispatcher_thread = start_thread(self._dispatch, )
+
+        if self.keep_order:
+
+            # to maximize concurrency
+            self.queue_of_output = _make_q(n=1024 * 1024)
+
+            # protect input.get() and ouput.put()
+            self.keep_order_lock = threading.RLock()
+            self.coordinator_thread = start_thread(self._coordinate, self.output_queue, 0)
+        else:
+            self.queue_of_output = None
+
+        self.add_worker_thread()
+
+    def add_worker_thread(self):
+
+        with self.worker_group_lock:
+
+            if self.exiting:
+                logger.info('worker_group exiting.'
+                            ' Thread number change not allowed')
+                return
+
+            s, e = self.running_index_range
+
+            for i in range(s, e):
+
+                if i not in self.threads:
+
+                    if self.keep_order:
+                        th = start_thread(self._exec_in_order,
+                                          self.input_queue, _make_q(), i)
+                    else:
+                        th = start_thread(self._exec,
+                                          self.input_queue, self.output_queue, i)
+
+                    self.threads[i] = th
+
+
+    def _exec(self, input_q, output_q, thread_index):
+
+        while self.running:
+
+            # If this thread is not in the running thread range, exit.
+            if thread_index < self.running_index_range[0]:
+
+                with self.worker_group_lock:
+                    del self.threads[thread_index]
+
+                logger.info('worker-thread {i} quit'.format(i=thread_index))
+                return
+
+            args = input_q.get()
+            if args is Finish:
+                return
+
+            with self.probe['probe_lock']:
+                self.probe['in'] += 1
+
+            try:
+                rst = self.worker(args)
+            except Exception as e:
+                logger.exception(repr(e))
+                continue
+
+            finally:
+                with self.probe['probe_lock']:
+                    self.probe['out'] += 1
+
+            # If rst is an iterator, it procures more than one args to next job.
+            # In order to be accurate, we only count an iterator as one.
+
+            _put_rst(output_q, rst)
+
+    def _exec_in_order(self, input_q, output_q, thread_index):
+
+        while self.running:
+
+            if thread_index < self.running_index_range[0]:
+
+                with self.worker_group_lock:
+                    del self.threads[thread_index]
+
+                logger.info('in-order worker-thread {i} quit'.format(
+                    i=thread_index))
+                return
+
+            with self.keep_order_lock:
+
+                args = input_q.get()
+                if args is Finish:
+                    return
+                self.queue_of_output.put(output_q)
+
+            with self.probe['probe_lock']:
+                self.probe['in'] += 1
+
+            try:
+                rst = self.worker(args)
+
+            except Exception as e:
+                logger.exception(repr(e))
+                output_q.put(EmptyRst)
+                continue
+
+            finally:
+                with self.probe['probe_lock']:
+                    self.probe['out'] += 1
+
+            output_q.put(rst)
+
+    def _coordinate(self, output_q, thread_index):
+
+        while self.running:
+
+            outq = self.queue_of_output.get()
+            if outq is Finish:
+                return
+
+            _put_rst(output_q, outq.get())
+
+
 class JobManager(object):
 
     def __init__(self, workers, queue_size=1024, probe=None, keep_order=False):
@@ -42,18 +198,18 @@ class JobManager(object):
         self.probe = probe
         self.keep_order = keep_order
 
-        self.sessions = []
+        self.worker_groups = []
 
         self.probe.update({
-            'sessions': self.sessions,
+            'worker_groups': self.worker_groups,
             'probe_lock': threading.RLock(),
             'in': 0,
             'out': 0,
         })
 
-        self.make_sessions()
+        self.make_worker_groups()
 
-    def make_sessions(self):
+    def make_worker_groups(self):
 
         inq = self.head_queue
 
@@ -65,61 +221,12 @@ class JobManager(object):
 
             worker, n = worker
 
-            sess = {'worker': worker,
-                    'threads': {},
-                    'input': inq,
-                    'output': _make_q(),
-                    'probe': self.probe,
-                    'index': i,
-                    'total': len(workers),
-                    # When exiting, it is not allowed to change thread number.
-                    # Because we need to send a `Finish` to each thread.
-                    'exiting': False,
-                    'running': True,
-                    # left close, right open: 0 running, n not.
-                    # Indicate what thread should have been running.
-                    'running_index_range': [0, n],
-                    # protect reading/writing session info
-                    'session_lock': threading.RLock(),
-                    }
+            wg = WorkerGroup(i, worker, n, inq,
+                             None,
+                             self.probe, self.keep_order)
 
-            if self.keep_order:
-                # to maximize concurrency
-                sess['queue_of_outq'] = _make_q(n=1024 * 1024)
-
-                # protect input.get() and ouput.put()
-                sess['keep_order_lock'] = threading.RLock()
-                sess['coordinator_thread'] = _make_worker_thread(
-                    sess, _coordinate, sess['output'], 0)
-
-            self.add_worker_thread(sess)
-
-            self.sessions.append(sess)
-            inq = sess['output']
-
-    def add_worker_thread(self, sess):
-
-        with sess['session_lock']:
-
-            if sess['exiting']:
-                logger.info('session exiting.'
-                            ' Thread number change not allowed')
-                return
-
-            s, e = sess['running_index_range']
-
-            for i in range(s, e):
-
-                if i not in sess['threads']:
-
-                    if self.keep_order:
-                        th = _make_worker_thread(
-                            sess, _exec_in_order, _make_q(), i)
-                    else:
-                        th = _make_worker_thread(
-                            sess, _exec, sess['output'], i)
-
-                    sess['threads'][i] = th
+            self.worker_groups.append(wg)
+            inq = wg.output_queue
 
     def set_thread_num(self, worker, n):
 
@@ -135,7 +242,7 @@ class JobManager(object):
         assert(n > 0)
         assert(isinstance(n, int))
 
-        for sess in self.sessions:
+        for wg in self.worker_groups:
 
             """
             In python2, `x = X(); x.meth is x.meth` results in a `False`.
@@ -146,17 +253,17 @@ class JobManager(object):
             See https://stackoverflow.com/questions/15977808/why-dont-methods-have-reference-equality
             """
 
-            if sess['worker'] != worker:
+            if wg.worker != worker:
                 continue
 
-            with sess['session_lock']:
+            with wg.worker_group_lock:
 
-                if sess['exiting']:
-                    logger.info('session exiting.'
+                if wg.exiting:
+                    logger.info('worker group exiting.'
                                 ' Thread number change not allowed')
                     break
 
-                s, e = sess['running_index_range']
+                s, e = wg.running_index_range
                 oldn = e - s
 
                 if n < oldn:
@@ -166,16 +273,16 @@ class JobManager(object):
                 else:
                     break
 
-                sess['running_index_range'] = [s, e]
-                self.add_worker_thread(sess)
+                wg.running_index_range = [s, e]
+                wg.add_worker_thread()
 
                 logger.info('thread number is set to {n},'
                             ' thread index: {idx},'
                             ' running threads: {ths}'.format(
                                 n=n,
-                                idx=range(sess['running_index_range'][0],
-                                          sess['running_index_range'][1]),
-                                ths=sorted(sess['threads'].keys())))
+                                idx=range(wg.running_index_range[0],
+                                          wg.running_index_range[1]),
+                                ths=sorted(wg.threads.keys())))
                 break
 
         else:
@@ -188,26 +295,26 @@ class JobManager(object):
 
         endtime = time.time() + (timeout or 86400 * 365)
 
-        for sess in self.sessions:
+        for wg in self.worker_groups:
 
-            with sess['session_lock']:
+            with wg.worker_group_lock:
                 # prevent adding or removing thread
-                sess['exiting'] = True
-                ths = sess['threads'].values()
+                wg.exiting = True
+                ths = wg.threads.values()
 
             # put nr = len(threads) Finish
             for th in ths:
-                sess['input'].put(Finish)
+                wg.input_queue.put(Finish)
 
             for th in ths:
                 th.join(endtime - time.time())
 
-            if 'queue_of_outq' in sess:
-                sess['queue_of_outq'].put(Finish)
-                sess['coordinator_thread'].join(endtime - time.time())
+            if wg.queue_of_output is not None:
+                wg.queue_of_output.put(Finish)
+                wg.coordinator_thread.join(endtime - time.time())
 
             # if join timeout, let threads quit at next loop
-            sess['running'] = False
+            wg.running = False
 
     def stat(self):
         return stat(self.probe)
@@ -234,15 +341,15 @@ def stat(probe):
         }
 
     # exclude the _start and _end
-    for sess in probe['sessions'][:-1]:
+    for wg in probe['worker_groups'][:-1]:
         o = {}
-        wk = sess['worker']
+        wk = wg.worker
         o['name'] = (wk.__module__ or 'builtin') + ":" + wk.__name__
-        o['input'] = _q_stat(sess['input'])
-        if 'queue_of_outq' in sess:
-            o['coordinator'] = _q_stat(sess['queue_of_outq'])
+        o['input'] = _q_stat(wg.input_queue)
+        if wg.queue_of_output is not None:
+            o['coordinator'] = _q_stat(wg.queue_of_output)
 
-        s, e = sess['running_index_range']
+        s, e = wg.running_index_range
         o['nr_worker'] = e - s
 
         rst['workers'].append(o)
@@ -254,91 +361,6 @@ def _q_stat(q):
     return {'size': q.qsize(),
             'capa': q.maxsize
             }
-
-
-def _exec(sess, output_q, thread_index):
-
-    while sess['running']:
-
-        # If this thread is not in the running thread range, exit.
-        if thread_index < sess['running_index_range'][0]:
-
-            with sess['session_lock']:
-                del sess['threads'][thread_index]
-
-            logger.info('worker-thread {i} quit'.format(i=thread_index))
-            return
-
-        args = sess['input'].get()
-        if args is Finish:
-            return
-
-        with sess['probe']['probe_lock']:
-            sess['probe']['in'] += 1
-
-        try:
-            rst = sess['worker'](args)
-        except Exception as e:
-            logger.exception(repr(e))
-            continue
-
-        finally:
-            with sess['probe']['probe_lock']:
-                sess['probe']['out'] += 1
-
-        # If rst is an iterator, it procures more than one args to next job.
-        # In order to be accurate, we only count an iterator as one.
-
-        _put_rst(output_q, rst)
-
-
-def _exec_in_order(sess, output_q, thread_index):
-
-    while sess['running']:
-
-        if thread_index < sess['running_index_range'][0]:
-
-            with sess['session_lock']:
-                del sess['threads'][thread_index]
-
-            logger.info('in-order worker-thread {i} quit'.format(
-                i=thread_index))
-            return
-
-        with sess['keep_order_lock']:
-
-            args = sess['input'].get()
-            if args is Finish:
-                return
-            sess['queue_of_outq'].put(output_q)
-
-        with sess['probe']['probe_lock']:
-            sess['probe']['in'] += 1
-
-        try:
-            rst = sess['worker'](args)
-
-        except Exception as e:
-            logger.exception(repr(e))
-            output_q.put(EmptyRst)
-            continue
-
-        finally:
-            with sess['probe']['probe_lock']:
-                sess['probe']['out'] += 1
-
-        output_q.put(rst)
-
-
-def _coordinate(sess, output_q, thread_index):
-
-    while sess['running']:
-
-        outq = sess['queue_of_outq'].get()
-        if outq is Finish:
-            return
-
-        _put_rst(output_q, outq.get())
 
 
 def _put_rst(output_q, rst):
@@ -363,8 +385,7 @@ def _make_q(n=1024):
     return Queue.Queue(n)
 
 
-def _make_worker_thread(sess, exec_func, outq, thread_index):
-    # `thread_index` identifying a thread in sess['threads'].
+def start_thread(exec_func, *args):
+    # `thread_index` identifying a thread in worker_group.threads.
     # It is used to decide which thread to remove.
-    return threadutil.start_daemon_thread(exec_func,
-                                          args=(sess, outq, thread_index,))
+    return threadutil.start_daemon_thread(exec_func, args=args)
