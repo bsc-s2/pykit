@@ -104,7 +104,15 @@ Nothing.
 get the stored tokens in RateLimiter.
 
 **syntax**:
-`RateLimiter.get_stored`
+`RateLimiter.get_stored(future=None)`
+
+**arguments**:
+
+-   `future`:
+    specifies the time to get for tokens.
+    If `future` is None, return current stored tokens.
+    If `future` is earlier than last consume time,return stored tokens of last consume time.
+    If `future` is later than than last consume time,return `future` stored tokens.
 
 **return**:
 the stored tokens in RateLimiter.
