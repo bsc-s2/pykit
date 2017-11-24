@@ -110,7 +110,8 @@ Process element from input one by one with functions in workers.
     can be used in a for-loop.
 
 -   `workers`:
-    list of functions, or `tuple` of `(function, nr_of_thread)`.
+    list of functions, or `tuple` of `(function, nr_of_thread)`,
+    or `tuple` of `(function, nr_of_thread, dispatcher_func)`.
 
     A worker must accept one argument and return one value.
     A typical worker would be defined like:
@@ -129,6 +130,29 @@ Process element from input one by one with functions in workers.
         for elt in args:
             yield elt
     ```
+
+    A `dispatcher` is specified by user to control how to dispatch args to
+    different workers.
+    It should accept one argument `args`, same as the `args` passed to a worker
+    function,  and return a `int` indicating which worker to used.
+
+    A dispatcher function might be defined like:
+
+    ```
+    def dispatch(args):
+        return hash(args) % 5
+    ```
+
+    A user-defined dipatcher is used when **concurrency** and **partial-order**
+    are both required:
+    -   The `args` passed to a same worker is guaranteed to be
+        executed in order.
+    -   Different workers still run multiple tasks concurrently.
+
+    **If a `dispatcher` specified, it implies `keep_order=True`**.
+
+    Thus a worker group with dispatcher also put result into input queue of next
+    worker group with order kept.
 
 -   `keep_order`:
     specifies whether elements must be processed in order.

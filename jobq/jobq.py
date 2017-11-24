@@ -37,14 +37,14 @@ class WorkerGroup(object):
                  dispatcher,
                  probe, keep_order):
 
-        self.index        = index
-        self.worker       = worker
-        self.n_thread     = n_thread
-        self.input_queue  = input_queue
+        self.index = index
+        self.worker = worker
+        self.n_thread = n_thread
+        self.input_queue = input_queue
         self.output_queue = _make_q()
-        self.dispatcher   = dispatcher
-        self.probe        = probe
-        self.keep_order   = keep_order
+        self.dispatcher = dispatcher
+        self.probe = probe
+        self.keep_order = keep_order
 
         self.threads = {}
 
@@ -61,20 +61,37 @@ class WorkerGroup(object):
         # protect reading/writing worker_group info
         self.worker_group_lock = threading.RLock()
 
-        if self.dispatcher is not None:
-            # self.
-            self.dispatcher_thread = start_thread(self._dispatch, )
-
-        if self.keep_order:
-
-            # to maximize concurrency
-            self.queue_of_output = _make_q(n=1024 * 1024)
-
-            # protect input.get() and ouput.put()
-            self.keep_order_lock = threading.RLock()
-            self.coordinator_thread = start_thread(self._coordinate, self.output_queue, 0)
+        # dispatcher mode implies keep_order
+        if self.dispatcher is not None or self.keep_order:
+            need_coordinator = True
         else:
-            self.queue_of_output = None
+            need_coordinator = False
+
+        # Coordinator guarantees worker-group level first-in first-out, by put
+        # output-queue into a queue-of-output-queue.
+        if need_coordinator:
+            # to maximize concurrency
+            self.queue_of_output_q = _make_q(n=1024 * 1024)
+
+            # Protect input.get() and ouput.put(), only used by non-dispatcher
+            # mode
+            self.keep_order_lock = threading.RLock()
+
+            self.coordinator_thread = start_thread(self._coordinate)
+        else:
+            self.queue_of_output_q = None
+
+        # `dispatcher` is a user-defined function to distribute args to workers.
+        # It accepts the same args passed to worker and returns a number to
+        # indicate which worker to used.
+        if self.dispatcher is not None:
+            self.dispatch_queues = []
+            for i in range(self.n_thread):
+                self.dispatch_queues.append({
+                    'input': _make_q(),
+                    'output': _make_q(),
+                })
+            self.dispatcher_thread = start_thread(self._dispatch)
 
         self.add_worker_thread()
 
@@ -96,12 +113,19 @@ class WorkerGroup(object):
                     if self.keep_order:
                         th = start_thread(self._exec_in_order,
                                           self.input_queue, _make_q(), i)
+                    elif self.dispatcher is not None:
+                        # for worker group with dispatcher, threads are added for the first time
+                        assert s == 0
+                        assert e == self.n_thread
+                        th = start_thread(self._exec,
+                                          self.dispatch_queues[i]['input'],
+                                          self.dispatch_queues[i]['output'],
+                                          i)
                     else:
                         th = start_thread(self._exec,
                                           self.input_queue, self.output_queue, i)
 
                     self.threads[i] = th
-
 
     def _exec(self, input_q, output_q, thread_index):
 
@@ -156,7 +180,7 @@ class WorkerGroup(object):
                 args = input_q.get()
                 if args is Finish:
                     return
-                self.queue_of_output.put(output_q)
+                self.queue_of_output_q.put(output_q)
 
             with self.probe['probe_lock']:
                 self.probe['in'] += 1
@@ -175,15 +199,32 @@ class WorkerGroup(object):
 
             output_q.put(rst)
 
-    def _coordinate(self, output_q, thread_index):
+    def _coordinate(self):
 
         while self.running:
 
-            outq = self.queue_of_output.get()
+            outq = self.queue_of_output_q.get()
             if outq is Finish:
                 return
 
-            _put_rst(output_q, outq.get())
+            _put_rst(self.output_queue, outq.get())
+
+    def _dispatch(self):
+
+        while self.running:
+
+            args = self.input_queue.get()
+            if args is Finish:
+                return
+
+            n = self.dispatcher(args)
+            n = n % self.n_thread
+
+            queues = self.dispatch_queues[n]
+            inq, outq = queues['input'], queues['output']
+
+            self.queue_of_output_q.put(outq)
+            inq.put(args)
 
 
 class JobManager(object):
@@ -219,10 +260,13 @@ class JobManager(object):
             if callable(worker):
                 worker = (worker, 1)
 
-            worker, n = worker
+            # worker callable, n_thread, dispatcher
+            worker = (worker + (None,))[:3]
+
+            worker, n, dispatcher = worker
 
             wg = WorkerGroup(i, worker, n, inq,
-                             None,
+                             dispatcher,
                              self.probe, self.keep_order)
 
             self.worker_groups.append(wg)
@@ -255,6 +299,9 @@ class JobManager(object):
 
             if wg.worker != worker:
                 continue
+
+            if wg.dispatcher is not None:
+                raise JobWorkerError('worker-group with dispatcher does not allow to change thread number')
 
             with wg.worker_group_lock:
 
@@ -302,15 +349,23 @@ class JobManager(object):
                 wg.exiting = True
                 ths = wg.threads.values()
 
-            # put nr = len(threads) Finish
-            for th in ths:
+            if wg.dispatcher is None:
+                # put nr = len(threads) Finish
+                for th in ths:
+                    wg.input_queue.put(Finish)
+            else:
                 wg.input_queue.put(Finish)
+                # wait for dispatcher to finish or jobs might be lost
+                wg.dispatcher_thread.join(endtime - time.time())
+
+                for qs in wg.dispatch_queues:
+                    qs['input'].put(Finish)
 
             for th in ths:
                 th.join(endtime - time.time())
 
-            if wg.queue_of_output is not None:
-                wg.queue_of_output.put(Finish)
+            if wg.queue_of_output_q is not None:
+                wg.queue_of_output_q.put(Finish)
                 wg.coordinator_thread.join(endtime - time.time())
 
             # if join timeout, let threads quit at next loop
@@ -346,8 +401,16 @@ def stat(probe):
         wk = wg.worker
         o['name'] = (wk.__module__ or 'builtin') + ":" + wk.__name__
         o['input'] = _q_stat(wg.input_queue)
-        if wg.queue_of_output is not None:
-            o['coordinator'] = _q_stat(wg.queue_of_output)
+        if wg.dispatcher is not None:
+            o['dispatcher'] = [
+                {'input': _q_stat(qs['input']),
+                 'output': _q_stat(qs['output']),
+                 }
+                for qs in wg.dispatch_queues
+            ]
+
+        if wg.queue_of_output_q is not None:
+            o['coordinator'] = _q_stat(wg.queue_of_output_q)
 
         s, e = wg.running_index_range
         o['nr_worker'] = e - s

@@ -6,6 +6,9 @@ import unittest
 
 from pykit import jobq
 from pykit import threadutil
+from pykit import ututil
+
+dd = ututil.dd
 
 
 def add1(args):
@@ -136,6 +139,100 @@ class TestProbe(unittest.TestCase):
         self.assertEqual(2, len(workers))
 
         th.join()
+
+
+class TestDispatcher(unittest.TestCase):
+
+    def test_dispatcher_job_manager(self):
+
+        n_threads = 3
+        n_numbers = 1000
+        rst = {}
+        ordered = []
+
+        def _collect_by_tid(ii):
+
+            tid = threading.current_thread().ident
+            if tid not in rst:
+                rst[tid] = []
+
+            rst[tid].append(ii)
+            return ii
+
+        def _collect(ii):
+            ordered.append(ii)
+
+        jm = jobq.JobManager([
+            (_collect_by_tid, n_threads, lambda x: x % n_threads),
+            (_collect, 1),
+        ])
+
+        # In dispatcher mode it does not allow to set thread_num to prevent out
+        # of order output
+        self.assertRaises(jobq.JobWorkerError, jm.set_thread_num, _collect_by_tid, 10)
+
+        for i in range(n_numbers):
+            jm.put(i)
+
+            st = jm.stat()
+            dd(st)
+
+            self.assertIn('dispatcher', st['workers'][0])
+            dstat = st['workers'][0]['dispatcher']
+            self.assertEqual(n_threads, len(dstat))
+            for ds in dstat:
+                self.assertIn('input', ds)
+                self.assertIn('output', ds)
+
+        jm.join()
+
+        self.assertEqual(n_threads, len(rst.keys()))
+
+        for arr in rst.values():
+            m = arr[0] % n_threads
+            for i in arr:
+                # a thread receives args with the same mod by `n_threads`
+                self.assertEqual(m, i % n_threads)
+
+        # with dispatcher, output are ordered
+        self.assertEqual([x for x in range(n_numbers)],
+                         ordered)
+
+    def test_dispatcher_run(self):
+
+        n_threads = 3
+        n_numbers = 1000
+        rst = {}
+        ordered = []
+
+        def _collect_by_tid(ii):
+
+            tid = threading.current_thread().ident
+            if tid not in rst:
+                rst[tid] = []
+
+            rst[tid].append(ii)
+            return ii
+
+        def _collect(ii):
+            ordered.append(ii)
+
+        jobq.run(range(n_numbers), [
+            (_collect_by_tid, n_threads, lambda x: x % n_threads),
+            (_collect, 1),
+        ])
+
+        self.assertEqual(n_threads, len(rst.keys()))
+
+        for arr in rst.values():
+            m = arr[0] % n_threads
+            for i in arr:
+                # a thread receives args with the same mod by `n_threads`
+                self.assertEqual(m, i % n_threads)
+
+        # with dispatcher, output are ordered
+        self.assertEqual([x for x in range(n_numbers)],
+                         ordered)
 
 
 class TestTimeout(unittest.TestCase):
