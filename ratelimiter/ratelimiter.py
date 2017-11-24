@@ -9,7 +9,7 @@ class RateLimiter(object):
     def __init__(self, token_per_second, capacity):
         self.token_per_second = token_per_second
         self.capacity = capacity
-        self.stored = float(token_per_second)
+        self.stored = float(min(token_per_second, capacity))
         self.sync_time = time.time()
 
         self.lock = threading.RLock()
@@ -23,7 +23,7 @@ class RateLimiter(object):
         with self.lock:
             new_sync_time = token_time or time.time()
 
-            if new_sync_time < self.sync_time:
+            if new_sync_time <= self.sync_time:
                 return
 
             new_tokens = (new_sync_time - self.sync_time) * self.token_per_second
