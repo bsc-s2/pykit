@@ -75,12 +75,19 @@ A module that provides a way for rate limit and throttle.
 Reduce the permits capacity according to consumed tokens.
 
 **syntax**:
-`RateLimiter.consume(consumed)`
+`RateLimiter.consume(consumed,token_time=None)`
 
 **arguments**:
 
 -   `consumed`:
     specifies already consumed tokens.
+
+-   `token_time`:
+    specifies the time to consume token.
+    Default is None.
+    If `token_time` is None, consumed from the latest stored tokens.
+    If `token_time` is earlier than last consume time, consumed from stored tokens of last consume time.
+    If `token_time` is later than than last consume time, consumed from tokens of the `token_time`.
 
 **return**:
 Nothing.
@@ -110,7 +117,8 @@ get the stored tokens in RateLimiter.
 
 -   `token_time`:
     specifies the time to get for tokens.
-    If `token_time` is None, return current stored tokens.
+    Default is None.
+    If `token_time` is None, return the latest stored tokens.
     If `token_time` is earlier than last consume time,return stored tokens of last consume time.
     If `token_time` is later than than last consume time,return stored tokens of the `token_time`.
 

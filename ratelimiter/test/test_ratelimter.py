@@ -27,9 +27,12 @@ class TestRateLimiter(unittest.TestCase):
         time.sleep(0.1)
         self.assertAlmostEqual(-5.9, r.get_stored(), places=1)
 
-    def test_get_stored(self):
+    def test_consume_and_get_stored_token_time(self):
         r = ratelimiter.RateLimiter(10, 100)
 
-        self.assertEqual(100, r.get_stored(time.time() + 10))
-        self.assertEqual(10, r.get_stored(time.time() - 10))
-        self.assertAlmostEqual(10, r.get_stored(), places=1)
+        consume_time = time.time() + 1
+        r.consume(100, consume_time)
+        self.assertAlmostEqual(-80, r.get_stored(consume_time), places=1)
+        self.assertEqual(r.get_stored(), r.get_stored(consume_time - 1))
+
+        self.assertAlmostEqual(-70, r.get_stored(consume_time + 1), places=1)

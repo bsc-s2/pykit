@@ -14,29 +14,25 @@ class RateLimiter(object):
 
         self.lock = threading.RLock()
 
-    def consume(self, consumed):
+    def consume(self, consumed, token_time=None):
         with self.lock:
-            self._sync()
+            self._sync(token_time=token_time)
             self.stored = self.stored - consumed
 
     def _sync(self, token_time=None):
         with self.lock:
-            if token_time is None:
-                new_sync_time = time.time()
-                new_tokens = (new_sync_time - self.sync_time) * self.token_per_second
-                self.stored = min(self.capacity, self.stored + new_tokens)
-                self.sync_time = new_sync_time
-                return self.stored
-            else:
-                if token_time < self.sync_time:
-                    token_time = self.sync_time
-                new_tokens = (token_time - self.sync_time) * self.token_per_second
-                return min(self.capacity, self.stored + new_tokens)
+            new_sync_time = token_time or time.time()
+
+            if new_sync_time < self.sync_time:
+                return
+
+            new_tokens = (new_sync_time - self.sync_time) * self.token_per_second
+            self.stored = min(self.capacity, self.stored + new_tokens)
+            self.sync_time = new_sync_time
 
     def set_token_per_second(self, token_per_second):
-        with self.lock:
-            self._sync()
-            self.token_per_second = token_per_second
+        self.token_per_second = token_per_second
 
     def get_stored(self, token_time=None):
-        return self._sync(token_time)
+        self._sync(token_time=token_time)
+        return self.stored
