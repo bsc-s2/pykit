@@ -513,8 +513,7 @@ t = strutil.make_trie(
         ), node_max_num=3)
 
 print str(t)
-# 11:  a,7:  b,6:  c,4:  end,1
-#                        d,3
+# 11:  a,7:  b,6:  c,4:  d,3
 #                  d,1
 #                  e,1
 #            x,1
@@ -522,8 +521,7 @@ print str(t)
 #                  2,2
 #                  4,1
 print str(t['a'])
-# a,7:  b,6:  c,4:  end,1
-#                   d,3
+# a,7:  b,6:  c,4: d,3
 #             d,1
 #             e,1
 #       x,1

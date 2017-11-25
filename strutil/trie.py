@@ -1,7 +1,5 @@
 from pykit import dictutil
 
-EOL = '\0end'
-
 class TrieNode(dict):
 
     def __init__(self, *args, **kwargs):
@@ -22,6 +20,11 @@ class TrieNode(dict):
         # If this node is an outstanding node to its parent node.
         # When created, a node must be an outstanding node.
         self.is_outstanding = True
+
+        # If this node is an end of a line of string.
+        # A leaf node must be an eol node.
+        # But not vice verse
+        self.is_eol = False
 
     def __str__(self):
 
@@ -89,12 +92,7 @@ def make_trie(sorted_strings, node_max_num=1):
             node[c] = _trie_node(node, c)
             node = node[c]
 
-        # Add ending branch.
-        # Or 'abcd' overrides 'abc', thus 'abc' can not be iterated.
-
-        c = EOL
-        node[c] = _trie_node(node, c)
-        node = node[c]
+        node.is_eol = True
 
         # Only leaf node is count by 1
         node.n = 1
@@ -115,19 +113,21 @@ def sharding(sorted_strings, size, accuracy=None):
     prev_key = ''
     rst = []
 
-    for ks, node in dictutil.depth_iter(t, empty_leaf=True):
+    for ks, node in dictutil.depth_iter(t, is_allowed=lambda ks, v: v.is_eol or len(v) == 0):
 
         if n >= size:
 
             rst.append((prev_key, n))
 
             prev_key = ks
-            if prev_key[-1] == EOL:
-                prev_key = prev_key[:-1]
             prev_key = ''.join(prev_key)
             n = 0
 
-        n += node.n
+        if len(node) == 0:
+            n += node.n
+        else:
+            # node.is_eol == True
+            n += 1
 
     rst.append((prev_key, n))
 

@@ -31,7 +31,6 @@ from .strutil import (
 )
 
 from .trie import (
-    EOL,
     TrieNode,
     make_trie,
     sharding,
@@ -67,7 +66,6 @@ __all__ = [
     'format_table',
     'utf8str',
 
-    'EOL',
     'TrieNode',
     'make_trie',
     'sharding',

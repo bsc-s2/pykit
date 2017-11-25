@@ -5,7 +5,6 @@ import os
 import unittest
 
 from pykit import dictutil
-from pykit import fsutil
 from pykit import strutil
 from pykit import ututil
 
@@ -40,11 +39,10 @@ class TestTrie(unittest.TestCase):
         self.assertEqual(len(self.strs), t.n)
 
         # only whole strings
-        for ks, v in dictutil.depth_iter(t, is_allowed=lambda ks, v: strutil.EOL in v):
-
-            self.assertEqual(1, v[strutil.EOL].n)
+        for ks, v in dictutil.depth_iter(t, is_allowed=lambda ks, v: v.is_eol):
 
             s = ''.join(ks)
+            dd('whole string: ', s, v)
             self.assertTrue(s in self.strs)
 
     def test_trie_prefix_count(self):
@@ -55,7 +53,7 @@ class TestTrie(unittest.TestCase):
         dd(str(t))
 
         # all prefixes, might be also a whole string.
-        for ks, v in dictutil.depth_iter(t, is_allowed=lambda ks, v: v.char != strutil.EOL):
+        for ks, v in dictutil.depth_iter(t, intermediate=True):
 
             dd('==== got keys:', ks, 'sub trie:')
             dd(v)
@@ -148,7 +146,6 @@ class TestTrie(unittest.TestCase):
             rst = strutil.sharding(lines, size=_size, accuracy=_accuracy)
 
             tot = 0
-            prev = None
             for i, (start, size) in enumerate(rst):
 
                 dd('{start:<10} {size:>20}'.format(start=start, size=size))
