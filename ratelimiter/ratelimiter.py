@@ -31,7 +31,12 @@ class RateLimiter(object):
             self.sync_time = new_sync_time
 
     def set_token_per_second(self, token_per_second):
-        self.token_per_second = token_per_second
+        with self.lock:
+            self._sync()
+            resize_rate = float(token_per_second) / self.token_per_second
+            self.capacity = self.capacity * resize_rate
+            self.token_per_second = token_per_second
+            self.stored = min(self.capacity, self.stored * resize_rate)
 
     def get_stored(self, token_time=None):
         self._sync(token_time=token_time)

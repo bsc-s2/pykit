@@ -97,6 +97,7 @@ set the tokens in second.
 
 **syntax**:
 `RateLimiter.set_token_per_second(token_per_second)`
+This will cause ratelimiter's `capacity` and `stored` resize according to token_per_second.
 
 **arguments**:
 
