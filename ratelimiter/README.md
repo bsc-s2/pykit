@@ -10,6 +10,7 @@
   - [ratelimiter.RateLimiter](#ratelimiterratelimiter)
     - [RateLimiter.consume](#ratelimiterconsume)
     - [RateLimiter.set_token_per_second](#ratelimiterset_token_per_second)
+    - [RateLimiter.set_capacity](#ratelimiterset_capacity)
     - [RateLimiter.get_stored](#ratelimiterget_stored)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
@@ -59,7 +60,7 @@ A module that provides a way for rate limit and throttle.
 **Synopsis**:
 
 **syntax**:
-`RateLimiter(token_per_second, max_burst=1)`
+`RateLimiter(token_per_second, capacity)`
 
 **arguments**:
 
@@ -97,13 +98,25 @@ set the tokens in second.
 
 **syntax**:
 `RateLimiter.set_token_per_second(token_per_second)`
-This will cause ratelimiter's `capacity` and `stored` resize according to token_per_second.
 
 **arguments**:
 
 -   `token_per_second`:
     specifies the tokens per second.
-    This will lead to stored tokens and max stored tokens resize.
+
+**return**:
+Nothing.
+
+### RateLimiter.set_capacity
+set the capacity.
+
+**syntax**:
+`RateLimiter.set_capacity(capacity)`
+
+**arguments**:
+
+-   `capacity`:
+    specifies the capacity.
 
 **return**:
 Nothing.

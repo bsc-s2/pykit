@@ -15,13 +15,18 @@ class TestRateLimiter(unittest.TestCase):
         r.set_token_per_second(10)
 
         self.assertEqual(10, r.token_per_second)
-        self.assertEqual(20, r.capacity)
-        self.assertAlmostEqual(10, r.get_stored(), places=1)
 
         r.set_token_per_second(5)
         self.assertEqual(5, r.token_per_second)
-        self.assertEqual(10, r.capacity)
-        self.assertAlmostEqual(5, r.get_stored(), places=1)
+
+    def test_set_capacity(self):
+        r = ratelimiter.RateLimiter(2, 10)
+        r.set_capacity(100)
+        self.assertEqual(100, r.capacity)
+
+        r.set_capacity(1)
+        self.assertEqual(1, r.capacity)
+        self.assertAlmostEqual(1, r.get_stored(), places=1)
 
     def test_consume_and_get_stored(self):
         r = ratelimiter.RateLimiter(1, 0.4)
