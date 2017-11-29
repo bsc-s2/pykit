@@ -1,5 +1,10 @@
 from . import (
-    gtidset
+    gtidset,
+)
+
+from .mysqlutil import (
+    scan_index,
+    sql_scan_index,
 )
 
 from privilege import (
@@ -9,4 +14,6 @@ from privilege import (
 __all__ = [
     "gtidset",
     "privileges",
+    "scan_index",
+    "sql_scan_index",
 ]
