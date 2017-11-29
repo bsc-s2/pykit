@@ -64,6 +64,7 @@ There is a `README.md` for each module.
 | [priorityqueue](priorityqueue) | Priority queue                                                                        |
 | [proc](proc)                   | Utility to create sub process                                                         |
 | [rangeset](rangeset)           | Segmented range.                                                                      |
+| [ratelimiter](ratelimiter)     | rate limiter                                                                          |
 | [redisutil](redisutil)         | For using redis more easily.                                                          |
 | [shell](shell)                 | Set different command arguments to execute different functions                        |
 | [strutil](strutil)             | A collection of helper functions used to manipulate string                            |
