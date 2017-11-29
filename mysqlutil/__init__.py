@@ -5,6 +5,8 @@ from . import (
 from .mysqlutil import (
     scan_index,
     sql_scan_index,
+    ConnectionTypeError,
+    IndexNotPairs,
 )
 
 from privilege import (
@@ -16,4 +18,6 @@ __all__ = [
     "privileges",
     "scan_index",
     "sql_scan_index",
+    "ConnectionTypeError",
+    "IndexNotPairs",
 ]

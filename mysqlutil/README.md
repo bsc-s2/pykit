@@ -5,10 +5,15 @@
 - [Name](#name)
 - [Status](#status)
 - [Description](#description)
+- [Exceptions](#exceptions)
+  - [mysqlutil.ConnectionTypeError](#mysqlutilconnectiontypeerror)
+  - [mysqlutil.IndexNotPairs](#mysqlutilindexnotpairs)
 - [Methods](#methods)
   - [mysqlutil.gtidset.compare](#mysqlutilgtidsetcompare)
   - [mysqlutil.gtidset.dump](#mysqlutilgtidsetdump)
   - [mysqlutil.gtidset.load](#mysqlutilgtidsetload)
+  - [mysqlutil.scan_index](#mysqlutilscan_index)
+  - [mysqlutil.sql_scan_index](#mysqlutilsql_scan_index)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -25,6 +30,25 @@ This library is considered production ready.
 #   Description
 
 Mysql related datatype, operations.
+
+#   Exceptions
+
+
+##  mysqlutil.ConnectionTypeError
+
+**syntax**:
+`mysqlutil.ConnectionTypeError`
+
+A subclass of `Exception`, raise if `connpool` in `mysqlutil.scan_index` is not valid.
+
+
+##  mysqlutil.IndexNotPairs
+
+**syntax**:
+`mysqlutil.IndexNotPairs`
+
+A subclass of `Exception`, raise if length of `index_values` and `index_fields` not equals.
+
 
 #   Methods
 
@@ -138,7 +162,181 @@ mysqlutil.gtidset.load(
 }
 ```
 
+## mysqlutil.scan_index
 
+**syntax**:
+`mysqlutil.scan_index(connpool, table, result_fields, index_fields, index_values,
+                      left_open=False, limit=None, index_name=None, db=None, use_dict=True, retry=0)`
+
+return a generator which generates rows of the sql select result with those arguments once a time.
+
+example:
+
+```
+connpool = {
+    'host': '127.0.0.1',
+    'port': 3306,
+    'user': 'mysql',
+    'passwd': '123qwe',
+}
+
+rst = scan_index(connpool, 'test-table', ['_id', 'name'], ['foo', 'bar'], ['a', 'b'], db='test-db')
+
+for rr in rst:
+    print rr
+
+# {'_id': '1', 'name': 'abb'}
+# {'_id': '2', 'name': 'abc'}
+# {'_id': '3', 'name': 'abd'}
+# ...
+
+
+connpool = pykit.mysqlconnpool.make(**kwargs)
+
+rst = scan_index(connpool, 'test-table', ['_id'], ['foo', 'bar'], ['a', 'b'], use_dicr=False)
+
+for rr in rst:
+    print rr
+
+# ('1', 'abb')
+# ('2', 'abc')
+# ('3', 'abd')
+# ...
+```
+
+**argument**:
+
+-   `connpool`:
+    provide a connection with a database manager.
+    If it is a dict, will be used as an address:
+
+    -   To connect with ip and port, `connpool` is dictionary that contains:
+
+        ```
+        {
+            'host': '127.0.0.1',
+            'port': 3306,
+            'user': 'mysql',
+            'passwd': '123qwe',
+        }
+        ```
+
+    -   To connect with `unix_socket`, `connpool` is dictionary that contains:
+
+        ```
+        {
+            'unix_socket': '/tmp/3306.sock',
+            'port': 3306,
+            'user': 'mysql',
+            'passwd': '123qwe',
+        }
+        ```
+
+    `connpool` can also be a `pykit.mysqlconnpool.MysqlConnectionPool` instance.
+    Otherwise, a `ConnectionTypeError` will be raised.
+
+-   `table`:
+    table name from which to find rows. A string.
+    Can also be a list or tuple like `(dbname, tablename)`.
+
+-   `result_fields`:
+    column names expected to be returned in result set.
+    If it is a blank list or tuple, all columns in the `table` will be returned.
+    A list or tuple of strings.
+
+-   `index_fields`:
+    index columns. Use the index consisted of those columns to find rows.
+    A list or tuple of strings, has the same length with `index_values`.
+
+-   `index_values`:
+    values of the column names in `index_fields`.
+    A list or tuple of strings, has the same length with `index_fields`.
+
+-   `left_open`:
+    if it is specified and is `True`, the last column in `index_fields` and the corresponding value joined with `>`.
+    Otherwise, joined with `>=`.
+    By default, it is `False`.
+
+-   `limit`:
+    specifies a limited number of rows in the result set to be returned.
+    If `limit` is `None`, return all rows in the table.
+    By default, it is `None`.
+
+-   `index_name`:
+    specifies an index to use to find rows in the table.
+    If it is not `None`, use `index_name` as the index and `index_fields` is ignored.
+
+-   `use_dict`:
+    if specified and is `False`, return result in list form.
+    By default, it is `True`.
+
+-   `retry`:
+    try to send query for another N times if connection lost:
+    when `MySQLdb.OperationalError` is raised and error code is (2006 or 2013).
+    By default, it is 0.
+
+**return**:
+a generator which generates rows of the sql select result with those arguments once a time.
+
+
+## mysqlutil.sql_scan_index
+
+**syntax**:
+`mysqlutil.sql_scan_index(table, result_fields, index_fields, index_values, left_open=False, limit=1024, index_name=None)`
+
+create a sql select statement with the arguments specified.
+
+example:
+
+```
+sql_scan_index("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"])
+# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`idx_key_val`) WHERE `foo`.`key` = "a" AND `foo`.`val` >= "b" LIMIT 1024'
+
+sql_scan_index("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"], index_name="bar")
+# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`bar`) WHERE `foo`.`key` >= "a"  LIMIT 1024'
+
+sql_scan_index("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"], left_open=True)
+# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`idx_key_val`) WHERE `foo`.`key` > "a"  LIMIT 1024'
+
+sql_scan_index(("mydb","foo"), ['_id', 'key'], ['key', 'val'], ["a", "b"], index_name="bar", left_open=True)
+# 'SELECT `_id`, `key` FROM `mydb`.`foo` FORCE INDEX (`bar`) WHERE `mydb`.`foo`.`key` > "a"  LIMIT 1024'
+```
+
+
+**arguments**:
+
+-   `table`:
+    table name from which to find rows. A string.
+    Can also be a list or tuple like `(dbname, tablename)`.
+
+-   `result_fields`:
+    column names expected to be returned in result set.
+    If it is a blank list or tuple, all columns in the `table` will be returned.
+    A list or tuple of strings.
+
+-   `index_fields`:
+    index columns. Use the index consisted of those columns to find rows.
+    A list or tuple of strings, has the same length with `index_values`.
+
+-   `index_values`:
+    values of the column names in `index_fields`.
+    A list or tuple of strings, has the same length with `index_fields`.
+
+-   `left_open`:
+    if specified and is `True`, the last column in `index_fields` and the corresponding value joined with `>`.
+    Otherwise, joined with `>=`.
+    By default, it is `False`.
+
+-   `limit`:
+    specifies a limited number of rows in the result set to be returned.
+    By default, it is 1024.
+
+-   `index_name`:
+    specifies an index to use to find rows in the table.
+    If it is not `None`, use `index_name` as the index and `index_fields` is ignored.
+
+**return**:
+a string which is a sql select statement.
 
 
 #   Author
