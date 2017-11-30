@@ -2,7 +2,7 @@ import os
 import sys
 import textwrap
 import unittest
-import subprocess
+import subprocess32
 from test import test_support
 from test.script_helper import assert_python_ok
 
@@ -38,9 +38,9 @@ class TestTool(unittest.TestCase):
     """)
 
     def test_stdin_stdout(self):
-        proc = subprocess.Popen(
+        proc = subprocess32.Popen(
                 (sys.executable, '-m', 'json.tool'),
-                stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                stdin=subprocess32.PIPE, stdout=subprocess32.PIPE)
         out, err = proc.communicate(self.data.encode())
         self.assertEqual(out.splitlines(), self.expect.encode().splitlines())
         self.assertEqual(err, None)

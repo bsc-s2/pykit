@@ -1,7 +1,7 @@
 import errno
 import logging
 import os
-import subprocess
+import subprocess32
 import threading
 import unittest
 
@@ -12,12 +12,12 @@ logger = logging.getLogger(__name__)
 
 def subproc(script, cwd=None):
 
-    subproc = subprocess.Popen(['sh'],
+    subproc = subprocess32.Popen(['sh'],
                                close_fds=True,
                                cwd=cwd,
-                               stdin=subprocess.PIPE,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
+                               stdin=subprocess32.PIPE,
+                               stdout=subprocess32.PIPE,
+                               stderr=subprocess32.PIPE)
 
     out, err = subproc.communicate(script)
 

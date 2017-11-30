@@ -2,7 +2,7 @@
 # coding: utf-8
 
 import socket
-import subprocess
+import subprocess32
 import time
 import unittest
 
@@ -275,11 +275,11 @@ def docker_cmd(*args, **argkv):
 
 def run_shell(*args, **argkv):
 
-    subproc = subprocess.Popen(args,
+    subproc = subprocess32.Popen(args,
                                close_fds=True,
                                cwd=None,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, )
+                               stdout=subprocess32.PIPE,
+                               stderr=subprocess32.PIPE, )
 
     out, err = subproc.communicate()
 
