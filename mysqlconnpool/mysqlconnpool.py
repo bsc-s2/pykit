@@ -34,6 +34,15 @@ class MysqlConnectionPool(object):
                      'pool_put': 0,
                      }
 
+    def __call__(self, action=None):
+
+        if action is None or action == 'get_conn':
+            return ConnectionWrapper(self)
+        elif action == 'stat':
+            return self.stat
+        else:
+            raise ValueError(action, 'invalid action: ' + repr(action))
+
     def get_conn(self):
 
         try:
@@ -61,6 +70,30 @@ class MysqlConnectionPool(object):
         except Queue.Full:
             conn.close()
 
+    def query(self, sql, use_dict=True, retry=0):
+
+        if retry < 0:
+            retry = 0
+
+        retry = int(retry)
+
+        # the first attempt does not count as 'retry'
+        for i in range(retry + 1):
+
+            try:
+                with self() as conn:
+                    return conn_query(conn, sql, use_dict=use_dict)
+
+            except MySQLdb.OperationalError as e:
+                if len(e.args) > 0 and e[0] in retriable_err:
+                    logger.info(
+                        repr(e) + " conn_query error {sql}".format(sql=sql))
+                    continue
+                else:
+                    raise
+        else:
+            raise
+
 
 class ConnectionWrapper(object):
 
@@ -83,20 +116,7 @@ class ConnectionWrapper(object):
 
 def make(conn_argkw, options=None):
 
-    pool = MysqlConnectionPool(conn_argkw, options=options)
-
-    def pool_api(action=None):
-
-        if action is None or action == 'get_conn':
-            return ConnectionWrapper(pool)
-        elif action == 'stat':
-            return pool.stat
-        else:
-            raise ValueError(action, 'invalid action: ' + repr(action))
-
-    pool_api.query = lambda *args, **kwargs: query(pool_api, *args, **kwargs)
-
-    return pool_api
+    return MysqlConnectionPool(conn_argkw, options=options)
 
 
 def conn_query(conn, sql, use_dict=True):
@@ -111,31 +131,6 @@ def conn_query(conn, sql, use_dict=True):
     cur.close()
 
     return rst
-
-
-def query(pool, sql, use_dict=True, retry=0):
-
-    if retry < 0:
-        retry = 0
-
-    retry = int(retry)
-
-    # the first attempt does not count as 'retry'
-    for i in range(retry + 1):
-
-        try:
-            with pool() as conn:
-                return conn_query(conn, sql, use_dict=use_dict)
-
-        except MySQLdb.OperationalError as e:
-            if len(e.args) > 0 and e[0] in retriable_err:
-                logger.info(
-                    repr(e) + " conn_query error {sql}".format(sql=sql))
-                continue
-            else:
-                raise
-    else:
-        raise
 
 
 def new_connection(conn_argkw, conv=None, options=None):

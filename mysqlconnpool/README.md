@@ -7,7 +7,8 @@
 - [Synopsis](#synopsis)
 - [Description](#description)
 - [Methods](#methods)
-  - [mysqlconnpool.pool](#mysqlconnpoolpool)
+  - [mysqlconnpool.conn_query](#mysqlconnpoolconn_query)
+  - [mysqlconnpool.make](#mysqlconnpoolmake)
     - [pool](#pool)
     - [pool.query](#poolquery)
 - [Author](#author)
@@ -70,10 +71,32 @@ stat = pool('stat')
 
 #   Methods
 
-##  mysqlconnpool.pool
+##  mysqlconnpool.conn_query
 
 **syntax**:
-`pool = mysqlconnpool.pool(addr)`
+`conn_query(conn, sql, use_dict=True)`
+
+Sends `sql` on the connection `conn` and returns query results.
+
+**argument**:
+
+-   `conn`:
+    a `MySQLdb.Connection` instance.
+
+-   `sql`:
+    string sql to query.
+
+-   `use_dict`:
+    if specified and is False, return query result in list form.
+
+**return**:
+query result in a list of dictionary,  or list of list(if `use_dict`=False).
+
+
+##  mysqlconnpool.make
+
+**syntax**:
+`pool = mysqlconnpool.make(addr)`
 
 Create a connection pool: `pool`.
 Reusable connections are maintained in pool.
@@ -105,7 +128,7 @@ Reusable connections are maintained in pool.
         ```
 
 **return**:
-a function that every time it is called it creates a connection wrapper
+a `MysqlConnectionPool` instance that every time it is called it creates a connection wrapper
 instance: `ConnectionWrapper`, which support access with `with`
 
 ### pool
