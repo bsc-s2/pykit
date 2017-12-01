@@ -75,24 +75,20 @@ def get(dic, key_path, vars=None, default=0, ignore_vars_key_error=None):
     _default = vars.get('_default', default)
     node = dic
 
-    _keys = key_path.split('.')
-    if _keys == ['']:
-        return node
+    _keys = key_path
+
+    if isinstance(key_path, basestring):
+        _keys = key_path.split('.')
 
     for k in _keys:
 
-        if k.startswith('$'):
-            k = k[1:]
-            if k in vars:
-                key = vars[k]
+        try:
+            key = _translate_var(k, vars)
+        except KeyError:
+            if ignore_vars_key_error:
+                return _default
             else:
-                if ignore_vars_key_error:
-                    return _default
-                else:
-                    raise KeyError('{k} does not exist in vars: {vars}'.format(
-                        k=k, vars=vars))
-        else:
-            key = k
+                raise
 
         if key not in node:
             return _default
@@ -106,24 +102,54 @@ def make_getter_str(key_path, default=0):
 
     s = 'lambda dic, vars={}: dic'
 
-    _keys = key_path.split('.')
-    if _keys == ['']:
-        return s
+    _keys = key_path
+    if isinstance(key_path, basestring):
+        _keys = key_path.split('.')
 
     for k in _keys:
 
-        if k.startswith('$'):
+        k_str = _translate_var_str(k)
 
-            dynamic_key = 'str(vars.get("%s", "_"))' % (k[1:], )
-
-            s += '.get(%s, {})' % (dynamic_key, )
-
-        else:
-            s += '.get("%s", {})' % (k, )
+        s += '.get(%s, {})' % (k_str, )
 
     s = s[:-3] + 'vars.get("_default", ' + repr(default) + '))'
 
     return s
+
+
+def _translate_var(k, vars):
+    if isinstance(k, basestring):
+        if k.startswith('$'):
+            k = k[1:]
+            if k in vars:
+                return str(vars[k])
+            else:
+                raise KeyError('{k} does not exist in vars: {vars}'.format(
+                    k=k, vars=vars))
+        else:
+            return k
+    elif isinstance(k, tuple):
+
+        return tuple(_translate_var(kk, vars) for kk in k)
+
+    else:
+        return k
+
+
+def _translate_var_str(k):
+    if isinstance(k, basestring):
+        if k.startswith('$'):
+            return 'str(vars.get("%s", "_"))' % (k[1:],)
+        else:
+            return '"' + k + '"'
+
+    elif isinstance(k, tuple):
+        s = "("
+        for kk in k:
+            s += _translate_var_str(kk) + ','
+        return s + ")"
+    else:
+        return repr(k)
 
 
 def make_getter(key_path, default=0):
@@ -131,11 +157,9 @@ def make_getter(key_path, default=0):
 
 
 def make_setter(key_path, value=None, incr=False):
-
-    if key_path == '':
-        raise KeyError('key_path can not be ""')
-
-    _keys = key_path.split('.')
+    _keys = key_path
+    if isinstance(key_path, basestring):
+        _keys = key_path.split('.')
 
     def_val = value
 
@@ -150,16 +174,7 @@ def make_setter(key_path, value=None, incr=False):
                 _node[k] = {}
             _node = _node[k]
 
-            if _k.startswith('$'):
-                k = vars.get(_k[1:])
-                if k is None:
-                    raise KeyError('var {_k} does not exist in vars. key_path={key_path}'.format(
-                        _k=_k, key_path=key_path))
-
-                k = str(k)
-
-            else:
-                k = _k
+            k = _translate_var(_k, vars)
 
         if value is not None:
             val_to_set = value
