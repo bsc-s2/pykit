@@ -320,10 +320,9 @@ Returns the value of the item specified by `key_path`.
     dictionary.
 
 -   `key_path`:
-    is a dot separated path string of key hierarchy to get an item from a
-    dictionary.
+    can be string , tuple or list.
 
-    Example: `foo.bar` is same as `some_dict["foo"]["bar"]`.
+    Example: 'foo.bar' or `('foo','bar')` or `['foo','bar']` is same as `some_dict["foo"]["bar"]`.
 
 -   `vars`:
     is a dictionary contains dynamic keys in `key_path`.
@@ -377,10 +376,9 @@ print get_second({"time": {"hour": 11, "minute": 20}})
 **arguments**:
 
 -   `key_path`:
-    is a dot separated path string of key hierarchy to get an item from a
-    dictionary.
+    can be string , tuple or list.
 
-    Example: `foo.bar` is same as `some_dict["foo"]["bar"]`.
+    Example: 'foo.bar' or `('foo','bar')` or `['foo','bar']` is same as `some_dict["foo"]["bar"]`.
 
 -   `default`:
     is the default value if the item is not found.
@@ -394,7 +392,7 @@ the item value found by key_path, or the default value if not found.
 ##  dictutil.make_setter
 
 **syntax**:
-`dictutil.make_setter(key_path, default=None, incr=False)`
+`dictutil.make_setter(key_path, value=None, incr=False)`
 
 It creates a function `setter(dic, value=None, vars={})` that can be used to
 set(or increment) the item value specified by `key_path` in a dictionary `dic`.
@@ -422,9 +420,9 @@ print tm
 **arguments**:
 
 -   `key_path`:
-    is a dot separated key path to locate an item in a dictionary.
+    can be string , tuple or list.
 
-    Example: `foo.bar` is same as `some_dict["foo"]["bar"]`.
+    Example: 'foo.bar' or `('foo','bar')` or `['foo','bar']` is same as `some_dict["foo"]["bar"]`.
 
 -   `value`:
     is the value to use if `setter` is called with its own `value` set to `None`.
