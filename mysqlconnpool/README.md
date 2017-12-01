@@ -81,7 +81,7 @@ Sends `sql` on the connection `conn` and returns query results.
 **argument**:
 
 -   `conn`:
-    a MySQLdb.connection instance.
+    a `MySQLdb.Connection` instance.
 
 -   `sql`:
     string sql to query.
