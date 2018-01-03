@@ -14,6 +14,7 @@ from geventwebsocket import WebSocketServer
 
 from pykit import threadutil
 from pykit import utfjson
+from pykit import jobq
 
 logger = logging.getLogger(__name__)
 
@@ -168,18 +169,14 @@ def progress_sender(job, channel, interval=5, stat=None):
 
 class JobdWebSocketApplication(WebSocketApplication):
 
+    jobq_mgr = None
+
     def on_open(self):
         logger.info('on open, the channel is: ' + repr(self))
         self.ignore_message = False
 
-    def on_message(self, message):
-        logger.info('on message, the channel is: %s, the message is: %s' %
-                    (repr(self), message))
-
+    def _parse_request(self, message):
         try:
-            if self.ignore_message == True:
-                return
-
             try:
                 msg = utfjson.load(message)
             except Exception as e:
@@ -202,7 +199,6 @@ class JobdWebSocketApplication(WebSocketApplication):
             self.jobs_dir = msg.get('jobs_dir', JOBS_DIR)
 
             self._setup_response(msg)
-            self.ignore_message = True
             return
 
         except SystemOverloadError as e:
@@ -220,6 +216,17 @@ class JobdWebSocketApplication(WebSocketApplication):
                               'message, %s') % (repr(self), repr(e)))
             self._send_err_and_close(e)
 
+    def on_message(self, message):
+        logger.info('on message, the channel is: %s, the message is: %s' %
+                    (repr(self), message))
+        if self.ignore_message:
+            return
+
+        else:
+            self.ignore_message = True
+
+        self.jobq_mgr.put((self, message))
+
     def _send_err_and_close(self, err):
         try:
             err_msg = {
@@ -230,9 +237,6 @@ class JobdWebSocketApplication(WebSocketApplication):
         except Exception as e:
             logger.error(('error on channel %s while sending back error '
                           + 'message, %s') % (repr(self), repr(e)))
-
-        time.sleep(3)
-        self.ws.close()
 
     def get_system_load(self):
         return {
@@ -331,7 +335,15 @@ class JobdWebSocketApplication(WebSocketApplication):
         logger.info('on close, the channel is: ' + repr(self))
 
 
-def run(ip='127.0.0.1', port=63482):
+def _parse_request(args):
+    app, msg = args
+    app._parse_request(msg)
+
+
+def run(ip='127.0.0.1', port=63482, jobq_thread_count=10):
+    JobdWebSocketApplication.jobq_mgr = jobq.JobManager(
+        [(_parse_request, jobq_thread_count)])
+
     WebSocketServer(
         (ip, port),
         Resource(OrderedDict({'/': JobdWebSocketApplication})),

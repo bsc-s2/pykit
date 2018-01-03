@@ -29,10 +29,7 @@ from geventwebsocket import Resource, WebSocketServer
 from pykit import wsjobd
 
 def run():
-    WebSocketServer(
-        ('127.0.0.1', 33445),
-        Resource(OrderedDict({'/': wsjobd.JobdWebSocketApplication})),
-    ).serve_forever()
+    wsjobd.run(ip='127.0.0.1', port=33445)
 
 if __name__ == "__main__":
     logger = logging.getLogger()

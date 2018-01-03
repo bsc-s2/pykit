@@ -27,7 +27,8 @@ def subproc(script):
 
 class TestWsjobd(unittest.TestCase):
 
-    def _clean(self):
+    @classmethod
+    def _clean(cls):
         try:
             subproc('python2 {b}/wsjobd_server.py stop'.format(b=this_base))
         except Exception as e:
@@ -35,19 +36,27 @@ class TestWsjobd(unittest.TestCase):
 
         time.sleep(0.1)
 
-    def setUp(self):
-        self._clean()
+    @classmethod
+    def setUpClass(cls):
+        cls._clean()
         subproc('python2 {b}/wsjobd_server.py start'.format(b=this_base))
+        time.sleep(1)
 
-    def tearDown(self):
-        self._clean()
+    @classmethod
+    def tearDownClass(cls):
+        cls._clean()
 
-    def get_connection(self):
+    def _create_client(self):
         ws = websocket.WebSocket()
         ws.connect('ws://127.0.0.1:%d' % PORT)
         ws.timeout = 6
-
         return ws
+
+    def setUp(self):
+        self.ws = self._create_client()
+
+    def tearDown(self):
+        self.ws.close()
 
     def get_random_ident(self):
         return 'random_ident_%d' % random.randint(10000, 99999)
@@ -65,13 +74,10 @@ class TestWsjobd(unittest.TestCase):
              'invalid jobs_dir'),
         )
         for msg, desc in cases:
-            ws = self.get_connection()
-
+            ws = self._create_client()
             ws.send(msg)
-
             resp = utfjson.load(ws.recv())
             self.assertIn('err', resp, desc)
-
             ws.close()
 
     def test_normal_job(self):
@@ -81,10 +87,9 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        self.ws.send(utfjson.dump(job_desc))
 
-        resp = utfjson.load(ws.recv())
+        resp = utfjson.load(self.ws.recv())
         self.assertEqual('foo', resp['result'], 'test get result')
 
     def test_report_interval(self):
@@ -97,13 +102,12 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        self.ws.send(utfjson.dump(job_desc))
 
-        ws.recv()
+        self.ws.recv()
         first_report_time = time.time()
 
-        ws.recv()
+        self.ws.recv()
         second_report_time = time.time()
 
         actual_interval = second_report_time - first_report_time
@@ -124,10 +128,9 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        self.ws.send(utfjson.dump(job_desc))
 
-        resp = ws.recv()
+        resp = self.ws.recv()
         resp = utfjson.load(resp)
         self.assertEqual('80%', resp)
 
@@ -142,10 +145,9 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        self.ws.send(utfjson.dump(job_desc))
 
-        resp = ws.recv()
+        resp = self.ws.recv()
         resp = utfjson.load(resp)
         self.assertEqual('SystemOverloadError', resp['err'])
 
@@ -159,11 +161,12 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        ws2 = self._create_client()
+        ws2.send(utfjson.dump(job_desc))
 
-        resp = ws.recv()
+        resp = ws2.recv()
         resp = utfjson.load(resp)
+        ws2.close()
         self.assertEqual('SystemOverloadError', resp['err'])
 
     def test_max_client_number(self):
@@ -178,10 +181,9 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        self.ws.send(utfjson.dump(job_desc))
 
-        resp = ws.recv()
+        resp = self.ws.recv()
         resp = utfjson.load(resp)
         self.assertNotIn('err', resp)
 
@@ -196,12 +198,13 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        ws2 = self._create_client()
+        ws2.send(utfjson.dump(job_desc))
 
-        resp = ws.recv()
+        resp = ws2.recv()
         resp = utfjson.load(resp)
         self.assertEqual('SystemOverloadError', resp['err'])
+        ws2.close()
 
     def test_module_not_exists(self):
         job_desc = {
@@ -210,10 +213,9 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        self.ws.send(utfjson.dump(job_desc))
 
-        resp = utfjson.load(ws.recv())
+        resp = utfjson.load(self.ws.recv())
         self.assertIn('err', resp)
 
     def test_report_system_load(self):
@@ -224,10 +226,9 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        self.ws.send(utfjson.dump(job_desc))
 
-        resp = utfjson.load(ws.recv())
+        resp = utfjson.load(self.ws.recv())
         self.assertIn('mem_available', resp['system_load'])
         self.assertIn('cpu_idle_percent', resp['system_load'])
         self.assertIn('client_number', resp['system_load'])
@@ -242,10 +243,9 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        self.ws.send(utfjson.dump(job_desc))
 
-        resp = utfjson.load(ws.recv())
+        resp = utfjson.load(self.ws.recv())
         self.assertEqual('foo', resp['result'])
 
         job_desc = {
@@ -255,10 +255,11 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
+        ws = self._create_client()
         ws.send(utfjson.dump(job_desc))
 
         resp = utfjson.load(ws.recv())
+        ws.close()
         # not bar, because the ident is same as the first job,
         # if job exists, it will not create a new one
         self.assertEqual('foo', resp['result'])
@@ -274,10 +275,9 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        self.ws.send(utfjson.dump(job_desc))
 
-        resp = utfjson.load(ws.recv())
+        resp = utfjson.load(self.ws.recv())
         self.assertEqual('foo', resp['result'])
 
         time.sleep(0.2)
@@ -289,10 +289,11 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        ws2 = self._create_client()
+        ws2.send(utfjson.dump(job_desc))
 
-        resp = utfjson.load(ws.recv())
+        resp = utfjson.load(ws2.recv())
+        ws2.close()
         # old job with the same ident has exit, it will create a new one
         self.assertEqual('bar', resp['result'])
         self.assertEqual('bar', resp['echo'])
@@ -307,9 +308,9 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
-        ws.close()
+        self.ws.send(utfjson.dump(job_desc))
+        self.ws.close()
+        self.ws = self._create_client()
 
         job_desc = {
             'func': 'test_job_echo.run',
@@ -319,10 +320,9 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        self.ws.send(utfjson.dump(job_desc))
 
-        resp = ws.recv()
+        resp = self.ws.recv()
         resp = utfjson.load(resp)
         self.assertEqual('foo', resp['result'])
 
@@ -334,10 +334,9 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        self.ws.send(utfjson.dump(job_desc))
 
-        resp = utfjson.load(ws.recv())
+        resp = utfjson.load(self.ws.recv())
         self.assertEqual('InvalidMessageError', resp['err'])
 
     def test_invalid_check_load_args(self):
@@ -360,10 +359,11 @@ class TestWsjobd(unittest.TestCase):
             case.update(job_desc)
             case['ident'] = self.get_random_ident()
 
-            ws = self.get_connection()
+            ws = self._create_client()
             ws.send(utfjson.dump(case))
 
             resp = utfjson.load(ws.recv())
+            ws.close()
             self.assertEqual('InvalidMessageError', resp['err'])
 
     def test_func_not_exists(self):
@@ -374,9 +374,8 @@ class TestWsjobd(unittest.TestCase):
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
-        resp = ws.recv()
+        self.ws.send(utfjson.dump(job_desc))
+        resp = self.ws.recv()
         resp = utfjson.load(resp)
         self.assertEqual('LoadingError', resp['err'])
 
@@ -391,16 +390,15 @@ class TestWsjobd(unittest.TestCase):
             },
         }
 
-        ws = self.get_connection()
-        ws.send(utfjson.dump(job_desc))
+        self.ws.send(utfjson.dump(job_desc))
 
         for i in range(10):
-            resp = ws.recv()
+            resp = self.ws.recv()
             self.assertNotIn('err', resp)
 
         with self.assertRaises(Exception):
             for i in range(3):
-                ws.recv()
+                self.ws.recv()
 
     def test_create_job(self):
         self.assertEqual(0, len(Job.sessions))

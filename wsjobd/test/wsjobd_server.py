@@ -1,21 +1,13 @@
 #!/usr/bin/env python2
 # coding: utf-8
 import logging
-from collections import OrderedDict
-
-from geventwebsocket import Resource
-from geventwebsocket import WebSocketServer
-
 from pykit import wsjobd
 
 PORT = 33445
 
 
 def run():
-    WebSocketServer(
-        ('127.0.0.1', PORT),
-        Resource(OrderedDict({'/': wsjobd.JobdWebSocketApplication})),
-    ).serve_forever()
+    wsjobd.run(ip='127.0.0.1', port=PORT, jobq_thread_count=20)
 
 
 if __name__ == "__main__":
