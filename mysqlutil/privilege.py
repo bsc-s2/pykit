@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 # https://dev.mysql.com/doc/refman/5.7/en/privileges-provided.html
 
 # ALL [PRIVILEGES]                Synonym for “all privileges”    Server administration
@@ -68,28 +71,33 @@ privileges = {
         'USAGE':                    ('USAGE',                   ),
 }
 
+# set direct map
+
+for k, v in privileges.items():
+    privileges[v[0]] = v
+
 # predefined shortcuts
 
 privileges.update({
-        'replicator': (  privileges.REPLICATION_CLIENT
-                       + privileges.REPLICATION_SLAVE
-                       + privileges.SELECT
+        'replicator': (  privileges["REPLICATION_CLIENT"]
+                       + privileges["REPLICATION_SLAVE"]
+                       + privileges["SELECT"]
         ),
-        'monitor':    (  privileges.SELECT
+        'monitor':    (  privileges["SELECT"]
         ),
-        'business':   (  privileges.CREATE
-                       + privileges.DROP
-                       + privileges.REFERENCES
-                       + privileges.ALTER
-                       + privileges.DELETE
-                       + privileges.INDEX
-                       + privileges.INSERT
-                       + privileges.SELECT
-                       + privileges.UPDATE
+        'business':   (  privileges["CREATE"]
+                       + privileges["DROP"]
+                       + privileges["REFERENCES"]
+                       + privileges["ALTER"]
+                       + privileges["DELETE"]
+                       + privileges["INDEX"]
+                       + privileges["INSERT"]
+                       + privileges["SELECT"]
+                       + privileges["UPDATE"]
         ),
-        'readwrite':  (  privileges.DELETE
-                       + privileges.INSERT
-                       + privileges.SELECT
-                       + privileges.UPDATE
+        'readwrite':  (  privileges["DELETE"]
+                       + privileges["INSERT"]
+                       + privileges["SELECT"]
+                       + privileges["UPDATE"]
         ),
 })
