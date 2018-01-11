@@ -163,17 +163,17 @@ def read_file(path):
         return f.read()
 
 
-def write_file(path, fcont, uid=None, gid=None, atomic=False):
+def write_file(path, fcont, uid=None, gid=None, atomic=False, fsync=True):
 
     if not atomic:
-        return _write_file(path, fcont, uid, gid)
+        return _write_file(path, fcont, uid, gid, fsync)
 
     tmp_path = '{path}._tmp_.{pid}_{timestamp}'.format(
         path=path,
         pid=os.getpid(),
         timestamp=timeutil.ns(),
     )
-    _write_file(tmp_path, fcont, uid, gid)
+    _write_file(tmp_path, fcont, uid, gid, fsync)
 
     try:
         os.rename(tmp_path, path)
@@ -182,7 +182,7 @@ def write_file(path, fcont, uid=None, gid=None, atomic=False):
         raise
 
 
-def _write_file(path, fcont, uid=None, gid=None):
+def _write_file(path, fcont, uid=None, gid=None, fsync=True):
 
     uid = uid or config.uid
     gid = gid or config.gid
@@ -190,7 +190,8 @@ def _write_file(path, fcont, uid=None, gid=None):
     with open(path, 'w') as f:
         f.write(fcont)
         f.flush()
-        os.fsync(f.fileno())
+        if fsync:
+            os.fsync(f.fileno())
 
     if uid is not None and gid is not None:
         os.chown(path, uid, gid)
