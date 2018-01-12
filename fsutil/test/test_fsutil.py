@@ -198,6 +198,16 @@ class TestFSUtil(unittest.TestCase):
         dd('specify uid/gid, to change uid, you need root privilege')
         fsutil.makedirs(fn, uid=1, gid=1)
 
+    def test_get_sub_dirs(self):
+        fsutil.makedirs('test_dir/sub_dir1')
+        fsutil.makedirs('test_dir/sub_dir2')
+        fsutil.write_file('test_dir/test_file', 'foo')
+
+        sub_dirs = fsutil.get_sub_dirs('test_dir')
+        self.assertListEqual(['sub_dir1', 'sub_dir2'], sub_dirs)
+
+        fsutil.remove('test_dir')
+
     def test_makedirs_with_config(self):
 
         fn = '/tmp/pykit-ut-fsutil-foo'
