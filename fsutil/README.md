@@ -529,7 +529,7 @@ Nothing
 ##  fsutil.write_file
 
 **syntax**:
-`fsutil.write_file(path, content, uid=None, gid=None, atomic=False)`
+`fsutil.write_file(path, content, uid=None, gid=None, atomic=False, fsync=True)`
 
 Write `content` to file `path`.
 
@@ -555,6 +555,9 @@ Write `content` to file `path`.
     `timeutil.ns()`, it is not atomic if the temporary files of same path
     created at the same nanosecond.
     The renaming will be an atomic operation (this is a POSIX requirement).
+
+-   `fsync`:
+    specify if need to synchronize data to storage device.
 
 **return**:
 Nothing
