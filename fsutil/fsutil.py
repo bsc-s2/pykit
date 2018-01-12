@@ -158,6 +158,17 @@ def makedirs(*paths, **kwargs):
         raise
 
 
+def get_sub_dirs(path):
+    files = os.listdir(path)
+
+    sub_dirs = []
+    for f in files:
+        if os.path.isdir(os.path.join(path, f)):
+            sub_dirs.append(f)
+
+    return sub_dirs
+
+
 def read_file(path):
     with open(path, 'r') as f:
         return f.read()

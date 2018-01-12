@@ -27,6 +27,7 @@
   - [fsutil.get_path_inode_usage](#fsutilget_path_inode_usage)
   - [fsutil.get_path_usage](#fsutilget_path_usage)
   - [fsutil.makedirs](#fsutilmakedirs)
+  - [fsutil.get_sub_dirs](#fsutilget_sub_dirs)
   - [fsutil.read_file](#fsutilread_file)
   - [fsutil.remove](#fsutilremove)
   - [fsutil.write_file](#fsutilwrite_file)
@@ -466,6 +467,22 @@ Nothing
 **raise**:
 `OSError` if trying to create dir with the same path of a non-dir file, or
 having other issue like permission denied.
+
+
+##  fsutil.get_sub_dirs
+
+**syntax**:
+`fsutil.get_sub_dirs(path)`
+
+Get all sub directories of `path`.
+
+**arguments**:
+
+-   `path`:
+    is the directory path.
+
+**return**:
+a list contain all sub directory names.
 
 
 ##  fsutil.read_file
