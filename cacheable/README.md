@@ -52,7 +52,8 @@ cache_data = {
 }
 
 # define the function with a decorator
-@cacheable.cache('cache_name', capacity=100, timeout=60, is_deepcopy=False)
+@cacheable.cache('cache_name', capacity=100, timeout=60,
+                    is_deepcopy=False, mutex_update=False)
 def get_data(param):
     return cache_data.get(param, '')
 
@@ -70,7 +71,8 @@ data = get_data('key1')
 # define a method with a decorator
 class MethodCache(object):
 
-    @cacheable.cache('method_cache_name', capacity=100, timeout=60, is_deepcopy=False)
+    @cacheable.cache('method_cache_name', capacity=100, timeout=60,
+                        is_deepcopy=False, mutex_update=False)
     def get_data(self, param):
         return cache_data.get(param, '')
 
@@ -101,13 +103,13 @@ Least Recently Used Cache.
 ##  cacheable.Cacheable
 
 **syntax**:
-`cacheable.Cacheable(capacity=1024 * 4, timeout=60, is_deepcopy=True)`
+`cacheable.Cacheable(capacity=1024 * 4, timeout=60, is_deepcopy=True, mutex_update=False)`
 
 Create a `LRU` object, all items will be cached in it.
 
 **arguments**:
 
--   `capacity`: for create `LRU` object, default is 1024*4
+-   `capacity`: for create `LRU` object, default is 1024 * 4
 
 -   `timeout`: for create `LRU` object, default is 60, unit is second
 
@@ -117,6 +119,13 @@ Create a `LRU` object, all items will be cached in it.
     -   `True`: return deepcopy of cached item
 
     -   `False`: return reference of cached item
+
+-   `mutex_update`: allows only one thread to update the cache item.
+     Default is `False`.
+
+    -   `True`: mutex update
+
+    -   `False`: concurrently update
 
 #   Methods
 
@@ -178,7 +187,7 @@ so can get value and set value like `dict`
 ##  cacheable.cache
 
 **syntax**:
-`cacheable.cache(name, capacity=1024 * 4, timeout=60, is_deepcopy=True)`
+`cacheable.cache(name, capacity=1024 * 4, timeout=60, is_deepcopy=True, mutex_update=False)`
 
 If not exist, create a `cacheable.Cacheable` and save it, else use exist one.
 
@@ -189,11 +198,11 @@ need_cache_data_aa = {'key': 'val_aa'}
 need_cache_data_bb = {'key': 'val_bb'}
 
 #use different `name` create two objects, they don't have any relation.
-@cacheable.cache('name_aa', capacity=100, timeout=60, is_deepcopy=False)
+@cacheable.cache('name_aa', capacity=100, timeout=60, is_deepcopy=False, mutex_update=False)
 def cache_aa(param):
     return need_cache_data_aa.get(param, '')
 
-@cacheable.cache('name_bb', capacity=100, timeout=60, is_deepcopy=False)
+@cacheable.cache('name_bb', capacity=100, timeout=60, is_deepcopy=False, mutex_update=False)
 def cache_bb(param):
     return need_cache_data_bb.get(param, '')
 ```
@@ -208,6 +217,8 @@ def cache_bb(param):
 
 -   `is_deepcopy`: used as `is_deepcopy` of `cacheable.Cacheable`
 
+-   `mutex_update`: used as `mutex_update` of `cacheable.Cacheable`
+
 **return**:
 A decorator function that it checks whether the data has been cached,
 if not or has been timeout, cache and return the data.
@@ -220,7 +231,7 @@ need_cache_data = {
     'key2': 'val_2',
 }
 
-@cacheable.cache('cache', capacity=100, timeout=60, is_deepcopy=False)
+@cacheable.cache('cache', capacity=100, timeout=60, is_deepcopy=False, mutex_update=False)
 def get_data(key):
     return need_cache_data.get(key, '')
 

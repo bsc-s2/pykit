@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
+import thread
 import time
 import unittest
 
@@ -191,6 +192,40 @@ class TestCacheable(unittest.TestCase):
         self.assertIsNot(get_deepcopy_of_cache_data('key1'),
                          get_deepcopy_of_cache_data('key1'))
 
+    def test_get_concurrent_update_cache_data(self):
+
+        result = {}
+        def _store_result(key):
+            result[key] = get_concurrent_update_cache_data()
+
+        thread.start_new_thread(_store_result, ('key1',))
+        time.sleep(1)
+        thread.start_new_thread(_store_result, ('key2',))
+
+        while True:
+            if 'key2' in result:
+                break
+            time.sleep(0.1)
+
+        self.assertIsNot(result['key1'], result['key2'])
+
+    def test_get_mutext_update_cache_data(self):
+
+        result = {}
+        def _store_result(key):
+            result[key] = get_mutex_update_cache_data()
+
+        thread.start_new_thread(_store_result, ('key1',))
+        time.sleep(1)
+        thread.start_new_thread(_store_result, ('key2',))
+
+        while True:
+            if 'key2' in result:
+                break
+            time.sleep(0.1)
+
+        self.assertIs(result['key1'], result['key2'])
+
     def test_generate_lru_key(self):
 
         cases = (
@@ -237,6 +272,17 @@ def get_cache_data(key):
     cache_data['tm'] = time.time()
     return cache_data
 
+@cacheable.cache('concurrent_update_cache_data', capacity=100, timeout=60,
+                    is_deepcopy=False, mutex_update=False)
+def get_concurrent_update_cache_data():
+    time.sleep(3)
+    return {}
+
+@cacheable.cache('mutex_update_cache_data', capacity=100, timeout=60,
+                    is_deepcopy=False, mutex_update=True)
+def get_mutex_update_cache_data():
+    time.sleep(3)
+    return {}
 
 need_cache_data = {
     'key1': {'tm': 0},
