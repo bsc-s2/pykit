@@ -118,7 +118,7 @@ convert datetime instance to specify format time string
 
 **syntax**:
 
-`timeutil.format_ts(ts, fmt_key)`
+`timeutil.format_ts(ts, fmt_key, utc=True)`
 
 convert timestamp to specify format time string
 
@@ -130,6 +130,9 @@ convert timestamp to specify format time string
 -   `fmt_key`:
     specify time string format.
     It can be a named format alias, or format string.
+
+-   `utc`:
+    set to `True` to get utc time, set to `False` to get local time.
 
 **return**:
     specify format time string

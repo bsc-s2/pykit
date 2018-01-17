@@ -35,8 +35,8 @@ def format(dt, fmt_key):
     return dt.strftime(_get_format(fmt_key))
 
 
-def format_ts(ts, fmt_key):
-    dt = ts_to_datetime(ts)
+def format_ts(ts, fmt_key, utc=True):
+    dt = ts_to_datetime(ts, utc)
     return format(dt, fmt_key)
 
 
@@ -48,8 +48,11 @@ def utc_datetime_to_ts(dt):
     return calendar.timegm(dt.timetuple())
 
 
-def ts_to_datetime(ts):
-    return datetime.datetime.utcfromtimestamp(ts)
+def ts_to_datetime(ts, utc=True):
+    if utc:
+        return datetime.datetime.utcfromtimestamp(ts)
+    else:
+        return datetime.datetime.fromtimestamp(ts)
 
 
 def ts():
