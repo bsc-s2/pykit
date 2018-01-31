@@ -540,3 +540,27 @@ class TestDefaultTimeout(unittest.TestCase):
             time.sleep(0.02)
 
         jobq.run(range(1), [_sleep_1])
+
+
+class TestLimitJobSpeed(unittest.TestCase):
+
+    def test_limit_job_speed(self):
+
+        job_num = 300
+        job_speed = 100
+
+        def entry_iter():
+            for ii in xrange(job_num):
+                yield ii
+
+        def empty(num):
+            pass
+
+        t0 = time.time()
+
+        jobq.run(entry_iter(), [
+                (jobq.limit_job_speed(job_speed, 1), 1),
+                (empty, 10),
+        ])
+
+        self.assertEqual(int(job_num / job_speed), int(time.time() - t0))

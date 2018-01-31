@@ -9,6 +9,10 @@ from .jobq import (
     JobWorkerNotFound,
 )
 
+from .works import (
+    limit_job_speed,
+)
+
 __all__ = [
     'EmptyRst',
     'Finish',
@@ -18,4 +22,5 @@ __all__ = [
 
     'JobWorkerError',
     'JobWorkerNotFound',
+     'limit_job_speed',
 ]

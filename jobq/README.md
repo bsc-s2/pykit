@@ -10,6 +10,7 @@
   - [jobq.run](#jobqrun)
   - [jobq.stat](#jobqstat)
   - [jobq.EmptyRst](#jobqemptyrst)
+  - [jobq.limit_job_speed](#jobqlimitjobspeed)
   - [jobq.JobManager](#jobqjobmanager)
   - [jobq.JobManager.put](#jobqjobmanagerput)
   - [jobq.JobManager.join](#jobqjobmanagerjoin)
@@ -218,6 +219,24 @@ def worker_back_hole(args):
 ```
 
 >   If `None` is returned by a worker, `None` is passed to next worker.
+
+##  jobq.limit_job_speed
+
+**syntax**:
+`jobq.limit_job_speed(max_job_speed, job_step)`
+
+A work that limits the speed at which job is executed.
+
+**arguments**:
+-   `max_job_speed`:
+    is a integer or function, represents the maximum execution job speed,
+    If it is a function, use the return value of the function.
+
+-   `job_step`:
+    is a integer, represents the step length of a job, the default is 1.
+
+**return**:
+None
 
 ## jobq.JobManager
 
