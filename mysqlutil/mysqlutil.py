@@ -2,7 +2,9 @@
 # coding: utf-8
 
 import MySQLdb
+
 from pykit import mysqlconnpool
+from pykit import strutil
 
 
 class ConnectionTypeError(Exception):
@@ -10,6 +12,10 @@ class ConnectionTypeError(Exception):
 
 
 class IndexNotPairs(Exception):
+    pass
+
+
+class ShardNotPairs(Exception):
     pass
 
 
@@ -113,9 +119,85 @@ def sql_scan_index(table, result_fields, index_fields, index_values,
     return sql_to_return
 
 
+def sql_condition_between_shards(shard_fields, start, end=None):
+
+    if end is None:
+        end = []
+    elif len(shard_fields) != len(end):
+        raise ShardNotPairs
+
+    if len(shard_fields) != len(start):
+        raise ShardNotPairs
+
+    same_fields = strutil.common_prefix(start, end)
+    prefix_condition = ''
+    prefix_len = len(same_fields)
+    if len(prefix_len) > 0:
+        prefix_shards = zip(shard_fields[:prefix_len], start[:prefix_len])
+        prefix_condition = connect_condition(prefix_shards, '=')
+        prefix_condition += " AND "
+
+        shard_fields = shard_fields[prefix_len:]
+        start = start[prefix_len:]
+        end = end[prefix_len:]
+
+    start_shards = zip(shard_fields, start)
+    start_condition_first = prefix_condition + \
+        connect_condition(start_shards, '>=')
+    start_condition = generate_shards_condition(
+        start_shards[:-1], '>', prefix=prefix_condition)
+    start_condition.insert(0, start_condition_first)
+
+    if len(end) == 0:
+        return start_condition
+
+    end_shards = zip(shard_fields, end)
+    end_condition = generate_shards_condition(
+        end_shards, '<', prefix=prefix_condition)
+
+    condition = []
+
+    condition += start_shards[:-1]
+    condition += end_shards[:-1]
+    condition.append(prefix_condition +
+                     start_condition[-1] + " AND " + end_condition[-1])
+
+    return condition
+
+
+def generate_shards_condition(shards, operator, prefix=''):
+
+    conditions = []
+    while len(shards) > 0:
+
+        and_condition = prefix + connect_condition(shards, operator)
+        conditions.append(and_condition)
+
+        shards = shards[:-1]
+
+    return conditions
+
+
+def connect_condition(shards, operator):
+
+    condition = []
+
+    for s in shards[-1]:
+        condition.append(quote(s[0]) + "=" + quote(s[1], '"'))
+
+    s = shards[-1]
+    condition.append(quote(s[0] + operator + quote(s[1], '"')))
+
+    return " AND ".join(condition)
+
+
+def quote(s, quote="`"):
+
+    if quote in s:
+        s = s.replace(quote, "\\" + quote)
+
+    return quote + s + quote
+
 def _safe(s):
     return '"' + MySQLdb.escape_string(s) + '"'
 
-
-def _quote(s):
-    return '`' + s + '`'
