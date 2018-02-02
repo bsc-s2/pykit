@@ -94,19 +94,16 @@ def sql_scan_index(table, result_fields, index_fields, index_values,
 
     if len(index_pairs) > 0:
 
-        conditions = []
-        for pair in index_pairs[:-1]:
-            conditions.append(table_name + '.' + quote(pair[0]) + ' = ' + _safe(pair[1]))
-
-        pair = index_pairs[-1]
         if left_open:
             operator = ' > '
         else:
             operator = ' >= '
 
-        conditions.append(table_name + '.' + quote(pair[0]) + operator + _safe(pair[1]))
+        prefix = table_name + '.'
+        and_conditions = connect_condition(
+            index_pairs, operator, prefix=prefix)
 
-        where_conditions = ' WHERE ' + ' AND '.join(conditions)
+        where_conditions = ' WHERE ' + and_conditions
 
     limit = int(limit)
 
@@ -129,12 +126,12 @@ def sql_condition_between_shards(shard_fields, start, end=None):
     if len(shard_fields) != len(start):
         raise ShardNotPairs
 
-    same_fields = strutil.common_prefix(start, end)
+    same_fields = strutil.common_prefix(start, end, recursive=False)
     prefix_condition = ''
     prefix_len = len(same_fields)
-    if len(prefix_len) > 0:
+    if prefix_len > 0:
         prefix_shards = zip(shard_fields[:prefix_len], start[:prefix_len])
-        prefix_condition = connect_condition(prefix_shards, '=')
+        prefix_condition = connect_condition(prefix_shards, ' = ')
         prefix_condition += " AND "
 
         shard_fields = shard_fields[prefix_len:]
@@ -142,23 +139,22 @@ def sql_condition_between_shards(shard_fields, start, end=None):
         end = end[prefix_len:]
 
     start_shards = zip(shard_fields, start)
-    start_condition_first = prefix_condition + \
-        connect_condition(start_shards, '>=')
-    start_condition = generate_shards_condition(
-        start_shards[:-1], '>', prefix=prefix_condition)
+    start_condition_first = connect_condition(start_shards, ' >= ')
+    start_condition = generate_shards_condition(start_shards[:-1], ' > ')
     start_condition.insert(0, start_condition_first)
 
+    condition = []
+    condition += [prefix_condition + x for x in start_condition[:-1]]
+
     if len(end) == 0:
-        return start_condition
+        condition.append(prefix_condition + start_condition[-1])
+        return condition
 
     end_shards = zip(shard_fields, end)
-    end_condition = generate_shards_condition(
-        end_shards, '<', prefix=prefix_condition)
+    end_condition = generate_shards_condition(end_shards, ' < ')
 
-    condition = []
+    condition += [prefix_condition + x for x in end_condition[:-1]]
 
-    condition += start_shards[:-1]
-    condition += end_shards[:-1]
     condition.append(prefix_condition +
                      start_condition[-1] + " AND " + end_condition[-1])
 
@@ -178,15 +174,15 @@ def generate_shards_condition(shards, operator, prefix=''):
     return conditions
 
 
-def connect_condition(shards, operator):
+def connect_condition(shards, operator, prefix=''):
 
     condition = []
 
-    for s in shards[-1]:
-        condition.append(quote(s[0]) + "=" + quote(s[1], '"'))
+    for s in shards[:-1]:
+        condition.append(prefix + quote(s[0]) + " = " + _safe(s[1]))
 
     s = shards[-1]
-    condition.append(quote(s[0] + operator + quote(s[1], '"')))
+    condition.append(prefix + quote(s[0]) + operator + _safe(s[1]))
 
     return " AND ".join(condition)
 

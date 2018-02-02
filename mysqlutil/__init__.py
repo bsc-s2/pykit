@@ -7,14 +7,11 @@ from .mysqlutil import (
     sql_scan_index,
     ConnectionTypeError,
     IndexNotPairs,
+    sql_condition_between_shards,
 )
 
 from privilege import (
     privileges
-)
-
-from .mysqlutil import (
-    sql_condition_between_shards,
 )
 
 __all__ = [
