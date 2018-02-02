@@ -75,19 +75,19 @@ def sql_scan_index(table, result_fields, index_fields, index_values,
                    left_open=False, limit=1024, index_name=None):
 
     if type(table) is str:
-        table_name = _quote(table)
+        table_name = quote(table)
     else:
-        table_name = '.'.join([_quote(t) for t in table])
+        table_name = '.'.join([quote(t) for t in table])
 
-    fields_to_return = ', '.join([_quote(x) for x in result_fields])
+    fields_to_return = ', '.join([quote(x) for x in result_fields])
     if len(fields_to_return) == 0:
         fields_to_return = '*'
 
     force_index = ''
     if index_name is not None:
-        force_index = ' FORCE INDEX (' + _quote(index_name) + ')'
+        force_index = ' FORCE INDEX (' + quote(index_name) + ')'
     elif len(index_fields) > 0:
-        force_index = ' FORCE INDEX (' + _quote('idx_' + '_'.join(index_fields)) + ')'
+        force_index = ' FORCE INDEX (' + quote('idx_' + '_'.join(index_fields)) + ')'
 
     where_conditions = ''
     index_pairs = zip(index_fields, index_values)
@@ -96,7 +96,7 @@ def sql_scan_index(table, result_fields, index_fields, index_values,
 
         conditions = []
         for pair in index_pairs[:-1]:
-            conditions.append(table_name + '.' + _quote(pair[0]) + ' = ' + _safe(pair[1]))
+            conditions.append(table_name + '.' + quote(pair[0]) + ' = ' + _safe(pair[1]))
 
         pair = index_pairs[-1]
         if left_open:
@@ -104,7 +104,7 @@ def sql_scan_index(table, result_fields, index_fields, index_values,
         else:
             operator = ' >= '
 
-        conditions.append(table_name + '.' + _quote(pair[0]) + operator + _safe(pair[1]))
+        conditions.append(table_name + '.' + quote(pair[0]) + operator + _safe(pair[1]))
 
         where_conditions = ' WHERE ' + ' AND '.join(conditions)
 
