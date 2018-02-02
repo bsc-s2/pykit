@@ -209,6 +209,57 @@ class TestMysqlutil(unittest.TestCase):
 
             self.assertEquals(rst, rst_expect)
 
+    def test_sql_condition_between_shards(self):
+
+        cases = (
+            ((['id'], ['10']),
+                ['`id` >= "10"']),
+            ((['id'], ['10'], ['15']),
+                ['`id` >= "10" AND `id` < "15"']),
+
+            ((['id', 'service'], ['10', 'a']),
+                ['`id` = "10" AND `service` >= "a"',
+                 '`id` > "10"',
+                ]),
+
+            ((['id', 'service'], ['10', 'a'], ['10', 'd']),
+                ['`id` = "10" AND `service` >= "a" AND `service` < "d"']),
+
+            ((['id', 'service'], ['10', 'a'], ['15', 'd']),
+                ['`id` = "10" AND `service` >= "a"',
+                 '`id` > "10" AND `id` < "15"',
+                 '`id` = "15" AND `service` < "d"',
+                ]),
+
+            ((['id', 'service', 'level'], ['10', 'a', 'a3']),
+                ['`id` = "10" AND `service` = "a" AND `level` >= "a3"',
+                 '`id` = "10" AND `service` > "a"',
+                 '`id` > "10"',
+                ]),
+
+            ((['id', 'service', 'level'], ['10', 'a', 'a3'], ['10', 'a', 'b2']),
+                ['`id` = "10" AND `service` = "a" AND `level` >= "a3" AND `level` < "b2"']),
+
+            ((['id', 'service', 'level'], ['10', 'a', 'a3'], ['10', 'd', 'b2']),
+                ['`id` = "10" AND `service` = "a" AND `level` >= "a3"',
+                 '`id` = "10" AND `service` > "a" AND `service` < "d"',
+                 '`id` = "10" AND `service` = "b2" AND `level` < "b2"',
+                ]),
+
+            ((['id', 'service', 'level'], ['10', 'a', 'a3'], ['15', 'd', 'b2']),
+                ['`id` = "10" AND `service` = "a" AND `level` >= "a3"',
+                 '`id` = "10" AND `service` > "a"',
+                 '`id` > "10" AND `id` < "15"',
+                 '`id` = "15" AND `service` < "d"',
+                 '`id` = "15" AND `service` = "d" AND `level` < "b2"',
+                ]),
+        )
+
+        for args, rst_expected in cases:
+            rst = mysqlutil.sql_condition_between_shards(*args)
+            self.assertEqual(rst.sort(), rst_expected.sort())
+
+
 def docker_does_container_exist(name):
 
     dcli = _docker_cli()
