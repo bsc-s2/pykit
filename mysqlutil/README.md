@@ -290,12 +290,12 @@ If `end` is `None`, known as `start` is the last shard.
 
 ```
 sql_condition_between_shards(
-    [bucket_id, scope, key], (100000000, 'a', 'key_foo'), (200000000, 'a', 'key_bar'))
-# ["`bucket_id`=100000000 AND `scope`='a' AND `key`>='key_foo'",
-#  "`bucket_id`=100000000 AND `scope`>'a'",
-#  "`bucket_id`>100000000 AND `bucket_id`<200000000",
-#  "`bucket_id`=200000000 AND `scope`<'a'",
-#  "`bucket_id`=200000000 AND `scope`='a' AND `key`<'key_bar'",]
+    [bucket_id, scope, key], ("100000000", "a", "key_foo"), ("200000000", "a", "key_bar"))
+# ['`bucket_id` = "100000000" AND `scope` = "a" AND `key` >= "key_foo"',
+#  '`bucket_id` = "100000000" AND `scope` > "a"',
+#  '`bucket_id` > "100000000" AND `bucket_id` < "200000000",
+#  '`bucket_id` = "200000000" AND `scope` < "a"',
+#  '`bucket_id` = "200000000" AND `scope` = "a" AND `key` < "key_bar"',]
 ```
 
 **argument**:
