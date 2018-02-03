@@ -226,6 +226,36 @@ class TestStrutil(unittest.TestCase):
 
             self.assertEqual(expected, rst)
 
+    def test_common_prefix_no_recursive(self):
+
+        cases = (
+            (('abc', ('45', 'xyz'), 3),
+             ('abc', ('45', 'xz'), 5),
+             ('abc', ('45', 'x-'), 5),
+             ('abc',),
+             ),
+            ('abc',
+             'abd',
+             'ag',
+             'a',
+             ),
+            ((1, 2, 'abc'),
+             (1, 2, 'abd'),
+             (1, 2),
+             ),
+        )
+
+        for args in cases:
+            expected = args[-1]
+            args = args[:-1]
+
+            dd('input: ', args, 'expected: ', expected)
+            rst = strutil.common_prefix(*args, recursive=False)
+            dd('rst: ', rst)
+
+            self.assertEqual(expected, rst)
+
+
     def test_line_pad(self):
 
         cases = (

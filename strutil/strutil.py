@@ -440,17 +440,18 @@ def utf8str(s):
         return str(s)
 
 
-def common_prefix(a, *others):
+def common_prefix(a, *others, **options):
 
+    recursive = options.get('recursive', True)
     for b in others:
         if type(a) != type(b):
             raise TypeError('a and b has different type: ' + repr((a, b)))
-        a = _common_prefix(a, b)
+        a = _common_prefix(a, b, recursive)
 
     return a
 
 
-def _common_prefix(a, b):
+def _common_prefix(a, b, recursive=True):
 
     rst = []
     for i, elt in enumerate(a):
@@ -471,7 +472,7 @@ def _common_prefix(a, b):
     # down.
     # And non-iterable element is skipped, such as int.
     i = len(rst)
-    if i < len(a) and i < len(b) and not isinstance(a, basestring) and hasattr(a[i], '__len__'):
+    if recursive and i < len(a) and i < len(b) and not isinstance(a, basestring) and hasattr(a[i], '__len__'):
 
         last_prefix = _common_prefix(a[i], b[i])
 

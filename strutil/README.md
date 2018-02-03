@@ -432,7 +432,7 @@ A colored formatted percent string.
 ##  strutil.common_prefix
 
 Find common prefix of several `string`s, tuples of string, or other nested
-structure, recursively.
+structure, recursively by default.
 It returns the shortest prefix: empty string or empty tuple is removed.
 
 **Synopsis**:
@@ -445,15 +445,17 @@ strutil.common_prefix((1, 2, 'abc'), (1, 2, 'abd'))   # (1, 2, 'ab')
 strutil.common_prefix((1, 2, 'abc'), (1, 2, 'xyz'))   # (1, 2); empty prefix of 'abc' and 'xyz' is removed
 strutil.common_prefix((1, 2, (5, 6)), (1, 2, (5, 7))) # (1, 2, (5,) )
 strutil.common_prefix('abc', 'abd', 'abe')            # 'ab'; common prefix of more than two
+strutil.common_prefix((1, 2, 'abc'), (1, 2, 'abd'), recursive=False) # (1, 2)
 ```
 
 **syntax**:
-`strutil.common_prefix(a, *others)`
+`strutil.common_prefix(a, *others, **options)`
 
 **arguments**:
 
 -   `a` and element in `others`:
     are `string`, `tuple` or `list` to find common prefix of them.
+-   if field `recursive` in `options` is set to `False`, it will run non-recursively.
 
 **return**:
 a common prefix of the same type of `a`.
