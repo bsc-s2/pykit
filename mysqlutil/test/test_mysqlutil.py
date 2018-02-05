@@ -232,8 +232,8 @@ class TestMysqlutil(unittest.TestCase):
 
             ((['id', 'service'], ['10', 'a'], ['15', 'd']),
                 ['`id` = "10" AND `service` >= "a"',
-                 '`id` > "10" AND `id` < "15"',
                  '`id` = "15" AND `service` < "d"',
+                 '`id` > "10" AND `id` < "15"',
                  ],
                 '2 shard fields normal'),
 
@@ -250,17 +250,17 @@ class TestMysqlutil(unittest.TestCase):
 
             ((['id', 'service', 'level'], ['10', 'a', 'a3'], ['10', 'd', 'b2']),
                 ['`id` = "10" AND `service` = "a" AND `level` >= "a3"',
-                 '`id` = "10" AND `service` > "a" AND `service` < "d"',
                  '`id` = "10" AND `service` = "d" AND `level` < "b2"',
+                 '`id` = "10" AND `service` > "a" AND `service` < "d"',
                  ],
                 '3 shard fields, 1 same fields'),
 
             ((['id', 'service', 'level'], ['10', 'a', 'a3'], ['15', 'd', 'b2']),
                 ['`id` = "10" AND `service` = "a" AND `level` >= "a3"',
                  '`id` = "10" AND `service` > "a"',
-                 '`id` > "10" AND `id` < "15"',
-                 '`id` = "15" AND `service` < "d"',
                  '`id` = "15" AND `service` = "d" AND `level` < "b2"',
+                 '`id` = "15" AND `service` < "d"',
+                 '`id` > "10" AND `id` < "15"',
                  ],
                 '3 shard fields normal'),
 
@@ -271,16 +271,22 @@ class TestMysqlutil(unittest.TestCase):
             ((['id', 'service', 'level'], ['10', 'a', 'a3'], ['10', 'a', 'a3']),
                 [],
                 'start == end'),
+
+            ((['id', 'service', 'level'], ['10', 'a"c', 'a"3"'], ['15', 'd\\b', 'b\'2']),
+                ['`id` = "10" AND `service` = "a\\\"c" AND `level` >= "a\\\"3\\\""',
+                 '`id` = "10" AND `service` > "a\\\"c"',
+                 '`id` = "15" AND `service` = "d\\\\b" AND `level` < "b\\\'2"',
+                 '`id` = "15" AND `service` < "d\\\\b"',
+                 '`id` > "10" AND `id` < "15"',
+                 ],
+                'special characters'),
         )
 
         for args, rst_expected, msg in cases:
             dd('msg: ', msg)
-            rst_expected.sort()
             dd('expected: ', rst_expected)
 
             rst = mysqlutil.sql_condition_between_shards(*args)
-            rst.sort()
-
             dd('rst     : ', rst)
 
             self.assertEqual(rst, rst_expected)
