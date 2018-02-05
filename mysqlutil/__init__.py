@@ -3,11 +3,11 @@ from . import (
 )
 
 from .mysqlutil import (
-    scan_index,
-    sql_scan_index,
     ConnectionTypeError,
     IndexNotPairs,
+    scan_index,
     sql_condition_between_shards,
+    sql_scan_index,
 )
 
 from privilege import (
@@ -15,11 +15,11 @@ from privilege import (
 )
 
 __all__ = [
+    "ConnectionTypeError",
     "gtidset",
+    "IndexNotPairs",
     "privileges",
     "scan_index",
-    "sql_scan_index",
-    "ConnectionTypeError",
-    "IndexNotPairs",
     "sql_condition_between_shards",
+    "sql_scan_index",
 ]

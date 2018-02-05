@@ -263,6 +263,14 @@ class TestMysqlutil(unittest.TestCase):
                  '`id` = "15" AND `service` = "d" AND `level` < "b2"',
                  ],
                 '3 shard fields normal'),
+
+            ((['id', 'service', 'level'], ['15', 'd', 'b2'], ['10', 'a', 'a3']),
+                [],
+                'start > end'),
+
+            ((['id', 'service', 'level'], ['10', 'a', 'a3'], ['10', 'a', 'a3']),
+                [],
+                'start == end'),
         )
 
         for args, rst_expected, msg in cases:

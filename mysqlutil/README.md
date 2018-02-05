@@ -285,7 +285,7 @@ a generator which generates rows of the sql select result with those arguments o
 **syntax**:
 `mysqlutil.sql_condition_between_shards(shard_fields, start, end=None)`
 
-Generate mysql dump conditions for those rows between shard `start` and shard `end`.
+Generate mysql dump conditions for those rows between shard `start` and shard `end`: "[`start`, `end`)".
 If `end` is `None`, known as `start` is the last shard.
 
 ```
@@ -301,12 +301,12 @@ sql_condition_between_shards(
 **argument**:
 
 - `shard_fields`:
-is table fileds of which the shard consist. A list.
+    is table fileds of which the shard consist. A list or tuple of string.
 - `start`:
-is the beginnin boundary of the condition range.
+    is the beginnin boundary of the condition range, a list or tuple of string.
 - `end`:
-is the ending boundary of the condition range. If `end` is `None`, then condtion generated has no
-ending boundary.
+    is the ending boundary of the condition range, a list or tuple of string. If `end` is `None`,
+    then condtion generated has no ending boundary.
 
 **return**:
 a list of string.

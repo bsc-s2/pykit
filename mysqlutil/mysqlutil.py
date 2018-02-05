@@ -118,10 +118,13 @@ def sql_scan_index(table, result_fields, index_fields, index_values,
 
 def sql_condition_between_shards(shard_fields, start, end=None):
 
-    if end is None:
+    if end is not None:
+        if start >= end:
+            return []
+        if len(shard_fields) != len(end):
+            raise ShardNotPairs
+    else:
         end = []
-    elif len(shard_fields) != len(end):
-        raise ShardNotPairs
 
     if len(shard_fields) != len(start):
         raise ShardNotPairs
@@ -161,15 +164,16 @@ def sql_condition_between_shards(shard_fields, start, end=None):
     return condition
 
 
-def generate_shards_condition(shards, operator, prefix=''):
+def generate_shards_condition(shards, operator):
 
     conditions = []
-    while len(shards) > 0:
+    shards_to_connect = shards[:]
+    while len(shards_to_connect) > 0:
 
-        and_condition = prefix + connect_condition(shards, operator)
+        and_condition = connect_condition(shards_to_connect, operator)
         conditions.append(and_condition)
 
-        shards = shards[:-1]
+        shards_to_connect = shards_to_connect[:-1]
 
     return conditions
 
@@ -196,4 +200,3 @@ def quote(s, quote="`"):
 
 def _safe(s):
     return '"' + MySQLdb.escape_string(s) + '"'
-
