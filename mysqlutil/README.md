@@ -286,25 +286,25 @@ a generator which generates rows of the sql select result with those arguments o
 `mysqlutil.sql_condition_between_shards(shard_fields, start, end=None)`
 
 Generate mysql dump conditions for those rows between shard `start` and shard `end`: "[`start`, `end`)".
-If `end` is `None`, known as `start` is the last shard.
+If `end` is `None`, means that `start` is the last shard.
 
 ```
 sql_condition_between_shards(
-    [bucket_id, scope, key], ("100000000", "a", "key_foo"), ("200000000", "a", "key_bar"))
+    ["bucket_id", "scope", "key"], ("100000000", "a", "key_foo"), ("200000000", "a", "key_bar"))
 # ['`bucket_id` = "100000000" AND `scope` = "a" AND `key` >= "key_foo"',
 #  '`bucket_id` = "100000000" AND `scope` > "a"',
-#  '`bucket_id` > "100000000" AND `bucket_id` < "200000000",
+#  '`bucket_id` = "200000000" AND `scope` = "a" AND `key` < "key_bar"',
 #  '`bucket_id` = "200000000" AND `scope` < "a"',
-#  '`bucket_id` = "200000000" AND `scope` = "a" AND `key` < "key_bar"',]
+#  '`bucket_id` > "100000000" AND `bucket_id` < "200000000",]
 ```
 
 **argument**:
 
-- `shard_fields`:
+-   `shard_fields`:
     is table fileds of which the shard consist. A list or tuple of string.
-- `start`:
+-   `start`:
     is the beginnin boundary of the condition range, a list or tuple of string.
-- `end`:
+-   `end`:
     is the ending boundary of the condition range, a list or tuple of string. If `end` is `None`,
     then condtion generated has no ending boundary.
 
