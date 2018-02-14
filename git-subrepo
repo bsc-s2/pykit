@@ -285,11 +285,119 @@ git_commit_copy()
     ) || die "Can't copy commit $1"
 }
 
-git_objetct_type()
+git_object_type()
 {
     # $0 ref|hash
     # output "commit", "tree" etc
     git cat-file -t "$@" 2>/dev/null
+}
+git_object_add_by_commit_path()
+{
+    # add an blob or tree object to target_path in index
+    # the object to add is specified by commit and path
+    local target_path="$1"
+    local src_commit="$2"
+    local src_path="$3"
+
+    local src_dir="$(dirname "$src_path")/"
+    local src_name="$(basename "$src_path")"
+    local src_treeish="$(git rev-parse "$src_commit:$src_dir")"
+
+    git_object_add_by_tree_name "$target_path" "$src_treeish" "$src_name"
+
+}
+git_object_add_by_tree_name()
+{
+    # add an blob or tree object to target_path in index
+    local target_path="$1"
+    local src_treeish="$2"
+    local src_name="$3"
+
+    dd "arg: target_path: ($target_path) src_treeish: ($src_treeish) src_name: ($src_name)"
+
+    local target_dir="$(dirname $target_path)/"
+    local target_fn="$(basename $target_path)"
+    local treeish=$(git ls-tree "$src_treeish" "$src_name" | awk '{print $3}')
+
+    dd "hash of object to add is: $treeish"
+
+    if [ "$(git_object_type $treeish)" = "blob" ]; then
+        # the treeish imported is a file, not a dir
+        # first create a wrapper tree or replace its containing tree
+
+        dd "object to add is blob"
+
+        local dir_treeish
+        local target_dir_treeish="$(git rev-parse "HEAD:$target_dir")"
+        if [ -n "target_dir_treeish" ]; then
+            dir_treeish="$(git rev-parse "HEAD:$target_dir")"
+            dd "target dir presents: $target_dir"
+
+        else
+            dd "target dir absent"
+            dir_treeish=""
+        fi
+
+        treeish=$(git_tree_add_blob "$dir_treeish" "$target_fn" $src_treeish $src_name) || die create wrapper treeish
+        target_path="$target_dir"
+
+        dd "wrapper treeish: $treeish"
+        dd "target_path set to: $target_path"
+    else
+        dd "object to add is tree"
+
+        treeish=$(git ls-tree "$src_treeish" "$src_name" | awk '{print $3}')
+        dd "updated treeish: $treeish"
+    fi
+
+    dd treeish content:
+    git ls-tree $treeish
+
+    if [ "$target_path" = "./" ]; then
+        git read-tree "$treeish" \
+            || die "read-tree $target_path $treeish"
+    else
+        git read-tree --prefix="$target_path" "$treeish" \
+            || die "read-tree $target_path $treeish"
+    fi
+}
+
+git_tree_add_tree()
+{
+    # output new tree hash in stdout
+    # treeish can be empty
+    local treeish="$1"
+    local target_fn="$2"
+    local item_hash="$3"
+    local item_name="$4"
+
+    {
+        if [ -n "$treeish" ]; then
+            git ls-tree "$treeish" \
+                | fgrep -v "	$item_name"
+        fi
+
+        cat "040000 tree $item_hash	$target_fn"
+    } | git mktree
+}
+git_tree_add_blob()
+{
+    # output new tree hash in stdout
+    # treeish can be empty
+    local treeish="$1"
+    local target_fn="$2"
+    local blob_treeish="$3"
+    local blob_name="$4"
+
+    {
+        if [ -n "$treeish" ]; then
+            git ls-tree "$treeish" \
+                | fgrep -v "	$target_fn"
+        fi
+
+        git ls-tree "$blob_treeish" "$blob_name" \
+            | awk -v target_fn="$target_fn" -F"	" '{print $1"	"target_fn}'
+    } | git mktree
 }
 
 git_copy_commit()
@@ -346,6 +454,25 @@ git_diff_ln_new()
 
 }'
 }
+
+# test:
+
+# # file to root
+# git reset --hard HEAD
+# git_object_add_by_commit_path a HEAD dist/shlib.sh
+# git status
+# # dir to root
+# git reset --hard HEAD
+# git_object_add_by_commit_path a HEAD dist
+# git status
+# # file to folder
+# git reset --hard HEAD
+# git_object_add_by_commit_path a/b/c HEAD dist/shlib.sh
+# git status
+# # dir to folder
+# git reset --hard HEAD
+# git_object_add_by_commit_path a/b/c HEAD dist
+# git status
 
 
 os_detect()
