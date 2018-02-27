@@ -101,6 +101,19 @@ class Cat(object):
         finally:
             self.running = False
 
+    def loop_iterate(self, timeout=None):
+        self.running = True
+
+        while True:
+            try:
+                for x in self._iter(timeout=timeout):
+                    yield x
+            except Exception as e:
+                logger.info('get exception when loop iterate: ' + repr(e))
+                time.sleep(1)
+
+        self.running = False
+
     def _iter(self, timeout):
 
         if timeout == 0:

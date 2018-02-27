@@ -24,9 +24,13 @@ class TestCat(unittest.TestCase):
 
     def setUp(self):
         force_remove(self.fn)
+        c = fsutil.Cat(self.fn)
+        force_remove(c.stat_path())
 
     def tearDown(self):
         force_remove(self.fn)
+        c = fsutil.Cat(self.fn)
+        force_remove(c.stat_path())
 
     def test_entire_file(self):
 
@@ -233,6 +237,8 @@ class TestCat(unittest.TestCase):
         c.cat(timeout=0)
         self.assertEqual(expected, rst)
 
+        force_remove(c.stat_path())
+
         # handler is a list of callable
         exp = []
         for l in expected:
@@ -264,6 +270,8 @@ class TestCat(unittest.TestCase):
         c.cat(timeout=0)
         self.assertEqual(expected + ['end'], rst)
 
+        force_remove(c.stat_path())
+
         # file_end_handler in iterate()
         rst = []
         force_remove(self.fn)
@@ -271,6 +279,8 @@ class TestCat(unittest.TestCase):
         for line in fsutil.Cat(self.fn, strip=True, file_end_handler=_end).iterate(timeout=0):
             rst.append(line)
         self.assertEqual(expected + ['end'], rst)
+
+        force_remove(c.stat_path())
 
         # file_end_handler multi times
         rst = []
@@ -317,6 +327,9 @@ class TestCat(unittest.TestCase):
         ]
         append_lines(self.fn, expected)
 
+        force_remove(fsutil.Cat(self.fn, id='foo').stat_path())
+        force_remove(fsutil.Cat(self.fn, id='bar').stat_path())
+
         # different id does not block each other even they cat a same file
         a = fsutil.Cat(self.fn, id='foo', strip=True).iterate(timeout=0)
         b = fsutil.Cat(self.fn, id='bar', strip=True).iterate(timeout=0)
@@ -352,6 +365,34 @@ class TestCat(unittest.TestCase):
         self.assertTrue(os.path.isfile(path))
 
         force_remove(path)
+
+    def test_loop_iterate(self):
+        expected = [
+            'a' * 32,
+            'b' * 32,
+            'c' * 32,
+        ]
+        append_lines(self.fn, ['a' * 32, 'b' * 32])
+
+        def _change_file():
+            time.sleep(1)
+            force_remove(self.fn)
+            append_lines(self.fn, ['c' * 32])
+
+        th = threadutil.start_daemon_thread(_change_file)
+
+        rst = []
+
+        def _loop_iterate():
+            for line in fsutil.Cat(self.fn, strip=True,
+                                   exclusive=False).loop_iterate(timeout=1.5):
+                rst.append(line)
+
+        th = threadutil.start_daemon_thread(_loop_iterate)
+
+        time.sleep(3)
+
+        self.assertEqual(expected, rst)
 
 
 def force_remove(fn):
