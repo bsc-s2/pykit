@@ -216,7 +216,7 @@ a generator.
 
 Same as `Cat.iterate`, but do not raise Exception, it catch all exceptions and
 try again, repeat endlessly. So, if the file is removed and then created, the
-lines in the new file is scaned automatically.
+lines in the new file is scanned automatically.
 
 **syntax**:
 `Cat.loop_iterate(timeout=None)`
