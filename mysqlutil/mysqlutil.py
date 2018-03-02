@@ -2,7 +2,9 @@
 # coding: utf-8
 
 import MySQLdb
+
 from pykit import mysqlconnpool
+from pykit import strutil
 
 
 class ConnectionTypeError(Exception):
@@ -10,6 +12,10 @@ class ConnectionTypeError(Exception):
 
 
 class IndexNotPairs(Exception):
+    pass
+
+
+class ShardNotPairs(Exception):
     pass
 
 
@@ -69,38 +75,35 @@ def sql_scan_index(table, result_fields, index_fields, index_values,
                    left_open=False, limit=1024, index_name=None):
 
     if type(table) is str:
-        table_name = _quote(table)
+        table_name = quote(table)
     else:
-        table_name = '.'.join([_quote(t) for t in table])
+        table_name = '.'.join([quote(t) for t in table])
 
-    fields_to_return = ', '.join([_quote(x) for x in result_fields])
+    fields_to_return = ', '.join([quote(x) for x in result_fields])
     if len(fields_to_return) == 0:
         fields_to_return = '*'
 
     force_index = ''
     if index_name is not None:
-        force_index = ' FORCE INDEX (' + _quote(index_name) + ')'
+        force_index = ' FORCE INDEX (' + quote(index_name) + ')'
     elif len(index_fields) > 0:
-        force_index = ' FORCE INDEX (' + _quote('idx_' + '_'.join(index_fields)) + ')'
+        force_index = ' FORCE INDEX (' + quote('idx_' + '_'.join(index_fields)) + ')'
 
     where_conditions = ''
     index_pairs = zip(index_fields, index_values)
 
     if len(index_pairs) > 0:
 
-        conditions = []
-        for pair in index_pairs[:-1]:
-            conditions.append(table_name + '.' + _quote(pair[0]) + ' = ' + _safe(pair[1]))
-
-        pair = index_pairs[-1]
         if left_open:
             operator = ' > '
         else:
             operator = ' >= '
 
-        conditions.append(table_name + '.' + _quote(pair[0]) + operator + _safe(pair[1]))
+        prefix = table_name + '.'
+        and_conditions = connect_condition(
+            index_pairs, operator, prefix=prefix)
 
-        where_conditions = ' WHERE ' + ' AND '.join(conditions)
+        where_conditions = ' WHERE ' + and_conditions
 
     limit = int(limit)
 
@@ -113,9 +116,87 @@ def sql_scan_index(table, result_fields, index_fields, index_values,
     return sql_to_return
 
 
+def sql_condition_between_shards(shard_fields, start, end=None):
+
+    if end is not None:
+        if start >= end:
+            return []
+        if len(shard_fields) != len(end):
+            raise ShardNotPairs
+    else:
+        end = []
+
+    if len(shard_fields) != len(start):
+        raise ShardNotPairs
+
+    same_fields = strutil.common_prefix(start, end, recursive=False)
+    prefix_condition = ''
+    prefix_len = len(same_fields)
+    if prefix_len > 0:
+        prefix_shards = zip(shard_fields[:prefix_len], start[:prefix_len])
+        prefix_condition = connect_condition(prefix_shards, ' = ')
+        prefix_condition += " AND "
+
+        shard_fields = shard_fields[prefix_len:]
+        start = start[prefix_len:]
+        end = end[prefix_len:]
+
+    start_shards = zip(shard_fields, start)
+    start_condition_first = connect_condition(start_shards, ' >= ')
+    start_condition = generate_shards_condition(start_shards[:-1], ' > ')
+    start_condition.insert(0, start_condition_first)
+
+    condition = []
+    condition += [prefix_condition + x for x in start_condition[:-1]]
+
+    if len(end) == 0:
+        condition.append(prefix_condition + start_condition[-1])
+        return condition
+
+    end_shards = zip(shard_fields, end)
+    end_condition = generate_shards_condition(end_shards, ' < ')
+
+    condition += [prefix_condition + x for x in end_condition[:-1]]
+
+    condition.append(prefix_condition +
+                     start_condition[-1] + " AND " + end_condition[-1])
+
+    return condition
+
+
+def generate_shards_condition(shards, operator):
+
+    conditions = []
+    shards_to_connect = shards[:]
+    while len(shards_to_connect) > 0:
+
+        and_condition = connect_condition(shards_to_connect, operator)
+        conditions.append(and_condition)
+
+        shards_to_connect = shards_to_connect[:-1]
+
+    return conditions
+
+
+def connect_condition(shards, operator, prefix=''):
+
+    condition = []
+
+    for s in shards[:-1]:
+        condition.append(prefix + quote(s[0]) + " = " + _safe(s[1]))
+
+    s = shards[-1]
+    condition.append(prefix + quote(s[0]) + operator + _safe(s[1]))
+
+    return " AND ".join(condition)
+
+
+def quote(s, quote="`"):
+
+    if quote in s:
+        s = s.replace(quote, "\\" + quote)
+
+    return quote + s + quote
+
 def _safe(s):
     return '"' + MySQLdb.escape_string(s) + '"'
-
-
-def _quote(s):
-    return '`' + s + '`'
