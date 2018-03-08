@@ -6,6 +6,9 @@ import datetime
 import time
 import types
 
+import pytz
+import tzlocal
+
 formats = {
     'default':        '%a, %d %b %Y %H:%M:%S UTC',
     'utc':            '%a, %d %b %Y %H:%M:%S UTC',
@@ -46,6 +49,19 @@ def _get_format(fmt_key):
 
 def utc_datetime_to_ts(dt):
     return calendar.timegm(dt.timetuple())
+
+
+def datetime_to_ts(dt):
+    epoch_dt = datetime.datetime.fromtimestamp(0, tz=pytz.utc)
+
+    if not hasattr(dt, 'tzinfo') or dt.tzinfo is None:
+        local_tz = tzlocal.get_localzone()
+        dt = local_tz.localize(dt)
+
+    delta = dt - epoch_dt
+    ts = delta.total_seconds()
+
+    return ts
 
 
 def ts_to_datetime(ts, utc=True):

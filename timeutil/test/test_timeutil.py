@@ -5,6 +5,8 @@ import datetime
 import time
 import unittest
 
+import pytz
+
 from pykit import timeutil
 from pykit import ututil
 
@@ -233,3 +235,23 @@ class TestTimeutil(unittest.TestCase):
             dd('rst(str): ', rst)
 
             self.assertEqual(expected, rst)
+
+    def test_datetime_to_ts(self):
+        ts = time.time()
+
+        dt = datetime.datetime.fromtimestamp(ts)
+        r = timeutil.datetime_to_ts(dt)
+        self.assertEqual(ts, r)
+
+        test_timezones = (
+            'US/Pacific',
+            'Europe/Warsaw',
+            'Asia/Shanghai',
+        )
+
+        for timezone_name in test_timezones:
+            dt = datetime.datetime.fromtimestamp(
+                ts, tz=pytz.timezone(timezone_name))
+
+            r = timeutil.datetime_to_ts(dt)
+            self.assertEqual(ts, r)

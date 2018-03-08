@@ -11,6 +11,7 @@
   - [timeutil.format](#timeutilformat)
   - [timeutil.format_ts](#timeutilformat_ts)
   - [timeutil.utc_datetime_to_ts](#timeutilutc_datetime_to_ts)
+  - [timeutil.datetime_to_ts](#timeutildatetime_to_ts)
   - [timeutil.ts_to_datetime](#timeutilts_to_datetime)
   - [timeutil.ts](#timeutilts)
   - [timeutil.ms](#timeutilms)
@@ -149,6 +150,23 @@ convert datetime instance to timestamp in second
 
 -   `dt`:
     datetime instance
+
+**return**:
+    timestamp in second
+
+##  timeutil.datetime_to_ts
+
+**syntax**:
+
+`datetime_to_ts(dt)`
+
+convert naive or aware datetime instance to timestamp in second
+
+**arguments**:
+
+-   `dt`:
+    datetime instance, if it does not contain timezone info, we
+    assume it has a local timezone.
 
 **return**:
     timestamp in second
