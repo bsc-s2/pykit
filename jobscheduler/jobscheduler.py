@@ -11,12 +11,6 @@ from pykit import threadutil
 from pykit import timeutil
 from pykit import utfjson
 
-RUNNING = 'running'
-FINISHED = 'finished'
-FAILED = 'failed'
-ABORTED = 'aborted'
-INACTIVE = 'inactive'
-
 SYS_gettid = 186
 
 logger = logging.getLogger(__name__)
@@ -92,85 +86,119 @@ def get_next_fire_time(conf, last_fire_ts):
 
 class JobScheduler(object):
 
-    def __init__(self, jobs, dump_status=None, reload_status=None, filter_job=None):
+    def __init__(self, jobs, dump_status=None, reload_status=None,
+                 should_job_run=None):
         self.lock = threading.RLock()
         self.jobs = jobs
-        self.job_status = {}
-        self.job_threads = {}
+        self.status = {}
+
         self.dump_status = dump_status
         self.reload_status = reload_status
-        self.filter_job = filter_job
+        self.should_job_run = should_job_run
 
         if self.reload_status is not None:
             try:
-                job_status = self.reload_status()
-                logger.info('loaded job_status: %s', repr(job_status))
+                status = self.reload_status()
+                logger.info('loaded job_status: %s', repr(status))
 
-                if job_status is not None:
-                    self.job_status = job_status
+                if status is not None:
+                    self.status = status
 
             except Exception as e:
                 logger.exception('failed to reload job status: %s' % repr(e))
 
-    def run_job(self, curr_time, job_name, job_conf, status):
-        libc = ctypes.cdll.LoadLibrary('libc.so.6')
-        tid = libc.syscall(SYS_gettid)
+    def append_log(self, job_status, job_conf, log_msg):
+        job_status['log'].append(log_msg)
+
+        # log at start and end, add keep 3 more entries.
+        n = job_conf['concurrence_n'] * 2 + 3
+        job_status['log'] = job_status['log'][-n:]
+
+    def run_job(self, curr_time, job_name, job_conf, job_status):
+        thread_id = None
+        thread_ident = threading.current_thread().ident
+
+        try:
+            libc = ctypes.cdll.LoadLibrary('libc.so.6')
+            thread_id = libc.syscall(SYS_gettid)
+        except Exception as e:
+            logger.info('failed to get thread id: %s' + repr(e))
 
         with self.lock:
-            status['start_time'] = curr_time
-            status['stat'] = RUNNING
-            status['thread_id'] = tid
-            status['message'] = ''
+            job_status['active_threads'][thread_ident] = {
+                'start_time': curr_time,
+                'thread_ident': thread_ident,
+                'thread_id': thread_id,
+            }
+
+            log_msg = 'thread: %s-%s started at: %s' % (
+                thread_ident, thread_id, curr_time)
+            self.append_log(job_status, job_conf, log_msg)
 
         try:
             job_conf['func'](*job_conf['args'], **job_conf['kwargs'])
 
             with self.lock:
-                status['finish_time'] = get_time_info(ts=time.time())
-                status['stat'] = FINISHED
+                log_msg = 'thread: %s-%s finished at: %s' % (
+                    thread_ident, thread_id, get_time_info(ts=time.time()))
+                self.append_log(job_status, job_conf, log_msg)
+
+                del(job_status['active_threads'][thread_ident])
 
         except Exception as e:
             logger.exception('failed to run job: %s, %s' %
                              (job_name, repr(e)))
 
             with self.lock:
-                status['fail_time'] = get_time_info(ts=time.time())
-                status['stat'] = FAILED
-                status['message'] = repr(e)
+                log_msg = 'thread: %s-%s failed at: %s' % (
+                    thread_ident, thread_id, get_time_info(ts=time.time()))
+                self.append_log(job_status, job_conf, log_msg)
 
-    def fire(self, curr_time, job_name, job_conf, status):
-        th = self.job_threads.get(job_name)
+                del(job_status['active_threads'][thread_ident])
+                job_status['message'] = repr(e)
 
-        if th is not None and th.is_alive():
+    def fire(self, curr_time, job_name, job_conf, job_status):
+        thread_n = len(job_status['active_threads'])
+
+        if thread_n >= job_conf['concurrence_n']:
+            log_msg = 'at time: %s, already have %d threads for job: %s' % (
+                curr_time, thread_n, job_name)
+            self.append_log(job_status, job_conf, log_msg)
+
+            logger.error('too many threads for job: %s' % job_name)
             return
 
-        self.job_threads[job_name] = threadutil.start_daemon_thread(
-            self.run_job, args=(curr_time, job_name, job_conf, status))
+        threadutil.start_daemon_thread(
+            self.run_job, args=(curr_time, job_name, job_conf, job_status))
+
+        job_status['message'] = ''
 
     def schedule_one_job(self, curr_time, job_name, job_conf):
-        if job_name not in self.job_status:
-            self.job_status[job_name] = {}
+        if job_name not in self.status:
+            self.status[job_name] = {
+                'active_threads': {},
+                'log': [],
+            }
 
-        status = self.job_status[job_name]
+        job_status = self.status[job_name]
 
-        status['curr_time'] = curr_time
+        job_status['curr_time'] = curr_time
 
-        if self.filter_job is not None:
-            need_run = self.filter_job(job_conf)
+        if self.should_job_run is not None:
+            should_run = self.should_job_run(job_conf)
 
-            if not need_run:
-                status['stat'] = INACTIVE
-                status['message'] = 'this job do not need to run'
+            if not should_run:
+                job_status['message'] = 'this job do not need to run'
                 return
 
-        if 'next_fire_time' not in status:
+        if 'next_fire_time' not in job_status:
             if job_conf.get('at') is None:
-                status['fire_time'] = curr_time
+                job_status['fire_time'] = curr_time
 
-                self.fire(curr_time, job_name, job_conf, status)
+                self.fire(curr_time, job_name, job_conf, job_status)
 
-                status['next_fire_time'] = get_next_fire_time(
-                    job_conf, status['fire_time']['ts'])
+                job_status['next_fire_time'] = get_next_fire_time(
+                    job_conf, job_status['fire_time']['ts'])
 
             else:
                 n, unit = job_conf['every']
@@ -183,15 +211,15 @@ class JobScheduler(object):
                     next_fire_time = get_next_fire_time(
                         job_conf, curr_time['ts'])
 
-                status['next_fire_time'] = next_fire_time
+                job_status['next_fire_time'] = next_fire_time
 
-        if curr_time['ts'] >= status['next_fire_time']['ts']:
-            status['fire_time'] = curr_time
+        if curr_time['ts'] >= job_status['next_fire_time']['ts']:
+            job_status['fire_time'] = curr_time
 
-            self.fire(curr_time, job_name, job_conf, status)
+            self.fire(curr_time, job_name, job_conf, job_status)
 
-            status['next_fire_time'] = get_next_fire_time(
-                job_conf, status['fire_time']['ts'])
+            job_status['next_fire_time'] = get_next_fire_time(
+                job_conf, job_status['fire_time']['ts'])
 
     def _schedule(self, curr_time):
         for job_name, job_conf in self.jobs.iteritems():
@@ -199,18 +227,20 @@ class JobScheduler(object):
                 self.schedule_one_job(curr_time, job_name, job_conf)
 
             except Exception as e:
-                logger.exception('failed to schedule job: %s, %s'
-                                 % (job_name, repr(e)))
+                logger.exception('failed to schedule job %s: %s' %
+                                 (job_name, repr(e)))
 
     def schedule(self):
-        for job_name, status in self.job_status.items():
+        for job_name, job_status in self.status.items():
             if job_name not in self.jobs:
-                del(self.job_status[job_name])
+                del(self.status[job_name])
                 continue
 
-            if status.get('stat') == RUNNING:
-                self.job_status[job_name]['stat'] = ABORTED
-                self.job_status[job_name]['message'] = 'aborted by restart'
+            if len(job_status['active_threads']) > 0:
+                msg = 'threads aborted by restart: %s' % (
+                    job_status['active_threads'])
+                self.status[job_name]['message'] = msg
+                self.status[job_name]['active_threads'] = {}
 
         while True:
             curr_time = get_time_info(time.time())
@@ -220,11 +250,13 @@ class JobScheduler(object):
 
             if self.dump_status is not None:
                 try:
-                    self.dump_status(self.job_status)
+                    self.dump_status(self.status)
                 except Exception as e:
                     logger.exception('failed to dump job status: %s' % repr(e))
 
-            logger.info('job status: %s' % utfjson.dump(self.job_status))
+            for job_name, job_status in self.status.items():
+                logger.info('status of job %s, %s' %
+                            (job_name, utfjson.dump(job_status)))
 
             end_time = time.time()
 
@@ -246,8 +278,5 @@ class JobScheduler(object):
             if job_name in self.jobs:
                 del(self.jobs[job_name])
 
-            if job_name in self.job_status:
-                del(self.job_status[job_name])
-
-            if job_name in self.job_threads:
-                del(self.job_threads[job_name])
+            if job_name in self.status:
+                del(self.status[job_name])

@@ -81,7 +81,7 @@ This module is used to run jobs at certain time, such as every day at 15:30.
 **syntax**:
 `jobscheduler.NextFireTimeError`
 
-Raise if the calculated next fire time is less of equal to the last fire time.
+Raise if the calculated next fire time is less or equal to the last fire time.
 It must be caused by invalid configuration.
 
 ## jobscheduler.JobExistError
@@ -89,7 +89,7 @@ It must be caused by invalid configuration.
 **syntax**:
 `jobscheduler.JobExistError`
 
-Raise if add a job with a already existed job name.
+Raise if add a job with an already existed job name.
 
 #   Classes
 
@@ -104,26 +104,31 @@ Raise if add a job with a already existed job name.
     a dict, key is the name of the job, value is the configuration of the job.
     The configuration is a dict, which contains following fields:
 
-    -   `func`: the function to run.
+    -   `func`: the function to run, required.
 
-    -   `args`: the args that will be passed to the function, is a list.
+    -   `args`: the args that will be passed to the function, is a list, if do
+        not need to pass args, set it to `[]`, do not set it to `None`. Required.
 
     -   `kwargs`: the keyword arguments that will be passed to the function,
-        is a dict.
+        is a dict, if do not need to pass kwargs, set it to `{}`, do not set it
+        to `None`. Required.
 
     -   `every`: a list with two elements, the first is a number, the
         second is a string to specify unit, which can be one of 'second',
         'minute', 'hour', 'day', 'week' and 'month'. For example,
-        `[3, 'hour']` means every 3 hours.
+        `[3, 'hour']` means every 3 hours. Required.
 
     -   `at`: a dict used to replace corresponding element in the time tuple
         of the next fire time. It may contain following fields: 'second',
-        'minute', 'hour', 'day'.
+        'minute', 'hour', 'day'. Not required.
 
     -   `timezone`: by default, configurations in `at` use local timezone,
         if you specified configuration in other timezone, you need to set
         `timezone` to the name of that timezone, such as 'Europe/Warsaw' or
-        'Asia/Shanghai' and so on.
+        'Asia/Shanghai' and so on. Not required.
+
+    -   `concurrence_n`: set the max number of threads that run the same job
+        concurrently. Required.
 
 -   `kwargs`:
     the keyword arguments, following arguments are allowed, none of them
