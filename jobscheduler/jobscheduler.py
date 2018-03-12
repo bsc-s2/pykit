@@ -174,6 +174,9 @@ class JobScheduler(object):
         job_status['message'] = ''
 
     def schedule_one_job(self, curr_time, job_name, job_conf):
+        if 'concurrence_n' not in job_conf:
+            job_conf['concurrence_n'] = 1
+
         if job_name not in self.status:
             self.status[job_name] = {
                 'active_threads': {},

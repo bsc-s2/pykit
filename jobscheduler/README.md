@@ -120,15 +120,15 @@ Raise if add a job with an already existed job name.
 
     -   `at`: a dict used to replace corresponding element in the time tuple
         of the next fire time. It may contain following fields: 'second',
-        'minute', 'hour', 'day'. Not required.
+        'minute', 'hour', 'day'. Optional.
 
     -   `timezone`: by default, configurations in `at` use local timezone,
         if you specified configuration in other timezone, you need to set
         `timezone` to the name of that timezone, such as 'Europe/Warsaw' or
-        'Asia/Shanghai' and so on. Not required.
+        'Asia/Shanghai' and so on. Optional.
 
     -   `concurrence_n`: set the max number of threads that run the same job
-        concurrently. Required.
+        concurrently. Optional, default is 1.
 
 -   `kwargs`:
     the keyword arguments, following arguments are allowed, none of them
