@@ -123,7 +123,8 @@ offset, or it scan from the first byte.
 
 
 **syntax**:
-`Cat(fn, handler=None, file_end_handler=None, exclusive=True, id=None, strip=False)`
+`Cat(fn, handler=None, file_end_handler=None, exclusive=True,
+        id=None, strip=False, read_chunk_size=16*1024**2)`
 
 **arguments**:
 
@@ -165,6 +166,12 @@ offset, or it scan from the first byte.
     and `\n`) before returning each line.
 
     By default it is `False`.
+
+-   `read_chunk_size`:
+    is the buffer size to read data once, appropriate small `read_chunk_size`
+    will return stream data quickly.
+
+    By default it is `16*1024**2`.
 
 **config**:
 

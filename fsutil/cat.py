@@ -55,7 +55,8 @@ class Cat(object):
                  file_end_handler=None,
                  exclusive=True,
                  id=None,
-                 strip=False):
+                 strip=False,
+                 read_chunk_size=read_size):
 
         self.fn = fn
         self.handler = handler
@@ -73,8 +74,13 @@ class Cat(object):
                 id = '__instant_command__'
 
         self.id = id
-
         self.strip = strip
+
+        read_chunk_size = int(read_chunk_size)
+        if read_chunk_size <= 0:
+            read_chunk_size = read_size
+        self.read_chunk_size = read_chunk_size
+
         self.running = None
 
         if (self.handler is not None
@@ -225,7 +231,7 @@ class Cat(object):
 
         while True:
 
-            if f.tell() + read_size < _file_size(f):
+            if f.tell() + self.read_chunk_size < _file_size(f):
                 return
 
             if (f.tell() < _file_size(f)
@@ -307,7 +313,7 @@ class Cat(object):
             if offset >= _file_size(f):
                 break
 
-            lines = f.readlines(read_size)
+            lines = f.readlines(self.read_chunk_size)
 
             try:
                 for l in lines:
