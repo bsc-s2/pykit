@@ -67,14 +67,54 @@ class TestCat(unittest.TestCase):
     def test_offset_record_when_destory(self):
 
         expected = [x * 32 for x in 'qwertyuiop']
+
+        append_lines(self.fn, expected)
+        cat_handle = fsutil.Cat(self.fn, strip=True)
+
+        rst = []
+        for val in cat_handle.iterate(timeout=0):
+            rst.append(val)
+        self.assertEqual(expected, rst)
+
+        # stat file was removed
+        fsutil.remove(cat_handle.stat_path())
+        for val in cat_handle.iterate(timeout=0):
+            rst.append(val)
+        self.assertEqual(expected * 2, rst)
+
+        # stat file was damaged
+        fsutil.write_file(cat_handle.stat_path(), '{]')
+        for val in cat_handle.iterate(timeout=0):
+            rst.append(val)
+        self.assertEqual(expected * 3, rst)
+
+    def test_data_chucked(self):
+
+        expected = [ 'a' * 32 ]
+        new_data = [ 'b' * 32 ]
+        chucked  = [ 'c' * 31 ]
+
+        cat_handle = fsutil.Cat(self.fn, strip=True)
         rst = []
 
         append_lines(self.fn, expected)
-        for _ in expected:
-            val = fsutil.Cat(self.fn, strip=True).iterate(timeout=0).next()
-            rst.append(val)
-
+        for l in cat_handle.iterate(timeout=0):
+            rst.append(l)
         self.assertEqual(expected, rst)
+
+        # file was refreshed
+        os.rename(self.fn, self.fn + '_old')
+        append_lines(self.fn, new_data)
+        fsutil.remove(self.fn + '_old')
+        for l in cat_handle.iterate(timeout=0):
+            rst.append(l)
+        self.assertEqual(expected + new_data, rst)
+
+        # file was chucked
+        fsutil.write_file(self.fn, chucked[0])
+        for l in cat_handle.iterate(timeout=0):
+            rst.append(l)
+        self.assertEqual(expected + new_data + chucked, rst)
 
     def test_continue_read(self):
 
@@ -84,17 +124,13 @@ class TestCat(unittest.TestCase):
         ]
         rst = []
 
-        append_lines(self.fn, expected)
+        for i in xrange(1, 11):
+            append_lines(self.fn, expected)
 
-        for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0):
-            rst.append(l)
+            for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0):
+                rst.append(l)
 
-        append_lines(self.fn, expected)
-
-        for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0):
-            rst.append(l)
-
-        self.assertEqual(expected * 2, rst)
+            self.assertEqual(expected * i, rst)
 
     def test_wait_for_file(self):
 

@@ -291,8 +291,8 @@ class Cat(object):
 
         try:
             last = self.read_last_stat()
-        except IOError:
-            # no such file
+        except (IOError, ValueError):
+            # no such file or damaged stat file
             last = {'inode': 0, 'offset': 0}
 
         if last['inode'] == ino and last['offset'] <= size:
