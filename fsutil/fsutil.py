@@ -166,6 +166,8 @@ def get_sub_dirs(path):
         if os.path.isdir(os.path.join(path, f)):
             sub_dirs.append(f)
 
+    sub_dirs.sort()
+
     return sub_dirs
 
 

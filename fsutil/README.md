@@ -490,7 +490,7 @@ having other issue like permission denied.
 **syntax**:
 `fsutil.get_sub_dirs(path)`
 
-Get all sub directories of `path`.
+Get all sorted sub directories of `path`.
 
 **arguments**:
 
