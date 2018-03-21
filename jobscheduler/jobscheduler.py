@@ -201,7 +201,7 @@ class JobScheduler(object):
                 self.fire(curr_time, job_name, job_conf, job_status)
 
                 job_status['next_fire_time'] = get_next_fire_time(
-                    job_conf, job_status['fire_time']['ts'])
+                    job_conf, curr_time['ts'])
 
             else:
                 n, unit = job_conf['every']
@@ -222,7 +222,7 @@ class JobScheduler(object):
             self.fire(curr_time, job_name, job_conf, job_status)
 
             job_status['next_fire_time'] = get_next_fire_time(
-                job_conf, job_status['fire_time']['ts'])
+                job_conf, job_status['next_fire_time']['ts'])
 
     def _schedule(self, curr_time):
         for job_name, job_conf in self.jobs.iteritems():
