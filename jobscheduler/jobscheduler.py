@@ -168,6 +168,9 @@ class JobScheduler(object):
             logger.error('too many threads for job: %s' % job_name)
             return
 
+        logger.info('at time: %s, start to run job: %s' %
+                    (curr_time, job_name))
+
         threadutil.start_daemon_thread(
             self.run_job, args=(curr_time, job_name, job_conf, job_status))
 
