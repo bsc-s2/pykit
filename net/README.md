@@ -24,6 +24,8 @@
   - [net.is_pub](#netis_pub)
   - [net.is_ip4](#netis_ip4)
   - [net.parse_ip_regex_str](#netparse_ip_regex_str)
+  - [net.ip_to_num](#netip_to_num)
+  - [net.num_to_ip](#netnum_to_ip)
 - [Commandline Tool](#commandline-tool)
   - [ip](#ip)
   - [devcie](#devcie)
@@ -338,6 +340,28 @@ Each one in the result list should be a regex string.
 
 **return**:
 a list of regex string.
+
+
+## net.ip_to_num
+
+**syntax**:
+`net.ip_to_num(ip)`
+
+It converts the IP to 4-byte integer
+
+**return**:
+a 4-byte integer.
+
+
+## net.num_to_ip
+
+**syntax**:
+`net.num_to_ip(ip_num)`
+
+It converts the 4-byte integer to IP
+
+**return**:
+IP.
 
 
 #   Commandline Tool

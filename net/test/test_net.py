@@ -5,6 +5,7 @@ from pykit import net
 
 dd = ututil.dd
 
+
 class TestNet(unittest.TestCase):
 
     def test_const(self):
@@ -286,3 +287,79 @@ class TestNet(unittest.TestCase):
         for ips, regs, outp in cases:
             dd('case: ', ips, regs, outp)
             self.assertEqual(outp, net.choose_by_regex(ips, regs))
+
+    def test_ip_interconvert_num(self):
+
+        cases_ip4_and_ip4_num = (
+            ('127.0.0.1', 0x7f000001),
+            ('124.51.31.23', 0x7c331f17),
+            ('255.255.255.255', 0xffffffff),
+            ('1.2.3.4', 0x01020304),
+            ('5.6.7.8', 0x05060708),
+        )
+
+        for ips, out in cases_ip4_and_ip4_num:
+            self.assertEqual(out, net.ip_to_num(ips))
+
+        for out, ipn in cases_ip4_and_ip4_num:
+            self.assertEqual(out, net.num_to_ip(ipn))
+
+        cases_not_ip4_and_not_ip4_num = (
+            None,
+            True,
+            False,
+            '',
+            '1',
+            (),
+            [],
+            {},
+            '1.',
+            '1.1',
+            '1.1.',
+            '1.1.1',
+            '1.1.1.',
+
+            '.1.1.1',
+
+            'x.1.1.1',
+            '1.x.1.1',
+            '1.1.x.1',
+            '1.1.1.x',
+
+            '1.1.1.1.',
+            '.1.1.1.1',
+            '1:1.1.1',
+            '1:1:1.1',
+
+            '256.1.1.1',
+            '1.256.1.1',
+            '1.1.256.1',
+            '1.1.1.256',
+
+            '1.1.1.1.',
+            '1.1.1.1.1',
+            '1.1.1.1.1.',
+            '1.1.1.1.1.1',
+            -10,
+            -100,
+            -110000000000,
+            68719476735,
+            'dada',
+            'mu',
+            1099511627775,
+            1.3,
+            20.5,
+            200.0,
+        )
+        cases_not_ip4 = (
+            1,
+            0,
+        )
+
+        for ip in cases_not_ip4_and_not_ip4_num:
+            self.assertRaises(net.InvalidIP4, net.ip_to_num, ip)
+        for ip in cases_not_ip4:
+            self.assertRaises(net.InvalidIP4, net.ip_to_num, ip)
+
+        for ipn in cases_not_ip4_and_not_ip4_num:
+            self.assertRaises(net.InvalidIP4Number, net.num_to_ip, ipn)
