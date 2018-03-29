@@ -132,6 +132,35 @@ class TestCat(unittest.TestCase):
 
             self.assertEqual(expected * i, rst)
 
+    def test_file_change(self):
+
+        expected = [
+            'a' * 32,
+            'b' * 32,
+            'c' * 32,
+            'd' * 32,
+        ]
+        rst = []
+
+        def _override():
+            for l in expected:
+                time.sleep(0.1)
+                force_remove(self.fn)
+                append_lines(self.fn, [l])
+                dd('overrided: ', l)
+
+        th = threadutil.start_daemon_thread(_override)
+
+        try:
+            for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0.4):
+                rst.append(l)
+        except fsutil.NoData:
+            pass
+
+        th.join()
+
+        self.assertEqual(expected, rst)
+
     def test_wait_for_file(self):
 
         expected = [

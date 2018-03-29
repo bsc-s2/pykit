@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 no_data_timeout = 3600
 read_size = 1024 * 1024 * 16
+file_check_time_range = (0.05, 1.0)  # sec
 stat_dir = config.cat_stat_dir or '/tmp'
 
 
@@ -135,11 +136,28 @@ class Cat(object):
 
         while True:
 
+            # NOTE: Opening a file and waiting for new data in it does not work.
+            #
+            # It has to check for file overriding on fs periodically.
+            # Or it may happens that it keeps waiting for new data on a deleted
+            # but opened file, while new data is actually written into a new
+            # file with the same path.
+            #
+            # Thus we check if file changed for about 5 times(by reopening it).
+
+            read_timeout = (expire_at - time.time()) / 5.0
+
+            if read_timeout < file_check_time_range[0]:
+                read_timeout = file_check_time_range[0]
+
+            if read_timeout > file_check_time_range[1]:
+                read_timeout = file_check_time_range[1]
+
             f = self.wait_open_file(timeout=expire_at - time.time())
 
             with f:
                 try:
-                    for x in self.iter_to_file_end(f, read_timeout=expire_at - time.time()):
+                    for x in self.iter_to_file_end(f, read_timeout=read_timeout):
                         yield x
 
                     # re-new expire_at if there is any data read.
@@ -156,7 +174,7 @@ class Cat(object):
                     logger.info(repr(e) + ' while cat: {fn}'.format(fn=self.fn))
 
                     if time.time() > expire_at:
-                        # raise last NoSuchFile or NoData
+                        # raise last NoData
                         raise
 
     def wait_open_file(self, timeout):
