@@ -14,7 +14,6 @@
 - [Classes](#classes)
   - [fsutil.Cat](#fsutilcat)
     - [Cat.iterate](#catiterate)
-    - [Cat.loop_iterate](#catloop_iterate)
     - [Cat.cat](#catcat)
     - [Cat.stat_path](#catstat_path)
 - [Methods](#methods)
@@ -219,22 +218,6 @@ a generator.
 -   `NoSuchFile`: if file does not present before `timeout`.
 -   `NoData`: if file does not have un-scanned data before `timeout`.
 
-###  Cat.loop_iterate
-
-Same as `Cat.iterate`, but do not raise Exception, it catch all exceptions and
-try again, repeat endlessly. So, if the file is removed and then created, the
-lines in the new file is scanned automatically.
-
-**syntax**:
-`Cat.loop_iterate(timeout=None)`
-
-**arguments**:
-
-Same as `Cat.iterate`.
-
-**return**:
-a generator.
-
 ###  Cat.cat
 
 Similar to `Cat.iterate` except it blocks until timeout or reaches file end and
@@ -245,7 +228,6 @@ let `Cat.handler` to deal with each line.
 
 **return**:
 Nothing.
-
 
 ###  Cat.stat_path
 

@@ -402,34 +402,6 @@ class TestCat(unittest.TestCase):
 
         force_remove(path)
 
-    def test_loop_iterate(self):
-        expected = [
-            'a' * 32,
-            'b' * 32,
-            'c' * 32,
-        ]
-        append_lines(self.fn, ['a' * 32, 'b' * 32])
-
-        def _change_file():
-            time.sleep(1)
-            force_remove(self.fn)
-            append_lines(self.fn, ['c' * 32])
-
-        th = threadutil.start_daemon_thread(_change_file)
-
-        rst = []
-
-        def _loop_iterate():
-            for line in fsutil.Cat(self.fn, strip=True,
-                                   exclusive=False).loop_iterate(timeout=1.5):
-                rst.append(line)
-
-        th = threadutil.start_daemon_thread(_loop_iterate)
-
-        time.sleep(3)
-
-        self.assertEqual(expected, rst)
-
 
 def force_remove(fn):
 
