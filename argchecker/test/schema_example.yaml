@@ -1,0 +1,82 @@
+---
+
+num:
+  checker:
+    type: float
+    min: -100
+    max: 100
+    not: [0, ]
+  required: true
+
+int:
+  checker:
+    type: integer
+
+char:
+  checker:
+    type: string
+    fixed_length: 1
+
+phone_number:
+  checker:
+    type: string
+    min_length: 8
+    max_length: 11
+
+week_day:
+  checker:
+    type: string
+    enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+alphabet_only:
+  checker:
+    type: string
+    regexp: "^[a-z]+$"
+
+numbers:
+  checker:
+    type: array
+    element_checker:
+      type: integer
+
+log_counter:
+  checker:
+    type: dict
+    key_checker:
+      type: string
+      enum: ['info', 'error', 'warn']
+    value_checker:
+      type: integer
+      min: 0
+
+anything:
+  checker:
+    type: any
+
+any_array:
+  checker:
+    type: array
+
+any_dict:
+  checker:
+    type: dict
+
+str_or_int:
+  checker:
+    - type: string
+      enum: ['auto']
+
+    - type: integer
+      min: 20
+      max: 100
+
+nested:
+  checker:
+    type: 'dict'
+    sub_schema:
+      x:
+        checker:
+          type: 'integer'
+      y:
+        checker:
+          type: 'string'

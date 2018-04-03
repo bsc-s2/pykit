@@ -43,6 +43,7 @@ There is a `README.md` for each module.
 
 | name                           | description                                                                           |
 | :--                            | :--                                                                                   |
+| [argchecker](argchecker)       | Validates arguments against the schema                                                |
 | [aws](aws)                     | AWS error codes and so on                                                             |
 | [cacheable](cacheable)         | Cache data which access frequently                                                    |
 | [cachepool](cachepool)         | Reusable object cache in process                                                      |
