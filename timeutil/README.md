@@ -64,7 +64,7 @@ Utility functions for time related operation.
 
 **syntax**:
 
-`timeutil.parse(time_str, fmt_key)`
+`timeutil.parse(time_str, fmt_key, timezone=None)`
 
 parse time string to datetime instance.
 
@@ -91,6 +91,10 @@ parse time string to datetime instance.
     ```
 
     Thus `parse(tm, "default")` is same as `parse(tm, "%a, %d %b %Y %H:%M:%S UTC")`.
+
+-   `timezone`:
+    specify a timezone to get an aware datetime object. It is a string,
+    such as 'Asia/Shanghai'.
 
 **return**:
 datetime instance

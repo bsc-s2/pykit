@@ -255,3 +255,15 @@ class TestTimeutil(unittest.TestCase):
 
             r = timeutil.datetime_to_ts(dt)
             self.assertEqual(ts, r)
+
+    def test_parse_with_timezone(self):
+        cases = (
+            ('2018-04-03 17:45:01', 'Asia/Shanghai', 1522748701),
+            ('2018-04-03 17:45:01', 'UTC', 1522748701 + 3600 * 8),
+        )
+
+        for time_str, timezone, exp_ts in cases:
+            dt = timeutil.parse(time_str, 'mysql', timezone=timezone)
+            ts = timeutil.datetime_to_ts(dt)
+
+            self.assertEqual(exp_ts, ts)

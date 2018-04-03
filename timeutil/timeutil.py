@@ -30,8 +30,13 @@ ts_length = {
 }
 
 
-def parse(time_str, fmt_key):
-    return datetime.datetime.strptime(time_str, _get_format(fmt_key))
+def parse(time_str, fmt_key, timezone=None):
+    dt = datetime.datetime.strptime(time_str, _get_format(fmt_key))
+    if timezone is not None:
+        tz = pytz.timezone(timezone)
+        dt = tz.localize(dt)
+
+    return dt
 
 
 def format(dt, fmt_key):
