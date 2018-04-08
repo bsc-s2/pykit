@@ -403,3 +403,34 @@ def add(a, b, exclude=None, recursive=True):
     r = copy.deepcopy(a)
     addto(r, b, exclude=exclude, recursive=recursive)
     return r
+
+
+def subdict(source, flds, use_default=False, default=None, deepcopy=False, deepcopy_default=False):
+
+    result = {}
+
+    for k in flds:
+
+        if k in source:
+            val = source[k]
+            result[k] = _copy_value(val, deepcopy)
+            continue
+
+        if use_default is False:
+            continue
+
+        if callable(default):
+            result[k] = default(k)
+            continue
+
+        result[k] = _copy_value(default, deepcopy_default)
+
+    return result
+
+
+def _copy_value(val, deepcopy=False):
+
+    if deepcopy:
+        return copy.deepcopy(val)
+
+    return val

@@ -1348,3 +1348,165 @@ class TestCombine(unittest.TestCase):
             self.assertIs(a, result)
             self.assertDictEqual(expected, result,
                                  repr([a, b, op, exclude, expected, result]))
+
+
+class TestDictutil(unittest.TestCase):
+
+    def test_subdict(self):
+
+        source_dict = {0: '0', 'a': 'a', 'none': None}
+
+        default_dict = {'b': 'b', 'c': 'c'}
+
+        def iter_default(k):
+            return default_dict.get(k)
+
+        def iter_keys():
+            for i in (0, 'a', 'b'):
+                yield i
+
+        cases = (
+            (
+                ('a', 0),
+                {
+                    'use_default': True,
+                },
+                {0: '0', 'a': 'a'},
+                'normal',
+            ),
+            (
+                ('a', 'b'),
+                {
+                    'use_default': True,
+                    'default': 0,
+                },
+                {'a': 'a', 'b': 0},
+                'use default',
+            ),
+            (
+                ('b', 'c'),
+                {
+                    'use_default': True,
+                    'default': iter_default,
+                },
+                {'b': 'b', 'c': 'c'},
+                'use default as callable',
+            ),
+            (
+                ('b', 'c'),
+                {
+                    'use_default': False,
+                    'default': iter_default,
+                },
+                {},
+                'not use default',
+            ),
+            (
+                iter_keys(),
+                {
+                    'use_default': True,
+                },
+                {0: '0', 'a': 'a', 'b': None},
+                'use keys as interable',
+            ),
+            (
+                ('none',),
+                {
+                    'use_default': True,
+                    'default': 'not None',
+                },
+                {'none': None},
+                'key exists and is None',
+            ),
+        )
+
+        for flds, kwargs, expected, msg in cases:
+            dd('msg: ', msg)
+            dd('expected: ', expected)
+            rst = dictutil.subdict(source_dict, flds, **kwargs)
+            dd('result:   ', rst)
+
+            self.assertEqual(expected, rst)
+
+        test_dict = {'test': 0}
+        source_dict['copy'] = test_dict
+        deepcopy_cases = (
+            (
+                ('copy',),
+                {
+                    'deepcopy': True,
+                },
+                {'copy': {'test': 0}},
+                'test deepcopy value',
+            ),
+            (
+                ('copy',),
+                {},
+                {'copy': test_dict},
+                'test reference value',
+            ),
+
+            (
+                ('default',),
+                {
+                    'use_default': True,
+                    'default': test_dict,
+                    'deepcopy_default': True,
+                },
+                {'default': {'test': 0}},
+                'test deepcopy default',
+            ),
+            (
+                ('default',),
+                {
+                    'use_default': True,
+                    'default': test_dict,
+                },
+                {'default': test_dict},
+                'test reference default',
+            ),
+            (
+                ('copy', 'default'),
+                {
+                    'use_default': True,
+                    'default': test_dict,
+                    'deepcopy': True,
+                },
+                {
+                    'copy': {'test': 0},
+                    'default': test_dict,
+                },
+                'test deepcopy value and reference default',
+            ),
+            (
+                ('copy', 'default'),
+                {
+                    'use_default': True,
+                    'default': test_dict,
+                    'deepcopy_default': True,
+                },
+                {
+                    'copy': test_dict,
+                    'default': {'test': 0},
+                },
+                'test reference value and deepcopy default',
+            ),
+        )
+
+        for flds, kwargs, expected, msg in deepcopy_cases:
+            dd('msg :', msg)
+            dd('expected: ', expected)
+
+            rst = dictutil.subdict(source_dict, flds, **kwargs)
+
+            dd('result:   ', rst)
+
+            self.assertEqual(expected, rst)
+
+            if 'deepcopy' not in kwargs:
+                for k in [x for x in flds if x in source_dict]:
+                    self.assertIs(expected[k], rst[k])
+
+            if 'deepcopy_default' not in kwargs:
+                for k in [x for x in flds if x not in source_dict]:
+                    self.assertIs(expected[k], rst[k])
