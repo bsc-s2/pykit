@@ -1215,110 +1215,103 @@ class TestAdd(unittest.TestCase):
 
     def test_add(self):
         cases = (
-            ({}, None, None, None, {}),
-            ({}, 'foo', None, None, {}),
-            ({}, 123, None, None, {}),
-            ({}, {}, None, None, {}),
-            ({'a': 1}, {}, None, None, {'a': 1}),
-            ({'a': 1}, {'a': 2}, None, None, {'a': 3}),
-            ({'a': '1'}, {'a': '2'}, None, None, {'a': '12'}),
-            ({'a': '1'}, {'b': '2'}, None, None, {'a': '1', 'b': '2'}),
-            ({'a': '1'}, {'b': {}}, None, None, {'a': '1', 'b': {}}),
-            ({'a': {}}, {'b': {}}, None, None, {'a': {}, 'b': {}}),
-            ({'a': {}}, {'a': {}}, None, None, {'a': {}}),
+            ({},          None,       {}, {}),
+            ({},          'foo',      {}, {}),
+            ({},          123,        {}, {}),
+            ({},          {},         {}, {}),
+            ({'a': 1},    {},         {}, {'a': 1}),
+            ({},          {'a': 2},   {}, {'a': 2}),
+            ({'a': 1},    {'a': 2},   {}, {'a': 3}),
+            ({'a': '1'},  {'a': '2'}, {}, {'a': '12'}),
+            ({'a': '1'},  {'b': '2'}, {}, {'a': '1', 'b': '2'}),
+            ({'a': '1'},  {'b': {}},  {}, {'a': '1', 'b': {}}),
+            ({'a': {}},   {'b': {}},  {}, {'a': {}, 'b': {}}),
+            ({'a': {}},   {'a': {}},  {}, {'a': {}}),
 
             ({'a': {'k1': 1}},
              {'a': {}},
-             None,
-             None,
+             {},
              {'a': {'k1': 1}}),
 
             ({'a': {'k1': 1}},
              {'a': {'k2': 1}},
-             None,
-             None,
+             {},
              {'a': {'k1': 1, 'k2': 1}}),
 
             ({'a': {'k1': 1}},
              {'a': {'k1': 1}},
-             None,
-             None,
+             {},
              {'a': {'k1': 2}}),
 
             ({'a': {'k1': 1}},
              {'a': {'k1': 1}},
-             {'a': True},
-             None,
+             {'exclude': {'a': True}, },
              {'a': {'k1': 1}}),
 
             ({'a': {'k1': 1}},
              {'a': {'k1': 1}},
-             {'a': {}},
-             None,
+             {'exclude': {'a': {}}, },
              {'a': {'k1': 2}}),
 
             ({'a': {}},
              {'a': {'k1': 1}},
-             {'a': {}},
-             None,
+             {'exclude': {'a': {}}, },
              {'a': {'k1': 1}}),
 
             ({'a': {}},
              {'a': {'k1': 1}},
-             {'a': True},
-             None,
+             {'exclude': {'a': True}, },
              {'a': {}}),
 
             ({'a': {'k1': 1}},
              {'a': {'k1': 1}},
-             {'a': {}},
-             None,
+             {'exclude': {'a': {}}, },
              {'a': {'k1': 2}}),
 
             ({'a': {'k1': 1}},
              {'a': {'k1': 1}},
-             {'b': True},
-             None,
+             {'exclude': {'b': True}, },
              {'a': {'k1': 2}}),
 
             ({'a': {'k1': 1}},
              {'a': {'k1': 1}},
-             {'b': True},
-             None,
+             {'exclude': {'b': True}, },
              {'a': {'k1': 2}}),
 
             ({'a': {'k1': 1}},
              {'a': {'k1': 1}},
-             {'a': {'k1': True}},
-             True,
+             {'exclude': {'a': {'k1': True}}, 'recursive': True},
              {'a': {'k1': 1}}),
 
             ({'a': {'k1': 1}},
              {'a': {'k1': 1}},
-             {'a': {'k2': True}},
-             True,
+             {'exclude': {'a': {'k2': True}}, 'recursive': True},
              {'a': {'k1': 2}}),
 
             ({'a': {'k1': 1}, 'b': 1},
              {'a': {'k1': 1, 'k2': 1}, 'b': 1},
-             None,
-             False,
+             {'recursive': False},
              {'a': {'k1': 1}, 'b': 2}),
         )
 
-        for a, b, exclude, recursive, expected in cases:
-            result = dictutil.add(a, b, exclude=exclude,
-                                  recursive=recursive)
+        for a, b, kwargs, expected in cases:
+            dd('a:', a)
+            dd('b:', b)
+            dd('kwargs:', kwargs)
+            dd('expected:', expected)
+
+            result = dictutil.add(a, b, **kwargs)
+            dd('rst:', result)
+
             self.assertIsNot(a, result)
             self.assertDictEqual(expected, result,
-                                 repr([a, b, exclude, expected, result]))
+                                 repr([a, b, kwargs, result]))
 
-            result = dictutil.addto(a, b, exclude=exclude,
-                                    recursive=recursive)
+            result = dictutil.addto(a, b, **kwargs)
 
             self.assertIs(a, result)
             self.assertDictEqual(expected, result,
-                                 repr([a, b, exclude, expected, result]))
+                                 repr([a, b, kwargs, result]))
 
 
 class TestCombine(unittest.TestCase):

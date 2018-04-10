@@ -360,30 +360,32 @@ def _attrdict(attrdict_clz, d, ref):
 
 
 def combineto(a, b, op, exclude=None, recursive=True):
+
     if not isinstance(b, dict):
         return a
 
     if exclude is None:
         exclude = {}
 
-    for k, v in b.iteritems():
+    for k, vb in b.iteritems():
         sub_exclude = exclude.get(k)
 
         if sub_exclude is True:
             continue
 
-        if isinstance(v, dict) and recursive == False:
-            continue
-
         if k not in a:
-            a[k] = copy.deepcopy(v)
-            continue
+            # use the default constructor of `vb` to get a `zero` value.
+            va = type(vb)()
+        else:
+            va = a[k]
 
-        if isinstance(a[k], dict):
-            combineto(a[k], v, op, exclude=sub_exclude, recursive=recursive)
-            continue
-
-        a[k] = op(a[k], v)
+        if isinstance(vb, dict):
+            if recursive:
+                a[k] = combineto(va, vb, op, exclude=sub_exclude, recursive=recursive)
+            else:
+                continue
+        else:
+            a[k] = op(va, vb)
 
     return a
 
