@@ -135,11 +135,11 @@ Raise if add a job with an already existed job name.
     is mandatory.
 
     -   `dump_status`: a callback function used to save job status to
-        persistence media, so after restart, the status can be reloaded.
+        persistent media, so after restart, the status can be reloaded.
         The only argument is the job status, which is a dict.
 
     -   `reload_status`: a callback function used to reload job status
-        from persistence media. No argument.
+        from persistent media. No argument.
 
     -   `filter_job`: a callback function used to check whether a job
         need to run on this machine. Return `True` if need to run, or
