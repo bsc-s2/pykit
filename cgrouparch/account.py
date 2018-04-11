@@ -2,15 +2,15 @@ import logging
 import os
 import time
 
-from cgroup_arch import model
 from pykit import utfjson
+from pykit.cgrouparch import model
 
 logger = logging.getLogger(__name__)
 
 
 def account_one_cgroup(slot_number, subsystem_model, cgroup_path,
                        cgroup_conf, result):
-    account_value = subsystem_model['get_account'](cgroup_path)
+    account_value = subsystem_model['account'](cgroup_path)
     result['value'] = account_value
 
     sub_cgroup = cgroup_conf.get('sub_cgroup')

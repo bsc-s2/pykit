@@ -5,16 +5,11 @@
 - [Name](#name)
 - [Status](#status)
 - [Description](#description)
-- [Install](#install)
-- [Usage](#usage)
-- [Update sub repo](#update-sub-repo)
+- [Synopsis](#synopsis)
 - [Methods](#methods)
   - [manager.run](#managerrun)
-    - [prototype](#prototype)
-    - [arguments](#arguments)
   - [get_cgexec_arg](#get_cgexec_arg)
-    - [prototype](#prototype-1)
-    - [arguments](#arguments-1)
+- [Read cgroup usage info data](#read-cgroup-usage-info-data)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -22,43 +17,58 @@
 
 #   Name
 
-cgroup_arch:
+cgrouparch
+
 A python lib used to build cgroup directory tree, add set cgroup pid.
 
 #   Status
 
-This library is in alpha phase.
+This library is considered production ready.
 
 #   Description
 
 This lib is used to set up cgroup directory tree according to
 configuration saved in zookeeper, and add pid to cgroup accordingly.
 
-#   Install
 
-This package does not support installation.
+#   Synopsis
 
-Just clone it and copy it into your project source folder.
-
-```
-cd your_project_folder
-git clone https://github.com/baishancloud/cgroup_arch.git
-```
-
-#   Usage
-
-run manager, the manager will watch on conf in zookeeper,
+Start the manager, the manager will watch on conf in zookeeper,
 rebuild cgroup directory tree if conf changed, it also
 update cgroup tasks file periodically according to conf.
 
 ```python
-from cgroup_arch import manager
+# configuration in zookeeper:
+{
+    'cpu': {
+        'sub_cgroup': {
+            'test_cgroup_a': {
+                'conf': {
+                    'share': 1024,
+                },
+            },
+            'test_cgroup_b': {
+                'conf': {
+                    'share': 100,
+                },
+                'sub_cgroup': {
+                    'test_cgroup_b_sub1': {
+                        'conf': {
+                            'share': 200,
+                        },
+                    },
+                },
+            },
+        },
+    },
+}
+
+from pykit.cgrouparch import manager
 
 def get_cgroup_pid_file(cgroup_name):
-    if cgroup_name == 'test':
+    if cgroup_name == 'test_cgroup_a':
         return ['/tmp/test.pid']
-    else:
-        return None
+    # ...
 
 def get_zk_host():
     return '127.0.0.1:2181,1.2.3.4:2181'
@@ -76,17 +86,17 @@ argkv = {
 manager.run(**argkv)
 ```
 
-get cgexec argument, to get the argument('-g cpu:group_foo/sub_group_bar')
-used in 'cgexec' tool.
+Get `cgexec` argument, to get the argument(for example:
+'-g cpu:test_cgroup_b/test_cgroup_b_sub1') used in `cgexec` command.
 
-this is usefull if you want to use 'cgexec' tool to run you process in a
+This is usefull if you want to use `cgexec` command to run you process in a
 cgroup, so the pid of process is added to the cgroup immediately.
 
-you need to provide info about zookeeper, because we need to read the
+You need to provide info about zookeeper, because we need to read the
 conf in zookeeper.
 
 ```python
-from cgroup_arch import manager
+from pykit.cgrouparch import manager
 
 argkv = {
     'cgroup_dir': '/sys/fs/cgroup',
@@ -94,98 +104,155 @@ argkv = {
     'zk_prefix': '/cluser_a/service_rank',
     'zk_auth_data': [('digest', 'super:123456')],
 }
-cgexec_arg = manager.get_cgexec_arg(['cgroup_foo'], **argkv)
+cgexec_arg = manager.get_cgexec_arg(['test_cgroup_a'], **argkv)
 
 # return like:
 # {
-#     'cgroup_foo': '-g cpu:group_foo -g blkio:group_bar',
+#     'test_cgroup_a': '-g cpu:test_cgroup_a',
 # }
 ```
-
-#  Update sub repo
-
->   You do not need to read this chapter if you are not a maintainer.
-
-First update sub repo config file `.gitsubrepo`
-and run `git-subrepo`.
-
-`git-subrepo` will fetch new changes from all sub repos and merge them into
-current branch `mater`:
-
-```
-./script/git-subrepo/git-subrepo
-```
-
-`git-subrepo` is a tool in shell script.
-It merges sub git repo into the parent git working dir with `git-submerge`.
 
 #   Methods
 
 ## manager.run
 
-This function read configuration from etcd and build the cgroup directory
-tree accordingly, it alsot  update cgroup pid periodically.
+**syntax**:
+`manager.run(**argkv)`
 
-### prototype
+This function read configuration from zookeeper and build the cgroup
+directory tree accordingly, it also  update cgroup pid periodically.
+Every second it save usage info of each cgroup in redis, you can read
+usage info through websocket protocol.
 
-```python
-run(**argkv)
-```
+**arguments**:
 
-### arguments
+-   `get_cgroup_pid_file`:
+    a callback function, the argument is the cgroup name, and it
+    should return a list of pid files. Required.
 
-It receive the following arguments:
+-   `get_zk_host`:
+    a callback function, should return zookeeper hosts, for example:
+    '127.0.0.1:2181,1.2.3.4:2181'. Required.
 
-- `get_cgroup_pid_file` is a callback function, the argument to this function is
-    the cgroup name, and it should return a list of pid file.
+-   `zk_prefix`:
+    specify the zookeeper key prefix'. Required.
 
-- `get_zk_host` is a callback function, should return etcd hosts, for example:
-    '127.0.0.1:2181,1.2.3.4:2181'.
+-   `zk_auth_data`:
+    specify zookeeper auth data, for example: `[('digest', 'super:123456')]`.
+    Required.
 
-- `zk_prefix` specify the zk key prefix'.
+-   `communicate_ip`:
+    specify ip address the websocket server will bind. Default to '0.0.0.0'.
 
-- `zk_auth_data` the zk auth data, for example: `[('digest', 'super:123456')]`.
+-   `communicate_port`:
+    specify port the websocket server will bind. Default to 43409.
 
-- `communicate_ip` ip the websocket will listen on.
+-   `tasks_update_interval`:
+    set cgroup tasks file update interval in seconds. Default to 30.
 
-- `communicate_port` port the websocket will listen on.
+-   `cgroup_dir`:
+    the mount point of the cgroup filesystem, default to '/sys/fs/cgroup'.
 
-- `tasks_update_interval` set cgroup tasks file update interval, in seconds.
+-   `redis_ip`:
+    ip of the redis server. Required.
 
-- `cgroup_dir` the mount point of the cgroup filesystem,
-     default is '/sys/fs/cgroup'.
+-   `redis_port`:
+    port of the redis server. Required.
 
-- `redis_ip` ip of the redis service.
+-   `redis_prefix`:
+    the key prefix to use when saving usage info into redis.
 
-- `redis_ip` port of the redis service.
+-   `redis_expire_time`:
+    we only keep recent usage info in redis, this specify the
+    expire time in seconds of usage info data in redis.  Default to 300.
 
-- `redis_prefix` the key prefix to use when store data into redis.
+-   `protected_cgroup`:
+    specify a list of cgroup names that you do not allow the manager
+    to touch, or the manager will remove all cgroups that are not
+    in the conf. Optional.
 
-- `redis_expire_time` we only keep recent data in redis, this
-    specify the expire time of data in redis.
-
-- `protected_cgroup` specify a list of cgroup names that you do not
-    allow the manager to touch, or the manager will remove all cgroups
-    that are not in the conf.
+**return**
+Not return
 
 ##  get_cgexec_arg
 
-This method used to get the argument used in 'cgexec' tool.
+**syntax**:
+`manager.get_cgexec_arg(cgroup_names, **argkv)`
 
-### prototype
+This method used to get the argument used in `cgexec` command.
 
-```python
-manager.get_cgexec_arg(cgroup_names, **argkv)
-```
+**arguments**:
 
-### arguments
+-   `cgroup_names`:
+    a list of cgroup names.
 
-It receive the following arguments:
-
-- `cgroup_names` is a list of cgroup_name.
-
-- `argkv` the same as that in `manager.run`, but only `cgroup_dir`,
+-   `argkv`:
+    the same as that in `manager.run`, but only `cgroup_dir`,
     `get_zk_host`, `zk_prefix`, `zk_auth_data` are needed.
+
+**return**
+
+A dict contains argument for `cgexec` of each input cgroup.
+
+#   Read cgroup usage info data
+
+You can read usage data of each cgroup of each second through
+websocket protocol.
+
+``` python
+import json
+import websocket
+
+body = {
+    'cmd': 'show_account',
+    'args': {
+        'nr_slot': 2,
+    },
+}
+
+ws = websocket.WebSocket()
+ws.connect('ws://127.0.0.1:43409')
+ws.send(json.dumps(body))
+print ws.recv()
+
+# output example:
+{
+  "cpu": {
+    "slots": [
+      {
+        "value": {
+          "usage": 21356553724888
+        },
+        "slot_number": 1515735564
+      },
+      {
+        "value": {
+          "usage": 21356463383201
+        },
+        "slot_number": 1515735563
+      },
+    ],
+    "sub_cgroup": {
+      "test_cgroup_a": {
+        "slots": [
+          {
+            "value": {
+              "usage": 827377974062
+            },
+            "slot_number": 1515735564
+          },
+          {
+            "value": {
+              "usage": 827377935788
+            },
+            "slot_number": 1515735563
+          },
+        ],
+      },
+    },
+  },
+}
+```
 
 #   Author
 

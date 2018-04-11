@@ -5,11 +5,11 @@ import time
 import redis
 from kazoo.client import KazooClient
 
-from cgroup_arch import account
-from cgroup_arch import cgroup_manager
-from cgroup_arch import communicate
 from pykit import threadutil
 from pykit import utfjson
+from pykit.cgrouparch import account
+from pykit.cgrouparch import cgroup_manager
+from pykit.cgrouparch import communicate
 
 logger = logging.getLogger(__name__)
 
@@ -156,13 +156,13 @@ def run(**argkv):
         'get_cgroup_pid_file': argkv['get_cgroup_pid_file'],
         'cgroup_dir': argkv.get('cgroup_dir', '/sys/fs/cgroup'),
 
-        'communicate_ip': argkv.get('communicate_ip', '127.0.0.1'),
-        'communicate_port': argkv.get('communicate_port', 7076),
+        'communicate_ip': argkv.get('communicate_ip', '0.0.0.0'),
+        'communicate_port': argkv.get('communicate_port', 43409),
 
         'tasks_update_interval': argkv.get('tasks_update_interval', 30),
 
-        'redis_ip': argkv.get('redis_ip', '127.0.0.1'),
-        'redis_port': argkv.get('redis_port', 7106),
+        'redis_ip': argkv['redis_ip'],
+        'redis_port': argkv['redis_port'],
         'redis_prefix': argkv.get('redis_prefix', 'cgroup_arch'),
         'redis_client': None,
         'redis_expire_time': argkv.get('redis_expire_time', 60 * 5),

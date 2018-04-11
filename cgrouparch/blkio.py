@@ -1,8 +1,8 @@
 import logging
 import os
 
-from cgroup_arch import cgroup_util
 from pykit import fsutil
+from pykit.cgrouparch import cgroup_util
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +30,19 @@ def reset_statistics(cgroup_path):
     fsutil.write_file(reset_file, '1', fsync=False)
 
 
-def get_account(cgroup_path):
+def account(cgroup_path):
     file_name = os.path.join(cgroup_path, 'blkio.io_service_bytes_recursive')
+
+    # file content format:
+    # 8:0 Read 1053712384
+    # 8:0 Write 81929383424
+    # 8:0 Sync 80865775616
+    # 8:0 Async 2117320192
+    # 8:0 Total 82983095808
+    # 8:16 Read 1053712384
+    # 8:16 Write 81929383424
+    # ...
+    # Total 82983095808
 
     content = fsutil.read_file(file_name)
     lines = content.split('\n')[:-1]

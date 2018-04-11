@@ -2,10 +2,10 @@ import logging
 import os
 import time
 
-from cgroup_arch import cgroup_util
-from cgroup_arch import model
-from cgroup_arch import util
 from pykit import fsutil
+from pykit.cgrouparch import cgroup_util
+from pykit.cgrouparch import model
+from pykit.cgrouparch import util
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +14,7 @@ def get_pids_of_one_pid_file(pid_file):
     try:
         pid = util.get_pid_from_file(pid_file)
         pids = util.get_all_pids(pid)
+        logger.info('pids for pid file: %s is %s' % (pid_file, pids))
         return pids
 
     except Exception as e:

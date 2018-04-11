@@ -8,8 +8,8 @@ from geventwebsocket import Resource
 from geventwebsocket import WebSocketApplication
 from geventwebsocket import WebSocketServer
 
-from cgroup_arch import account
 from pykit import utfjson
+from pykit.cgrouparch import account
 
 global_value = {}
 

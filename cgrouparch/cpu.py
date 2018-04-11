@@ -1,8 +1,8 @@
 import logging
 import os
 
-from cgroup_arch import cgroup_util
 from pykit import fsutil
+from pykit.cgrouparch import cgroup_util
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def reset_statistics(cgroup_path):
     fsutil.write_file(usage_file, '0', fsync=False)
 
 
-def get_account(cgroup_path):
+def account(cgroup_path):
     usage_file = os.path.join(cgroup_path, 'cpuacct.usage')
 
     usage = int(fsutil.read_file(usage_file).strip())
