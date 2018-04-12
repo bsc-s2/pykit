@@ -1,0 +1,499 @@
+{
+    "AccessDenied": {
+        "Code": "AccessDenied",
+        "Message": "Access Denied",
+        "httpcode": 403,
+        "status": "Forbidden",
+        "type": "Client"
+    },
+    "AccountProblem": {
+        "Code": "AccountProblem",
+        "Message": "There is a problem with your AWS account that prevents the operation from completing successfully. Please contact customer service at webservices@amazon.com.",
+        "httpcode": 403,
+        "status": "Forbidden",
+        "type": "Client"
+    },
+    "AmbiguousGrantByEmailAddress": {
+        "Code": "AmbiguousGrantByEmailAddress",
+        "Message": "The e-mail address you provided is associated with more than one account.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "BadDigest": {
+        "Code": "BadDigest",
+        "Message": "The Content-MD5 you specified did not match what we received.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "BucketAlreadyExists": {
+        "Code": "BucketAlreadyExists",
+        "Message": "The requested bucket name is not available. The bucket namespace is shared by all users of the system. Please select a different name and try again.",
+        "httpcode": 409,
+        "status": "Conflict",
+        "type": "Client"
+    },
+    "BucketAlreadyOwnedByYou": {
+        "Code": "BucketAlreadyOwnedByYou",
+        "Message": "Your previous request to create the named bucket succeeded and you already own it.",
+        "httpcode": 409,
+        "status": "Conflict",
+        "type": "Client"
+    },
+    "BucketNotEmpty": {
+        "Code": "BucketNotEmpty",
+        "Message": "The bucket you tried to delete is not empty.",
+        "httpcode": 409,
+        "status": "Conflict",
+        "type": "Client"
+    },
+    "CredentialsNotSupported": {
+        "Code": "CredentialsNotSupported",
+        "Message": "This request does not support credentials.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "CrossLocationLoggingProhibited": {
+        "Code": "CrossLocationLoggingProhibited",
+        "Message": "Cross location logging not allowed. Buckets in one geographic location cannot log information to a bucket in another location.",
+        "httpcode": 403,
+        "status": "Forbidden",
+        "type": "Client"
+    },
+    "DownloadSourceException": {
+        "Code": "DownloadSourceException",
+        "Message": "Donwload source exception can not download file",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "DownloadedFileDamaged": {
+        "Code": "DownloadedFileDamaged",
+        "Message": "Donwloaded file content is damaged",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "EntityTooLarge": {
+        "Code": "EntityTooLarge",
+        "Message": "Your proposed upload exceeds the maximum allowed object size.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "EntityTooSmall": {
+        "Code": "EntityTooSmall",
+        "Message": "Your proposed upload is smaller than the minimum allowed object size.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "ExpiredToken": {
+        "Code": "ExpiredToken",
+        "Message": "The provided token has expired.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "IncompleteBody": {
+        "Code": "IncompleteBody",
+        "Message": "You did not provide the number of bytes specified by the Content-Length HTTP header",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "IncorrectNumberOfFilesInPostRequest": {
+        "Code": "IncorrectNumberOfFilesInPostRequest",
+        "Message": "POST requires exactly one file upload per request.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InlineDataTooLarge": {
+        "Code": "InlineDataTooLarge",
+        "Message": "Inline data exceeds the maximum allowed size.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InternalError": {
+        "Code": "InternalError",
+        "Message": "We encountered an internal error. Please try again.",
+        "httpcode": 500,
+        "status": "Internal Server Error",
+        "type": "Server"
+    },
+    "InvalidAccessKeyId": {
+        "Code": "InvalidAccessKeyId",
+        "Message": "The AWS Access Key Id you provided does not exist in our records.",
+        "httpcode": 403,
+        "status": "Forbidden",
+        "type": "Client"
+    },
+    "InvalidAddressingHeader": {
+        "Code": "InvalidAddressingHeader",
+        "Message": "You must specify the Anonymous role.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InvalidArgument": {
+        "Code": "InvalidArgument",
+        "Message": "Invalid Argument",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InvalidBucketName": {
+        "Code": "InvalidBucketName",
+        "Message": "The specified bucket is not valid.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InvalidDigest": {
+        "Code": "InvalidDigest",
+        "Message": "The Content-MD5 you specified was an invalid.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InvalidLocationConstraint": {
+        "Code": "InvalidLocationConstraint",
+        "Message": "The specified location constraint is not valid.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InvalidPart": {
+        "Code": "InvalidPart",
+        "Message": "One or more of the specified parts could not be found.The part might not have been uploaded, or the specified entity tag might not have matched the part's entity tag.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InvalidPartOrder": {
+        "Code": "InvalidPartOrder",
+        "Message": "The list of parts was not in ascendingorder. Parts list must specified in order by part number.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InvalidPayer": {
+        "Code": "InvalidPayer",
+        "Message": "All access to this object has been disabled.",
+        "httpcode": 403,
+        "status": "Forbidden",
+        "type": "Client"
+    },
+    "InvalidPolicyDocument": {
+        "Code": "InvalidPolicyDocument",
+        "Message": "The content of the form does not meet the conditions specified in the policy document.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InvalidRange": {
+        "Code": "InvalidRange",
+        "Message": "The requested range cannot be satisfied.",
+        "httpcode": 416,
+        "status": "Requested Range Not Satisfiable",
+        "type": "Client"
+    },
+    "InvalidSOAPRequest": {
+        "Code": "InvalidSOAPRequest",
+        "Message": "The SOAP request body is invalid.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InvalidSecurity": {
+        "Code": "InvalidSecurity",
+        "Message": "The provided security credentials are not valid.",
+        "httpcode": 403,
+        "status": "Forbidden",
+        "type": "Client"
+    },
+    "InvalidStorageClass": {
+        "Code": "InvalidStorageClass",
+        "Message": "The storage class you specified is not valid.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InvalidTargetBucketForLogging": {
+        "Code": "InvalidTargetBucketForLogging",
+        "Message": "The target bucket for logging does not exist, is not owned by you, or does not have the appropriate grants for the log-delivery group.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InvalidToken": {
+        "Code": "InvalidToken",
+        "Message": "The provided token is malformed or otherwise invalid.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "InvalidURI": {
+        "Code": "InvalidURI",
+        "Message": "Couldn't parse the specified URI.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "KeyTooLong": {
+        "Code": "KeyTooLong",
+        "Message": "Your key is too long.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "MalformedACLError": {
+        "Code": "MalformedACLError",
+        "Message": "The XML you provided was not well-formed or did not validate against our published schema.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "MalformedPOSTRequest": {
+        "Code": "MalformedPOSTRequest",
+        "Message": "The body of your POST request is not well-formed multipart/form-data.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "MalformedXML": {
+        "Code": "MalformedXML",
+        "Message": "This happens when the user sends a malformed xml (xml that doesn't conform to the published xsd) for the configuration. The error message is, \"The XML you provided was not well-formed or did not validate against our published schema.\"",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "MaxMessageLengthExceeded": {
+        "Code": "MaxMessageLengthExceeded",
+        "Message": "Your request was too big.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "MaxPostPreDataLengthExceededError": {
+        "Code": "MaxPostPreDataLengthExceededError",
+        "Message": "Your POST request fields preceding the upload file were too large.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "MetadataTooLarge": {
+        "Code": "MetadataTooLarge",
+        "Message": "Your metadata headers exceed the maximum allowed metadata size.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "MethodNotAllowed": {
+        "Code": "MethodNotAllowed",
+        "Message": "The specified method is not allowed against this resource.",
+        "httpcode": 405,
+        "status": "Method Not Allowed",
+        "type": "Client"
+    },
+    "MissingAttachment": {
+        "Code": "MissingAttachment",
+        "Message": "A SOAP attachment was expected, but none were found.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "MissingContentLength": {
+        "Code": "MissingContentLength",
+        "Message": "You must provide the Content-Length HTTP header.",
+        "httpcode": 411,
+        "status": "Length Required",
+        "type": "Client"
+    },
+    "MissingRequestBodyError": {
+        "Code": "MissingRequestBodyError",
+        "Message": "This happens when the user sends an empty xml document as a request. The error message is, \"Request body is empty.\"",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "MissingSecurityElement": {
+        "Code": "MissingSecurityElement",
+        "Message": "The SOAP 1.1 request is missing a security element.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "MissingSecurityHeader": {
+        "Code": "MissingSecurityHeader",
+        "Message": "Your request was missing a required header.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "NoLoggingStatusForKey": {
+        "Code": "NoLoggingStatusForKey",
+        "Message": "There is no such thing as a logging status sub-resource for a key.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "NoSuchBucket": {
+        "Code": "NoSuchBucket",
+        "Message": "The specified bucket does not exist.",
+        "httpcode": 404,
+        "status": "Not Found",
+        "type": "Client"
+    },
+    "NoSuchDownloadSource": {
+        "Code": "NoSuchDownloadSource",
+        "Message": "The specified download source does not exist",
+        "httpcode": 404,
+        "status": "Not Found",
+        "type": "Client"
+    },
+    "NoSuchKey": {
+        "Code": "NoSuchKey",
+        "Message": "The specified key does not exist.",
+        "httpcode": 404,
+        "status": "Not Found",
+        "type": "Client"
+    },
+    "NoSuchUpload": {
+        "Code": "NoSuchUpload",
+        "Message": "The specified multipart upload does not exist. The upload ID might be invalid, or the multipart upload might have been aborted or completed.",
+        "httpcode": 404,
+        "status": "Not Found",
+        "type": "Client"
+    },
+    "NotImplemented": {
+        "Code": "NotImplemented",
+        "Message": "A header you provided implies functionality that is not implemented.",
+        "httpcode": 501,
+        "status": "Not Implemented",
+        "type": "Server"
+    },
+    "NotSignedUp": {
+        "Code": "NotSignedUp",
+        "Message": "Your account is not signed up for the Amazon?S3 service. You must sign up before you can use Amazon?S3. You can sign up at the following URL: http://aws.amazon.com/s3",
+        "httpcode": 403,
+        "status": "Forbidden",
+        "type": "Client"
+    },
+    "OperationAborted": {
+        "Code": "OperationAborted",
+        "Message": "A conflicting conditional operation is currently in progress against this resource. Please try again.",
+        "httpcode": 409,
+        "status": "Conflict",
+        "type": "Client"
+    },
+    "PermanentRedirect": {
+        "Code": "PermanentRedirect",
+        "Message": "The bucket you are attempting to access must be addressed using the specified endpoint. Please send all future requests to this endpoint.",
+        "httpcode": 301,
+        "status": "Moved Permanently",
+        "type": "Client"
+    },
+    "PreconditionFailed": {
+        "Code": "PreconditionFailed",
+        "Message": "At least one of the pre-conditions you specified did not hold.",
+        "httpcode": 412,
+        "status": "Precondition Failed",
+        "type": "Client"
+    },
+    "Redirect": {
+        "Code": "Redirect",
+        "Message": "Temporary redirect.",
+        "httpcode": 307,
+        "status": "Moved Temporarily",
+        "type": "Client"
+    },
+    "RequestIsNotMultiPartContent": {
+        "Code": "RequestIsNotMultiPartContent",
+        "Message": "Bucket POST must be of the enclosure-type multipart/form-data.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "RequestTimeTooSkewed": {
+        "Code": "RequestTimeTooSkewed",
+        "Message": "The difference between the request time and the server's time is too large.",
+        "httpcode": 403,
+        "status": "Forbidden",
+        "type": "Client"
+    },
+    "RequestTimeout": {
+        "Code": "RequestTimeout",
+        "Message": "Your socket connection to the server was not read from or written to within the timeout period.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "RequestTorrentOfBucketError": {
+        "Code": "RequestTorrentOfBucketError",
+        "Message": "Requesting the torrent file of a bucket is not permitted.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "SignatureDoesNotMatch": {
+        "Code": "SignatureDoesNotMatch",
+        "Message": "The request signature we calculated does not match the signature you provided. Check your AWS Secret Access Key and signing method. For more information, see Authenticating REST Requests and Authenticating SOAP Requests for details.",
+        "httpcode": 403,
+        "status": "Forbidden",
+        "type": "Client"
+    },
+    "SlowDown": {
+        "Code": "SlowDown",
+        "Message": "Please reduce your request rate.",
+        "httpcode": 503,
+        "status": "Service Unavailable",
+        "type": "Server"
+    },
+    "TemporaryRedirect": {
+        "Code": "TemporaryRedirect",
+        "Message": "You are being redirected to the bucket while DNS updates.",
+        "httpcode": 307,
+        "status": "Moved Temporarily",
+        "type": "Client"
+    },
+    "TokenRefreshRequired": {
+        "Code": "TokenRefreshRequired",
+        "Message": "The provided token must be refreshed.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "TooManyBuckets": {
+        "Code": "TooManyBuckets",
+        "Message": "You have attempted to create more buckets than allowed.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "UnexpectedContent": {
+        "Code": "UnexpectedContent",
+        "Message": "This request does not support content.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "UnresolvableGrantByEmailAddress": {
+        "Code": "UnresolvableGrantByEmailAddress",
+        "Message": "The e-mail address you provided does not match any account on record.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    },
+    "UserKeyMustBeSpecified": {
+        "Code": "UserKeyMustBeSpecified",
+        "Message": "The bucket POST must contain the specified field name. If it is specified, please check the order of the fields.",
+        "httpcode": 400,
+        "status": "Bad Request",
+        "type": "Client"
+    }
+}
