@@ -57,12 +57,15 @@ class Cat(object):
                  exclusive=True,
                  id=None,
                  strip=False,
+                 tail=False,
                  read_chunk_size=read_size):
 
         self.fn = fn
         self.handler = handler
         self.file_end_handler = file_end_handler
         self.exclusive = exclusive
+        self.tail = tail
+        self.jumped_to_tail = False
 
         if id is None:
 
@@ -154,6 +157,15 @@ class Cat(object):
                 read_timeout = file_check_time_range[1]
 
             f = self.wait_open_file(timeout=expire_at - time.time())
+
+            # only need to jump to tail at first time
+            if self.tail and not self.jumped_to_tail:
+                offset = _file_size(f)
+                logger.info('jump to tail: {offset} when scan {fn}'.format(
+                    offset=offset, fn=self.fn))
+
+                self.write_last_stat(f, offset)
+                self.jumped_to_tail = True
 
             with f:
                 try:

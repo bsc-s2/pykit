@@ -123,7 +123,7 @@ offset, or it scan from the first byte.
 
 **syntax**:
 `Cat(fn, handler=None, file_end_handler=None, exclusive=True,
-        id=None, strip=False, read_chunk_size=16*1024**2)`
+        id=None, strip=False, tail=False, read_chunk_size=16*1024**2)`
 
 **arguments**:
 
@@ -163,6 +163,12 @@ offset, or it scan from the first byte.
 -   `strip`:
     is `True` or `False` to specifies if to strip blank chars(space, tab, `\r`
     and `\n`) before returning each line.
+
+    By default it is `False`.
+
+-   `False`:
+    is `True` or `False` to specifies if to scan from the end of file, so only
+    new data will be scanned.
 
     By default it is `False`.
 
