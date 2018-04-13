@@ -24,6 +24,8 @@ from .cat import (
     LockTimeout,
     NoData,
     NoSuchFile,
+    SEEK_END,
+    SEEK_START,
     Cat
 )
 

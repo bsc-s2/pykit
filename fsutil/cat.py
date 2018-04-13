@@ -22,6 +22,8 @@ no_data_timeout = 3600
 read_size = 1024 * 1024 * 16
 file_check_time_range = (0.05, 1.0)  # sec
 stat_dir = config.cat_stat_dir or '/tmp'
+SEEK_START = 'start'
+SEEK_END = 'end'
 
 
 class CatError(Exception):
@@ -89,9 +91,9 @@ class Cat(object):
 
             self.handler = [self.handler]
 
-    def cat(self, timeout=None):
+    def cat(self, timeout=None, default_seek=None):
 
-        for line in self.iterate(timeout=timeout):
+        for line in self.iterate(timeout=timeout, default_seek=default_seek):
 
             for h in self.handler:
                 try:
@@ -100,15 +102,15 @@ class Cat(object):
                     logger.exception(repr(e)
                                      + ' while handling {line}'.foramt(line=repr(line)))
 
-    def iterate(self, timeout=None):
+    def iterate(self, timeout=None, default_seek=None):
         self.running = True
         try:
-            for x in self._iter(timeout=timeout):
+            for x in self._iter(timeout, default_seek):
                 yield x
         finally:
             self.running = False
 
-    def _iter(self, timeout):
+    def _iter(self, timeout, default_seek):
 
         if timeout == 0:
             # timeout at once after one read, if there is no more data in file.
@@ -122,12 +124,12 @@ class Cat(object):
 
         try:
             with lck:
-                for x in self._nolock_iter(timeout=timeout):
+                for x in self._nolock_iter(timeout, default_seek):
                     yield x
         except portlock.PortlockTimeout:
             raise LockTimeout(self.id, self.fn, 'other Cat() has been holding this lock')
 
-    def _nolock_iter(self, timeout=None):
+    def _nolock_iter(self, timeout, default_seek):
 
         if timeout is None:
             timeout = no_data_timeout
@@ -157,7 +159,8 @@ class Cat(object):
 
             with f:
                 try:
-                    for x in self.iter_to_file_end(f, read_timeout=read_timeout):
+                    for x in self.iter_to_file_end(
+                            f, read_timeout, default_seek):
                         yield x
 
                     # re-new expire_at if there is any data read.
@@ -206,11 +209,11 @@ class Cat(object):
 
         raise NoSuchFile(self.fn)
 
-    def iter_to_file_end(self, f, read_timeout):
+    def iter_to_file_end(self, f, read_timeout, default_seek):
 
         full_chunk_timeout = min([read_timeout * 0.01, 1])
 
-        offset = self.get_last_offset(f)
+        offset = self.get_last_offset(f, default_seek)
         f.seek(offset)
 
         logger.info('scan {fn} from offset: {offset}'.format(
@@ -294,22 +297,45 @@ class Cat(object):
         logger.info('position written fn=%s inode=%d offset=%d' % (
             self.fn, ino, offset))
 
-    def get_last_offset(self, f):
-
+    def get_last_offset(self, f, default_seek):
         st = os.fstat(f.fileno())
         ino = st[stat.ST_INO]
         size = st[stat.ST_SIZE]
 
+        max_residual = None
+
+        if default_seek is None or default_seek == SEEK_START:
+            default_offset = 0
+
+        elif default_seek == SEEK_END:
+            default_offset = size
+
+        elif default_seek < 0:
+            max_residual = 0 - default_seek
+            default_offset = max(size - max_residual, 0)
+
+        else:
+            default_offset = default_seek
+
+        stat_file = self.stat_path()
+
+        if not os.path.isfile(stat_file):
+            return default_offset
+
         try:
             last = self.read_last_stat()
         except (IOError, ValueError):
-            # no such file or damaged stat file
-            last = {'inode': 0, 'offset': 0}
+            # damaged stat file
+            return default_offset
 
-        if last['inode'] == ino and last['offset'] <= size:
-            return last['offset']
-        else:
-            return 0
+        if max_residual is not None:
+            if size - last['offset'] > max_residual:
+                last['offset'] = size - max_residual
+
+        if last['inode'] != ino or last['offset'] > size:
+            return default_offset
+
+        return last['offset']
 
     def iter_lines(self, f):
 

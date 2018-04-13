@@ -210,6 +210,47 @@ Make a generator to yield every line.
 
     By default it is 3600.
 
+-   `default_seek`:
+    specify a default offset when the last scanned offset is not avaliable
+    or not valid.
+
+    Not avaliable mean the stat file used to store the scanning offset is
+    not exist or has broken. For example, when it is the first time to
+    scan a file, the stat file will not exist.
+
+    Not valid mean the info stored in stat file is not for the file we are
+    about to scan, this will happen when the same file is deleted and then
+    created, the info stored in stat file is for the deleted file not for
+    the created new file.
+
+    We will also treat the last offset stored in stat file as not valid
+    if it is too small than the file size when you set `default_seek`
+    to a negative number. And the absolute value of `default_seek` is
+    the maximum allowed difference.
+
+    It can take following values:
+
+    -   fsutil.SEEK_START:
+        scan from the beginning of the file.
+
+    -   fsutil.SEEK_END:
+        scan from the end of the file, mean only new data will be scanned.
+
+    -   `x`(a positive number, includes `0`).
+        scan from offset `x`.
+
+    -   `-x`(a negative number).
+        it is used to specify the maximum allowed difference between last
+        offset and file size. If the difference is bigger than `x`, then
+        scan from `x` bytes before the end of the file, not scan from the
+        last offset.
+
+        This is usefull when you want to scan from near the end of the file.
+        Use `fsutil.SEEK_END` can not solve the problem, because it only
+        take effect when the last offset is not avaliable.
+
+    By default it is `fsutil.SEEK_START`.
+
 **return**:
 a generator.
 

@@ -431,6 +431,62 @@ class TestCat(unittest.TestCase):
 
         force_remove(path)
 
+    def test_default_seek(self):
+        cases = (
+            ('abc', {'default_seek': fsutil.SEEK_START}, ['abc']),
+            ('abc', {'default_seek': 0},                 ['abc']),
+            ('abc', {'default_seek': 1},                 ['bc']),
+            ('abc', {'default_seek': -2},                ['c']),
+            ('abc', {'default_seek': -100},              ['abc']),
+            ('abc', {'default_seek': fsutil.SEEK_END},   []),
+            ('abc', {},                                  ['abc']),
+        )
+
+        for file_content, kwargs, expected in cases:
+            c = fsutil.Cat(self.fn)
+            force_remove(c.stat_path())
+
+            append_lines(self.fn, [file_content])
+
+            rst = []
+            try:
+                kwargs['timeout'] = 0.1
+                for l in fsutil.Cat(self.fn, strip=True).iterate(**kwargs):
+                    rst.append(l)
+            except fsutil.NoData:
+                pass
+
+            self.assertEqual(expected, rst)
+
+            force_remove(self.fn)
+
+    def test_max_residual(self):
+        c = fsutil.Cat(self.fn)
+        force_remove(c.stat_path())
+
+        append_lines(self.fn, ['123'])
+
+        rst = []
+        try:
+            for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0.1):
+                rst.append(l)
+        except fsutil.NoData:
+            pass
+
+        self.assertEqual(['123'], rst)
+
+        append_lines(self.fn, ['0' * 1000])
+
+        rst = []
+        try:
+            for l in fsutil.Cat(self.fn, strip=False).iterate(
+                    timeout=0.1, default_seek=-100):
+                rst.append(l)
+        except fsutil.NoData:
+            pass
+
+        self.assertEqual(['0' * 99 + '\n'], rst)
+
 
 def force_remove(fn):
 
