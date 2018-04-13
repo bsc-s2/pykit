@@ -431,6 +431,34 @@ class TestCat(unittest.TestCase):
 
         force_remove(path)
 
+    def test_scan_from_tail(self):
+
+        expected = [
+            'a' * 32,
+            'b' * 32,
+        ]
+        rst = []
+
+        def _update_file():
+            for l in expected:
+                time.sleep(0.2)
+                append_lines(self.fn, [l])
+                dd('append line: ', l)
+
+        append_lines(self.fn, ['already exist line'])
+
+        th = threadutil.start_daemon_thread(_update_file)
+
+        try:
+            for l in fsutil.Cat(self.fn, strip=True, tail=True).iterate(
+                    timeout=0.5):
+                rst.append(l)
+        except fsutil.NoData:
+            pass
+
+        th.join()
+
+        self.assertEqual(expected, rst)
 
 def force_remove(fn):
 
