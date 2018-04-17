@@ -4,14 +4,13 @@
 
 - [Name](#name)
 - [Status](#status)
+- [Synopsis](#synopsis)
 - [Description](#description)
-- [Install](#install)
-- [Usage](#usage)
-- [Update sub repo](#update-sub-repo)
+- [Classes](#classes)
+  - [Signer](#signer)
 - [Methods](#methods)
-  - [init](#init)
-  - [add_auth](#add-auth)
-  - [add_post_auth](#add-post-auth)
+  - [Signer.add_auth](#signeradd_auth)
+  - [Singer.add_post_auth](#singeradd_post_auth)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -19,38 +18,18 @@
 
 #   Name
 
-awssign:
-A python lib used for signing a request using aws signature version 4
+awssign
+
+A python lib is used for adding aws version 4 signature to request.
 
 #   Status
 
-This library is in beta phase.
+This library is considered production ready.
 
-It has been used heavily in our object storage service, as a foundamental
-library of our devops platform.
-
-#   Description
-
-This lib is used to sign a request using aws signature vesrion 4. You
-need to provide a python dict which represent your request(it typically
-contains `verb`, `uri`, `args`, `headers`, `body`), and you access key
-and you secret key. This lib will add signatrue to the request.
-
-#   Install
-
-This package does not support installation.
-
-Just clone it and copy it into your project source folder.
-
-```
-cd your_project_folder
-git clone https://github.com/baishancloud/awssign.git
-```
-
-#   Usage
+#   Synopsis
 
 ```python
-import awssign
+from pykit import awssign
 import httplib
 
 access_key = 'your access key'
@@ -76,134 +55,144 @@ request = {
 
 signer.add_auth(request, sign_payload=True)
 
-conn = httplib.HTTPConnection('bscstorage.com')
-conn.request(request['verb'], request['uri'], request['body'], request['headers'])
+conn = httplib.HTTPConnection('ss.bscstorage.com')
+conn.request(request['verb'], request['uri'],
+             request['body'], request['headers'])
 resp = conn.getresponse()
 ```
 
-#  Update sub repo
+#   Description
 
->   You do not need to read this chapter if you are not a maintainer.
+This lib is used to sign a request using aws signature version 4. You
+need to provide a python dict which represent your request(it typically
+contains `verb`, `uri`, `args`, `headers`, `body`), and your access key
+and your secret key. This lib will add signature to the request.
 
-First update sub repo config file `.gitsubrepo`
-and run `git-subrepo`.
+#   Classes
 
-`git-subrepo` will fetch new changes from all sub repos and merge them into
-current branch `mater`:
+## Signer
 
-```
-./script/git-subrepo/git-subrepo
-```
+**syntax**
+`signer = awssign.Signer(access_key, secret_key, **kwargs)`
 
-`git-subrepo` is a tool in shell script.
-It merges sub git repo into the parent git working dir with `git-submerge`.
+**arguments**
+
+-   `access_key`:
+    the access key used to sign the request.
+
+-   `secret_key`:
+    the secret key used to sign the request.
+
+-   `kwargs`:
+    following keyword arguments are allowed.
+
+    -   `region`:
+    the region name of the service, the default is 'us-east-1'.
+
+    - `serive`:
+    the service name, the default is 's3'.
+
+    - `default_expires`:
+    the default expires time of a presigned url in seconds,
+    the default is 60.
 
 #   Methods
 
-##  init
-
-The initiate method of class `Signer`.
-
-### prototype
-
-```python
-Singer.__init__(self, access_key, secret_key, region=None, service=None, default_expires=None)
-```
-
-### arguments
-
-It receive the following arguments:
-
-- `access_key` is the access key used to sign the request.
-
-- `secret_key` is the secret key used to sign the request.
-
-- `region` is the region name of the service, the default is 'us-east-1'.
-
-- `serive` is service name, the default is 's3'.
-
-- `default_expires` is the default expires time of a presigned url in seconds,
-    the default is 60.
-
-##  add-auth
+## Signer.add_auth
 
 The method used to sign a request.
 
-### prototype
+**syntax**
+`signer.add_auth(request, **kwargs)`
 
-```
-add_auth(self, request, **argkv)
-```
+**arguments**
 
-### arguments
+-   `request`:
+    a python dict which used to represent your request.
+    It may contents the following fields:
 
-It receives the following arguments:
+    -   `verb`:
+        the request method, such as 'GET', 'PUT'. Required.
 
-- `request` is a python dict which represent your request.
-    It may contents the following keys:
+    -   `uri`:
+        the url encoded uri, it can contains query string only when you
+        did not specify `args` in `request`. Required.
 
-    - `verb` is the request method, such as 'GET', 'PUT'.
+    -   `args`:
+        a python dict contains the request parameters, it should not be
+        url encoded. You can not use both `args` and query string in `uri`
+        at the same time.
 
-    - `uri` is the url encoded uri, it can contains query string if you did not
-        include `args` in `request`.
-
-    - `args` is a python dict contains the request parameters, it should not be
-        url encoded. You can not use both `args` and query string in `uri` in the
-        same `request`.
-
-    - `headers` is a python dict contains request headers. It must contains the
+    -   `headers`:
+        a python dict contains request headers. It must contains the
         'Host' header.
 
-    - `body` is a string, contains the request payload. If you do not want to sign
-       the payload or you have set 'X-Amz-ContentSHA256' header in `headers`, you
-       can omit this key.
+    -   `body`:
+        a string contains the request payload. If you do not want to sign
+        the payload or you have set 'X-Amz-ContentSHA256' header in `headers`,
+        you can omit this field.
 
-- `argkv` is a dict contains some optional arguments.
-    It can contains the following arguments:
+-   `kwargs`:
+    following keyword arguments are allowed.
 
-    - `query_auth` is a boolean value to indicate whether the signature should be add
-        to query string.
+    -   `query_auth`:
+        set to `True` if you want to add the signature to the query string.
+        The default is `False`, mean add the signature in the header.
 
-    - `sign_payload` is a boolean value to indicate whether the payload should be signed.
+    -   `sign_payload`:
+        set to `True` if you want to sign the payload.
+        The default is `False`.
 
-    - `headers_not_to_sign` is a list of header names, to indicate which headers are
-        not need to be signed.
+    -   `headers_not_to_sign`:
+        a list of header names, used to indicate which headers are
+        not need to be signed. Optional.
 
-    - `request_date` is a timestamp or a iso base format date string, used to specify
+    -   `request_date`:
+        timestamp or a iso base format date string, used to specify
         a custom request date, instead of using current time as request date.
+        Optional.
 
-    - `expires` is number seconds to indicate how long will a presigned url be valid.
-        It will overwrite the value of `default_expires`.
+    -   `expires`:
+        specify the signature expire time in seconds.
+        It will overwrite the value of `default_expires`. Optional.
 
-    - `signing_date` is a 8 digital date string like '20170131', used to specify a
-        custom signing date.
+    -   `signing_date`:
+        is a 8 digital date string like '20170131', used to specify a
+        custom signing date. Optional.
 
-##  add-post-auth
+##  Singer.add_post_auth
 
 The method used to sign a browser based post request.
 
-### prototype
+**syntax**
+`signer.add_post_auth(fields, **kwargs)`
 
-```
-add_post_auth(self, fields, **argkv)
-```
+**arguments**
 
-### arguments
+-   `fields`:
+    a python dict which contains form fields.
+    It may contents the following fields:
 
-It receives the following arguments:
+    -   `Policy`:
+        is python dict, describing what is permitted in the request.
+        After this function call, it will be replaced by it's base64
+        encoded version.
 
-- `fields` is a python dict which contains form fields.
-    It may contents the following keys:
-
-    - `Policy` is python dict, describing what is permitted in the request.
-        after this function call, it will be replaced by it's base64 encoded
-        version.
-
-    - `key` the key of the object to upload.
+    -   `key`:
+        the key of the object to upload.
 
     It also support some other fields, more infomation at
     [here](http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html)
     This method will add some signature related fields to this dict.
+
+-   `kwargs`:
+    following keyword arguments are allowed.
+
+    -   `request_date`:
+        the same as in `add_auth`.
+
+    -   `signing_date`:
+        the same as in `add_auth`.
 
 #   Author
 

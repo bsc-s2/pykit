@@ -1,10 +1,9 @@
 #!/usr/bin/env python2.6
 # coding: utf-8
 
-import time
 import unittest
 
-import awssign
+from pykit import awssign
 
 EMPTY_PAYLOAD_HASH = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 
@@ -321,7 +320,3 @@ class TestSigner(unittest.TestCase):
         ctx = self.signer.add_auth(request, signing_date='20150102')
         self.assertEqual('20150102/us-east-1/s3/aws4_request',
                          ctx['credential_scope'])
-
-
-if __name__ == "__main__":
-    unittest.main()

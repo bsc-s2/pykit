@@ -3,7 +3,7 @@
 
 import unittest
 
-import awssign
+from pykit import awssign
 
 
 class TestSigner(unittest.TestCase):
@@ -33,7 +33,3 @@ class TestSigner(unittest.TestCase):
                          fields['X-Amz-Credential'])
         self.assertEqual('eyJleHBpcmF0aW9uIjogIjIwMTgtMDEtMDFUMTI6MDA6MDAuMDAwWiIsICJjb25kaXRpb24iOiBbWyJzdGFydHMtd2l0aCIsICIka2V5IiwgIiJdLCB7ImJ1Y2tldCI6ICJ0ZXN0LWJ1Y2tldCJ9XX0=',
                          fields['Policy'])
-
-
-if __name__ == "__main__":
-    unittest.main()

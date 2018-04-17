@@ -178,7 +178,7 @@ class SigV4(object):
     def _derive_signing_key(self, secret_key, credential_scope):
         scope_items = credential_scope.split('/')
 
-        k_date = self._make_hmac_sha256( 'AWS4' + secret_key, scope_items[0])
+        k_date = self._make_hmac_sha256('AWS4' + secret_key, scope_items[0])
         k_region = self._make_hmac_sha256(k_date, scope_items[1])
         k_service = self._make_hmac_sha256(k_region, scope_items[2])
         k_signing = self._make_hmac_sha256(k_service, scope_items[3])

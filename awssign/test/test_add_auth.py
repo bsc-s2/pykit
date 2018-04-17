@@ -3,10 +3,10 @@
 
 import unittest
 
-import awssign
+from pykit import awssign
 
 
-class TestSigner(unittest.TestCase):
+class TestAddAuth(unittest.TestCase):
 
     def test_basic(self):
         signer = awssign.Signer('access_key', 'secret_key')
@@ -83,7 +83,3 @@ class TestSigner(unittest.TestCase):
         self.assertEqual('20190101T120000Z', ctx['request_date'])
         self.assertEqual(
             'foo;host;x-amz-content-sha256;x-amz-date', ctx['signed_headers'])
-
-
-if __name__ == "__main__":
-    unittest.main()

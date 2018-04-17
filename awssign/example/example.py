@@ -1,8 +1,9 @@
 #!/usr/bin/env python
+# coding: utf-8
 
 import time
 
-import awssign
+from pykit import awssign
 
 # to sign a request, you need to provide a dict which contain 'varb',
 # 'uri', 'headers'
