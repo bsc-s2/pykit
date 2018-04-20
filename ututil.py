@@ -100,7 +100,8 @@ def dd(*msg):
     And dd always write log to log file in /tmp dir.
     """
 
-    s = ' '.join([str(x) for x in msg])
+    s = ' '.join([x.encode('utf-8') if isinstance(x, unicode) else str(x)
+                    for x in msg])
 
     _init()
 
