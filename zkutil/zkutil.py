@@ -1,12 +1,19 @@
 
+import hashlib
 import os
 import types
 
 from pykit import net
 
+
+FULL_ACL = ('c', 'd', 'r', 'w', 'a')
+
 # We assumes that ip does not change during process running.
 # Display intra ip if presents, or display pub ip.
 host_ip4 = net.ips_prefer(net.get_host_ip4(), net.INN)
+
+class PermTypeError(Exception):
+    pass
 
 
 def lock_data(node_id):
@@ -39,3 +46,24 @@ def parse_lock_data(data_str):
         'ip': ip,
         'process_id': process_id,
     }
+
+
+def make_digest(acc):
+    # acc = "username:password"
+
+    digest = hashlib.sha1(acc).digest().encode('base64').strip()
+    return digest
+
+
+def make_acl_entry(username, password, permissions):
+
+    perms = ''
+    for c in permissions:
+        if c not in FULL_ACL:
+            raise PermTypeError()
+        perms += c
+
+    return "digest:{username}:{digest}:{permissions}".format(
+            username=username,
+            digest=make_digest(username + ":" + password),
+            permissions=perms)

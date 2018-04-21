@@ -8,6 +8,8 @@
 - [Methods](#methods)
   - [zkutil.lock_data](#zkutillock_data)
   - [zkutil.parse_lock_data](#zkutilparse_lock_data)
+  - [zkutil.make_digest](#zkutilmake_digest)
+  - [zkutil.make_acl_entry](#zkutilmake_acl_entry)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -78,6 +80,49 @@ It parse string built by `zkutil.lock_data()` to an dictionary.
 `process_id` is an `int`, the other two are `string`s.
 
 If any of these three field can not be parsed correctly, it will be `None`.
+
+##  zkutil.make_digest
+
+**syntax**:
+`zkutil.make_digest(acc)`
+
+It make a digest for string acc
+
+The `acc` string is in form:
+
+```
+username:password
+
+```
+
+**return**:
+a digest string.
+
+
+##  zkutil.make_acl_entry
+
+**syntax**:
+`zkutil.make_acl_entry(username, password, permissions)`
+
+It concat `username`, `digest` and `permissions` to a string as acl entry.
+
+**arguments**:
+-   `username`:
+    the name of zookeeper user.
+
+-   `password`:
+    the password of zookeeper user.
+
+-   `permissions`:
+    a string, a list or a tuple.
+    each element in `permissions` is a char who should be included in `cdrwa`. If `permissions` contains extra element, `PermTypeError` will be raised.
+
+**return**
+    a string in form:
+```
+"digest:<username>:<digest>:<permissions>"
+```
+where `digest` is a string build by `zkutil.make_digest()`
 
 #   Author
 
