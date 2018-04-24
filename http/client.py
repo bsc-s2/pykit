@@ -47,7 +47,8 @@ class Client(object):
 
     stopwatch_root_name = 'pykit.http.Client'
 
-    def __init__(self, host, port, timeout=60, stopwatch_kwargs=None):
+    def __init__(self, host, port, timeout=60,
+                 stopwatch_kwargs=None, https_context=None):
 
         self.host = host
         self.port = port
@@ -60,6 +61,7 @@ class Client(object):
         self.status = None
         self.headers = {}
         self.recv_iter = None
+        self.https_context = https_context
 
         self.stopwatch_kwargs = {
             # min_tracing_milliseconds=0 to trace all events. StopWatch trace
@@ -146,6 +148,9 @@ class Client(object):
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.settimeout(self.timeout)
             self.sock.connect((self.host, self.port))
+            if self.https_context is not None:
+                self.sock = self.https_context.wrap_socket(self.sock,
+                                                           server_hostname=self.host)
 
         bufs = ['{method} {uri} HTTP/1.1'.format(method=method, uri=uri), ]
 

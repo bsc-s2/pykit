@@ -2,7 +2,9 @@
 # coding: utf-8
 
 import gc
+import os
 import socket
+import ssl
 import threading
 import time
 import unittest
@@ -19,6 +21,7 @@ HOST = '127.0.0.1'
 PORT = 38002
 KB = 1024
 MB = (1024**2)
+HOME_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestHttpClient(unittest.TestCase):
@@ -330,6 +333,22 @@ class TestHttpClient(unittest.TestCase):
 
         self.assertEqual([], h.get_trace())
 
+    def test_https(self):
+        cases = (
+            ('/get_1b', 'a'),
+            ('/get_10k', 'bc' * 5 * KB),
+            ('/get_30m', 'cde' * 10 * MB),
+        )
+
+        context = ssl._create_unverified_context()
+        cli = http.Client(HOST, PORT, https_context=context)
+        for uri, expected_res in cases:
+            cli.request(uri)
+            body = cli.read_body(None)
+
+            self.assertEqual(200, cli.status)
+            self.assertEqual(expected_res, body)
+
     def __init__(self, *args, **kwargs):
 
         super(TestHttpClient, self).__init__(*args, **kwargs)
@@ -358,6 +377,11 @@ class TestHttpClient(unittest.TestCase):
         else:
             addr = (HOST, PORT)
             self.http_server = HTTPServer(addr, Handle)
+            if 'https' in self._testMethodName:
+                cert_file = os.path.join(HOME_PATH, 'test_https.pem')
+                self.http_server.socket = ssl.wrap_socket(self.http_server.socket,
+                                                          certfile=cert_file,
+                                                          server_side=True)
             self.http_server.serve_forever()
 
     def _special_case_handle(self):

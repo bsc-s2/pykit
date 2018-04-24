@@ -223,7 +223,7 @@ Whether response body is chunked encoding or not.
 ##  http.Client
 
 **syntax**:
-`http.Client(host, port, timeout=60, stopwatch_kwargs=None)`
+`http.Client(host, port, timeout=60, stopwatch_kwargs=None, https_context=None)`
 
 HTTP client class
 
@@ -254,6 +254,9 @@ HTTP client class
                      min_tracing_milliseconds=3,
                      time_func=None):
     ```
+
+-   `https_context`:
+    a `ssl.SSLContext` instance describing the various SSL options. Defaults to `None`.
 
 #   Methods
 
