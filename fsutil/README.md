@@ -16,6 +16,7 @@
     - [Cat.iterate](#catiterate)
     - [Cat.cat](#catcat)
     - [Cat.stat_path](#catstat_path)
+    - [Cat.reset_stat](#catreset_stat)
 - [Methods](#methods)
   - [fsutil.assert_mountpoint](#fsutilassert_mountpoint)
   - [fsutil.get_all_mountpoint](#fsutilget_all_mountpoint)
@@ -280,6 +281,15 @@ Returns the full path of the file to store scanning offset.
 **return**:
 string
 
+###  Cat.reset_stat
+
+Remove the file used to store scanning offset.
+
+**syntax**:
+`Cat.reset_stat()`
+
+**return**:
+Nothing
 
 # Methods
 

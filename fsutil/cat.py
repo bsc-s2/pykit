@@ -368,6 +368,13 @@ class Cat(object):
 
         return None
 
+    def reset_stat(self):
+        stat_path = self.stat_path()
+        if not os.path.isfile(stat_path):
+            return
+
+        os.remove(stat_path)
+
 
 def _file_size(f):
     st = os.fstat(f.fileno())

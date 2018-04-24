@@ -487,6 +487,43 @@ class TestCat(unittest.TestCase):
 
         self.assertEqual(['0' * 99 + '\n'], rst)
 
+    def test_reset_stat(self):
+        cat = fsutil.Cat(self.fn, strip=True)
+        force_remove(cat.stat_path())
+
+        append_lines(self.fn, ['123'])
+
+        rst = []
+        try:
+            for l in cat.iterate(timeout=0.1):
+                rst.append(l)
+        except fsutil.NoData:
+            pass
+
+        self.assertEqual(['123'], rst)
+
+        append_lines(self.fn, ['456'])
+
+        rst = []
+        try:
+            for l in cat.iterate(timeout=0.1):
+                rst.append(l)
+        except fsutil.NoData:
+            pass
+
+        self.assertEqual(['456'], rst)
+
+        cat.reset_stat()
+
+        rst = []
+        try:
+            for l in cat.iterate(timeout=0.1):
+                rst.append(l)
+        except fsutil.NoData:
+            pass
+
+        self.assertEqual(['123', '456'], rst)
+
 
 def force_remove(fn):
 
