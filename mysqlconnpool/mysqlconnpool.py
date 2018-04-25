@@ -133,12 +133,11 @@ def conn_query(conn, sql, use_dict=True):
     return rst
 
 
-def new_connection(conn_argkw, conv=None, options=None):
+def new_connection(conn_argkw, options=None):
 
     # useful arg could be added in future.:
     # conn_argkw.init_command
 
-    conv = conv or {}
     options = options or {}
 
     opt = {
@@ -146,7 +145,7 @@ def new_connection(conn_argkw, conv=None, options=None):
     }
     opt.update(options)
 
-    conn = MySQLdb.connect(conv=conv, **conn_argkw)
+    conn = MySQLdb.connect(**conn_argkw)
     for k, v in opt.items():
         conn.query('set {k}={v}'.format(k=k, v=v))
 

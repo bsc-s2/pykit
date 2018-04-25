@@ -11,6 +11,7 @@ import MySQLdb
 
 from pykit import mysqlconnpool
 from pykit import ututil
+from pykit import utdocker
 
 dd = ututil.dd
 
@@ -58,6 +59,7 @@ class Testmysqlconnpool(unittest.TestCase):
 
     def tearDown(self):
         stop_mysql_server()
+        utdocker.remove_container(mysql_test_name)
 
     def test_pool_name(self):
 
@@ -210,6 +212,33 @@ class Testmysqlconnpool(unittest.TestCase):
 
         databases = [x[0] for x in rst]
         self.assertTrue('mysql' in databases)
+
+    def test_query_charset(self):
+
+        sql_create_table = ('CREATE TABLE `test`.`q` ( `name` varchar(128) NOT NULL)'
+                            ' ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin')
+
+        pool = mysqlconnpool.make({
+            'host': self.mysql_ip,
+            'port': mysql_test_port,
+            'user': mysql_test_user,
+            'passwd': mysql_test_password,
+            'charset': 'utf8',
+        })
+
+        rst = pool.query('CREATE DATABASE `test`')
+        dd('create database rst: ', rst)
+
+        rst = pool.query(sql_create_table)
+        dd('create table rst: ', rst)
+
+        rst = pool.query('INSERT INTO `test`.`q` (`name`) VALUES ("我")')
+        dd('insert rst: ', rst)
+
+        rst = pool.query('SELECT * FROM `test`.`q`')
+        dd('select rst: ', rst)
+
+        self.assertEqual(({'name': u'\u6211'},), rst)
 
 
 def start_mysql_server():
