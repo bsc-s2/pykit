@@ -1,17 +1,41 @@
 #!/bin/sh
 
-# usage:
-#     script/t.sh [-v]
-#     script/t.sh [-v] zkutil
-#     script/t.sh [-v] zkutil.test
-#     script/t.sh [-v] zkutil.test_zkutil
-#     script/t.sh [-v] zkutil.test_zkutil.TestZKUtil
-#     script/t.sh [-v] zkutil.test_zkutil.TestZKUtil.test_lock_data
+usage()
+{
+    cat <<-END
+Usage:
+    script/t.sh
+    script/t.sh zkutil
+    script/t.sh zkutil.test
+    script/t.sh zkutil.test.test_zkutil
+    script/t.sh zkutil.test.test_zkutil.TestZKUtil
+    script/t.sh zkutil.test.test_zkutil.TestZKUtil.test_lock_data
+
+Options:
+    -v                  Display dependency check.
+                        Display case names.
+
+    -vv | -v -v         Display debug message in unittest script: dd().
+
+    -C                  Skip dependency check.
+
+    -h                  Display this message.
+
+    -p                  Specify python version to run the test.
+                        By default it is "2" for python2.
+
+Example:
+    script/t.sh -C -vv -p 3.6 zkutil.test.test_zkutil
+END
+}
 
 flag=
 ut_debug=
 verbosity=
 check_dep=1
+pyth=
+pyth_ver=2
+
 while [ "$#" -gt 0 ]; do
 
     # -v or -vv
@@ -30,10 +54,20 @@ while [ "$#" -gt 0 ]; do
         # quick mode,  do not check dependency
         check_dep=0
         shift
+    elif [ "$1" = "-h" ]; then
+        shift
+        usage
+        exit 0
+    elif [ "$1" = "-p" ]; then
+        shift
+        pyth_ver=$1
+        shift
     else
         break
     fi
 done
+
+pyth=python$pyth_ver
 
 if [ "$verbosity" = 'vv' ]; then
     ut_debug=1
@@ -56,7 +90,7 @@ if [ "$check_dep" = "1" ]; then
     for _mod in $(find pykit -mindepth 2 -maxdepth 2 -type f -name __init__.py); do
         mod=${_mod#pykit/}
         mod=${mod%/__init__.py}
-        if msg=$(python2 -c 'import pykit.'$mod 2>&1); then
+        if msg=$($pyth -c 'import pykit.'$mod 2>&1); then
             if [ "$verbosity" != "" ]; then
                 printf "test importing $mod: OK\n"
             fi
@@ -86,10 +120,10 @@ fi
 # UT_DEBUG controls if dd() should output debug log to stdout.
 # see ututil.py
 
-if python2 -c 'import '$pkg 2>/dev/null; then
+if $pyth -c 'import '$pkg 2>/dev/null; then
     # it is a module
-    PYTHONPATH="$(pwd)" UT_DEBUG=$ut_debug python2 -m unittest discover -c $flag --failfast -s "$pkg"
+    PYTHONPATH="$(pwd)" UT_DEBUG=$ut_debug $pyth -m unittest discover -c $flag --failfast -s "$pkg"
 else
     # it is a class or function: pykit.zkutil.test.test_zkutil.TestXXX
-    PYTHONPATH="$(pwd)" UT_DEBUG=$ut_debug python2 -m unittest -c $flag --failfast "$pkg"
+    PYTHONPATH="$(pwd)" UT_DEBUG=$ut_debug $pyth -m unittest -c $flag --failfast "$pkg"
 fi
