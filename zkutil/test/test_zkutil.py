@@ -1,6 +1,6 @@
 import os
-import unittest
 import types
+import unittest
 
 from pykit import net
 from pykit import zkutil

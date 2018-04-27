@@ -5,12 +5,12 @@ import types
 
 from pykit import net
 
-
 FULL_ACL = ('c', 'd', 'r', 'w', 'a')
 
 # We assumes that ip does not change during process running.
 # Display intra ip if presents, or display pub ip.
 host_ip4 = net.ips_prefer(net.get_host_ip4(), net.INN)
+
 
 class PermTypeError(Exception):
     pass
@@ -64,6 +64,6 @@ def make_acl_entry(username, password, permissions):
         perms += c
 
     return "digest:{username}:{digest}:{permissions}".format(
-            username=username,
-            digest=make_digest(username + ":" + password),
-            permissions=perms)
+        username=username,
+        digest=make_digest(username + ":" + password),
+        permissions=perms)
