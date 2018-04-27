@@ -22,3 +22,7 @@ subprocess32==3.2.7
 
 
 # numpy==1.7.1
+
+
+# zkutil
+kazoo==2.2.1
