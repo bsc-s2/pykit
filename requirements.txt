@@ -2,6 +2,12 @@
 #   pip2 install -r requirements.txt
 
 
+# tool kits
+pyflakes
+autopep8
+autoflake
+isort
+
 # fsutil
 # wsjobd
 psutil==4.3.1
