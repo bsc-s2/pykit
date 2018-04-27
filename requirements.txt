@@ -13,6 +13,20 @@ isort
 psutil==4.3.1
 
 
+# net
+netifaces==0.10.6
+
+
+# timeutil
+# jobscheduler
+tzlocal==1.5.1
+
+
+# timeutil
+# jobscheduler
+pytz==2018.4
+
+
 # mysqlconnpool.test
 # etcd.test
 # redisutil.test
