@@ -3,8 +3,8 @@ import types
 import unittest
 
 from pykit import net
-from pykit import zkutil
 from pykit import ututil
+from pykit import zkutil
 
 dd = ututil.dd
 
@@ -17,7 +17,7 @@ class TestZKutil(unittest.TestCase):
         dd(k)
         elts = k.split('-')
 
-        self.assertEqual(8, len(elts))
+        self.assertEqual(4, len(elts))
 
         self.assertEqual('a', elts[0])
         self.assertTrue(net.is_ip4(elts[1]))
@@ -40,7 +40,7 @@ class TestZKutil(unittest.TestCase):
             rst = zkutil.parse_lock_data(inp)
 
             self.assertTrue(
-                set(['node_id', 'ip', 'process_id', 'uuid']) == set(rst.keys()))
+                set(['node_id', 'ip', 'process_id', 'counter']) == set(rst.keys()))
             self.assertEqual(
                 expected, (rst['node_id'], rst['ip'], rst['process_id']))
 
