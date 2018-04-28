@@ -39,10 +39,11 @@ class TestZKutil(unittest.TestCase):
 
             rst = zkutil.parse_lock_data(inp)
 
-            self.assertTrue(
-                set(['node_id', 'ip', 'process_id', 'counter']) == set(rst.keys()))
-            self.assertEqual(
-                expected, (rst['node_id'], rst['ip'], rst['process_id']))
+            self.assertEqual(set(['node_id', 'ip', 'process_id', 'counter']),
+                             set(rst.keys()))
+
+            self.assertEqual(expected,
+                             (rst['node_id'], rst['ip'], rst['process_id']))
 
     def test_make_digest(self):
 
