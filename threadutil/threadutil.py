@@ -25,9 +25,14 @@ def start_thread(target, name=None, args=None, kwargs=None, daemon=False):
     return t
 
 
-def start_daemon_thread(target, name=None, args=None, kwargs=None):
+def start_daemon(target, name=None, args=None, kwargs=None):
     return start_thread(target, name=name, args=args, kwargs=kwargs,
                         daemon=True)
+
+
+def start_daemon_thread(target, name=None, args=None, kwargs=None):
+    # deprecated
+    return start_daemon(target, name=name, args=args, kwargs=kwargs)
 
 
 def raise_in_thread(thread, exctype):

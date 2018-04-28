@@ -93,7 +93,7 @@ class TestThreadutil(unittest.TestCase):
 
         self.assertEqual(array, [3, 2, 1])
 
-    def test_start_daemon_thread(self):
+    def test_start_daemon(self):
         noop = lambda : None
 
         # Thread should be non-daemon by default
@@ -103,5 +103,5 @@ class TestThreadutil(unittest.TestCase):
         t = tu.start_thread(noop, daemon=True)
         self.assertTrue(t.daemon)
 
-        t = tu.start_daemon_thread(noop)
+        t = tu.start_daemon(noop)
         self.assertTrue(t.daemon)

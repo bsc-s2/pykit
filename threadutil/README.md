@@ -8,7 +8,7 @@
 - [Description](#description)
 - [Methods](#methods)
   - [start_thread](#start_thread)
-  - [start_daemon_thread](#start_daemon_thread)
+  - [start_daemon](#start_daemon)
   - [raise_in_thread](#raise_in_thread)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
@@ -84,7 +84,7 @@ Create and start a thread with the given parameters.
 
 The created thread object.
 
-## start_daemon_thread
+## start_daemon
 
 Create and start a daemon thread.
 It is same as `threadutil.start_thread()` except that it sets argument `daemon=True`.
