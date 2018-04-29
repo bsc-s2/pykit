@@ -1,5 +1,4 @@
 import os
-import types
 import unittest
 
 from pykit import net
@@ -58,13 +57,9 @@ class TestZKutil(unittest.TestCase):
 
     def test_make_acl_entry(self):
 
-        def iter_perms():
-            for c in 'cdrwa':
-                yield c
-
         username = 'zookeeper_user'
         password = 'MT80fFT7vh'
-        perm_cases = (
+        perm_cases = [
             '',
             'rw',
             'cdrwa',
@@ -74,16 +69,18 @@ class TestZKutil(unittest.TestCase):
             (),
             ('c',),
             ('c', 'r', 'w'),
-            iter_perms(),
-        )
+            iter('cdrwa'),
+        ]
 
         for inp in perm_cases:
 
-            if isinstance(inp, types.GeneratorType):
+            if isinstance(inp, type(iter(''))):
                 perm = 'cdrwa'
             else:
                 perm = ''.join(inp)
 
+            dd('inp=', inp)
+            dd('perm=', perm)
             rst = zkutil.make_acl_entry(username, password, inp)
 
             rst_splited = rst.split(':')
@@ -114,3 +111,49 @@ class TestZKutil(unittest.TestCase):
 
             with self.assertRaises(zkutil.PermTypeError):
                 zkutil.make_acl_entry(username, password, inp)
+
+    def test_permission_convert(self):
+
+        perm_cases = (
+            ('',              [], ''),
+            ('rw',            ['read', 'write'], 'rw'),
+            ('cdrwa',         ['create', 'delete', 'read', 'write', 'admin'], 'cdrwa'),
+            ([],              [], ''),
+            (['c'],           ['create'], 'c'),
+            (['c', 'r', 'r'], ['create', 'read', 'read'], 'crr'),
+            ((),              [], ''),
+            (('c',),          ['create'], 'c'),
+            (('c', 'r', 'w'), ['create', 'read', 'write'], 'crw'),
+            (iter('cdrwa'),   ['create', 'delete', 'read', 'write', 'admin'], 'cdrwa'),
+        )
+
+        for inp, lng, short in perm_cases:
+
+            rst = zkutil.perm_to_long(inp)
+            self.assertEqual(lng, rst)
+
+            rst = zkutil.perm_to_short(lng)
+            self.assertEqual(short, rst)
+
+        # invalid short format
+
+        invalid_short = (
+            'abc',
+            ['cde'],
+            ['a', 'v'],
+            ('rw',),
+            ('a', 'b', 'c'),
+        )
+
+        for inp in invalid_short:
+            self.assertRaises(zkutil.PermTypeError, zkutil.perm_to_long, inp)
+
+        # invalid long format
+
+        invalid_long = (
+            'abc',
+            ['foo'],
+        )
+
+        for inp in invalid_long:
+            self.assertRaises(zkutil.PermTypeError, zkutil.perm_to_short, inp)

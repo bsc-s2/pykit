@@ -6,7 +6,20 @@ import types
 
 from pykit import net
 
-FULL_ACL = ('c', 'd', 'r', 'w', 'a')
+PERM_TO_LONG = {
+    'c': 'create',
+    'd': 'delete',
+    'r': 'read',
+    'w': 'write',
+    'a': 'admin',
+}
+PERM_TO_SHORT = {
+    'create': 'c',
+    'delete': 'd',
+    'read': 'r',
+    'write': 'w',
+    'admin': 'a',
+}
 
 # We assumes that ip does not change during process running.
 # Display intra ip if presents, or display pub ip.
@@ -72,11 +85,37 @@ def make_acl_entry(username, password, permissions):
 
     perms = ''
     for c in permissions:
-        if c not in FULL_ACL:
-            raise PermTypeError()
+        if c not in PERM_TO_LONG:
+            raise PermTypeError(c)
         perms += c
 
     return "digest:{username}:{digest}:{permissions}".format(
         username=username,
         digest=make_digest(username + ":" + password),
         permissions=perms)
+
+
+def perm_to_long(short):
+
+    rst = []
+
+    for c in short:
+        if c not in PERM_TO_LONG:
+            raise PermTypeError(c)
+
+        rst.append(PERM_TO_LONG[c])
+
+    return rst
+
+
+def perm_to_short(lst):
+
+    rst = ''
+
+    for p in lst:
+        if p not in PERM_TO_SHORT:
+            raise PermTypeError(p)
+
+        rst += PERM_TO_SHORT[p]
+
+    return rst
