@@ -4,9 +4,9 @@ import time
 import unittest
 
 from pykit import redisutil
+from pykit import threadutil
 from pykit import utdocker
 from pykit import ututil
-from pykit import threadutil
 
 dd = ututil.dd
 
@@ -16,6 +16,10 @@ redis_port = 6379
 
 
 class TestRedis(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        utdocker.pull_image(redis_tag)
 
     def setUp(self):
 
