@@ -5,9 +5,9 @@ import os
 import time
 import unittest
 
+from pykit import daemonize
 from pykit import proc
 from pykit import ututil
-from pykit import daemonize
 
 dd = ututil.dd
 
@@ -16,7 +16,7 @@ this_base = os.path.dirname(__file__)
 
 def subproc(script, env=None):
     if env is None:
-        env=dict(PYTHONPATH=this_base + '/../..',)
+        env = dict(PYTHONPATH=this_base + '/../..',)
 
     return proc.shell_script(script, env=env)
 

@@ -1,7 +1,7 @@
-import daemonize
 import os
 import sys
 
+import daemonize
 from pykit import proc
 
 foo_fn = '/tmp/foo'
