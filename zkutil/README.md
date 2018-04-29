@@ -12,6 +12,14 @@
   - [zkutil.make_acl_entry](#zkutilmake_acl_entry)
   - [zkutil.perm_to_long](#zkutilperm_to_long)
   - [zkutil.perm_to_short](#zkutilperm_to_short)
+- [Exceptions](#exceptions)
+  - [zkutil.LockTimeout](#zkutillocktimeout)
+- [Classes](#classes)
+  - [zkutil.ZKLock](#zkutilzklock)
+    - [Synopsis](#synopsis)
+    - [Why we need this](#why-we-need-this)
+    - [zkutil.ZKLock.acquire](#zkutilzklockacquire)
+    - [zkutil.ZKLock.release](#zkutilzklockrelease)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -171,6 +179,199 @@ such as `cdrw`.
 
 **return**:
 a string of short permissions.
+
+
+#  Exceptions
+
+## zkutil.LockTimeout
+
+Raise if `ZKLock` timed out on waiting to acquire a lock.
+
+
+#  Classes
+
+
+##  zkutil.ZKLock
+
+**syntax**:
+`zkutil.ZKLock(lock_name, node_id=None, zkclient=None, hosts=None, on_lost=None,
+               acl=None, auth=None, lock_dir=None, timeout=10)`
+
+ZKLock implements a zookeeper based distributed lock.
+
+
+### Synopsis
+
+Using default configuration:
+
+```python
+"""
+config.zk_acl      # (('xp', '123', 'cdrwa'), ('foo', 'bar', 'rw'))
+config.zk_auth     # ('digest', 'xp', '123')
+config.zk_hosts    # '127.0.0.1:2181'
+config.zk_node_id  # 'web-01'
+config.zk_lock_dir # 'lock/'
+"""
+with zkutil.ZKLock('foo_lock', on_lost=my_callback):
+    do_something()
+```
+
+Specify connection arguments. When locks of one of them, use the value defined
+in `config.py`.
+
+```python
+with zkutil.ZKLock('foo_lock', on_lost=my_callback,
+                   hosts='127.0.0.1:2181',
+                   acl=(('xp', '123', 'cdrwa'),),
+                   auth=('digest', 'xp', '123'),
+                   node_id='web-3',
+                   lock_dir='my_locks/'):
+    do_something()
+```
+
+Pass in a `KazooClient`.
+Before pass it to `ZKLock`, you should deal with these things:
+
+-   Add node state change listener, to deal with connection issue.
+    If connection lost, you should stop doing everything within the lock.
+    Because zookeeper might have deleted the zk-node for lock and other process
+    the could acquire the lock.
+
+-   `add_auth` after connecting to zk.
+
+```python
+self.zk = KazooClient(hosts='127.0.0.1:2181')
+self.zk.start()
+self.zk.add_auth('digest', 'xp:123')
+with zkutil.ZKLock('foo_lock', ...):
+    do_something();
+```
+
+
+### Why we need this
+
+It is similar to standard zookeeper mechanism except:
+
+> It does not relies on `sequence` node to enqueue lock request.
+> But instead, all processes try to create a same zk-node to acquire the lock.
+> Thus it does not guarantee a lock will be acquired in order.
+> And it might starve processes.
+>
+> `sequence` node based lock requires a dir for each lock.
+> Thus it is not suitable in case there are a lot locks.
+>
+> And a single node lock is much easier if you'd like to retrieve lock holders
+> info.
+
+**arguments**:
+
+-   `lock_name`:
+    the lock name.
+    It is used as part of zk-node to create.
+
+-   `node_id`:
+    is used to identify a host.
+
+    Different host must have different `node_id`.
+    Or it can not differentiate what host a node belongs to, during reconnecting
+    to zk.
+
+    By default it uses `config.zk_node_id`
+
+    > Why this?
+    >   ZKLock sends a `create` command to zk to acquire a lock.
+    >   But it is possible a process successfully created a node but did not
+    >   receive a success response(with a node left on server).
+    >   In this case we always re-get the node, no matter whether we received
+    >   the response of the creation.
+    >   And check node value(with node_id embedded in it), to see if this
+    >   zk-node is created by this host.
+
+-   `zkclient`:
+    is a `KazooClient` instance connected to zk.
+
+    If this argument  is not `None`, `hosts` and `auth` are ignored.
+
+    If this argument is `None`, `on_lost` must be specified to watch lock node
+    state change event. And connection is maintained by `ZKLock` and will be
+    destroyed at once after lock released.
+
+-   `hosts`:
+    is a comma separated address list to specify zookeeper cluster, such as:
+    `127.0.0.1:2181,128.0.0.2:2181`
+
+    If it is `None`, and `zkclient` is `None`, `ZKLock` tries to use
+    `config.zk_hosts` to establish a connection.
+
+-   `on_lost`:
+    is a `callable` that accepts no argument to handle connection state change
+    event.
+    Such as:
+
+    ```python
+    def my_on_lost():
+        sys.exit()
+
+    with zkutil.ZKLock('foo_lock', on_lost=my_on_lost):
+        do_something()
+    ```
+
+-   `acl`:
+    is a two level tuple to specify the ACL for creating a lock node.
+
+    `acl` can specify access control config for multi users, such as:
+    `(('xp', 'xp-s-password', 'cdrwa'), ('other', 'password', 'r'))`
+
+    If it is `None`, `ZKLock` uses `config.zk_acl` for created node.
+
+-   `auth`:
+    is the authorization info to connect to zookeeper.
+    It is used only when `zkclient` is `None`.
+
+    If it is `None`, `ZKLock` uses `config.zk_auth` to connect.
+
+-   `lock_dir`:
+    specifies base dir of lock node.
+    Such as `/mycluster/mylocks/`.
+
+    If it is `None`, `ZKLock` uses `config.zk_lock_dir`.
+
+    If `config.zk_lock_dir` is `None` it uses a predefined const: `lock/`.
+
+-   `timeout`:
+    specifies how long in second to wait before acquiring a lock.
+
+    By default it is 10(second).
+
+
+###  zkutil.ZKLock.acquire
+
+**syntax**:
+`ZKLock.acquire(timeout=None)`
+
+Acquire the lock in blocking mode.
+
+**arguments**:
+
+-   `timeout`:
+    is time in second to wait.
+
+**return**:
+Nothing
+
+
+###  zkutil.ZKLock.release
+
+**syntax**:
+`ZKLock.release()`
+
+Release the lock if it has been locked.
+Otherwise return silently.
+
+If this lock initiated a connection by itself, it will be closed.
+
+**return**:
+Nothing
 
 
 #   Author

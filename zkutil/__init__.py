@@ -10,6 +10,14 @@ from .zkutil import (
 
 )
 
+from .zklock import (
+    LockTimeout,
+
+    ZKLock,
+
+    make_kazoo_digest_acl,
+)
+
 __all__ = [
     "PermTypeError",
 
@@ -19,4 +27,10 @@ __all__ = [
     "parse_lock_id",
     "perm_to_long",
     "perm_to_short",
+
+    "LockTimeout",
+
+    "ZKLock",
+
+    "make_kazoo_digest_acl",
 ]
