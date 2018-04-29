@@ -141,7 +141,7 @@ def get_host_ip4(iface_prefix=None, exclude_prefix=None):
 
             for addr in addrs[netifaces.AF_INET]:
 
-                ip = addr['addr']
+                ip = str(addr['addr'])
 
                 if not is_ip4_loopback(ip):
                     ips.append(ip)

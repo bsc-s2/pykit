@@ -210,6 +210,10 @@ class TestNet(unittest.TestCase):
         ips = net.get_host_ip4(iface_prefix='')
         self.assertNotEqual([], ips)
 
+        for ip in ips:
+            self.assertIsInstance(ip, str)
+            self.assertTrue(net.is_ip4(ip))
+
         ips2 = net.get_host_ip4(exclude_prefix='')
         self.assertEqual([], ips2, 'exclude any')
 
