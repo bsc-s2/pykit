@@ -15,6 +15,7 @@ from pykit import utdocker
 
 dd = ututil.dd
 
+mysql_test_ip = '192.168.52.40'
 mysql_test_password = '123qwe'
 mysql_test_port = 3306
 mysql_test_user = 'root'
@@ -28,17 +29,26 @@ class ShellError(Exception):
 
 class Testmysqlconnpool(unittest.TestCase):
 
-    mysql_ip = None
-
     @classmethod
     def setUpClass(cls):
         utdocker.pull_image(mysql_test_tag)
 
     def setUp(self):
 
-        self.mysql_ip = start_mysql_server()
+        utdocker.start_container(
+                mysql_test_name,
+                mysql_test_tag,
+                ip=mysql_test_ip,
+                env={
+                    'MYSQL_ROOT_PASSWORD': mysql_test_password,
+                },
+                port_bindings={
+                    mysql_test_port: mysql_test_port
+                }
 
-        addr = (self.mysql_ip, mysql_test_port)
+        )
+
+        addr = (mysql_test_ip, mysql_test_port)
 
         # some time it takes several seconds to start listening
         for ii in range(40):
@@ -55,21 +65,20 @@ class Testmysqlconnpool(unittest.TestCase):
             raise
 
         self.pool = mysqlconnpool.make({
-            'host': self.mysql_ip,
+            'host': mysql_test_ip,
             'port': mysql_test_port,
             'user': mysql_test_user,
             'passwd': mysql_test_password,
         })
 
     def tearDown(self):
-        stop_mysql_server()
         utdocker.remove_container(mysql_test_name)
 
     def test_pool_name(self):
 
         pool = self.pool
 
-        name = '{0}:{1}'.format(self.mysql_ip, mysql_test_port)
+        name = '{0}:{1}'.format(mysql_test_ip, mysql_test_port)
 
         self.assertEqual(name, pool('stat')['name'])
 
@@ -223,7 +232,7 @@ class Testmysqlconnpool(unittest.TestCase):
                             ' ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin')
 
         pool = mysqlconnpool.make({
-            'host': self.mysql_ip,
+            'host': mysql_test_ip,
             'port': mysql_test_port,
             'user': mysql_test_user,
             'passwd': mysql_test_password,
@@ -243,84 +252,3 @@ class Testmysqlconnpool(unittest.TestCase):
         dd('select rst: ', rst)
 
         self.assertEqual(({'name': u'\u6211'},), rst)
-
-
-def start_mysql_server():
-
-    run_shell('service', 'docker', 'start')
-
-    if not docker_does_container_exist(mysql_test_name):
-
-        dd('create container: ' + mysql_test_name)
-        dcli = _docker_cli()
-        dcli.create_container(name=mysql_test_name,
-                              environment={
-                                  'MYSQL_ROOT_PASSWORD': mysql_test_password,
-                              },
-                              image=mysql_test_tag,
-                              )
-        time.sleep(2)
-
-    dd('start mysql: ' + mysql_test_name)
-    dcli = _docker_cli()
-    dcli.start(container=mysql_test_name)
-
-    dd('get mysql ip inside container')
-    rc, out, err = docker_cmd(
-        'run',
-        '-it',
-        '--link', mysql_test_name + ':mysql',
-        '--rm', mysql_test_tag,
-        'sh', '-c', 'exec echo "$MYSQL_PORT_3306_TCP_ADDR"',
-    )
-
-    ip = out.strip()
-    dd('ip: ' + repr(ip))
-
-    return ip
-
-
-def stop_mysql_server():
-
-    dcli = _docker_cli()
-    dcli.stop(container=mysql_test_name)
-
-
-def docker_does_container_exist(name):
-
-    dcli = _docker_cli()
-    try:
-        dcli.inspect_container(name)
-        return True
-    except docker.errors.NotFound:
-        return False
-
-
-def _docker_cli():
-    dcli = docker.Client(base_url='unix://var/run/docker.sock')
-    return dcli
-
-
-def docker_cmd(*args, **argkv):
-    args = ['docker'] + list(args)
-    return run_shell(*args, **argkv)
-
-
-def run_shell(*args, **argkv):
-
-    subproc = subprocess32.Popen(args,
-                               close_fds=True,
-                               cwd=None,
-                               stdout=subprocess32.PIPE,
-                               stderr=subprocess32.PIPE, )
-
-    out, err = subproc.communicate()
-
-    subproc.wait()
-
-    if subproc.returncode != 0:
-        raise ShellError(subproc.returncode, out, err, args, argkv)
-
-    rst = [subproc.returncode, out, err]
-
-    return rst
