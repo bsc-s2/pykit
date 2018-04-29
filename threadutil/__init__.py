@@ -4,7 +4,7 @@ from .threadutil import (
     raise_in_thread,
     start_thread,
     start_daemon,
-    start_daemon_thread, # deprecated
+    start_daemon_thread,  # deprecated
 )
 
 
@@ -14,5 +14,5 @@ __all__ = [
     'raise_in_thread',
     'start_thread',
     'start_daemon',
-    'start_daemon_thread', # deprecated
+    'start_daemon_thread',  # deprecated
 ]

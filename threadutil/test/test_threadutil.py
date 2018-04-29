@@ -1,12 +1,10 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import unittest
-import threading
 import time
+import unittest
 
 from pykit import threadutil
-
 
 tu = threadutil.threadutil
 
@@ -88,13 +86,13 @@ class TestThreadutil(unittest.TestCase):
         self.assertEqual(array, [1, 2, 3])
 
         t = tu.start_thread(_sort, args=(array, ),
-                                    kwargs={'reverse': True})
+                            kwargs={'reverse': True})
         t.join()
 
         self.assertEqual(array, [3, 2, 1])
 
     def test_start_daemon(self):
-        noop = lambda : None
+        def noop(): return None
 
         # Thread should be non-daemon by default
         t = tu.start_thread(noop)
