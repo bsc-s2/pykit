@@ -1,7 +1,7 @@
 import unittest
 
-from pykit import ututil
 from pykit import net
+from pykit import ututil
 
 dd = ututil.dd
 

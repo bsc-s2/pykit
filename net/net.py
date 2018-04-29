@@ -1,9 +1,9 @@
 import logging
 import re
-import sys
-import types
 import socket
 import struct
+import sys
+import types
 
 import netifaces
 import yaml
