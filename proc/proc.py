@@ -4,6 +4,7 @@
 import errno
 import logging
 import os
+
 import subprocess32
 
 logger = logging.getLogger(__name__)
@@ -38,12 +39,12 @@ def command(cmd, *arguments, **options):
     stdin = options.get('stdin', None)
 
     subproc = subprocess32.Popen([cmd] + list(arguments),
-                               close_fds=close_fds,
-                               cwd=cwd,
-                               env=env,
-                               stdin=subprocess32.PIPE,
-                               stdout=subprocess32.PIPE,
-                               stderr=subprocess32.PIPE, )
+                                 close_fds=close_fds,
+                                 cwd=cwd,
+                                 env=env,
+                                 stdin=subprocess32.PIPE,
+                                 stdout=subprocess32.PIPE,
+                                 stderr=subprocess32.PIPE, )
 
     out, err = subproc.communicate(input=stdin)
 
