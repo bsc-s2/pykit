@@ -3,7 +3,6 @@ import threading
 
 from pykit import heap
 
-
 default_priority = 10.0
 
 Empty = Queue.Empty
