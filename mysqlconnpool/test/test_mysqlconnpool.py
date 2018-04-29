@@ -30,6 +30,10 @@ class Testmysqlconnpool(unittest.TestCase):
 
     mysql_ip = None
 
+    @classmethod
+    def setUpClass(cls):
+        utdocker.pull_image(mysql_test_tag)
+
     def setUp(self):
 
         self.mysql_ip = start_mysql_server()
