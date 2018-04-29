@@ -1,9 +1,10 @@
-import time
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
-def limit_job_speed(max_job_speed, job_step = 1):
+
+def limit_job_speed(max_job_speed, job_step=1):
     speed_stat = {
         'start_time': time.time(),
         'job_num': 0,
@@ -29,10 +30,10 @@ def limit_job_speed(max_job_speed, job_step = 1):
 
                 logger.info('current speed: {speed}/s max_speed:{max_speed}/s'
                             ' job_num:{job_num} start_time:{start_time}'.format(
-                                speed = round(speed, 3),
-                                max_speed = max_speed,
-                                job_num = speed_stat['job_num'],
-                                start_time = speed_stat['start_time']))
+                                speed=round(speed, 3),
+                                max_speed=max_speed,
+                                job_num=speed_stat['job_num'],
+                                start_time=speed_stat['start_time']))
 
                 speed_stat['start_time'] = now
                 speed_stat['job_num'] = 0

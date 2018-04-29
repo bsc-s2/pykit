@@ -22,5 +22,5 @@ __all__ = [
 
     'JobWorkerError',
     'JobWorkerNotFound',
-     'limit_job_speed',
+    'limit_job_speed',
 ]
