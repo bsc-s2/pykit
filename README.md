@@ -125,6 +125,8 @@ fsutil.write_file('bar', '123') # write_file sets file uid and gid to 2 and 3.
 -   `gid`: specifies default group-id when file created, directory made.
 -   `log_dir`: specifies default base_dir when logger created.
 -   `cat_stat_dir`: specifies default stat_dir for all log cat class instances.
+-   `zk_node_id`:
+    specifies a string to identify this host, by default it is `uuid.getnode()`.
 
 
 See the `README.md` of sub modules for detail.
@@ -139,7 +141,7 @@ Run one of following to test all, a module, a TestCase or a function.
 ./script/t.sh zkutil.test
 ./script/t.sh zkutil.test.test_zkutil
 ./script/t.sh zkutil.test.test_zkutil.TestZKUtil
-./script/t.sh zkutil.test.test_zkutil.TestZKUtil.test_lock_data
+./script/t.sh zkutil.test.test_zkutil.TestZKUtil.test_lock_id
 ```
 
 #   For developer

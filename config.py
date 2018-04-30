@@ -1,5 +1,6 @@
 
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -25,3 +26,4 @@ gid                  = _get('gid')
 log_dir              = _get('log_dir')
 
 cat_stat_dir         = _get('cat_stat_dir')
+zk_node_id           = _get('zk_node_id', '%012x' % uuid.getnode())

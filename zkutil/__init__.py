@@ -1,10 +1,10 @@
 from .zkutil import (
     PermTypeError,
 
-    lock_data,
+    lock_id,
     make_acl_entry,
     make_digest,
-    parse_lock_data,
+    parse_lock_id,
     perm_to_long,
     perm_to_short,
 
@@ -13,10 +13,10 @@ from .zkutil import (
 __all__ = [
     "PermTypeError",
 
-    "lock_data",
+    "lock_id",
     "make_acl_entry",
     "make_digest",
-    "parse_lock_data",
+    "parse_lock_id",
     "perm_to_long",
     "perm_to_short",
 ]

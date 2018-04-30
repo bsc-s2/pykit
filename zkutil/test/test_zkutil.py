@@ -1,6 +1,8 @@
 import os
 import unittest
+import uuid
 
+from pykit import config
 from pykit import net
 from pykit import ututil
 from pykit import zkutil
@@ -10,9 +12,9 @@ dd = ututil.dd
 
 class TestZKutil(unittest.TestCase):
 
-    def test_lock_data(self):
+    def test_lock_id(self):
 
-        k = zkutil.lock_data('a')
+        k = zkutil.lock_id('a')
         dd(k)
         elts = k.split('-')
 
@@ -22,7 +24,24 @@ class TestZKutil(unittest.TestCase):
         self.assertTrue(net.is_ip4(elts[1]))
         self.assertEqual(os.getpid(), int(elts[2]))
 
-    def test_parse_lock_data(self):
+    def test_lock_id_default(self):
+
+        expected = '%012x' % uuid.getnode()
+
+        k = zkutil.lock_id()
+        dd(k)
+        self.assertEqual(expected, k.split('-')[0])
+
+        k = zkutil.lock_id(node_id=None)
+        dd(k)
+        self.assertEqual(expected, k.split('-')[0])
+
+        config.zk_node_id = 'a'
+        k = zkutil.lock_id(node_id=None)
+        dd(k)
+        self.assertEqual('a', k.split('-')[0])
+
+    def test_parse_lock_id(self):
 
         cases = (
                 ('', ('', None, None)),
@@ -36,7 +55,7 @@ class TestZKutil(unittest.TestCase):
 
         for inp, expected in cases:
 
-            rst = zkutil.parse_lock_data(inp)
+            rst = zkutil.parse_lock_id(inp)
 
             self.assertEqual(set(['node_id', 'ip', 'process_id', 'counter']),
                              set(rst.keys()))
