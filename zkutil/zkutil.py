@@ -110,27 +110,35 @@ def make_acl_entry(username, password, permissions):
         permissions=perms)
 
 
-def perm_to_long(short):
+def perm_to_long(short, lower=True):
 
     rst = []
 
     for c in short:
+        c = c.lower()
         if c not in PERM_TO_LONG:
             raise PermTypeError(c)
 
         rst.append(PERM_TO_LONG[c])
 
+    if not lower:
+        rst = [x.upper() for x in rst]
+
     return rst
 
 
-def perm_to_short(lst):
+def perm_to_short(lst, lower=True):
 
     rst = ''
 
     for p in lst:
+        p = p.lower()
         if p not in PERM_TO_SHORT:
             raise PermTypeError(p)
 
         rst += PERM_TO_SHORT[p]
+
+    if not lower:
+        rst = rst.upper()
 
     return rst

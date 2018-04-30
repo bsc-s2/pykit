@@ -176,3 +176,24 @@ class TestZKutil(unittest.TestCase):
 
         for inp in invalid_long:
             self.assertRaises(zkutil.PermTypeError, zkutil.perm_to_short, inp)
+
+    def test_permission_convert_case(self):
+
+        self.assertEqual(['CREATE', 'DELETE', 'READ', 'WRITE', 'ADMIN'],
+                         zkutil.perm_to_long('cdrwa', lower=False))
+
+        self.assertEqual(['CREATE', 'DELETE', 'READ', 'WRITE', 'ADMIN'],
+                         zkutil.perm_to_long('CDRWA', lower=False))
+
+        self.assertEqual(['create', 'delete', 'read', 'write', 'admin'],
+                         zkutil.perm_to_long('CDRWA'))
+
+        self.assertEqual('CDRWA',
+                         zkutil.perm_to_short(['create', 'delete', 'read', 'write', 'admin'],
+                                              lower=False))
+
+        self.assertEqual('CDRWA',
+                         zkutil.perm_to_short(['CREATE', 'DELETE', 'READ', 'WRITE', 'ADMIN'],
+                                              lower=False))
+        self.assertEqual('cdrwa',
+                         zkutil.perm_to_short(['CREATE', 'DELETE', 'READ', 'WRITE', 'ADMIN']))

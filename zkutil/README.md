@@ -132,9 +132,9 @@ where `digest` is a string build by `zkutil.make_digest()`
 ##  zkutil.perm_to_long
 
 **syntax**:
-`zkutil.perm_to_long(short)`
+`zkutil.perm_to_long(short, lower=True)`
 
-Convert short style zookeeper permissions(`cdrwa`)
+Convert short style zookeeper permissions(`cdrwa` or `CDRWA`)
 to standard permission list(`['create', 'delete', 'read', 'write', 'admin']`).
 
 **arguments**:
@@ -143,6 +143,10 @@ to standard permission list(`['create', 'delete', 'read', 'write', 'admin']`).
     is `iterable` of short permissions that can be used in `for-loop`.
     Such as `"cdrw"` or `['c', 'd']`
 
+-   `lower`:
+    specifies if convert result to lower or upper case.
+    By default it is `True`, for lower case.
+
 **return**:
 a list of standard permission.
 
@@ -150,7 +154,7 @@ a list of standard permission.
 ##  zkutil.perm_to_short
 
 **syntax**:
-`zkutil.perm_to_short(lst)`
+`zkutil.perm_to_short(lst, lower=True)`
 
 The reverse of `perm_to_long`:
 It convert a list of standard permissions back to a short permission string,
@@ -160,6 +164,10 @@ such as `cdrw`.
 
 -   `lst`:
     is a list of standard permissions, such as `['create', 'read']`.
+
+-   `lower`:
+    specifies if convert result to lower or upper case.
+    By default it is `True`, for lower case.
 
 **return**:
 a string of short permissions.
