@@ -212,6 +212,8 @@ class TestZKLock(unittest.TestCase):
 
     def test_config(self):
 
+        old = (config.zk_acl, config.zk_auth, config.zk_node_id)
+
         config.zk_acl = (('foo', 'bar', 'cd'),
                          ('xp', '123', 'cdrwa'))
 
@@ -240,6 +242,8 @@ class TestZKLock(unittest.TestCase):
             dd(acls)
 
             _check_ac(acls[0])
+
+        (config.zk_acl, config.zk_auth, config.zk_node_id) = old
 
     def test_hosts(self):
 

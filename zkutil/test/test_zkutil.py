@@ -204,3 +204,27 @@ class TestZKutil(unittest.TestCase):
                                               lower=False))
         self.assertEqual('cdrwa',
                          zkutil.perm_to_short(['CREATE', 'DELETE', 'READ', 'WRITE', 'ADMIN']))
+
+    def test_make_kazoo_digest_acl(self):
+
+        inp = (('foo', 'bar', 'cd'),
+               ('xp', '123', 'cdrwa'))
+
+        dd(inp)
+
+        rst = zkutil.make_kazoo_digest_acl(inp)
+        dd(rst)
+
+        self.assertEqual(2, len(rst))
+
+        ac = rst[0]
+        self.assertEqual('digest', ac.id.scheme)
+        self.assertEqual('foo', ac.id.id.split(':')[0])
+        self.assertEqual(set(['CREATE', 'DELETE']), set(ac.acl_list))
+
+        ac = rst[1]
+        self.assertEqual('digest', ac.id.scheme)
+        self.assertEqual('xp', ac.id.id.split(':')[0])
+        self.assertEqual(set(['ALL']), set(ac.acl_list))
+
+        self.assertIsNone(zkutil.make_kazoo_digest_acl(None))

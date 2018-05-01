@@ -10,6 +10,7 @@
   - [zkutil.parse_lock_id](#zkutilparse_lock_id)
   - [zkutil.make_digest](#zkutilmake_digest)
   - [zkutil.make_acl_entry](#zkutilmake_acl_entry)
+  - [zkutil.make_kazoo_digest_acl](#zkutilmake_kazoo_digest_acl)
   - [zkutil.perm_to_long](#zkutilperm_to_long)
   - [zkutil.perm_to_short](#zkutilperm_to_short)
 - [Exceptions](#exceptions)
@@ -141,6 +142,39 @@ It concat `username`, `digest` and `permissions` to a string as acl entry.
 "digest:<username>:<digest>:<permissions>"
 ```
 where `digest` is a string build by `zkutil.make_digest()`
+
+
+##  zkutil.make_kazoo_digest_acl
+
+**syntax**:
+`zkutil.make_kazoo_digest_acl(acl)`
+
+Convert tuple/list acl to kazoo style.
+
+E.g.:
+
+```python
+acl = (('xp', '123', 'cdrwa'),
+       ('foo', 'passw', 'rw'),
+
+print zkutil.make_kazoo_digest_acl(acl)
+"""
+[
+    ACL(perms=12, acl_list=['CREATE', 'DELETE'],
+        id=Id(scheme='digest', id=u'foo:VNy+Z9IdXrOUk9Rtia4fQS071t4=')),
+    ACL(perms=31, acl_list=['ALL'],
+        id=Id(scheme='digest', id=u'xp:LNcZO17uqqJ4GuYoSclIsGjYniQ='))
+]
+"""
+```
+
+**arguments**:
+
+-   `acl`:
+    acl in tuple or list.
+
+**return**:
+a `list` of `kazoo.security.ACL`.
 
 
 ##  zkutil.perm_to_long

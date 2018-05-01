@@ -4,6 +4,8 @@ import os
 import threading
 import types
 
+from kazoo import security
+
 from pykit import config
 from pykit import net
 
@@ -146,5 +148,24 @@ def perm_to_short(lst, lower=True):
 
     if not lower:
         rst = rst.upper()
+
+    return rst
+
+
+def make_kazoo_digest_acl(acl):
+
+    # acl = (('xp', '123', 'cdrwa'),
+    #        ('foo', 'passw', 'rw'),
+    # )
+
+    if acl is None:
+        return None
+
+    rst = []
+    for name, passw, perms in acl:
+        perm_dict = {p: True
+                     for p in perm_to_long(perms)}
+        acl_entry = security.make_digest_acl(name, passw, **perm_dict)
+        rst.append(acl_entry)
 
     return rst

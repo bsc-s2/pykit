@@ -5,7 +5,6 @@ import logging
 import threading
 import time
 
-from kazoo import security
 from kazoo.client import KazooClient
 from kazoo.exceptions import KazooException
 from kazoo.exceptions import LockTimeout
@@ -70,7 +69,7 @@ class ZKLock(object):
             lock_dir = config.zk_lock_dir
 
         self.zkclient = zkclient
-        self.acl = make_kazoo_digest_acl(acl)
+        self.acl = zkutil.make_kazoo_digest_acl(acl)
 
         self.lock_name = lock_name
         self.lock_dir = lock_dir
@@ -235,22 +234,3 @@ def make_owning_zkclient(hosts, auth):
         zkclient.add_auth(scheme, name + ':' + passw)
 
     return zkclient
-
-
-def make_kazoo_digest_acl(acl):
-
-    # acl = (('xp', '123', 'cdrwa'),
-    #        ('foo', 'passw', 'rw'),
-    # )
-
-    if acl is None:
-        return None
-
-    rst = []
-    for name, passw, perms in acl:
-        perm_dict = {p: True
-                     for p in zkutil.perm_to_long(perms)}
-        acl_entry = security.make_digest_acl(name, passw, **perm_dict)
-        rst.append(acl_entry)
-
-    return rst
