@@ -11,5 +11,6 @@ def run(context):
 
         try:
             context['send_log'](log_entry)
-        except Exception as e:
-            logger.exception('failed to send log entry: %s' % repr(e))
+        except Exception:
+            # do not log repr(e), it may cause endless escape of '\'.
+            logger.error('failed to send log entry')
