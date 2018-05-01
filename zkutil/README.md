@@ -20,6 +20,7 @@
     - [Synopsis](#synopsis)
     - [Why we need this](#why-we-need-this)
     - [zkutil.ZKLock.acquire](#zkutilzklockacquire)
+    - [zkutil.ZKLock.try_lock](#zkutilzklocktry_lock)
     - [zkutil.ZKLock.release](#zkutilzklockrelease)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
@@ -235,7 +236,7 @@ Raise if `ZKLock` timed out on waiting to acquire a lock.
 
 **syntax**:
 `zkutil.ZKLock(lock_name, node_id=None, zkclient=None, hosts=None, on_lost=None,
-               acl=None, auth=None, lock_dir=None, timeout=10)`
+               acl=None, auth=None, lock_dir=None, persistent=False, timeout=10)`
 
 ZKLock implements a zookeeper based distributed lock.
 
@@ -378,8 +379,22 @@ It is similar to standard zookeeper mechanism except:
 
     If `config.zk_lock_dir` is `None` it uses a predefined const: `lock/`.
 
+-   `persistent`:
+    specifies if the lock will be cleared when connection to zk lost.
+    A persistent lock is implemented with a normal zk-node.
+    A non-persistent lock is implemented with a `ephemeral` zk-node.
+
+    By default it is `False`.
+
+    > A persistent lock is used in cases when you need to accurately track
+    > locking state, such as when detecting which resource has been locked by a
+    > dead transaction.
+    > Unless **You Know What You Are Doing**,
+    > do **NOT** use a persistent lock, because there must be a cleanup program
+    > for making thing right.
+
 -   `timeout`:
-    specifies how long in second to wait before acquiring a lock.
+    is a `float` that specifies how long in second to wait acquiring a lock.
 
     By default it is 10(second).
 
@@ -394,10 +409,36 @@ Acquire the lock in blocking mode.
 **arguments**:
 
 -   `timeout`:
-    is time in second to wait.
+    is `float` time in second to wait.
+    If it is `None`, it use `self.timeout`, which is 10 seconds by default.
+
+    If `timeout` is less than 0 `ZKLock` tries to acquire the lock for only once
+    and if failed, it raise `LockTimeout` at once.
 
 **return**:
 Nothing
+
+###  zkutil.ZKLock.try_lock
+
+**syntax**:
+`ZKLock.try_lock()`
+
+Try to acquire the lock and return result.
+It never blocks.
+
+**return**:
+a tuple of result, lock holder and lock holder version.
+Such as `(True, "aa-xx-bb", -1)` or `(False, "aa-xx-cc", 12)`
+
+If lock is acquired:
+- the 1st element is `True`,
+- the 2nd is identifier of this lock,
+- the 3rd is `-1`.
+
+If lock is not acquired:
+- the 1st element is `False`,
+- the 2nd is identifier of the lock holder,
+- the 3rd is a non-negative integer, which is the version of the zk node.
 
 
 ###  zkutil.ZKLock.release

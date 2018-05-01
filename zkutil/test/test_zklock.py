@@ -132,15 +132,54 @@ class TestZKLock(unittest.TestCase):
 
         self.running = False
 
+    def test_persistent(self):
+        l = zkutil.ZKLock('foo_name', persistent=True, on_lost=lambda: True)
+        with l:
+            l.zkclient.stop()
+            l.zkclient.close()
+
+        self.assertRaises(zkutil.LockTimeout, self.lck.acquire, timeout=0.2)
+
     def test_timeout(self):
+
         l1 = zkutil.ZKLock('foo_name', on_lost=lambda: True)
         l2 = zkutil.ZKLock('foo_name', on_lost=lambda: True)
-        with l1:
-            t0 = time.time()
-            self.assertRaises(zkutil.LockTimeout, l2.acquire, timeout=0.2)
-            t1 = time.time()
 
-            self.assertAlmostEqual(0.2, t1-t0, places=1)
+        with l1:
+            with ututil.Timer() as t:
+                self.assertRaises(zkutil.LockTimeout, l2.acquire, timeout=0.2)
+                self.assertAlmostEqual(0.2, t.spent(), places=1)
+
+            with ututil.Timer() as t:
+                self.assertRaises(zkutil.LockTimeout, l2.acquire, timeout=-1)
+                self.assertAlmostEqual(0.0, t.spent(), delta=0.01)
+
+        try:
+            l2.acquire(timeout=-1)
+        except zkutil.LockTimeout:
+            self.fail('timeout<0 should could acquire')
+
+    def test_try_lock(self):
+
+        l1 = zkutil.ZKLock('foo_name', on_lost=lambda: True)
+        l2 = zkutil.ZKLock('foo_name', on_lost=lambda: True)
+
+        with l1:
+            with ututil.Timer() as t:
+                rst = l2.try_lock()
+                self.assertFalse(rst[0])
+                self.assertEqual(l1.identifier, rst[1])
+                self.assertGreaterEqual(rst[2], 0)
+
+                self.assertAlmostEqual(0.0, t.spent(), delta=0.01)
+
+        with ututil.Timer() as t:
+            rst = l2.try_lock()
+            self.assertTrue(rst[0])
+            self.assertEqual(l2.identifier, rst[1])
+            self.assertEqual(rst[2], -1)
+
+            self.assertAlmostEqual(0.0, t.spent(), delta=0.01)
 
     def test_zk_lost(self):
 

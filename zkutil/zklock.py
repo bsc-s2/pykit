@@ -37,6 +37,7 @@ class ZKLock(object):
                  acl=None,
                  auth=None,
                  lock_dir=None,
+                 persistent=False,
                  timeout=10):
 
         if node_id is None:
@@ -75,12 +76,12 @@ class ZKLock(object):
         self.lock_dir = lock_dir
         self.lock_path = self.lock_dir + self.lock_name
         self.identifier = zkutil.lock_id(node_id)
+        self.ephemeral = not persistent
         self.timeout = timeout
 
         self.mutex = threading.RLock()
         self.maybe_available = threading.Event()
         self.maybe_available.set()
-        self.locked = False
         self.lock_holder = None
 
     def watcher(self, watchevent):
@@ -101,28 +102,47 @@ class ZKLock(object):
 
         expire_at = time.time() + timeout
 
-        while time.time() < expire_at:
+        while True:
 
+            # Even if timeout is smaller than 0, try-loop continue on until
+            # maybe_available is not ready.
+            #
+            # There is a chance that:
+            #  - Failed to create lock node(lock is occupied by other)
+            #  - Failed to get lock node(just deleted)
+            #  - Failed to create lock node(lock is occupied by other)
+            #  - Failed to get lock node(just deleted)
+            #  - ...
             if not self.maybe_available.wait(timeout=expire_at - time.time()):
+
                 logger.debug('lock is still held by others: ' + str(self))
-                continue
+
+                if time.time() > expire_at:
+                    raise LockTimeout('lock: ' + str(self.lock_path))
 
             self._acquire_by_create()
-            if self.locked:
+            if self.is_locked():
                 return
 
             self._acquire_by_get()
-            if self.locked:
+            if self.is_locked():
                 return
 
-        else:
-            raise LockTimeout('lock: ' + str(self.lock_path))
+    def try_lock(self):
+
+        try:
+            self.acquire(timeout=-1)
+        except LockTimeout:
+            pass
+
+        # if_locked, lock holder identifier, holder version
+        return self.is_locked(), self.lock_holder[0], self.lock_holder[1]
 
     def release(self):
 
         with self.mutex:
 
-            if self.locked:
+            if self.is_locked():
 
                 try:
                     self.zkclient.delete(self.lock_path)
@@ -147,13 +167,20 @@ class ZKLock(object):
             except KazooException as e:
                 logger.info(repr(e) + ' while close my own client')
 
+    def is_locked(self):
+
+        l = self.lock_holder
+
+        return (l is not None
+                and l[0] == self.identifier)
+
     def _acquire_by_create(self):
 
         logger.debug('to creaet: {s}'.format(s=str(self)))
 
         try:
             self.zkclient.create(self.lock_path, self.identifier,
-                                 ephemeral=True, acl=self.acl)
+                                 ephemeral=self.ephemeral, acl=self.acl)
 
         except NodeExistsError as e:
 
@@ -171,7 +198,8 @@ class ZKLock(object):
             raise
 
         with self.mutex:
-            self.locked = True
+            # If lock holder is me, there is not a `get` thus there is no version fetched.
+            self.lock_holder = (self.identifier, -1)
 
         logger.info('ACQUIRED(by create): {s}'.format(s=str(self)))
 
@@ -181,22 +209,24 @@ class ZKLock(object):
 
         try:
             with self.mutex:
-                self.lock_holder, zstat = self.zkclient.get(self.lock_path, watch=self.watcher)
+                holder, zstat = self.zkclient.get(self.lock_path, watch=self.watcher)
+
+                self.lock_holder = (holder, zstat.version)
 
                 logger.debug('got lock holder: {s}'.format(s=str(self)))
 
-                if self.lock_holder == self.identifier:
-                    self.locked = True
+                if holder == self.identifier:
                     logger.info('ACQUIRED(by get): {s}'.format(s=str(self)))
                     return
-                else:
-                    logger.debug('other holds: {s}'.format(s=str(self)))
-                    self.maybe_available.clear()
+
+                logger.debug('other holds: {s}'.format(s=str(self)))
+                self.maybe_available.clear()
 
         except NoNodeError as e:
             # create failed but when getting  it, it has been deleted
             logger.info(repr(e) + ' while get lock: {s}'.format(s=str(self)))
             with self.mutex:
+                self.lock_holder = None
                 self.maybe_available.set()
 
         except KazooException as e:
