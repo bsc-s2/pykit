@@ -29,6 +29,7 @@ class TestZKutil(unittest.TestCase):
         expected = '%012x' % uuid.getnode()
 
         k = zkutil.lock_id()
+        dd(config)
         dd(k)
         self.assertEqual(expected, k.split('-')[0])
 
@@ -57,11 +58,17 @@ class TestZKutil(unittest.TestCase):
 
             rst = zkutil.parse_lock_id(inp)
 
-            self.assertEqual(set(['node_id', 'ip', 'process_id', 'counter']),
+            self.assertEqual(set(['node_id', 'ip', 'process_id', 'counter', 'txid']),
                              set(rst.keys()))
 
             self.assertEqual(expected,
                              (rst['node_id'], rst['ip'], rst['process_id']))
+
+    def test_parse_lock_id_with_txid(self):
+
+        rst = zkutil.parse_lock_id('txid:123-a-b-x')
+        self.assertEqual('txid:123', rst['node_id'])
+        self.assertEqual('123', rst['txid'])
 
     def test_make_digest(self):
 

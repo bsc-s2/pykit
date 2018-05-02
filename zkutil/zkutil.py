@@ -81,12 +81,18 @@ def parse_lock_id(data_str):
     else:
         process_id = None
 
-    return {
+    rst = {
         'node_id': node_id,
         'ip': ip,
         'process_id': process_id,
         'counter': cnt,
+        'txid': None
     }
+
+    if node_id.startswith('txid:'):
+        rst['txid'] = node_id.split(':', 1)[1]
+
+    return rst
 
 
 def make_digest(acc):

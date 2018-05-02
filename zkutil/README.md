@@ -86,12 +86,18 @@ It parse string built by `zkutil.lock_id()` to an dictionary.
     "node_id": "<node_id>",
     "ip": "<ip>",
     "process_id": process_id,
+    "counter": <integer>,
+    "txid": "<txid>",
 }
 ```
 
-`process_id` is an `int`, the other two are `string`s.
+`process_id` and `counter` is `int`, the others are `string`s.
 
 If any of these three field can not be parsed correctly, it will be `None`.
+
+If `node_id` is in form of `txid:...`, `txid` is filled with the text after `:`.
+Otherwise it is `None`.
+This is added for zk-transaction implementation.
 
 ##  zkutil.make_digest
 
