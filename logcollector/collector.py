@@ -50,4 +50,4 @@ def run(**kwargs):
         # an error log.
         logger.error('stat: %s' % context['stat'])
 
-        time.sleep(1)
+        time.sleep(100)
