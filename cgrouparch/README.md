@@ -217,40 +217,38 @@ print ws.recv()
 
 # output example:
 {
-  "cpu": {
-    "slots": [
-      {
-        "value": {
-          "usage": 21356553724888
-        },
-        "slot_number": 1515735564
-      },
-      {
-        "value": {
-          "usage": 21356463383201
-        },
-        "slot_number": 1515735563
-      },
-    ],
-    "sub_cgroup": {
-      "test_cgroup_a": {
-        "slots": [
-          {
+    "1525258774": {
+        "cpu": {
             "value": {
-              "usage": 827377974062
+                "usage": 1446489231295
             },
-            "slot_number": 1515735564
-          },
-          {
-            "value": {
-              "usage": 827377935788
+            "sub_cgroup": {
+                "test_cgroup_a": {
+                    "value": {
+                        "usage": 192790540163
+                    },
+                },
+                "test_cgroup_b": {
+                    "value": {
+                        "usage": 192790540163
+                    },
+                    "sub_cgroup": {
+                        "test_cgroup_b_sub1": {
+                            "value": {
+                                "usage": 3928774282
+                            },
+                        },
+                    },
+                },
             },
-            "slot_number": 1515735563
-          },
-        ],
-      },
+        },
+        "blkio": {
+            ...
+        },
     },
-  },
+    "1525258775": {
+        ...
+    }
 }
 ```
 
