@@ -108,6 +108,7 @@ def _scan(context, log_name):
     log_stat['reported_n'] = 0
 
     for log_str in iter_log(log_conf):
+        log_str = log_str[:1024]
         log_stat['total_n'] += 1
 
         log_entry = build_entry(context, log_name, file_name,
