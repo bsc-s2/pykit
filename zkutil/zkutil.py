@@ -169,3 +169,16 @@ def make_kazoo_digest_acl(acl):
         rst.append(acl_entry)
 
     return rst
+
+
+def is_backward_locking(locked_keys, key):
+
+    locked_keys = sorted(locked_keys)
+    assert key not in locked_keys, 'must not re-lock a key'
+
+    if len(locked_keys) == 0:
+        is_backward = False
+    else:
+        is_backward = key < locked_keys[-1]
+
+    return is_backward

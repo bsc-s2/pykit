@@ -1,6 +1,7 @@
 from .zkutil import (
     PermTypeError,
 
+    is_backward_locking,
     lock_id,
     make_acl_entry,
     make_digest,
@@ -21,6 +22,7 @@ from .zklock import (
 __all__ = [
     "PermTypeError",
 
+    "is_backward_locking",
     "lock_id",
     "make_acl_entry",
     "make_digest",

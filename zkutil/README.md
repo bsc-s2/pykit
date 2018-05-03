@@ -6,6 +6,7 @@
 - [Status](#status)
 - [Description](#description)
 - [Methods](#methods)
+  - [zkutil.is_backward_locking](#zkutilis_backward_locking)
   - [zkutil.lock_id](#zkutillock_id)
   - [zkutil.parse_lock_id](#zkutilparse_lock_id)
   - [zkutil.make_digest](#zkutilmake_digest)
@@ -41,6 +42,53 @@ This library is still in beta phase.
 Some helper function to make life easier with zookeeper.
 
 #   Methods
+
+
+##  zkutil.is_backward_locking
+
+**syntax**:
+`zkutil.is_backward_locking(locked_keys, key)`
+
+Check if the operation of locking `key` is a backward-locking.
+
+Naive dead lock detect:
+
+Locks must be acquired in alphabetic order, from left to right.
+Trying to acquire a lock>=right_most_locked, is a forward locking
+Otherwise it is a backward locking.
+
+Always do forward locking we can guarantee there won't be a dead lock.
+Since a deadlock needs at least one backward locking to form a circular dependency.
+
+If a process fails to acquire a lock in a backward locking,
+it should release all locks it holds and redo the entire transaction.
+
+E.g. suppose X has acquired lock a and c, Y has acquired lock b:
+
+```
+         locks are ordered left-to-right
+---------------------------------------------
+prox-X   a(locked)                  c(locked)
+prox-Y               b(locked)
+```
+
+If Y tries to acquire c(forward) and X tries to acquire b(**backward**):
+    There is a deadlock. X should release all locks.
+
+If Y tries to acquires a(**backward**) and X tries to acquire b(**backward**),
+    There is a deadlock, X and Y should both release their locks.
+
+**arguments**:
+
+-   `locked_keys`:
+    is a collection support `in` operator that contains already locked keys.
+
+-   `key`:
+    is the key to lock.
+
+**return**:
+a `bool` indicate if locking `key` would be a backward-locking.
+
 
 ##  zkutil.lock_id
 

@@ -228,3 +228,23 @@ class TestZKutil(unittest.TestCase):
         self.assertEqual(set(['ALL']), set(ac.acl_list))
 
         self.assertIsNone(zkutil.make_kazoo_digest_acl(None))
+
+    def test_is_backward_locking(self):
+
+        cases = (
+            ([],         'a', False, None),
+            (['a'],      'a', False, AssertionError),
+            (['a', 'c'], 'a', True,  AssertionError),
+            (['a', 'c'], 'c', True,  AssertionError),
+            (['a', 'c'], '',  True,  None),
+            (['a', 'c'], 'b', True,  None),
+            (['a', 'c'], 'd', False, None),
+        )
+
+        for locked, key, expected, err in cases:
+
+            if err is None:
+                rst = zkutil.is_backward_locking(locked, key)
+                self.assertEqual(expected, rst)
+            else:
+                self.assertRaises(err, zkutil.is_backward_locking, locked, key)
