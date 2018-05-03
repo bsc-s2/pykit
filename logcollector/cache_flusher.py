@@ -31,8 +31,11 @@ def flush_cache(log_cache, queue):
     if time.time() - ts_list[-1] < 2:
         ts_list = ts_list[:-1]
 
-    for log_ts in ts_list:
+    # only enqueue logs of latest 3 ts.
+    for log_ts in ts_list[-3:]:
         enqueue_log_entry(log_cache[log_ts], queue)
+
+    for log_ts in ts_list:
         del log_cache[log_ts]
 
 
