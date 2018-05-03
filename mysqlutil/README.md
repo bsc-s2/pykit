@@ -315,7 +315,7 @@ mysqlutil.make_update_sql('errlog', {'_id': '0', 'time': '042718'}, None, None, 
 
 -   `values`:
     is values to insert into `table`.
-    A list or tuple of strings.
+    A `dict` whose keys are fields want to update, and values are the update values.
 
 -   `index`:
     specifies condition fields to find those rows to update.
@@ -465,7 +465,7 @@ make_index_scan_sql("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"])
 # 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`idx_key_val`) WHERE `key` = "a" AND `val` >= "b" LIMIT 1024'
 
 make_index_scan_sql("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"], index_name="bar")
-# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`bar`) WHERE `foo`.`key` = "a" AND `val` >= "b" LIMIT 1024'
+# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`bar`) WHERE `key` = "a" AND `val` >= "b" LIMIT 1024'
 
 make_index_scan_sql("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"], left_open=True)
 # 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`idx_key_val`) WHERE `key` = "a" AND `val` > "b" LIMIT 1024'
@@ -505,7 +505,8 @@ make_index_scan_sql(("mydb","foo"), ['_id', 'key'], ['key', 'val'], ["a", "b"], 
 
 -   `index_name`:
     specifies an index to use to find rows in the table.
-    If it is not `None`, use `index_name` as the index and `index` is ignored.
+    If it is not `None`, use `index_name` as the force index filed, otherwise `index` is used.
+    By default, it is `None`.
 
 **return**:
 a string which is a sql select statement.

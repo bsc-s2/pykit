@@ -25,7 +25,11 @@ def scan_index(connpool, table, result_fields, index_fields, index_values,
         raise ConnectionTypeError
 
     if len(index_values) != len(index_fields):
-        raise InvalidLength('number of index fields and values are not equal')
+        raise InvalidLength(
+            'number of index fields and values are not equal: '
+            'index fields: {fld}; '
+            'index values: {val}'.format(fld=index_fields, val=index_values))
+
 
     req_fields = list(index_fields)
     req_values = list(index_values)
@@ -53,7 +57,7 @@ def scan_index(connpool, table, result_fields, index_fields, index_values,
         if len(rst) > 0:
             last_row = rst[-1]
             req_fields = list(index_fields)
-            req_values = [last_row[x] for x in req_fields]
+            req_values = [str(last_row[x]) for x in req_fields]
             left_open = True
             continue
 
@@ -82,7 +86,7 @@ def make_index_scan_sql(table, result_fields, index, index_values, left_open=Fal
     return make_select_sql(table, result_fields, index, index_values, limit, force_index, operator)
 
 
-def make_sql_condition(fld_vals, operator="=", callback=list):
+def make_sql_condition(fld_vals, operator="=", formatter=list):
 
     cond_expressions = []
 
@@ -93,19 +97,14 @@ def make_sql_condition(fld_vals, operator="=", callback=list):
     cond_expressions.append(quote(key, "`") + " " +
                             operator + " " + _safe(value))
 
-    return callback(cond_expressions)
+    return formatter(cond_expressions)
 
 
 def make_insert_sql(table, values, fields=None):
 
     sql_pattern = "INSERT INTO {tb}{fld_clause} VALUES {val_clause};"
 
-    if isinstance(table, basestring):
-        tb = quote(table, '`')
-    else:
-        db = quote(table[0], '`')
-        table_name = quote(table[1], '`')
-        tb = db + '.' + table_name
+    tb = make_table_name(table)
 
     if fields is not None:
         fld_clause = ' ({flds})'.format(
@@ -126,24 +125,11 @@ def make_update_sql(table, values, index, index_values, limit=None):
 
     sql_pattern = "UPDATE {tb} SET {set_clause}{where_clause}{limit_clause};"
 
-    if isinstance(table, basestring):
-        tb = quote(table, '`')
-    else:
-        db = quote(table[0], '`')
-        table_name = quote(table[1], '`')
-        tb = db + '.' + table_name
+    tb = make_table_name(table)
 
-    set_clause = make_sql_condition(values.items(), callback=', '.join)
+    set_clause = make_sql_condition(values.items(), formatter=', '.join)
 
-    if index is not None:
-        if len(index) != len(index_values):
-            raise InvalidLength(
-                'number of index fields and values are not equal')
-
-        where_clause = ' WHERE {cond}'.format(
-            cond=make_sql_condition(zip(index, index_values), callback=' AND '.join))
-    else:
-        where_clause = ''
+    where_clause = make_where_clause(index, index_values)
 
     if limit is not None:
         limit_clause = ' LIMIT {n}'.format(n=limit)
@@ -160,22 +146,9 @@ def make_delete_sql(table, index, index_values, limit=None):
 
     sql_pattern = 'DELETE FROM {tb}{where_clause}{limit_clause};'
 
-    if isinstance(table, basestring):
-        tb = quote(table, '`')
-    else:
-        db = quote(table[0], '`')
-        table_name = quote(table[1], '`')
-        tb = db + '.' + table_name
+    tb = make_table_name(table)
 
-    if index is not None:
-        if len(index) != len(index_values):
-            raise InvalidLength(
-                'number of index fields and values are not equal')
-
-        where_clause = ' WHERE {cond}'.format(
-            cond=make_sql_condition(zip(index, index_values), callback=' AND '.join))
-    else:
-        where_clause = ''
+    where_clause = make_where_clause(index, index_values)
 
     if limit is not None:
         limit_clause = ' LIMIT {n}'.format(n=limit)
@@ -193,12 +166,7 @@ def make_select_sql(table, result_fields, index, index_values,
 
     sql_pattern = 'SELECT {rst} FROM {tb}{force_index}{where_clause}{limit_clause};'
 
-    if isinstance(table, basestring):
-        tb = quote(table, "`")
-    else:
-        db = quote(table[0], "`")
-        tbl = quote(table[1], "`")
-        tb = db + '.' + tbl
+    tb = make_table_name(table)
 
     if result_fields is None:
         rst_flds = '*'
@@ -210,15 +178,7 @@ def make_select_sql(table, result_fields, index, index_values,
     else:
         index_fld = ' FORCE INDEX (`{idx}`)'.format(idx=force_index)
 
-    if index is not None:
-        if len(index) != len(index_values):
-            raise InvalidLength(
-                'number of index fields and values are not equal')
-
-        where_clause = ' WHERE {cond}'.format(
-            cond=make_sql_condition(zip(index, index_values), operator, callback=' AND '.join))
-    else:
-        where_clause = ''
+    where_clause = make_where_clause(index, index_values, operator)
 
     if limit is not None:
         limit_clause = ' LIMIT {n}'.format(n=limit)
@@ -243,5 +203,30 @@ def _safe(s):
     return '"' + MySQLdb.escape_string(s) + '"'
 
 
-def _quote(s):
-    return '`' + s + '`'
+def make_table_name(table_name):
+
+    if isinstance(table_name, basestring):
+        tb = quote(table_name, "`")
+    else:
+        db = quote(table_name[0], "`")
+        tbl = quote(table_name[1], "`")
+        tb = db + '.' + tbl
+
+    return tb
+
+
+def make_where_clause(index, index_values, operator='='):
+
+    if index is not None:
+        if len(index) != len(index_values):
+            raise InvalidLength(
+                'number of index fields and values are not equal: '
+                'index fields: {fld}; '
+                'index values: {val}'.format(fld=index, val=index_values))
+
+        where_clause = ' WHERE {cond}'.format(
+            cond=make_sql_condition(zip(index, index_values), operator, formatter=' AND '.join))
+    else:
+        where_clause = ''
+
+    return where_clause

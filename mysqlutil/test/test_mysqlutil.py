@@ -6,8 +6,6 @@ import unittest
 
 import docker
 
-from MySQLdb.constants import FIELD_TYPE
-
 from pykit import mysqlconnpool
 from pykit import mysqlutil
 from pykit import proc
@@ -35,7 +33,6 @@ class TestMysqlutil(unittest.TestCase):
             'port': mysql_test_port,
             'user': mysql_test_user,
             'passwd': mysql_test_password,
-            'conv': {FIELD_TYPE.LONG: str},
         }
 
         conns = (addr,
@@ -98,7 +95,7 @@ class TestMysqlutil(unittest.TestCase):
                         dd('rst:', rr)
                         dd('except: ', rst_expect[i])
 
-                        self.assertEqual(rr[0], rst_expect[i])
+                        self.assertEqual(rr[0], long(rst_expect[i]))
 
                     self.assertEqual(len(rst_expect), i+1)
         finally:
