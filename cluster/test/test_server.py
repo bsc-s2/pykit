@@ -1,0 +1,198 @@
+#!/usr/bin/env python2
+# coding: utf-8
+
+import psutil
+import re
+import socket
+import unittest
+
+from pykit import cluster
+from pykit import proc
+from pykit import ututil
+
+dd = ututil.dd
+
+
+class TestClusterServer(unittest.TestCase):
+
+    def test_make_server_id(self):
+        server_id = cluster.make_server_id()
+        self.assertEqual(12, len(server_id))
+        self.assertRegexpMatches(server_id, "^[0-9a-f]{12}$")
+        out = proc.shell_script('ifconfig')
+        self.assertIn(re.sub('(.{2})', r':\1', server_id)[1:], str(out))
+
+    def test_validate_server_id(self):
+        invalid_cases = (
+            (),
+            [],
+            {},
+            'foo',
+            123,
+
+            'aabbccddeef,'
+            'aabbccddeef('
+            'aabbccddeef?'
+            'aabbccddeef&'
+            'aabbccddEEff'
+            'aabbccddeeffgg'
+            'aabbccddeegg'
+        )
+
+        for c in invalid_cases:
+            self.assertFalse(cluster.validate_server_id(c))
+
+        cases = (
+            '112233aabbcc',
+            'aa112233bbcc',
+            '112233445566',
+            'aabbccddeeff',
+        )
+
+        for c in cases:
+            self.assertTrue(cluster.validate_server_id(c))
+
+    def test_serverrec(self):
+        cases = (
+            ('.l1', 'center', {'role1': 1}, {'foo': 1}),
+            ('.l1.l2', 'xx', {'role1': 1, 'role2': 1}, {'foo': 1, 'bar': 2}),
+            ('.l1.l2.l3', 'yy', {'role1': 1, 'role2': 1, 'role3': 1}, {'foo': 1}),
+            ('.l1.l2.l3.l4', 'zz', {'role1': 1, 'role4': 4}, {'foo': 1, 'bar': 2, 'foobar': 3}),
+        )
+
+        for idc, idc_type, roles, argkv in cases:
+            serverrec = cluster.make_serverrec(idc, idc_type, roles, **argkv)
+
+            dd('serverrec:' + repr(serverrec))
+
+            self.assertIn('server_id', serverrec)
+            self.assertIn('pub_ips', serverrec)
+            self.assertIn('inn_ips', serverrec)
+            self.assertIn('memory', serverrec)
+
+            self.assertIn('count', serverrec['cpu'])
+            if hasattr(psutil, 'cpu_freq'):
+                self.assertIn('frequency', serverrec['cpu'])
+
+            self.assertIn('mountpoints', serverrec)
+
+            self.assertEqual(socket.gethostname(), serverrec['hostname'])
+            self.assertEqual(idc, serverrec['idc'])
+            self.assertEqual(idc_type, serverrec['idc_type'])
+            self.assertEqual(roles, serverrec['roles'])
+
+            for k, v in argkv.items():
+                self.assertEqual(v, serverrec[k])
+
+            serverrec_str = cluster.get_serverrec_str(serverrec)
+            dd('serverrec_str:' + repr(serverrec_str))
+
+            exp_str = 'server_id: {sid}; idc: {idc}; idc_type: {idct}; roles: {r}; mountpoints_count: {mp_cnt}'.format(
+                      sid=serverrec['server_id'], idc=idc, idct=idc_type,
+                      r=roles, mp_cnt=len(serverrec['mountpoints']))
+
+            self.assertEqual(exp_str, serverrec_str)
+
+    def test_drive_id(self):
+        cases = (
+            ('112233445566', 1),
+            ('112233445566', 10),
+            ('112233445566', 100),
+            ('112233445566', 1999),
+
+            ('aabbccddeeff', 1),
+            ('aabbccddeeff', 10),
+            ('aabbccddeeff', 100),
+            ('aabbccddeeff', 1999),
+
+            ('1122ccddeeff', 1),
+            ('1122ccddeeff', 10),
+            ('1122ccddeeff', 100),
+            ('1122ccddeeff', 1999),
+        )
+
+        for sid, mp_idx in cases:
+            drive_id = cluster.make_drive_id(sid, mp_idx)
+            self.assertEqual('%s0%03d' % (sid[:12], mp_idx % 1000),
+                             drive_id)
+
+            self.assertDictEqual({'server_id': sid[:12], 'mount_point_index': mp_idx % 1000},
+                                 cluster.parse_drive_id(drive_id))
+
+    def test_validate_drive_id(self):
+        invalid_cases = (
+            (),
+            [],
+            {},
+            'foo',
+            123,
+            'aabbccddeeff*001',
+            'aabbccddeeff000a',
+            '*&bbccddeeff0001',
+            'AAbbccddeeff0001',
+            'AAbbccddeeff0xxx',
+        )
+
+        for c in invalid_cases:
+            self.assertFalse(cluster.validate_drive_id(c))
+
+        cases = (
+            'aabbccddeeff0001',
+            'aabbccddeeff0100',
+            'aabbccddeeff0999',
+            '11bbccddeeff0999',
+            '11bb33ddeeff0999',
+        )
+
+        for c in cases:
+            self.assertTrue(cluster.validate_drive_id(c))
+
+    def test_validate_idc(self):
+        invalid_cases = (
+            {},
+            (),
+            [],
+            'l1',
+            '*l1.l2',
+            '&l1.l2.l3',
+
+            '.l&&',
+            '.l1.l*',
+        )
+
+        for c in invalid_cases:
+            self.assertFalse(cluster.validate_idc(c))
+
+        cases = (
+            '',
+            '.',
+            '.l1',
+            '.l1.l2',
+            '.l1.l2.l3',
+            '.l1.l2.l3.l4',
+
+            '.L1',
+            '.L1.L2',
+            '.L1.L2.L3',
+            '.L1.L2.L3.L4',
+        )
+
+        for c in cases:
+            self.assertTrue(cluster.validate_idc(c))
+
+    def test_idc_distance(self):
+        cases = (
+            ('', '', 0),
+            ('.', '.', 0),
+            ('.wt', '.wt', 0),
+            ('.wt.TJ', '.wt.TJ', 0),
+            ('.wt.TJ.xx', '.wt.TJ.yy', 4),
+            ('.wt.XD', '.wt.TJ', 8),
+            ('.dx.GZ', '.wt.TJ', 16),
+            ('.dx', '.wt', 16),
+            ('.dx.GZ', '.dx', 8),
+        )
+
+        for n1, n2, dis in cases:
+            self.assertEqual(dis,
+                             cluster.idc_distance(n1, n2))

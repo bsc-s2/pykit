@@ -47,6 +47,7 @@ There is a `README.md` for each module.
 | [aws](aws)                     | AWS error codes and so on                                                             |
 | [cacheable](cacheable)         | Cache data which access frequently                                                    |
 | [cachepool](cachepool)         | Reusable object cache in process                                                      |
+| [cluster](cluster)             | Some helper function for the server in a cluster                                      |
 | [daemonize](daemonize)         | Start, stop or restart a daemon process                                               |
 | [dictutil](dictutil)           | Dictionary helper utility                                                             |
 | [etcd](etcd)                   | etcd client                                                                           |
