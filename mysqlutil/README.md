@@ -7,13 +7,17 @@
 - [Description](#description)
 - [Exceptions](#exceptions)
   - [mysqlutil.ConnectionTypeError](#mysqlutilconnectiontypeerror)
-  - [mysqlutil.IndexNotPairs](#mysqlutilindexnotpairs)
+  - [mysqlutil.InvalidLength](#mysqlutilinvalidlength)
 - [Methods](#methods)
   - [mysqlutil.gtidset.compare](#mysqlutilgtidsetcompare)
   - [mysqlutil.gtidset.dump](#mysqlutilgtidsetdump)
   - [mysqlutil.gtidset.load](#mysqlutilgtidsetload)
+  - [mysqlutil.make_delete_sql](#mysqlutilmake_delete_sql)
+  - [mysqlutil.make_insert_sql](#mysqlutilmake_insert_sql)
+  - [mysqlutil.make_select_sql](#mysqlutilmake_select_sql)
+  - [mysqlutil.make_update_sql](#mysqlutilmake_update_sql)
   - [mysqlutil.scan_index](#mysqlutilscan_index)
-  - [mysqlutil.sql_scan_index](#mysqlutilsql_scan_index)
+  - [mysqlutil.make_index_scan_sql](#mysqlutilmake_index_scan_sql)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -42,12 +46,12 @@ Mysql related datatype, operations.
 A subclass of `Exception`, raise if `connpool` in `mysqlutil.scan_index` is not valid.
 
 
-##  mysqlutil.IndexNotPairs
+##  mysqlutil.InvalidLength
 
 **syntax**:
-`mysqlutil.IndexNotPairs`
+`mysqlutil.InvalidLength`
 
-A subclass of `Exception`, raise if length of `index_values` and `index_fields` not equals.
+A subclass of `Exception`, raise when length of list or tuple parameter is not valid.
 
 
 #   Methods
@@ -161,6 +165,174 @@ mysqlutil.gtidset.load(
     '83e2adaf-9c37-11e6-9d6e-a0369fb6f7b4' : [[1,70]],
 }
 ```
+
+##  mysqlutil.make_delete_sql
+
+**syntax**:
+`mysqlutil.make_delete_sql(table, index, index_values, limit=None)`
+
+Make a sql delete statement.
+
+```
+mysqlutil.make_delete_sql('errlog', ('service', 'ip'), ('common0', '127.0.0.1'))
+# 'DELETE FROM `errlog` WHERE `service` = "common0" AND `ip` = "127.0.0.1";'
+
+mysqlutil.make_delete_sql('errlog', ('service', 'ip'), ('common0', '127.0.0.1'), limit=1)
+# 'DELETE FROM `errlog` WHERE `service` = "common0" AND `ip` = "127.0.0.1" LIMIT 1;'
+```
+
+**arguments**:
+
+-   `table`:
+    specifies table name from which to delete rows.
+    A string or a list or tuple like `(dbname, tablename)`.
+
+-   `index`:
+    specifies condition fields to find those rows to delete.
+    A list or tuple of strings has the same length with `index_values`.
+    If it is `None`, means no `where` condition used in sql delete statement.
+
+-   `index_values`:
+    specifies condition values to find those rows to delete.
+    A list or tuple of strings has the same length with `index`.
+
+-   `limit`:
+    specifies a limited number of rows to delete.
+    By default, it is `None`, meams no limit.
+
+**return**:
+a string which is a sql delete statement.
+
+
+##  mysqlutil.make_insert_sql
+
+**syntax**:
+`mysqlutil.make_insert_sql(table, values, fields=None)`
+
+Make a sql insert statement.
+
+```
+mysqlutil.make_insert_sql('errlog', ['common1', '127.0.0.3', '3'])
+# 'INSERT INTO `errlog` VALUES ("common1", "127.0.0.3", "3");'
+
+mysqlutil.make_insert_sql(('test', 'errlog'), ['common1', '127.0.0.3', '3'], ['service', 'ip', '_id'])
+# 'INSERT INTO `errlog` (`service`, `ip`, `_id`) VALUES ("common1", "127.0.0.3", "3");'
+```
+
+**arguments**:
+
+-   `table`:
+    specifies table name into which to insert rows.
+    A string or a list or tuple like `(dbname, tablename)`.
+
+-   `values`:
+    is values to insert into `table`.
+    A list or tuple of strings.
+
+-   `fields`:
+    is a subset of fields in `table`, specifies which fields is to insert to.
+    A list or tuple of strings.
+    If it is specified, should assure that `fields` has the same length with `values`.
+    By default, it is `None`.
+
+**return**:
+a string which is a sql insert statement.
+
+
+##  mysqlutil.make_select_sql
+
+**syntax**:
+`mysqlutil.make_select_sql(table, result_fields, index, index_values, limit=None, force_index=None, operator='=')`
+
+Make a sql select statement.
+
+```
+make_select_sql('errlog', ['_id', 'key'], ('key', 'val'), ('a', 'b'))
+# 'SELECT `_id`, `key` FROM `errlog` WHERE `key` = "a" AND `val` = "b";'
+
+make_select_sql('errlog', ['_id', 'key'], ('key', 'val'), ('a', 'b'),
+                limit=1024, force_index="bar", operator='>=')
+# 'SELECT `_id`, `key` FROM `errlog` FORCE INDEX (`bar`) WHERE `key` = "a" AND `val` >= "b" LIMIT 1024'
+```
+
+**arguments**:
+
+-   `table`:
+    table name from which to find rows. A string.
+    Can also be a list or tuple like `(dbname, tablename)`.
+
+-   `result_fields`:
+    fields expected to be returned in result set.
+    If it is `None`, all columns in the `table` will be returned.
+    A list or tuple of strings.
+
+-   `index`:
+    specifies condition fields to find rows.
+    A list or tuple of strings has the same length with `index_values`.
+    If it is `None`, means no `where` condition used in sql select statement.
+
+-   `index_values`:
+    specifies condition values to find rows.
+    A list or tuple of strings has the same length with `index`.
+
+-   `limit`:
+    specifies a limited number of rows in the result.
+    By default, it is `None`.
+
+-   `force_index`:
+    specifies a `force index` statement in result.
+
+-   `operator`:
+    specifies condition operator of the last condition in `index`.
+    By default, it is '='.
+
+**return**:
+a string which is a sql select statement.
+
+
+##  mysqlutil.make_update_sql
+
+**syntax**:
+`mysqlutil.make_update_sql(table, values, index, index_values, limit=None)`
+
+Make a sql update statement.
+
+```
+mysqlutil.make_update_sql('errlog', {'_id': '0', 'time': '042718'},
+                            ('service', 'ip', '_id'), ('common0', '127.0.0.1', '8'))
+# 'UPDATE `errlog` SET `_id` = "0", `time` = "042718" ' \
+# 'WHERE `service` = "common0" AND `ip` = "127.0.0.1" AND `_id` = "8";',
+
+mysqlutil.make_update_sql('errlog', {'_id': '0', 'time': '042718'}, None, None, limit=1)
+# 'UPDATE `errlog` SET `_id` = "0", `time` = "042718" limit 1'
+```
+
+**arguments**:
+
+-   `table`:
+    table name from which to update values. A string.
+    Can also be a list or tuple like `(dbname, tablename)`.
+
+-   `values`:
+    is values to insert into `table`.
+    A list or tuple of strings.
+
+-   `index`:
+    specifies condition fields to find those rows to update.
+    A list or tuple of strings has the same length with `index_values`.
+    If it is `None`, means no `where` condition used in sql update statement.
+
+-   `index_values`:
+    specifies condition values to find those rows to update.
+    A list or tuple of strings has the same length with `index`.
+
+-   `limit`:
+    specifies a limited number of rows in the result.
+    By default, it is `None`.
+
+**return**:
+a string which is a sql update statement.
+
 
 ## mysqlutil.scan_index
 
@@ -279,29 +451,28 @@ for rr in rst:
 a generator which generates rows of the sql select result with those arguments once a time.
 
 
-## mysqlutil.sql_scan_index
+## mysqlutil.make_index_scan_sql
 
 **syntax**:
-`mysqlutil.sql_scan_index(table, result_fields, index_fields, index_values, left_open=False, limit=1024, index_name=None)`
+`mysqlutil.make_index_scan_sql(table, result_fields, index, index_values, left_open=False, limit=1024, index_name=None)`
 
-create a sql select statement with the arguments specified.
+make a sql select statement to scan table with index used.
 
 example:
 
 ```
-sql_scan_index("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"])
-# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`idx_key_val`) WHERE `foo`.`key` = "a" AND `foo`.`val` >= "b" LIMIT 1024'
+make_index_scan_sql("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"])
+# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`idx_key_val`) WHERE `key` = "a" AND `val` >= "b" LIMIT 1024'
 
-sql_scan_index("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"], index_name="bar")
-# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`bar`) WHERE `foo`.`key` >= "a"  LIMIT 1024'
+make_index_scan_sql("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"], index_name="bar")
+# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`bar`) WHERE `foo`.`key` = "a" AND `val` >= "b" LIMIT 1024'
 
-sql_scan_index("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"], left_open=True)
-# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`idx_key_val`) WHERE `foo`.`key` > "a"  LIMIT 1024'
+make_index_scan_sql("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"], left_open=True)
+# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`idx_key_val`) WHERE `key` = "a" AND `val` > "b" LIMIT 1024'
 
-sql_scan_index(("mydb","foo"), ['_id', 'key'], ['key', 'val'], ["a", "b"], index_name="bar", left_open=True)
-# 'SELECT `_id`, `key` FROM `mydb`.`foo` FORCE INDEX (`bar`) WHERE `mydb`.`foo`.`key` > "a"  LIMIT 1024'
+make_index_scan_sql(("mydb","foo"), ['_id', 'key'], ['key', 'val'], ["a", "b"], index_name="bar", left_open=True)
+# 'SELECT `_id`, `key` FROM `mydb`.`foo` FORCE INDEX (`bar`) WHERE `key` = "a" AND `val` > "b" LIMIT 1024'
 ```
-
 
 **arguments**:
 
@@ -314,16 +485,17 @@ sql_scan_index(("mydb","foo"), ['_id', 'key'], ['key', 'val'], ["a", "b"], index
     If it is a blank list or tuple, all columns in the `table` will be returned.
     A list or tuple of strings.
 
--   `index_fields`:
-    index columns. Use the index consisted of those columns to find rows.
-    A list or tuple of strings, has the same length with `index_values`.
+-   `index`:
+    specifies condition fields to find rows.
+    A list or tuple of strings has the same length with `index_values`.
+    If it is `None`, means no `where` condition used in sql select statement.
 
 -   `index_values`:
-    values of the column names in `index_fields`.
-    A list or tuple of strings, has the same length with `index_fields`.
+    specifies condition values to find rows.
+    A list or tuple of strings has the same length with `index`.
 
 -   `left_open`:
-    if specified and is `True`, the last column in `index_fields` and the corresponding value joined with `>`.
+    if specified and is `True`, the last column in `index` and the corresponding value joined with `>`.
     Otherwise, joined with `>=`.
     By default, it is `False`.
 
@@ -333,7 +505,7 @@ sql_scan_index(("mydb","foo"), ['_id', 'key'], ['key', 'val'], ["a", "b"], index
 
 -   `index_name`:
     specifies an index to use to find rows in the table.
-    If it is not `None`, use `index_name` as the index and `index_fields` is ignored.
+    If it is not `None`, use `index_name` as the index and `index` is ignored.
 
 **return**:
 a string which is a sql select statement.

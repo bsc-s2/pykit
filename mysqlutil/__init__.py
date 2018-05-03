@@ -3,10 +3,15 @@ from . import (
 )
 
 from .mysqlutil import (
-    scan_index,
-    sql_scan_index,
     ConnectionTypeError,
-    IndexNotPairs,
+    InvalidLength,
+
+    make_delete_sql,
+    make_index_scan_sql,
+    make_insert_sql,
+    make_select_sql,
+    make_update_sql,
+    scan_index,
 )
 
 from privilege import (
@@ -14,10 +19,15 @@ from privilege import (
 )
 
 __all__ = [
+    "ConnectionTypeError",
+    "InvalidLength",
+
     "gtidset",
+    "make_delete_sql",
+    "make_index_scan_sql",
+    "make_insert_sql",
+    "make_select_sql",
+    "make_update_sql",
     "privileges",
     "scan_index",
-    "sql_scan_index",
-    "ConnectionTypeError",
-    "IndexNotPairs",
 ]
