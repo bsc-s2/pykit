@@ -9,6 +9,7 @@
 - [Conf](#conf)
   - [file_path](#file_path)
   - [is_first_line](#is_first_line)
+  - [get_level](#get_level)
   - [parse](#parse)
   - [level](#level)
 - [Methods](#methods)
@@ -42,6 +43,9 @@ def is_first_line(line):
     # return True if the line is the first line of a log,
     # otherwise return False.
 
+def get_level(log_str):
+    # return the level of the log.
+
 def parse(log_str):
    # parse the log.
 
@@ -50,6 +54,7 @@ conf = {
         'file_path': 'path/to/log/file/xxx.error.log',
         'level': ['warn', 'error'],
         'is_first_line': is_first_line,
+        'get_level': get_level,
         'parse': parse,
     },
 }
@@ -88,6 +93,12 @@ the path of the log file.
 is a callback function.
 The argument to this function is a line in log file, if the line is the
 first line of a log, then return `True`, otherwise return `False`.
+
+## get_level
+
+is a callback function.
+The argument to this function is the complete log string, which may contains
+multiple lines. It should return the level of the log, which is a string.
 
 ## parse
 

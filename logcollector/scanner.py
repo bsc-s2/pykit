@@ -73,10 +73,7 @@ def _iter_log(log_conf):
 
                 log_lines = [line]
             else:
-                if len(log_lines) > 100:
-                    logger.error('too many lines for one log in file: %s'
-                                 % file_path)
-                else:
+                if len(log_lines) < 100:
                     log_lines.append(line)
 
     except Exception as e:
@@ -111,13 +108,15 @@ def _scan(context, log_name):
         log_str = log_str[:1024]
         log_stat['total_n'] += 1
 
+        log_level = log_conf['get_level'](log_str)
+
+        if log_level not in log_conf['level']:
+            continue
+
         log_entry = build_entry(context, log_name, file_name,
                                 log_str, log_conf)
 
         log_stat['latence'] = time.time() - log_entry['log_ts']
-
-        if log_entry['level'] not in log_conf['level']:
-            continue
 
         log_stat['reported_n'] += 1
 
