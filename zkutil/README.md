@@ -7,6 +7,7 @@
 - [Description](#description)
 - [Methods](#methods)
   - [zkutil.is_backward_locking](#zkutilis_backward_locking)
+    - [Naive dead lock detect:](#naive-dead-lock-detect)
   - [zkutil.lock_id](#zkutillock_id)
   - [zkutil.parse_lock_id](#zkutilparse_lock_id)
   - [zkutil.make_digest](#zkutilmake_digest)
@@ -51,11 +52,11 @@ Some helper function to make life easier with zookeeper.
 
 Check if the operation of locking `key` is a backward-locking.
 
-Naive dead lock detect:
+### Naive dead lock detect:
 
-Locks must be acquired in alphabetic order, from left to right.
-Trying to acquire a lock>=right_most_locked, is a forward locking
-Otherwise it is a backward locking.
+Locks must be acquired in alphabetic order(or other order, from left to right.
+Trying to acquire a `lock>=right_most_locked`, is a forward locking Otherwise it
+is a backward locking.
 
 Always do forward locking we can guarantee there won't be a dead lock.
 Since a deadlock needs at least one backward locking to form a circular dependency.
@@ -66,17 +67,36 @@ it should release all locks it holds and redo the entire transaction.
 E.g. suppose X has acquired lock a and c, Y has acquired lock b:
 
 ```
+         Acquired locks by process X and Y
          locks are ordered left-to-right
 ---------------------------------------------
-prox-X   a(locked)                  c(locked)
-prox-Y               b(locked)
+proc-X   a(locked)                  c(locked)
+proc-Y               b(locked)
 ```
 
-If Y tries to acquire c(forward) and X tries to acquire b(**backward**):
+If
+X tries to acquire b(**backward**),
+Y tries to acquire c(forward):
     There is a deadlock. X should release all locks.
 
-If Y tries to acquires a(**backward**) and X tries to acquire b(**backward**),
+```
+---------------------------------------------
+proc-X   a(locked)   .------------ c(locked)
+                     v             ^
+proc-Y               b(locked) ----'
+```
+
+If
+X tries to acquire b(**backward**)
+Y tries to acquires a(**backward**)
     There is a deadlock, X and Y should both release their locks.
+
+```
+---------------------------------------------
+proc-X   a(locked)   .------------ c(locked)
+         ^           v
+proc-Y   '---------- b(locked)
+```
 
 **arguments**:
 
