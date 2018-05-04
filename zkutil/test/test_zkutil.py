@@ -2,6 +2,8 @@ import os
 import unittest
 import uuid
 
+from kazoo import security
+
 from pykit import config
 from pykit import net
 from pykit import ututil
@@ -228,6 +230,23 @@ class TestZKutil(unittest.TestCase):
         self.assertEqual(set(['ALL']), set(ac.acl_list))
 
         self.assertIsNone(zkutil.make_kazoo_digest_acl(None))
+
+    def test_parse_kazoo_acl(self):
+
+        inp = (security.make_acl('world', 'anyone', all=True),
+               security.make_digest_acl('foo', 'bar', create=True, read=True),
+               security.make_digest_acl('xp', '123', all=True),
+               )
+        expected = (('world', 'anyone', 'cdrwa'),
+                    ('digest', 'foo', 'rc'),
+                    ('digest', 'xp', 'cdrwa'))
+
+        dd(inp)
+
+        rst = zkutil.parse_kazoo_acl(inp)
+        dd(rst)
+
+        self.assertEqual(expected, tuple(rst))
 
     def test_is_backward_locking(self):
 

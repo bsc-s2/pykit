@@ -13,6 +13,7 @@
   - [zkutil.make_digest](#zkutilmake_digest)
   - [zkutil.make_acl_entry](#zkutilmake_acl_entry)
   - [zkutil.make_kazoo_digest_acl](#zkutilmake_kazoo_digest_acl)
+  - [zkutil.parse_kazoo_acl](#zkutilparse_kazoo_acl)
   - [zkutil.perm_to_long](#zkutilperm_to_long)
   - [zkutil.perm_to_short](#zkutilperm_to_short)
 - [Exceptions](#exceptions)
@@ -244,6 +245,35 @@ print zkutil.make_kazoo_digest_acl(acl)
 
 **return**:
 a `list` of `kazoo.security.ACL`.
+
+
+##  zkutil.parse_kazoo_acl
+
+**syntax**:
+`zkutil.parse_kazoo_acl(acls)`
+
+Convert kazoo style acls in list/tuple to a list in form `[(<scheme>, <user>, <perm>)]`.
+
+E.g.:
+
+```python
+acls = [ACL(perms=31, acl_list=['ALL'], id=Id(scheme=u'world', id=u'anyone')),
+        ACL(perms=5, acl_list=['READ', 'CREATE'],
+        id=Id(scheme='digest', id=u'foo:Zu5Tckgnn822Oi3gy2jMA7auDdE='))]
+
+print zkutil.parse_kazoo_acl(acls)
+"""
+[('world', 'anyone', 'cdrwa'), ('digest', 'foo', 'rc')]
+"""
+```
+
+**arguments**:
+
+-   `acls`:
+    a list/tuple of `kazoo.security.ACL`.
+
+**return**:
+a list of acl in form `[(<scheme>, <user>, <perm>)]`
 
 
 ##  zkutil.perm_to_long

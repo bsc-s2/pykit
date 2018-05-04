@@ -171,6 +171,24 @@ def make_kazoo_digest_acl(acl):
     return rst
 
 
+def parse_kazoo_acl(acls):
+
+    # acls = [ACL(perms=31,
+    #            acl_list=['ALL'],
+    #            id=Id(scheme='digest', id=u'user:+Ir5sN1lGJEEs8xBZhZXK='))]
+
+    rst = []
+    for acl in acls:
+        if 'ALL' in acl.acl_list:
+            acl_list = 'cdrwa'
+        else:
+            acl_list = perm_to_short(acl.acl_list)
+
+        rst.append((acl.id.scheme, acl.id.id.split(':')[0], acl_list))
+
+    return rst
+
+
 def is_backward_locking(locked_keys, key):
 
     locked_keys = sorted(locked_keys)
