@@ -79,20 +79,31 @@ def start_container(name, image,
                     ip=None,
                     command='',
                     port_bindings=None,
+                    volume_bindings=None,
                     env=None):
 
     net_name = 'network1'
     dcli = get_client()
 
     kwargs = {}
+    _config_kwargs = {}
     if env is not None:
         kwargs['environment'] = env
 
     if port_bindings is not None:
         kwargs['ports'] = port_bindings.keys()
-        kwargs['host_config'] = dcli.create_host_config(
-            port_bindings=port_bindings
-        )
+        _config_kwargs['port_bindings'] = port_bindings
+
+    if volume_bindings is not None:
+        volumes = []
+        for bind in volume_bindings:
+            volumes.append(bind.split(':')[1])
+
+        kwargs['volumes'] = volumes
+        _config_kwargs['binds'] = volume_bindings
+
+    kwargs['host_config'] = dcli.create_host_config(
+        **_config_kwargs)
 
     if ip is not None:
         net_cfg = dcli.create_networking_config({
