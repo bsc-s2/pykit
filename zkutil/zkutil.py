@@ -1,10 +1,10 @@
-
 import hashlib
 import os
 import threading
 import types
 
 from kazoo import security
+from kazoo.client import KazooClient
 
 from pykit import config
 from pykit import net
@@ -200,3 +200,50 @@ def is_backward_locking(locked_keys, key):
         is_backward = key < locked_keys[-1]
 
     return is_backward
+
+
+def _init_node(zkcli, parent_path, node, val, acl, users):
+
+    path = parent_path + '/' + node
+
+    if acl is None:
+        acls = zkcli.get_acls(parent_path)[0]
+    else:
+        acls = [(user, users[user], perms) for user, perms in acl.items()]
+        acls = make_kazoo_digest_acl(acls)
+
+    if zkcli.exists(path) is None:
+        zkcli.create(path, value=val, acl=acls)
+    else:
+        zkcli.set_acls(path, acls)
+
+    return path
+
+
+def init_hierarchy(hosts, hierarchy, users, auth):
+
+    zkcli = KazooClient(hosts)
+    zkcli.start()
+
+    scheme, name, passw = auth
+    zkcli.add_auth(scheme, name + ':' + passw)
+
+    def _init_hierarchy(hierarchy, parent_path):
+
+        if len(hierarchy) == 0:
+            return
+
+        for node, attr_children in hierarchy.items():
+            val = attr_children.get('__val__', '{}')
+            acl = attr_children.get('__acl__')
+
+            path = _init_node(zkcli, parent_path, node, val, acl, users)
+            children = {k: v
+                        for k, v in attr_children.items()
+                        if k not in ('__val__', '__acl__')
+                        }
+
+            _init_hierarchy(children, path)
+
+    _init_hierarchy(hierarchy, '/')
+    zkcli.stop()

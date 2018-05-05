@@ -3,13 +3,18 @@ import unittest
 import uuid
 
 from kazoo import security
+from kazoo.client import KazooClient
 
 from pykit import config
 from pykit import net
+from pykit import utdocker
 from pykit import ututil
 from pykit import zkutil
 
 dd = ututil.dd
+
+zk_tag = 'daocloud.io/zookeeper:3.4.10'
+zk_name = 'zk_test'
 
 
 class TestZKutil(unittest.TestCase):
@@ -145,14 +150,16 @@ class TestZKutil(unittest.TestCase):
         perm_cases = (
             ('',              [], ''),
             ('rw',            ['read', 'write'], 'rw'),
-            ('cdrwa',         ['create', 'delete', 'read', 'write', 'admin'], 'cdrwa'),
+            ('cdrwa',         ['create', 'delete',
+                               'read', 'write', 'admin'], 'cdrwa'),
             ([],              [], ''),
             (['c'],           ['create'], 'c'),
             (['c', 'r', 'r'], ['create', 'read', 'read'], 'crr'),
             ((),              [], ''),
             (('c',),          ['create'], 'c'),
             (('c', 'r', 'w'), ['create', 'read', 'write'], 'crw'),
-            (iter('cdrwa'),   ['create', 'delete', 'read', 'write', 'admin'], 'cdrwa'),
+            (iter('cdrwa'),   ['create', 'delete',
+                               'read', 'write', 'admin'], 'cdrwa'),
         )
 
         for inp, lng, short in perm_cases:
@@ -267,3 +274,112 @@ class TestZKutil(unittest.TestCase):
                 self.assertEqual(expected, rst)
             else:
                 self.assertRaises(err, zkutil.is_backward_locking, locked, key)
+
+
+class TestZKinit(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+
+        utdocker.pull_image(zk_tag)
+
+    def setUp(self):
+
+        utdocker.create_network()
+
+        utdocker.start_container(
+            zk_name,
+            zk_tag,
+            port_bindings={2181: 2181}
+        )
+
+        dd('start zk-test in docker')
+
+    def tearDown(self):
+
+        utdocker.stop_container(zk_name)
+        utdocker.remove_container(zk_name)
+
+        dd('remove_container: ' + zk_name)
+
+    def test_init_hierarchy(self):
+
+        auth = ('digest', 'aa', 'pw_aa')
+        hosts = '127.0.0.1:2181'
+        users = {'aa': 'pw_aa', 'bb': 'pw_bb', 'cc': 'pw_cc'}
+        hierarchy = {
+            'node1':
+            {
+                '__val__': 'node1_val',
+                '__acl__': {'aa': 'cdrwa', 'bb': 'rw'},
+                'node11':
+                {
+                    '__val__': 'node11_val',
+                    '__acl__': {'aa': 'cdrwa', 'cc': 'r'},
+                },
+                'node12':
+                {
+                    '__val__': 'node12_val',
+                    'node121': {'__val__': 'node121_val'}
+                },
+                'node13':
+                {
+                    '__acl__': {'aa': 'cdrwa'}
+                }
+            },
+            'node2':
+            {
+                '__val__': 'node2_val',
+                'node21': {'__val__': 'node21_val'},
+                'node22': {'__acl__': {'aa': 'rwa'}}
+            },
+            'node3':
+            {
+                '__acl__': {'aa': 'carw', 'cc': 'r'},
+                'node31': {'node311': {'node3111': {}, 'node3112': {}}}
+            }
+        }
+
+        zkutil.init_hierarchy(hosts, hierarchy, users, auth)
+
+        zkcli = KazooClient(hosts)
+        zkcli.start()
+        zkcli.add_auth('digest', 'aa:pw_aa')
+
+        expected_nodes = (
+            ('/node1', 'node1_val', [('digest', 'aa', 'cdrwa'),
+                                     ('digest', 'bb', 'rw')], set(['node11', 'node12', 'node13'])),
+            ('/node1/node11', 'node11_val',
+             [('digest', 'aa', 'cdrwa'), ('digest', 'cc', 'r')], set([])),
+            ('/node1/node12', 'node12_val',
+             [('digest', 'aa', 'cdrwa'), ('digest', 'bb', 'rw')], set(['node121'])),
+            ('/node1/node12/node121', 'node121_val',
+             [('digest', 'aa', 'cdrwa'), ('digest', 'bb', 'rw')], set([])),
+            ('/node1/node13', '{}', [('digest', 'aa', 'cdrwa')], set([])),
+
+            ('/node2', 'node2_val',
+             [('world', 'anyone', 'cdrwa')], set(['node21', 'node22'])),
+            ('/node2/node21', 'node21_val',
+             [('world', 'anyone', 'cdrwa')],  set([])),
+            ('/node2/node22', '{}', [('digest', 'aa', 'rwa')],  set([])),
+
+            ('/node3', '{}', [('digest', 'aa', 'rwca'),
+                              ('digest', 'cc', 'r')], set(['node31'])),
+            ('/node3/node31', '{}', [('digest', 'aa', 'rwca'),
+                                     ('digest', 'cc', 'r')],  set(['node311'])),
+            ('/node3/node31/node311', '{}',
+             [('digest', 'aa', 'rwca'), ('digest', 'cc', 'r')], set(['node3111', 'node3112'])),
+            ('/node3/node31/node311/node3111', '{}',
+             [('digest', 'aa', 'rwca'), ('digest', 'cc', 'r')], set([])),
+            ('/node3/node31/node311/node3112', '{}',
+             [('digest', 'aa', 'rwca'), ('digest', 'cc', 'r')], set([])),
+        )
+
+        for node, val, acl, children in expected_nodes:
+
+            actual_acl = zkutil.parse_kazoo_acl(zkcli.get_acls(node)[0])
+            self.assertEqual(val, zkcli.get(node)[0])
+            self.assertEqual(acl, actual_acl)
+            self.assertEqual(children, set(zkcli.get_children(node)))
+
+        zkcli.stop()
