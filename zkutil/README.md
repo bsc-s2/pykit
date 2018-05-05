@@ -16,6 +16,7 @@
   - [zkutil.parse_kazoo_acl](#zkutilparse_kazoo_acl)
   - [zkutil.perm_to_long](#zkutilperm_to_long)
   - [zkutil.perm_to_short](#zkutilperm_to_short)
+  - [zkutil.init_hierarchy](#zkutilinit_hierarchy)
 - [Exceptions](#exceptions)
   - [zkutil.LockTimeout](#zkutillocktimeout)
 - [Classes](#classes)
@@ -318,6 +319,44 @@ such as `cdrw`.
 
 **return**:
 a string of short permissions.
+
+
+##  zkutil.init_hierarchy
+
+**syntax**:
+`zkutil.init_hierarchy(hosts, hierarchy, users, auth)`
+
+It initialize a zookeeper cluster, including initializing the tree structure, setting value and permissions for each node.
+
+**arguments**:
+
+-   `hosts`:
+    comma-separated list of hosts to connect to, such as `'127.0.0.1:2181,127.0.0.1:2182,[::1]:2183'`.
+
+-   `hierarchy`:
+    a dict of zk node structure with value or acl optional for each node.
+    For example,
+    ```
+    node1:
+      __val__: "json, optional, by default a '{}'"
+      __acl__: # optional, same with parent if not given
+        user_1: "cdrwa"
+        user_2: "rw"
+                    ...
+    node2:
+        node21: {...}
+    ```
+    As shown above, each node has two attributes `__val__` and `__acl__` which are used to set the corresponding node.
+
+-   `users`:
+    a dict in form `{<username>: <password>}` containing all users in `hierarchy`.
+
+-  `auth`:
+    a tuple in form `(<scheme>, <user>, <password>)`.
+    It is the authorization info to connect to zookeeper which is used to initialize the zookeeper cluster.
+
+**return**:
+None.
 
 
 #  Exceptions

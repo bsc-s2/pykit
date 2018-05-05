@@ -10,6 +10,7 @@ from .zkutil import (
     parse_lock_id,
     perm_to_long,
     perm_to_short,
+    init_hierarchy,
 
 )
 
@@ -30,6 +31,7 @@ __all__ = [
     "parse_lock_id",
     "perm_to_long",
     "perm_to_short",
+    "init_hierarchy",
 
     "LockTimeout",
 
