@@ -162,11 +162,6 @@ class ZKLock(object):
             except KazooException as e:
                 logger.info(repr(e) + ' while stop my own client')
 
-            try:
-                self.zkclient.close()
-            except KazooException as e:
-                logger.info(repr(e) + ' while close my own client')
-
     def is_locked(self):
 
         l = self.lock_holder

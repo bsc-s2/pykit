@@ -89,7 +89,6 @@ class TestZKLock(unittest.TestCase):
     def tearDown(self):
 
         self.zk.stop()
-        self.zk.close()
         utdocker.remove_container(zk_test_name)
 
     def _loop_acquire(self, ident):
@@ -116,7 +115,6 @@ class TestZKLock(unittest.TestCase):
                     holder=l.lock_holder))
 
         zk.stop()
-        zk.close()
 
     def test_concurrent(self):
 
@@ -136,7 +134,6 @@ class TestZKLock(unittest.TestCase):
         l = zkutil.ZKLock('foo_name', persistent=True, on_lost=lambda: True)
         with l:
             l.zkclient.stop()
-            l.zkclient.close()
 
         self.assertRaises(zkutil.LockTimeout, self.lck.acquire, timeout=0.2)
 
@@ -166,20 +163,20 @@ class TestZKLock(unittest.TestCase):
 
         with l1:
             with ututil.Timer() as t:
-                rst = l2.try_lock()
-                self.assertFalse(rst[0])
-                self.assertEqual(l1.identifier, rst[1])
-                self.assertGreaterEqual(rst[2], 0)
+                locked, holder, ver = l2.try_lock()
+                self.assertFalse(locked)
+                self.assertEqual(l1.identifier, holder)
+                self.assertGreaterEqual(ver, 0)
 
-                self.assertAlmostEqual(0.0, t.spent(), delta=0.01)
+                self.assertAlmostEqual(0.0, t.spent(), delta=0.05)
 
         with ututil.Timer() as t:
-            rst = l2.try_lock()
-            self.assertTrue(rst[0])
-            self.assertEqual(l2.identifier, rst[1])
-            self.assertEqual(rst[2], -1)
+            locked, holder, ver = l2.try_lock()
+            self.assertTrue(locked)
+            self.assertEqual(l2.identifier, holder)
+            self.assertEqual(ver, -1)
 
-            self.assertAlmostEqual(0.0, t.spent(), delta=0.01)
+            self.assertAlmostEqual(0.0, t.spent(), delta=0.05)
 
     def test_zk_lost(self):
 
@@ -198,7 +195,6 @@ class TestZKLock(unittest.TestCase):
         with l:
             time.sleep(0.1)
             self.zk.stop()
-            self.zk.close()
             time.sleep(0.1)
             self.assertFalse(sess['acquired'])
 
