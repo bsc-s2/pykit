@@ -213,7 +213,7 @@ def _init_node(zkcli, parent_path, node, val, acl, users):
         acls = make_kazoo_digest_acl(acls)
 
     if zkcli.exists(path) is None:
-        zkcli.create(path, value=val, acl=acls, makepath=True)
+        zkcli.create(path, value=val, acl=acls)
     else:
         zkcli.set_acls(path, acls)
 
@@ -238,15 +238,12 @@ def init_hierarchy(hosts, hierarchy, users, auth):
             acl = attr_children.get('__acl__')
 
             path = _init_node(zkcli, parent_path, node, val, acl, users)
+            children = {k: v
+                        for k, v in attr_children.items()
+                        if k not in ('__val__', '__acl__')
+                        }
 
-            children = {k: v for k, v in attr_children.items(
-            ) if k not in ('__val__', '__acl__')}
             _init_hierarchy(children, path)
 
-    path = ''
-
-    try:
-        _init_hierarchy(hierarchy, path)
-        zkcli.stop()
-    except Exception as e:
-        raise e
+    _init_hierarchy(hierarchy, '/')
+    zkcli.stop()
