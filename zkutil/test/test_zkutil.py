@@ -431,6 +431,26 @@ class TestWait(unittest.TestCase):
                 zkutil.wait_absent(self.zk, 'a', wait_time)
                 self.assertAlmostEqual(0, t.spent(), delta=0.2)
 
+    def test_wait_absent_no_timeout(self):
+
+        def _del():
+            time.sleep(1)
+            self.zk.delete('a')
+
+        for kwargs in (
+            {},
+                {'timeout': None},
+        ):
+
+            self.zk.create('a')
+            th = threadutil.start_daemon(target=_del)
+
+            with ututil.Timer() as t:
+                zkutil.wait_absent(self.zk, 'a', **kwargs)
+                self.assertAlmostEqual(1, t.spent(), delta=0.1)
+
+            th.join()
+
     def test_wait_absent_timeout(self):
 
         self.zk.create('a')

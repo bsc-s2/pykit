@@ -325,7 +325,7 @@ a string of short permissions.
 ##  zkutil.wait_absent
 
 **syntax**:
-`zkutil.wait_absent(zkclient, path, timeout)`
+`zkutil.wait_absent(zkclient, path, timeout=None)`
 
 Wait at most `timeout` seconds for zk-node `path` to be absent.
 
@@ -344,6 +344,8 @@ If `path` does not exist, it returns at once.
 
 -   `timeout`:
     specifies the time(in second) to wait.
+
+    By default it is `None` which means to wait for a year.
 
 **return**:
 Nothing or raise `ZKWaitTimeout`.

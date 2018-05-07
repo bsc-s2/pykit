@@ -256,7 +256,10 @@ def init_hierarchy(hosts, hierarchy, users, auth):
     zkcli.stop()
 
 
-def wait_absent(zkclient, path, timeout):
+def wait_absent(zkclient, path, timeout=None):
+
+    if timeout is None:
+        timeout = 86400 * 365
 
     expire_at = time.time() + timeout
 
