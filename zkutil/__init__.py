@@ -2,6 +2,10 @@ from .exceptions import (
     ZKWaitTimeout,
 )
 
+from .zkconf import (
+    ZKConf,
+)
+
 from .zkutil import (
     PermTypeError,
 
@@ -44,6 +48,7 @@ __all__ = [
 
     "LockTimeout",
 
+    "ZKConf",
     "ZKLock",
 
 ]

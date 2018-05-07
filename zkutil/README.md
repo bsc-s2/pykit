@@ -21,6 +21,7 @@
 - [Exceptions](#exceptions)
   - [zkutil.LockTimeout](#zkutillocktimeout)
 - [Classes](#classes)
+  - [zkutil.ZKConf](#zkutilzkconf)
   - [zkutil.ZKLock](#zkutilzklock)
     - [Synopsis](#synopsis)
     - [Why we need this](#why-we-need-this)
@@ -397,6 +398,33 @@ Raise if `ZKLock` timed out on waiting to acquire a lock.
 
 
 #  Classes
+
+
+##  zkutil.ZKConf
+
+**syntax**:
+`zkutil.ZKConf(hosts=None,
+               journal_dir=None,
+               record_dir=None,
+               lock_dir=None,
+               auth=None,
+               acl=None
+)`
+
+It is a config wrapper, provding several method for accessing config.
+If one of the config field is not spedified when initializing this class, it
+falls back to using `config.zk_<field>`.
+
+Classes in this module relies on this class to access config.
+
+E.g.:
+
+```python
+config.zk_journal_dir = "my_dir/"
+c = zkutil.ZKConf(hosts="127.0.0.1:9999")
+c.hosts()       # "127.0.0.1:9999" # specified
+c.journal_dir() # "my_dir/"        # by default using `config.zk_<field>`
+```
 
 
 ##  zkutil.ZKLock
