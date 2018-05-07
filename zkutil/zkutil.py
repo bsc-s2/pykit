@@ -1,13 +1,20 @@
 import hashlib
+import logging
 import os
 import threading
+import time
 import types
 
 from kazoo import security
 from kazoo.client import KazooClient
+from kazoo.exceptions import NoNodeError
 
 from pykit import config
 from pykit import net
+
+from .exceptions import ZKWaitTimeout
+
+logger = logging.getLogger(__name__)
 
 PERM_TO_LONG = {
     'c': 'create',
@@ -247,3 +254,58 @@ def init_hierarchy(hosts, hierarchy, users, auth):
 
     _init_hierarchy(hierarchy, '/')
     zkcli.stop()
+
+
+def wait_absent(zkclient, path, timeout=None):
+
+    if timeout is None:
+        timeout = 86400 * 365
+
+    expire_at = time.time() + timeout
+
+    lck = threading.RLock()
+
+    maybe_absent = threading.Event()
+    maybe_absent.clear()
+
+    def on_node_change(watchevent):
+
+        logger.info('node state change: {0} {1} {2}'.format(
+            watchevent.type, watchevent.state, watchevent.path))
+        with lck:
+            maybe_absent.set()
+
+    def on_connection_change(state):
+
+        logger.info('connection state change: {0}'.format(state))
+
+        # notify it to re-get, then raise Connection related error
+        with lck:
+            maybe_absent.set()
+
+    zkclient.add_listener(on_connection_change)
+
+    try:
+        while True:
+
+            # prevent clear() runs after set() in on_node_change()
+            with lck:
+                try:
+                    val, zstat = zkclient.get(path, watch=on_node_change)
+                    maybe_absent.clear()
+                except NoNodeError as e:
+                    logger.info(repr(e) + ' found, return')
+                    return
+
+            if maybe_absent.wait(expire_at - time.time()):
+                continue
+            else:
+                raise ZKWaitTimeout("timeout({timeout} sec)"
+                                    " waiting for {path} to be absent".format(
+                                        timeout=timeout,
+                                        path=path))
+    finally:
+        try:
+            zkclient.remove_listener(on_connection_change)
+        except Exception as e:
+            logger.info(repr(e) + ' while removing on_connection_change')

@@ -16,6 +16,7 @@
   - [zkutil.parse_kazoo_acl](#zkutilparse_kazoo_acl)
   - [zkutil.perm_to_long](#zkutilperm_to_long)
   - [zkutil.perm_to_short](#zkutilperm_to_short)
+  - [zkutil.wait_absent](#zkutilwait_absent)
   - [zkutil.init_hierarchy](#zkutilinit_hierarchy)
 - [Exceptions](#exceptions)
   - [zkutil.LockTimeout](#zkutillocktimeout)
@@ -319,6 +320,35 @@ such as `cdrw`.
 
 **return**:
 a string of short permissions.
+
+
+##  zkutil.wait_absent
+
+**syntax**:
+`zkutil.wait_absent(zkclient, path, timeout=None)`
+
+Wait at most `timeout` seconds for zk-node `path` to be absent.
+
+If `path` still presents after `timeout` seconds,
+it raises a `ZKWaitTimeout` exception.
+
+If `path` does not exist, it returns at once.
+
+**arguments**:
+
+-   `zkclient`:
+    kazoo client.
+
+-   `path`:
+    specifies the path to watch.
+
+-   `timeout`:
+    specifies the time(in second) to wait.
+
+    By default it is `None` which means to wait for a year.
+
+**return**:
+Nothing or raise `ZKWaitTimeout`.
 
 
 ##  zkutil.init_hierarchy

@@ -1,12 +1,15 @@
 import os
+import time
 import unittest
 import uuid
 
 from kazoo import security
 from kazoo.client import KazooClient
+from kazoo.exceptions import ConnectionClosedError
 
 from pykit import config
 from pykit import net
+from pykit import threadutil
 from pykit import utdocker
 from pykit import ututil
 from pykit import zkutil
@@ -383,3 +386,162 @@ class TestZKinit(unittest.TestCase):
             self.assertEqual(children, set(zkcli.get_children(node)))
 
         zkcli.stop()
+
+
+class TestWait(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        utdocker.pull_image(zk_tag)
+
+    def setUp(self):
+
+        utdocker.create_network()
+        utdocker.start_container(
+            zk_name,
+            zk_tag,
+            env={
+                "ZOO_MY_ID": 1,
+                "ZOO_SERVERS": "server.1=0.0.0.0:2888:3888",
+            },
+            port_bindings={2181: 2181}
+        )
+
+        self.zk = KazooClient('127.0.0.1:2181')
+        self.zk.start()
+
+        dd('start zk-test in docker')
+
+    def tearDown(self):
+
+        self.zk.stop()
+        utdocker.remove_container(zk_name)
+
+    def test_wait_absent(self):
+
+        for wait_time in (
+                -1,
+                0.0,
+                0.1,
+                1,
+        ):
+
+            dd('no node wait:', wait_time)
+
+            with ututil.Timer() as t:
+                zkutil.wait_absent(self.zk, 'a', wait_time)
+                self.assertAlmostEqual(0, t.spent(), delta=0.2)
+
+    def test_wait_absent_no_timeout(self):
+
+        def _del():
+            time.sleep(1)
+            self.zk.delete('a')
+
+        for kwargs in (
+            {},
+                {'timeout': None},
+        ):
+
+            self.zk.create('a')
+            th = threadutil.start_daemon(target=_del)
+
+            with ututil.Timer() as t:
+                zkutil.wait_absent(self.zk, 'a', **kwargs)
+                self.assertAlmostEqual(1, t.spent(), delta=0.1)
+
+            th.join()
+
+    def test_wait_absent_timeout(self):
+
+        self.zk.create('a')
+
+        for wait_time in (
+                -1,
+                0.0,
+                0.1,
+                1,
+        ):
+            dd('node present wait:', wait_time)
+            expected = max([0, wait_time])
+
+            with ututil.Timer() as t:
+                try:
+                    zkutil.wait_absent(self.zk, 'a', wait_time)
+                    self.fail('must timeout')
+                except zkutil.ZKWaitTimeout:
+                    self.assertAlmostEqual(expected, t.spent(), delta=0.2)
+
+        self.zk.delete('a')
+
+    def test_wait_absent_delete_node(self):
+
+        delete_after = 0.2
+
+        for wait_time in (
+                0.5,
+                1,
+        ):
+            dd('node present wait:', wait_time)
+
+            self.zk.create('a')
+
+            def _del():
+                time.sleep(delete_after)
+                self.zk.delete('a')
+
+            th = threadutil.start_daemon(target=_del)
+            with ututil.Timer() as t:
+                zkutil.wait_absent(self.zk, 'a', wait_time)
+                self.assertAlmostEqual(delete_after, t.spent(), delta=0.1)
+
+            th.join()
+
+    def test_wait_absent_change_node(self):
+
+        self.zk.create('a')
+
+        change_after = 0.2
+
+        for wait_time in (
+                0.5,
+                1,
+        ):
+            dd('node present wait:', wait_time)
+            expected = max([0, wait_time])
+
+            def _change():
+                time.sleep(change_after)
+                self.zk.set('a', 'bbb')
+
+            th = threadutil.start_daemon(target=_change)
+            with ututil.Timer() as t:
+                try:
+                    zkutil.wait_absent(self.zk, 'a', wait_time)
+                    self.fail('must timeout')
+                except zkutil.ZKWaitTimeout:
+                    self.assertAlmostEqual(expected, t.spent(), delta=0.1)
+
+            th.join()
+
+        self.zk.delete('a')
+
+    def test_wait_absent_connection_lost(self):
+
+        self.zk.create('a')
+
+        def _close():
+            time.sleep(.3)
+            self.zk.stop()
+
+        th = threadutil.start_daemon(target=_close)
+
+        with ututil.Timer() as t:
+            try:
+                zkutil.wait_absent(self.zk, 'a')
+                self.fail('ConnectionClosedError is expected')
+            except ConnectionClosedError:
+                pass
+            self.assertAlmostEqual(.3, t.spent(), delta=0.1)
+
+        th.join()
