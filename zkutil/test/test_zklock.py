@@ -3,6 +3,7 @@ import time
 import unittest
 
 from kazoo.client import KazooClient
+from kazoo.exceptions import ConnectionClosedError
 
 from pykit import config
 from pykit import threadutil
@@ -211,6 +212,23 @@ class TestZKLock(unittest.TestCase):
             self.zk.delete(l.lock_dir + 'foo_name')
             time.sleep(0.1)
             self.assertFalse(sess['acquired'])
+
+    def test_conn_lost_when_blocking_acquiring(self):
+
+        l2 = zkutil.ZKLock('foo_name', on_lost=lambda: True)
+
+        def _stop():
+            time.sleep(0.5)
+            self.zk.stop()
+
+        th = threadutil.start_daemon(target=_stop)
+        with l2:
+            try:
+                self.lck.acquire(timeout=1)
+            except ConnectionClosedError:
+                pass
+
+        th.join()
 
     def test_internal_zkclient(self):
 

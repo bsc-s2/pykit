@@ -56,9 +56,6 @@ class ZKLock(object):
         else:
             self.owning_client = False
 
-        if on_lost is not None:
-            zkclient.add_listener(lambda state: on_lost())
-
         # a copy of hosts for debugging and tracking
         self._hosts = ','.join(['{0}:{1}'.format(*x)
                                 for x in zkclient.hosts])
@@ -70,6 +67,31 @@ class ZKLock(object):
             lock_dir = config.zk_lock_dir
 
         self.zkclient = zkclient
+
+        # NOTE: Bound method are not the same.
+        #       Unable to be used with remove_listener()
+        # class X(object):
+        #     def bound(self):
+        #         pass
+        #     def __init__(self):
+        #         def nonbound():
+        #             pass
+        #         self.nonbound = nonbound
+        # x = X()
+        # print x.bound is x.bound # False
+        # print x.nonbound is x.nonbound # True
+
+        def on_connection_change(state):
+            # notify zklock to re-do acquiring procedure, to trigger Connection Error
+            with self.mutex:
+                self.maybe_available.set()
+
+            if on_lost is not None:
+                on_lost()
+
+        self.on_connection_change = on_connection_change
+        self.zkclient.add_listener(self.on_connection_change)
+
         self.acl = zkutil.make_kazoo_digest_acl(acl)
 
         self.lock_name = lock_name
@@ -84,16 +106,15 @@ class ZKLock(object):
         self.maybe_available.set()
         self.lock_holder = None
 
-    def watcher(self, watchevent):
+    def on_node_change(self, watchevent):
 
         # Must be locked first.
-        # Or there is a chance watcher is triggered before
+        # Or there is a chance on_node_change is triggered before
         #         self.maybe_available.clear()
-
         with self.mutex:
             self.maybe_available.set()
 
-        logger.info('state changed, lock is released: {s}'.format(s=str(self)))
+        logger.info('node state changed, lock might be released: {s}'.format(s=str(self)))
 
     def acquire(self, timeout=None):
 
@@ -162,6 +183,11 @@ class ZKLock(object):
             except KazooException as e:
                 logger.info(repr(e) + ' while stop my own client')
 
+        try:
+            self.zkclient.remove_listener(self.on_connection_change)
+        except Exception as e:
+            logger.info(repr(e) + ' while remove on_connection_change')
+
     def is_locked(self):
 
         l = self.lock_holder
@@ -204,7 +230,7 @@ class ZKLock(object):
 
         try:
             with self.mutex:
-                holder, zstat = self.zkclient.get(self.lock_path, watch=self.watcher)
+                holder, zstat = self.zkclient.get(self.lock_path, watch=self.on_node_change)
 
                 self.lock_holder = (holder, zstat.version)
 
