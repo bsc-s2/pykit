@@ -1,3 +1,7 @@
+from .exceptions import (
+    ZKWaitTimeout,
+)
+
 from .zkutil import (
     PermTypeError,
 
@@ -11,6 +15,7 @@ from .zkutil import (
     parse_lock_id,
     perm_to_long,
     perm_to_short,
+    wait_absent,
 
 )
 
@@ -23,6 +28,7 @@ from .zklock import (
 
 __all__ = [
     "PermTypeError",
+    "ZKWaitTimeout",
 
     "init_hierarchy",
     "is_backward_locking",
@@ -34,6 +40,7 @@ __all__ = [
     "parse_lock_id",
     "perm_to_long",
     "perm_to_short",
+    "wait_absent",
 
     "LockTimeout",
 

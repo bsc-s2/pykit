@@ -1,13 +1,20 @@
 import hashlib
+import logging
 import os
 import threading
+import time
 import types
 
 from kazoo import security
 from kazoo.client import KazooClient
+from kazoo.exceptions import NoNodeError
 
 from pykit import config
 from pykit import net
+
+from .exceptions import ZKWaitTimeout
+
+logger = logging.getLogger(__name__)
 
 PERM_TO_LONG = {
     'c': 'create',
@@ -247,3 +254,38 @@ def init_hierarchy(hosts, hierarchy, users, auth):
 
     _init_hierarchy(hierarchy, '/')
     zkcli.stop()
+
+
+def wait_absent(zkclient, path, timeout):
+
+    expire_at = time.time() + timeout
+
+    lck = threading.RLock()
+
+    maybe_absent = threading.Event()
+    maybe_absent.clear()
+
+    def on_change(watchevent):
+        logger.info('state change: {0} {1} {2}'.format(
+            watchevent.type, watchevent.state, watchevent.path))
+        with lck:
+            maybe_absent.set()
+
+    while True:
+
+        # prevent clear() runs after set() in on_change()
+        with lck:
+            try:
+                val, zstat = zkclient.get(path, watch=on_change)
+                maybe_absent.clear()
+            except NoNodeError as e:
+                logger.info(repr(e) + ' found, return')
+                return
+
+        if maybe_absent.wait(expire_at - time.time()):
+            continue
+        else:
+            raise ZKWaitTimeout("timeout({timeout} sec)"
+                                " waiting for {path} to be absent".format(
+                                    timeout=timeout,
+                                    path=path))
