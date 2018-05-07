@@ -268,27 +268,44 @@ def wait_absent(zkclient, path, timeout=None):
     maybe_absent = threading.Event()
     maybe_absent.clear()
 
-    def on_change(watchevent):
-        logger.info('state change: {0} {1} {2}'.format(
+    def on_node_change(watchevent):
+
+        logger.info('node state change: {0} {1} {2}'.format(
             watchevent.type, watchevent.state, watchevent.path))
         with lck:
             maybe_absent.set()
 
-    while True:
+    def on_connection_change(state):
 
-        # prevent clear() runs after set() in on_change()
+        logger.info('connection state change: {0}'.format(state))
+
+        # notify it to re-get, then raise ConnectionClosedError
         with lck:
-            try:
-                val, zstat = zkclient.get(path, watch=on_change)
-                maybe_absent.clear()
-            except NoNodeError as e:
-                logger.info(repr(e) + ' found, return')
-                return
+            maybe_absent.set()
 
-        if maybe_absent.wait(expire_at - time.time()):
-            continue
-        else:
-            raise ZKWaitTimeout("timeout({timeout} sec)"
-                                " waiting for {path} to be absent".format(
-                                    timeout=timeout,
-                                    path=path))
+    zkclient.add_listener(on_connection_change)
+
+    try:
+        while True:
+
+            # prevent clear() runs after set() in on_node_change()
+            with lck:
+                try:
+                    val, zstat = zkclient.get(path, watch=on_node_change)
+                    maybe_absent.clear()
+                except NoNodeError as e:
+                    logger.info(repr(e) + ' found, return')
+                    return
+
+            if maybe_absent.wait(expire_at - time.time()):
+                continue
+            else:
+                raise ZKWaitTimeout("timeout({timeout} sec)"
+                                    " waiting for {path} to be absent".format(
+                                        timeout=timeout,
+                                        path=path))
+    finally:
+        try:
+            zkclient.remove_listener(on_connection_change)
+        except Exception as e:
+            logger.info(repr(e) + ' while removing on_connection_change')

@@ -5,6 +5,7 @@ import uuid
 
 from kazoo import security
 from kazoo.client import KazooClient
+from kazoo.exceptions import ConnectionClosedError
 
 from pykit import config
 from pykit import net
@@ -524,3 +525,23 @@ class TestWait(unittest.TestCase):
             th.join()
 
         self.zk.delete('a')
+
+    def test_wait_absent_connection_lost(self):
+
+        self.zk.create('a')
+
+        def _close():
+            time.sleep(.3)
+            self.zk.stop()
+
+        th = threadutil.start_daemon(target=_close)
+
+        with ututil.Timer() as t:
+            try:
+                zkutil.wait_absent(self.zk, 'a')
+                self.fail('ConnectionClosedError is expected')
+            except ConnectionClosedError:
+                pass
+            self.assertAlmostEqual(.3, t.spent(), delta=0.1)
+
+        th.join()
