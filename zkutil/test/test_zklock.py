@@ -217,14 +217,11 @@ class TestZKLock(unittest.TestCase):
 
         l2 = zkutil.ZKLock('foo_name', on_lost=lambda: True)
 
-        def _stop():
-            time.sleep(0.5)
-            self.zk.stop()
-
-        th = threadutil.start_daemon(target=_stop)
+        th = threadutil.start_daemon(target=self.zk.stop, after=0.5)
         with l2:
             try:
                 self.lck.acquire(timeout=1)
+                self.fail('expected connection error')
             except ConnectionClosedError:
                 pass
 
