@@ -68,7 +68,7 @@ class TestZKutil(unittest.TestCase):
 
             rst = zkutil.parse_lock_id(inp)
 
-            self.assertEqual(set(['node_id', 'ip', 'process_id', 'counter', 'txid']),
+            self.assertEqual(set(['node_id', 'ip', 'process_id', 'uuid', 'txid']),
                              set(rst.keys()))
 
             self.assertEqual(expected,
