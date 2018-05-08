@@ -33,7 +33,7 @@ class ZKLock(object):
                  zkclient=None,
                  on_lost=None,
                  identifier=None,
-                 persistent=False,
+                 ephemeral=True,
                  timeout=10):
 
         if zkconf is None:
@@ -70,7 +70,7 @@ class ZKLock(object):
         self.lock_name = lock_name
         self.lock_path = zkconf.lock(self.lock_name)
         self.identifier = identifier
-        self.ephemeral = not persistent
+        self.ephemeral = ephemeral
         self.timeout = timeout
 
         self.mutex = threading.RLock()
@@ -180,8 +180,10 @@ class ZKLock(object):
         logger.debug('to creaet: {s}'.format(s=str(self)))
 
         try:
-            self.zkclient.create(self.lock_path, self.identifier,
-                                 ephemeral=self.ephemeral, acl=self.zkconf.kazoo_digest_acl())
+            self.zkclient.create(self.lock_path,
+                                 self.identifier,
+                                 ephemeral=self.ephemeral,
+                                 acl=self.zkconf.kazoo_digest_acl())
 
         except NodeExistsError as e:
 
@@ -199,8 +201,8 @@ class ZKLock(object):
             raise
 
         with self.mutex:
-            # If lock holder is me, there is not a `get` thus there is no version fetched.
-            self.lock_holder = (self.identifier, -1)
+            # New created node always has version=0
+            self.lock_holder = (self.identifier, 0)
 
         logger.info('ACQUIRED(by create): {s}'.format(s=str(self)))
 

@@ -149,7 +149,7 @@ class TestZKLock(unittest.TestCase):
         self.running = False
 
     def test_persistent(self):
-        l = zkutil.ZKLock('foo_name', persistent=True, on_lost=lambda: True)
+        l = zkutil.ZKLock('foo_name', ephemeral=False, on_lost=lambda: True)
         with l:
             l.zkclient.stop()
 
@@ -174,6 +174,20 @@ class TestZKLock(unittest.TestCase):
         except zkutil.LockTimeout:
             self.fail('timeout<0 should could acquire')
 
+    def test_lock_holder(self):
+        a = zkutil.ZKLock('foo_name', on_lost=lambda: True)
+        b = zkutil.ZKLock('foo_name', on_lost=lambda: True)
+
+        with a:
+            self.assertEqual((a.identifier, 0), a.lock_holder)
+            val, zstate = self.zk.get(a.lock_path)
+            self.assertEqual((val, zstate.version), a.lock_holder)
+
+            locked, holder, ver = b.try_lock()
+            self.assertFalse(locked)
+            self.assertEqual((a.identifier, 0), (holder, ver))
+            self.assertEqual((val, zstate.version), (holder, ver))
+
     def test_try_lock(self):
 
         l1 = zkutil.ZKLock('foo_name', on_lost=lambda: True)
@@ -192,7 +206,7 @@ class TestZKLock(unittest.TestCase):
             locked, holder, ver = l2.try_lock()
             self.assertTrue(locked)
             self.assertEqual(l2.identifier, holder)
-            self.assertEqual(ver, -1)
+            self.assertEqual(ver, 0)
 
             self.assertAlmostEqual(0.0, t.spent(), delta=0.05)
 
@@ -250,7 +264,6 @@ class TestZKLock(unittest.TestCase):
 
         def on_lost():
             sess['acquired'] = False
-            print sess['acquired']
 
         # There must be a listener specified to watch connection issue
         self.assertRaises(ValueError, zkutil.ZKLock, 'foo_name')

@@ -432,7 +432,7 @@ c.journal_dir() # "my_dir/"        # by default using `config.zk_<field>`
 
 **syntax**:
 `zkutil.ZKLock(lock_name, zkclient=None, zkconf=None, on_lost=None,
-               persistent=False, timeout=10)`
+               ephemeral=True, timeout=10)`
 
 ZKLock implements a zookeeper based distributed lock.
 
@@ -590,12 +590,12 @@ It is similar to standard zookeeper mechanism except:
 
     A recovered process would uses a specified identifier.
 
--   `persistent`:
+-   `ephemeral`:
     specifies if the lock will be cleared when connection to zk lost.
     A persistent lock is implemented with a normal zk-node.
-    A non-persistent lock is implemented with a `ephemeral` zk-node.
+    A ephemeral lock is implemented with a `ephemeral` zk-node.
 
-    By default it is `False`.
+    By default it is `True`.
 
     > A persistent lock is used in cases when you need to accurately track
     > locking state, such as when detecting which resource has been locked by a
