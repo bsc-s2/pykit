@@ -407,6 +407,7 @@ Raise if `ZKLock` timed out on waiting to acquire a lock.
                journal_dir=None,
                record_dir=None,
                lock_dir=None,
+               node_id=None,
                auth=None,
                acl=None
 )`

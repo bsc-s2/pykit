@@ -11,17 +11,19 @@ class ZKConf(object):
                  journal_dir=None,
                  record_dir=None,
                  lock_dir=None,
+                 node_id=None,
                  auth=None,
                  acl=None
                  ):
 
         self.conf = {
-            'hosts':  hosts,
-            'journal_dir':  journal_dir,
+            'hosts':       hosts,
+            'journal_dir': journal_dir,
             'record_dir':  record_dir,
-            'lock_dir':  lock_dir,
-            'auth':  auth,
-            'acl':  acl,
+            'lock_dir':    lock_dir,
+            'node_id':     node_id,
+            'auth':        auth,
+            'acl':         acl,
         }
 
     def hosts(self): return self._get_config('hosts')
@@ -31,6 +33,8 @@ class ZKConf(object):
     def record_dir(self): return self._get_config('record_dir')
 
     def lock_dir(self): return self._get_config('lock_dir')
+
+    def node_id(self): return self._get_config('node_id')
 
     def auth(self): return self._get_config('auth')
 
