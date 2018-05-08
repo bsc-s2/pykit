@@ -92,6 +92,23 @@ class TestZKLock(unittest.TestCase):
         self.zk.stop()
         utdocker.remove_container(zk_test_name)
 
+    def _on_conn_change(self, state):
+
+        self.lsn_count += 1
+
+    def test_bounded_listener(self):
+
+        # ensure that adding a bounded listener(self.on_xxx) is ok
+
+        self.lsn_count = 0
+
+        self.zk.add_listener(self._on_conn_change)
+        self.zk.add_listener(self._on_conn_change)
+
+        self.zk.stop()
+
+        self.assertEqual(1, self.lsn_count)
+
     def _loop_acquire(self, ident):
 
         zk = KazooClient(hosts='127.0.0.1:2181')

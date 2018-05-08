@@ -61,29 +61,8 @@ class ZKLock(object):
                                 for x in zkclient.hosts])
 
         self.zkclient = zkclient
+        self.on_lost = on_lost
 
-        # NOTE: Bound method are not the same.
-        #       Unable to be used with remove_listener()
-        # class X(object):
-        #     def bound(self):
-        #         pass
-        #     def __init__(self):
-        #         def nonbound():
-        #             pass
-        #         self.nonbound = nonbound
-        # x = X()
-        # print x.bound is x.bound # False
-        # print x.nonbound is x.nonbound # True
-
-        def on_connection_change(state):
-            # notify zklock to re-do acquiring procedure, to trigger Connection Error
-            with self.mutex:
-                self.maybe_available.set()
-
-            if on_lost is not None:
-                on_lost()
-
-        self.on_connection_change = on_connection_change
         self.zkclient.add_listener(self.on_connection_change)
 
         self.lock_name = lock_name
@@ -106,6 +85,14 @@ class ZKLock(object):
             self.maybe_available.set()
 
         logger.info('node state changed, lock might be released: {s}'.format(s=str(self)))
+
+    def on_connection_change(self, state):
+        # notify zklock to re-do acquiring procedure, to trigger Connection Error
+        with self.mutex:
+            self.maybe_available.set()
+
+        if self.on_lost is not None:
+            self.on_lost()
 
     def acquire(self, timeout=None):
 
