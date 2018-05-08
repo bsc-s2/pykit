@@ -1,6 +1,6 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**
+#   Table of Content
 
 - [Name](#name)
 - [Status](#status)
@@ -10,6 +10,7 @@
   - [start_thread](#start_thread)
   - [start_daemon](#start_daemon)
   - [raise_in_thread](#raise_in_thread)
+    - [Caveat: It might not work as expected](#caveat-it-might-not-work-as-expected)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -54,7 +55,7 @@ A collection of helper function for managing python threads easily.
 **Syntax**
 
 ```
-t = threadutil.start_thread(work, name='my_thread', args=(10, ), kwargs={'x': 2}, daemon=False)
+t = threadutil.start_thread(work, name='my_thread', args=(10, ), kwargs={'x': 2}, daemon=False, after=None)
 ```
 
 Create and start a thread with the given parameters.
@@ -79,6 +80,12 @@ Create and start a thread with the given parameters.
     > A daemon thread will quit when the main thread in a process quits.
     > A non-daemon thread keeps running after main thread quits.
     > A process does not quit if there are any non-daemon threads running.
+
+- `after`:
+    If `after` is not `None`, it sleeps for `after` seconds before calling
+    `target`.
+
+    By default it is `None`.
 
 **Returns**
 

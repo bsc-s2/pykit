@@ -4,6 +4,7 @@
 import ctypes
 import inspect
 import threading
+import time
 
 
 class AsyncRaiseError(Exception):
@@ -14,20 +15,27 @@ class InvalidThreadIdError(AsyncRaiseError):
     pass
 
 
-def start_thread(target, name=None, args=None, kwargs=None, daemon=False):
+def start_thread(target, name=None, args=None, kwargs=None, daemon=False, after=None):
     args = args or ()
     kwargs = kwargs or {}
 
-    t = threading.Thread(target=target, name=name, args=args, kwargs=kwargs)
+    if after is None:
+        _target = target
+    else:
+        def _target(*args, **kwargs):
+            time.sleep(after)
+            target(*args, **kwargs)
+
+    t = threading.Thread(target=_target, name=name, args=args, kwargs=kwargs)
     t.daemon = daemon
     t.start()
 
     return t
 
 
-def start_daemon(target, name=None, args=None, kwargs=None):
+def start_daemon(target, name=None, args=None, kwargs=None, after=None):
     return start_thread(target, name=name, args=args, kwargs=kwargs,
-                        daemon=True)
+                        daemon=True, after=after)
 
 
 def start_daemon_thread(target, name=None, args=None, kwargs=None):
