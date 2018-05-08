@@ -256,15 +256,15 @@ def wait_absent(zkclient, path, timeout=None):
 
     lck = threading.RLock()
 
-    maybe_absent = threading.Event()
-    maybe_absent.clear()
+    maybe_changed = threading.Event()
+    maybe_changed.clear()
 
-    def on_node_change(watchevent):
+    def set_available(watchevent):
 
         logger.info('node state change: {0} {1} {2}'.format(
             watchevent.type, watchevent.state, watchevent.path))
         with lck:
-            maybe_absent.set()
+            maybe_changed.set()
 
     def on_connection_change(state):
 
@@ -272,23 +272,23 @@ def wait_absent(zkclient, path, timeout=None):
 
         # notify it to re-get, then raise Connection related error
         with lck:
-            maybe_absent.set()
+            maybe_changed.set()
 
     zkclient.add_listener(on_connection_change)
 
     try:
         while True:
 
-            # prevent clear() runs after set() in on_node_change()
+            # prevent clear() runs after set() in set_available()
             with lck:
                 try:
-                    val, zstat = zkclient.get(path, watch=on_node_change)
-                    maybe_absent.clear()
+                    val, zstat = zkclient.get(path, watch=set_available)
+                    maybe_changed.clear()
                 except NoNodeError as e:
                     logger.info(repr(e) + ' found, return')
                     return
 
-            if maybe_absent.wait(expire_at - time.time()):
+            if maybe_changed.wait(expire_at - time.time()):
                 continue
             else:
                 raise ZKWaitTimeout("timeout({timeout} sec)"
@@ -300,3 +300,75 @@ def wait_absent(zkclient, path, timeout=None):
             zkclient.remove_listener(on_connection_change)
         except Exception as e:
             logger.info(repr(e) + ' while removing on_connection_change')
+
+
+def _conditioned_get_loop(zkclient, path, conditioned_get, timeout=None, **kwargs):
+
+    if timeout is None:
+        timeout = 86400 * 365
+
+    expire_at = time.time() + timeout
+    lck = threading.RLock()
+    maybe_available = threading.Event()
+    maybe_available.clear()
+
+    def set_available():
+        with lck:
+            maybe_available.set()
+
+    def on_connection_change(state):
+        # notify it to re-get, then raise Connection related error
+        logger.info('connection state change: {0}'.format(state))
+        set_available()
+
+    zkclient.add_listener(on_connection_change)
+
+    rst_wait = {}
+
+    try:
+        while True:
+
+            with lck:
+                it = conditioned_get(zkclient, path, **kwargs)
+                it.next()
+                rst = it.send((rst_wait, set_available))
+
+                if rst is rst_wait:
+                    maybe_available.clear()
+                else:
+                    return rst
+
+            if maybe_available.wait(expire_at - time.time()):
+                continue
+
+            raise ZKWaitTimeout("timeout({timeout} sec)"
+                                " waiting for {path} to be absent".format(
+                                    timeout=timeout,
+                                    path=path))
+    finally:
+        try:
+            zkclient.remove_listener(on_connection_change)
+        except Exception as e:
+            logger.info(repr(e) + ' while removing on_connection_change')
+
+
+def make_conditioned_getter(conditioned_get):
+
+    def _wrap(zkclient, path, timeout=None, **kwargs):
+        return _conditioned_get_loop(zkclient, path, conditioned_get, timeout=timeout, **kwargs)
+
+    _wrap.__name__ = conditioned_get.__name__
+
+    return _wrap
+
+
+@make_conditioned_getter
+def get_next(zkclient, path, version=-1):
+
+    rst_wait, set_available = yield
+
+    val, zstat = zkclient.get(path, watch=lambda watchevent: set_available())
+    if zstat.version > version:
+        yield val, zstat
+
+    yield rst_wait

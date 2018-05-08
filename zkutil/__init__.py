@@ -21,6 +21,8 @@ from .zkutil import (
     perm_to_short,
     wait_absent,
 
+    get_next,
+
 )
 
 from .zklock import (
@@ -45,6 +47,8 @@ __all__ = [
     "perm_to_long",
     "perm_to_short",
     "wait_absent",
+
+    "get_next",
 
     "LockTimeout",
 

@@ -16,7 +16,10 @@
   - [zkutil.parse_kazoo_acl](#zkutilparse_kazoo_acl)
   - [zkutil.perm_to_long](#zkutilperm_to_long)
   - [zkutil.perm_to_short](#zkutilperm_to_short)
+- [Conditioned access methods](#conditioned-access-methods)
+  - [zkutil.get_next](#zkutilget_next)
   - [zkutil.wait_absent](#zkutilwait_absent)
+- [Other methods](#other-methods)
   - [zkutil.init_hierarchy](#zkutilinit_hierarchy)
 - [Exceptions](#exceptions)
   - [zkutil.LockTimeout](#zkutillocktimeout)
@@ -323,19 +326,19 @@ such as `cdrw`.
 a string of short permissions.
 
 
-##  zkutil.wait_absent
+#   Conditioned access methods
 
-**syntax**:
-`zkutil.wait_absent(zkclient, path, timeout=None)`
+A collection of helper functions those block until a condition satisfied before
+returning.
+Such as:
 
-Wait at most `timeout` seconds for zk-node `path` to be absent.
+-   Wait for a zk-node to be absent.
+-   Wait for a zk-node version greater than a specified one before returning
+    the node value.
 
-If `path` still presents after `timeout` seconds,
-it raises a `ZKWaitTimeout` exception.
+These methods share the same form: `def xxx(zkclient, path, timeout=None, **kwargs)`.
 
-If `path` does not exist, it returns at once.
-
-**arguments**:
+Common parameters are:
 
 -   `zkclient`:
     kazoo client.
@@ -348,8 +351,41 @@ If `path` does not exist, it returns at once.
 
     By default it is `None` which means to wait for a year.
 
+    If condition was not satisfied in `timeout` seconds,
+    it raises a `ZKWaitTimeout` exception.
+
+
+##  zkutil.get_next
+
+**syntax**:
+`zkutil.get_next(zkclient, path, timeout=None, version=-1)`
+
+Wait until zk-node `path` version becomes greater than `version` then return
+node value and `zstat`.
+
+**arguments**:
+
+-   `version`:
+    the version that `path` version must be greater than.
+
 **return**:
-Nothing or raise `ZKWaitTimeout`.
+zk node value an `zstat`.
+
+
+##  zkutil.wait_absent
+
+**syntax**:
+`zkutil.wait_absent(zkclient, path, timeout=None)`
+
+Wait at most `timeout` seconds for zk-node `path` to be absent.
+
+If `path` does not exist, it returns at once.
+
+**return**:
+Nothing
+
+
+#   Other methods
 
 
 ##  zkutil.init_hierarchy

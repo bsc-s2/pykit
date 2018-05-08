@@ -6,6 +6,7 @@ import uuid
 from kazoo import security
 from kazoo.client import KazooClient
 from kazoo.exceptions import ConnectionClosedError
+from kazoo.exceptions import NoNodeError
 
 from pykit import config
 from pykit import net
@@ -543,5 +544,142 @@ class TestWait(unittest.TestCase):
             except ConnectionClosedError:
                 pass
             self.assertAlmostEqual(.3, t.spent(), delta=0.1)
+
+        th.join()
+
+    def test_get_next_no_version(self):
+
+        cases = (
+            -1,
+            0.0,
+            0.1,
+            1,
+        )
+
+        for timeout in cases:
+
+            self.zk.create('a', 'a-val')
+
+            with ututil.Timer() as t:
+                zkutil.get_next(self.zk, 'a', timeout=timeout, version=-1)
+                self.assertAlmostEqual(0, t.spent(), delta=0.2)
+
+            with ututil.Timer() as t:
+                zkutil.get_next(self.zk, 'a', timeout=timeout)
+                self.assertAlmostEqual(0, t.spent(), delta=0.2)
+
+            self.zk.delete('a')
+
+    def test_get_next_timeout(self):
+
+        cases = (
+            -1,
+            0.0,
+            0.2,
+            1,
+        )
+
+        for timeout in cases:
+
+            expected = max([timeout, 0])
+            self.zk.create('a', 'a-val')
+
+            with ututil.Timer() as t:
+                try:
+                    zkutil.get_next(self.zk, 'a', timeout=timeout, version=0)
+                    self.fail('expected ZKWaitTimeout')
+                except zkutil.ZKWaitTimeout:
+                    pass
+                self.assertAlmostEqual(expected, t.spent(), delta=0.2)
+
+            self.zk.delete('a')
+
+    def test_get_next_changed(self):
+
+        cases = (
+            0.4,
+            1,
+        )
+
+        def _set_a():
+            self.zk.set('a', 'changed')
+
+        for timeout in cases:
+
+            self.zk.create('a', 'a-val')
+            th = threadutil.start_daemon(target=_set_a, after=0.3)
+
+            with ututil.Timer() as t:
+                val, zstat = zkutil.get_next(self.zk, 'a', timeout=timeout, version=0)
+                self.assertAlmostEqual(0.3, t.spent(), delta=0.2)
+                self.assertEqual('changed', val)
+                self.assertEqual(1, zstat.version)
+
+            th.join()
+            self.zk.delete('a')
+
+    def test_get_next_changed_but_unsatisfied(self):
+
+        cases = (
+            0.4,
+            1,
+        )
+
+        def _set_a():
+            self.zk.set('a', 'changed')
+
+        for timeout in cases:
+
+            self.zk.create('a', 'a-val')
+            th = threadutil.start_daemon(target=_set_a, after=0.3)
+
+            with ututil.Timer() as t:
+                try:
+                    val, zstat = zkutil.get_next(self.zk, 'a', timeout=timeout, version=5)
+                    self.fail('expected ZKWaitTimeout')
+                except zkutil.ZKWaitTimeout:
+                    pass
+                self.assertAlmostEqual(timeout, t.spent(), delta=0.2)
+
+            th.join()
+            self.zk.delete('a')
+
+    def test_get_next_deleted(self):
+
+        cases = (
+            0.4,
+            1,
+        )
+
+        def _del_a():
+            self.zk.delete('a')
+
+        for timeout in cases:
+
+            self.zk.create('a', 'a-val')
+            th = threadutil.start_daemon(target=_del_a, after=0.3)
+
+            with ututil.Timer() as t:
+                try:
+                    zkutil.get_next(self.zk, 'a', timeout=timeout, version=0)
+                    self.fail('expected NoNodeError')
+                except NoNodeError:
+                    pass
+                self.assertAlmostEqual(0.3, t.spent(), delta=0.2)
+
+            th.join()
+
+    def test_get_next_conn_lost(self):
+
+        self.zk.create('a', 'a-val')
+        th = threadutil.start_daemon(target=self.zk.stop, after=0.3)
+
+        with ututil.Timer() as t:
+            try:
+                zkutil.get_next(self.zk, 'a', timeout=1, version=0)
+                self.fail('expected ConnectionClosedError')
+            except ConnectionClosedError:
+                pass
+            self.assertAlmostEqual(0.3, t.spent(), delta=0.2)
 
         th.join()
