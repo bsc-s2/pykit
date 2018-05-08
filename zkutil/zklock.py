@@ -14,6 +14,7 @@ from kazoo.exceptions import NoNodeError
 from pykit import config
 
 from . import zkutil
+from .zkconf import ZKConf
 
 logger = logging.getLogger(__name__)
 
@@ -30,18 +31,17 @@ class ZKTXConnectionLost(ZKTXError):
 class ZKLock(object):
 
     def __init__(self, lock_name,
-                 node_id=None,
+                 zkconf=None,
                  zkclient=None,
-                 hosts=None,
                  on_lost=None,
-                 acl=None,
-                 auth=None,
-                 lock_dir=None,
                  persistent=False,
                  timeout=10):
 
-        if node_id is None:
-            node_id = config.zk_node_id
+        if zkconf is None:
+            zkconf = ZKConf()
+        if isinstance(zkconf, dict):
+            zkconf = ZKConf(**zkconf)
+        self.zkconf = zkconf
 
         if zkclient is None:
             # If user does not pass a zkclient instance,
@@ -51,7 +51,7 @@ class ZKLock(object):
             if on_lost is None:
                 raise ValueError('on_lost must be specified to watch zk connection issue if no zkclient specified')
 
-            zkclient = make_owning_zkclient(hosts, auth)
+            zkclient = make_owning_zkclient(zkconf.hosts(), zkconf.auth())
             self.owning_client = True
         else:
             self.owning_client = False
@@ -59,12 +59,6 @@ class ZKLock(object):
         # a copy of hosts for debugging and tracking
         self._hosts = ','.join(['{0}:{1}'.format(*x)
                                 for x in zkclient.hosts])
-
-        if acl is None:
-            acl = config.zk_acl
-
-        if lock_dir is None:
-            lock_dir = config.zk_lock_dir
 
         self.zkclient = zkclient
 
@@ -92,12 +86,9 @@ class ZKLock(object):
         self.on_connection_change = on_connection_change
         self.zkclient.add_listener(self.on_connection_change)
 
-        self.acl = zkutil.make_kazoo_digest_acl(acl)
-
         self.lock_name = lock_name
-        self.lock_dir = lock_dir
-        self.lock_path = self.lock_dir + self.lock_name
-        self.identifier = zkutil.lock_id(node_id)
+        self.lock_path = zkconf.lock(self.lock_name)
+        self.identifier = zkutil.lock_id(zkconf.node_id())
         self.ephemeral = not persistent
         self.timeout = timeout
 
@@ -201,7 +192,7 @@ class ZKLock(object):
 
         try:
             self.zkclient.create(self.lock_path, self.identifier,
-                                 ephemeral=self.ephemeral, acl=self.acl)
+                                 ephemeral=self.ephemeral, acl=self.zkconf.kazoo_digest_acl())
 
         except NodeExistsError as e:
 
@@ -271,14 +262,8 @@ class ZKLock(object):
 
 def make_owning_zkclient(hosts, auth):
 
-    if hosts is None:
-        hosts = config.zk_hosts
-
     zkclient = KazooClient(hosts=hosts)
     zkclient.start()
-
-    if auth is None:
-        auth = config.zk_auth
 
     if auth is not None:
         scheme, name, passw = auth

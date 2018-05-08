@@ -209,7 +209,7 @@ class TestZKLock(unittest.TestCase):
 
         with l:
             time.sleep(0.1)
-            self.zk.delete(l.lock_dir + 'foo_name')
+            self.zk.delete(l.zkconf.lock('foo_name'))
             time.sleep(0.1)
             self.assertFalse(sess['acquired'])
 
@@ -241,7 +241,7 @@ class TestZKLock(unittest.TestCase):
         l = zkutil.ZKLock('foo_name', on_lost=on_lost)
 
         with l:
-            self.zk.delete(l.lock_dir + 'foo_name')
+            self.zk.delete(l.zkconf.lock('foo_name'))
             time.sleep(0.3)
 
         self.assertFalse(sess['acquired'])
@@ -272,14 +272,14 @@ class TestZKLock(unittest.TestCase):
 
         l = zkutil.ZKLock('foo_name', on_lost=lambda: True)
 
-        dd(l.acl)
+        dd(l.zkconf.acl())
 
         def _check_ac(ac):
             self.assertEqual('digest', ac.id.scheme)
             self.assertEqual('foo', ac.id.id.split(':')[0])
             self.assertEqual(set(['CREATE', 'DELETE']), set(ac.acl_list))
 
-        _check_ac(l.acl[0])
+        _check_ac(l.zkconf.kazoo_digest_acl()[0])
 
         with l:
             # should have created lock node
@@ -298,7 +298,9 @@ class TestZKLock(unittest.TestCase):
     def test_hosts(self):
 
         l = zkutil.ZKLock('foo_name',
-                          hosts='127.0.0.1:2181',
+                          zkconf=dict(
+                              hosts='127.0.0.1:2181',
+                          ),
                           on_lost=lambda: True)
 
         with l:

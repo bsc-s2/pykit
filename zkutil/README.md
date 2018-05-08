@@ -431,8 +431,8 @@ c.journal_dir() # "my_dir/"        # by default using `config.zk_<field>`
 ##  zkutil.ZKLock
 
 **syntax**:
-`zkutil.ZKLock(lock_name, node_id=None, zkclient=None, hosts=None, on_lost=None,
-               acl=None, auth=None, lock_dir=None, persistent=False, timeout=10)`
+`zkutil.ZKLock(lock_name, zkclient=None, zkconf=None, on_lost=None,
+               persistent=False, timeout=10)`
 
 ZKLock implements a zookeeper based distributed lock.
 
@@ -458,11 +458,13 @@ in `config.py`.
 
 ```python
 with zkutil.ZKLock('foo_lock', on_lost=my_callback,
-                   hosts='127.0.0.1:2181',
-                   acl=(('xp', '123', 'cdrwa'),),
-                   auth=('digest', 'xp', '123'),
-                   node_id='web-3',
-                   lock_dir='my_locks/'):
+                   zkconf=dict(
+                       hosts='127.0.0.1:2181',
+                       acl=(('xp', '123', 'cdrwa'),),
+                       auth=('digest', 'xp', '123'),
+                       node_id='web-3',
+                       lock_dir='my_locks/'
+                   )):
     do_something()
 ```
 
@@ -506,7 +508,19 @@ It is similar to standard zookeeper mechanism except:
     the lock name.
     It is used as part of zk-node to create.
 
--   `node_id`:
+-   `zkclient`:
+    is a `KazooClient` instance connected to zk.
+
+    If this argument  is not `None`, `hosts` and `auth` are ignored.
+
+    If this argument is `None`, `on_lost` must be specified to watch lock node
+    state change event. And connection is maintained by `ZKLock` and will be
+    destroyed at once after lock released.
+
+-   `zkconf`:
+    is a `ZKConf` or a `dict` contains zk config.
+
+-   `zkconf:node_id`:
     is used to identify a host.
 
     Different host must have different `node_id`.
@@ -524,16 +538,7 @@ It is similar to standard zookeeper mechanism except:
     >   And check node value(with node_id embedded in it), to see if this
     >   zk-node is created by this host.
 
--   `zkclient`:
-    is a `KazooClient` instance connected to zk.
-
-    If this argument  is not `None`, `hosts` and `auth` are ignored.
-
-    If this argument is `None`, `on_lost` must be specified to watch lock node
-    state change event. And connection is maintained by `ZKLock` and will be
-    destroyed at once after lock released.
-
--   `hosts`:
+-   `zkconf:hosts`:
     is a comma separated address list to specify zookeeper cluster, such as:
     `127.0.0.1:2181,128.0.0.2:2181`
 
@@ -553,7 +558,7 @@ It is similar to standard zookeeper mechanism except:
         do_something()
     ```
 
--   `acl`:
+-   `zkconf:acl`:
     is a two level tuple to specify the ACL for creating a lock node.
 
     `acl` can specify access control config for multi users, such as:
@@ -561,13 +566,13 @@ It is similar to standard zookeeper mechanism except:
 
     If it is `None`, `ZKLock` uses `config.zk_acl` for created node.
 
--   `auth`:
+-   `zkconf:auth`:
     is the authorization info to connect to zookeeper.
     It is used only when `zkclient` is `None`.
 
     If it is `None`, `ZKLock` uses `config.zk_auth` to connect.
 
--   `lock_dir`:
+-   `zkconf:lock_dir`:
     specifies base dir of lock node.
     Such as `/mycluster/mylocks/`.
 
