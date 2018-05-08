@@ -3,6 +3,8 @@
 
 from pykit import config
 
+from . import zkutil
+
 
 class ZKConf(object):
 
@@ -49,6 +51,13 @@ class ZKConf(object):
     def tx(self, txid=''): return ''.join([self.journal_dir(), 'tx/', txid])
 
     def txid_range(self): return ''.join([self.journal_dir(), 'txid_range'])
+
+    def kazoo_digest_acl(self):
+        a = self.acl()
+        if a is None:
+            return a
+
+        return zkutil.make_kazoo_digest_acl(a)
 
     def kazoo_auth(self):
 
