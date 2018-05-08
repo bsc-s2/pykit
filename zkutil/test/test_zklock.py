@@ -322,3 +322,23 @@ class TestZKLock(unittest.TestCase):
 
         with l:
             self.assertEqual('127.0.0.1:2181', l._hosts)
+
+    def test_specify_identifier(self):
+
+        a = zkutil.ZKLock('foo_name',
+                          zkconf=dict(
+                              hosts='127.0.0.1:2181',
+                          ),
+                          identifier='faked',
+                          on_lost=lambda: True)
+
+        b = zkutil.ZKLock('foo_name',
+                          zkconf=dict(
+                              hosts='127.0.0.1:2181',
+                          ),
+                          identifier='faked',
+                          on_lost=lambda: True)
+
+        a.acquire()
+        b.acquire()
+        dd('a and b has the same identifier thus they both can acquire the lock')

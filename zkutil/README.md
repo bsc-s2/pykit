@@ -580,6 +580,16 @@ It is similar to standard zookeeper mechanism except:
 
     If `config.zk_lock_dir` is `None` it uses a predefined const: `lock/`.
 
+-   `identifier`:
+    specifies a lock identifier in str,
+    which is used to check if a process has been holding a lock.
+
+    **Two different processes must specifies different identifier**.
+
+    By default it is `None`, in which case `ZKLock` will generate one.
+
+    A recovered process would uses a specified identifier.
+
 -   `persistent`:
     specifies if the lock will be cleared when connection to zk lost.
     A persistent lock is implemented with a normal zk-node.

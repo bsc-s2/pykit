@@ -11,8 +11,6 @@ from kazoo.exceptions import LockTimeout
 from kazoo.exceptions import NodeExistsError
 from kazoo.exceptions import NoNodeError
 
-from pykit import config
-
 from . import zkutil
 from .zkconf import ZKConf
 
@@ -34,6 +32,7 @@ class ZKLock(object):
                  zkconf=None,
                  zkclient=None,
                  on_lost=None,
+                 identifier=None,
                  persistent=False,
                  timeout=10):
 
@@ -56,6 +55,9 @@ class ZKLock(object):
         else:
             self.owning_client = False
 
+        if identifier is None:
+            identifier = zkutil.lock_id(zkconf.node_id())
+
         # a copy of hosts for debugging and tracking
         self._hosts = ','.join(['{0}:{1}'.format(*x)
                                 for x in zkclient.hosts])
@@ -67,7 +69,7 @@ class ZKLock(object):
 
         self.lock_name = lock_name
         self.lock_path = zkconf.lock(self.lock_name)
-        self.identifier = zkutil.lock_id(zkconf.node_id())
+        self.identifier = identifier
         self.ephemeral = not persistent
         self.timeout = timeout
 
