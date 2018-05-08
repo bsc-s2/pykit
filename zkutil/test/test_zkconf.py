@@ -39,6 +39,7 @@ class TestZKConf(unittest.TestCase):
         self.assertEqual('journal_dir/tx/',        c.tx())
         self.assertEqual('journal_dir/tx/a',       c.tx('a'))
         self.assertEqual('journal_dir/txid_range', c.txid_range())
+        self.assertEqual('journal_dir/txid_maker', c.txid_maker())
 
         self.assertEqual(zkutil.make_kazoo_digest_acl((('foo', 'bar', 'cd'), ('xp', '123', 'cdrwa'))),
                          c.kazoo_digest_acl())
@@ -83,6 +84,7 @@ class TestZKConf(unittest.TestCase):
         self.assertEqual('JOURNAL_DIR/tx/',        c.tx())
         self.assertEqual('JOURNAL_DIR/tx/a',       c.tx('a'))
         self.assertEqual('JOURNAL_DIR/txid_range', c.txid_range())
+        self.assertEqual('JOURNAL_DIR/txid_maker', c.txid_maker())
 
         self.assertEqual(zkutil.make_kazoo_digest_acl((('FOO', 'BAR', 'CD'), ('XP', '123', 'CDRWA'))),
                          c.kazoo_digest_acl())

@@ -52,6 +52,8 @@ class ZKConf(object):
 
     def txid_range(self): return ''.join([self.journal_dir(), 'txid_range'])
 
+    def txid_maker(self): return ''.join([self.journal_dir(), 'txid_maker'])
+
     def kazoo_digest_acl(self):
         a = self.acl()
         if a is None:
