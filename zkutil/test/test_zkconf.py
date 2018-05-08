@@ -40,6 +40,14 @@ class TestZKConf(unittest.TestCase):
         self.assertEqual(('digest', 'a:b'), c.kazoo_auth())
 
     def test_default(self):
+        old = (
+            config.zk_hosts,
+            config.zk_journal_dir,
+            config.zk_record_dir,
+            config.zk_lock_dir,
+            config.zk_auth,
+            config.zk_acl,
+        )
 
         config.zk_hosts = 'HOSTS'
         config.zk_journal_dir = 'JOURNAL_DIR/'
@@ -68,3 +76,12 @@ class TestZKConf(unittest.TestCase):
         self.assertEqual('JOURNAL_DIR/txid_range', c.txid_range())
 
         self.assertEqual(('DIGEST', 'A:B'), c.kazoo_auth())
+
+        (
+            config.zk_hosts,
+            config.zk_journal_dir,
+            config.zk_record_dir,
+            config.zk_lock_dir,
+            config.zk_auth,
+            config.zk_acl,
+        ) = old
