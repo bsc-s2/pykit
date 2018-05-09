@@ -164,13 +164,15 @@ See the `README.md` of sub modules for detail.
 Run one of following to test all, a module, a TestCase or a function.
 
 ```
-./script/t.sh
-./script/t.sh zkutil
-./script/t.sh zkutil.test
-./script/t.sh zkutil.test.test_zkutil
-./script/t.sh zkutil.test.test_zkutil.TestZKUtil
-./script/t.sh zkutil.test.test_zkutil.TestZKUtil.test_lock_id
+./script/t
+./script/t zkutil
+./script/t zkutil.test
+./script/t zkutil.test.test_zkutil
+./script/t zkutil.test.test_zkutil.TestZKUtil
+./script/t zkutil.test.test_zkutil.TestZKUtil.test_lock_id
 ```
+
+See [Details](script/README.md)
 
 #   For developer
 

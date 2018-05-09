@@ -1,0 +1,27 @@
+#!/bin/bash
+
+thisscript="$0"
+dir=$(dirname $thisscript)
+
+White="$(        tput bold; tput setaf 7)"
+NC="$(                      tput sgr0)"
+
+if git diff --name-only | grep -q "."; then
+    git status
+    echo "$White"
+    echo "#### There are un-staged modifications."
+    echo "#### This script changes files in place."
+    echo "#### To prevent unintended changes. Please 'git add' first."
+    echo "$NC"
+    exit 1
+fi
+
+export PYKIT_SCRICT=1
+
+$dir/pyauto || exit 1
+$dir/t      || exit 1
+$dir/toc    || exit 1
+
+echo "$White"
+echo "Great work! Everything is ready to commit!"
+echo "$NC"

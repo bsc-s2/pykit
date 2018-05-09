@@ -10,52 +10,58 @@
 
 #   Description
 
--   `pyauto.sh` run static code check and reformat on python source code file.
+-   `before-commit` is a wrapper of folowing 3 script to do static check,
+    unittest and generate Table of content section of doc.
+
+-   `pyauto` run static code check and reformat on python source code file.
 
     Usage:
 
     ```
     # check all *.py in current dir, recursively.
-    $ pyauto.sh
+    $ pyauto
 
     # check one file:
-    $ pyauto.sh a.py
+    $ pyauto a.py
     ```
 
--   `t.sh` run python built in unittest.
+-   `t` run python built in unittest.
 
-    `t.sh` must be run in a module dir such as `humannum`.
+    `t` must be run in a module dir such as `humannum`.
 
     An optional argument can be used to specify what module/class/function to
     test:
 
     ```
-    ./script/t.sh
-    ./script/t.sh zkutil
-    ./script/t.sh zkutil.test
-    ./script/t.sh zkutil.test.test_zkutil
-    ./script/t.sh zkutil.test.test_zkutil.TestZKUtil
-    ./script/t.sh zkutil.test.test_zkutil.TestZKUtil.test_lock_data
+    ./script/t
+    ./script/t zkutil
+    ./script/t zkutil.test
+    ./script/t zkutil.test.test_zkutil
+    ./script/t zkutil.test.test_zkutil.TestZKUtil
+    ./script/t zkutil.test.test_zkutil.TestZKUtil.test_lock_data
     ```
 
-    One can use `-v` to tell `t.sh` to display verbose info during test:
+    One can use `-v` to tell `t` to display verbose info during test:
 
-    -   `t.sh -v` lets python unittest run in verbose mode: to display each
+    -   `t -v` lets python unittest run in verbose mode: to display each
         case function.
 
-    -   `t.sh -vv` or `t.sh -v -v` enables displaying debug message by
+    -   `t -vv` or `t -v -v` enables displaying debug message by
         `pykit.ututil.dd()`.
 
--   `toc.sh` add Table-of-Content to markdown files.
+    -   `t -C` to skip dependency check.
+        If you are sure about dependency is complete, use `-C` to speed up test.
+
+-   `toc` add Table-of-Content to markdown files.
 
     Usage:
 
     ```sh
     # build TOC for all *.md
-    $ toc.sh
+    $ toc
 
     # build TOC for files:
-    $ toc.sh a.md b.md
+    $ toc a.md b.md
     ```
 
 #   Author

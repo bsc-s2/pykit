@@ -1,0 +1,40 @@
+#!/bin/sh
+
+# pip install pyflakes autopep8 autoflake isort
+
+path="${1-.}"
+
+fns="$(find "$path" -name "*.py" -exec echo '"{}"' \;)"
+
+autopep8_options='--max-line-length 120'
+
+die_if_strict()
+{
+    [ "$PYKIT_SCRICT" = "1" ] && exit 1
+}
+
+
+die_if_changed()
+{
+    White="$(        tput bold; tput setaf 7)"
+    NC="$(                      tput sgr0)"
+
+    if [ "$PYKIT_SCRICT" = "1" ]; then
+        if git diff --name-only | grep -q "."; then
+            git status
+
+            echo "$White"
+            echo "#### Something is auto fixed."
+            echo "#### Please review and 'git add' them."
+            echo "$NC"
+            exit 1
+        fi
+    fi
+}
+
+eval pyflakes                              $fns || die_if_strict
+eval autopep8  -i $autopep8_options        $fns
+eval autoflake -i                          $fns
+eval isort     --force-single-line-imports $fns
+
+die_if_changed
