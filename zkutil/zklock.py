@@ -86,6 +86,11 @@ class ZKLock(object):
         with self.mutex:
             self.maybe_available.set()
 
+            # If locked. the node change is treated as losing a lock
+            if self.is_locked():
+                if self.on_lost is not None:
+                    self.on_lost()
+
         logger.info('node state changed, lock might be released: {s}'.format(s=str(self)))
 
     def on_connection_change(self, state):
@@ -121,10 +126,10 @@ class ZKLock(object):
                 if time.time() > expire_at:
                     raise LockTimeout('lock: ' + str(self.lock_path))
 
-            self._acquire_by_create()
-            if self.is_locked():
-                return
+            # Always proceed the "get" phase, in order to add a watch handler.
+            # To watch node change event.
 
+            self._create()
             self._acquire_by_get()
             if self.is_locked():
                 return
@@ -154,6 +159,11 @@ class ZKLock(object):
             else:
                 logger.info('not acquired, do not need to release')
 
+        try:
+            self.zkclient.remove_listener(self.on_connection_change)
+        except Exception as e:
+            logger.info(repr(e) + ' while remove on_connection_change')
+
         if self.owning_client:
 
             logger.info('zk client is made by me, close it')
@@ -163,11 +173,6 @@ class ZKLock(object):
             except KazooException as e:
                 logger.info(repr(e) + ' while stop my own client')
 
-        try:
-            self.zkclient.remove_listener(self.on_connection_change)
-        except Exception as e:
-            logger.info(repr(e) + ' while remove on_connection_change')
-
     def is_locked(self):
 
         l = self.lock_holder
@@ -175,7 +180,7 @@ class ZKLock(object):
         return (l is not None
                 and l[0] == self.identifier)
 
-    def _acquire_by_create(self):
+    def _create(self):
 
         logger.debug('to creaet: {s}'.format(s=str(self)))
 
@@ -196,15 +201,7 @@ class ZKLock(object):
             self.lock_holder = None
             return
 
-        except KazooException as e:
-            logger.exception(repr(e) + ' while create lock: {s}'.format(s=str(self)))
-            raise
-
-        with self.mutex:
-            # New created node always has version=0
-            self.lock_holder = (self.identifier, 0)
-
-        logger.info('ACQUIRED(by create): {s}'.format(s=str(self)))
+        logger.info('CREATE OK: {s}'.format(s=str(self)))
 
     def _acquire_by_get(self):
 
@@ -212,8 +209,8 @@ class ZKLock(object):
 
         try:
             with self.mutex:
-                holder, zstat = self.zkclient.get(self.lock_path, watch=self.on_node_change)
 
+                holder, zstat = self.zkclient.get(self.lock_path, watch=self.on_node_change)
                 self.lock_holder = (holder, zstat.version)
 
                 logger.debug('got lock holder: {s}'.format(s=str(self)))
@@ -231,10 +228,6 @@ class ZKLock(object):
             with self.mutex:
                 self.lock_holder = None
                 self.maybe_available.set()
-
-        except KazooException as e:
-            logger.info(repr(e) + ' while get lock: {s}'.format(s=str(self)))
-            raise
 
     def __str__(self):
         return '({id}) {l}:[{holder}] on {h}'.format(

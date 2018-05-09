@@ -244,6 +244,33 @@ class TestZKLock(unittest.TestCase):
             time.sleep(0.1)
             self.assertFalse(sess['acquired'])
 
+    def test_node_change_after_acquired(self):
+
+        sess = {'acquired': True}
+
+        def on_lost():
+            sess['acquired'] = False
+
+        l = zkutil.ZKLock('foo_name',
+                          zkclient=self.zk,
+                          on_lost=on_lost)
+
+        with l:
+            sess['acquired'] = True
+            self.zk.delete(l.zkconf.lock('foo_name'))
+            time.sleep(0.1)
+            self.assertFalse(sess['acquired'])
+
+        l = zkutil.ZKLock('foo_name',
+                          zkclient=self.zk,
+                          on_lost=on_lost)
+
+        with l:
+            sess['acquired'] = True
+            self.zk.set(l.zkconf.lock('foo_name'), 'xxx')
+            time.sleep(0.1)
+            self.assertFalse(sess['acquired'])
+
     def test_conn_lost_when_blocking_acquiring(self):
 
         l2 = zkutil.ZKLock('foo_name', on_lost=lambda: True)
@@ -272,9 +299,8 @@ class TestZKLock(unittest.TestCase):
 
         with l:
             self.zk.delete(l.zkconf.lock('foo_name'))
-            time.sleep(0.3)
-
-        self.assertFalse(sess['acquired'])
+            time.sleep(0.1)
+            self.assertFalse(sess['acquired'])
 
     def test_acl(self):
         with self.lck:
@@ -355,3 +381,19 @@ class TestZKLock(unittest.TestCase):
         a.acquire()
         b.acquire()
         dd('a and b has the same identifier thus they both can acquire the lock')
+
+    def test_release_listener_removed(self):
+
+        self.lck.release()
+        self.assertNotIn(self.lck.on_connection_change, self.zk.state_listeners)
+
+    def test_release_owning_client_stopped(self):
+
+        l = zkutil.ZKLock('foo_name',
+                          zkconf=dict(
+                              hosts='127.0.0.1:2181',
+                          ),
+                          on_lost=lambda: True)
+
+        l.release()
+        self.assertTrue(l.zkclient._stopped.is_set())
