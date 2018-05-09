@@ -19,6 +19,8 @@
 - [Conditioned access methods](#conditioned-access-methods)
   - [zkutil.get_next](#zkutilget_next)
   - [zkutil.wait_absent](#zkutilwait_absent)
+- [ACID methods](#acid-methods)
+  - [zkutil.cas_loop](#zkutilcas_loop)
 - [Other methods](#other-methods)
   - [zkutil.init_hierarchy](#zkutilinit_hierarchy)
 - [Exceptions](#exceptions)
@@ -383,6 +385,69 @@ If `path` does not exist, it returns at once.
 
 **return**:
 Nothing
+
+
+#   ACID methods
+
+##  zkutil.cas_loop
+
+**syntax**:
+`zkutil.cas_loop(zkclient, path, json=True)`
+
+A helper generator for doing CAS(check and set or compare and swap) on zk.
+See [CAS](https://en.wikipedia.org/wiki/Compare-and-swap)
+
+A general CAS loop is like following(check the version when update):
+
+```python
+while True:
+    curr_val, zstat = zkclient.get(path)
+    new_val = curr_val + ':foo'
+    try:
+        zkclient.set(path, new_val, version=zstat.version)
+    except BadVersionError as e:
+        continue
+    else:
+        return
+```
+
+`cas_loop` simplifies the above workflow to:
+
+```python
+for curr_val, set_val in zkutil.cas_loop(zkclient, path):
+    set_val(curr_val + ':foo')
+```
+
+The loop body runs several times until a successful update is made to zk.
+
+**arguments**:
+
+-   `zkclient`:
+    is a `KazooClient` instance connected to zk.
+
+    It can also be a string, in which case it is treated as a comma separated
+    hosts list, and a `zkclient` is created with default setting.
+
+    It can also be a `dict` or an instance of `ZKConf`, in which case it create
+    a `zkclient` with `ZKConf` defined setting.
+
+
+-   `path`:
+    is the zk-node path to get and set.
+
+-   `json`:
+    whether to do a json load after reading the value from zk and to do a json dump
+    before updating the value to zk.
+
+    By default it is `True`.
+
+**return**:
+a generator yields a `tuple` of 2 element:
+
+-   The current value,
+-   and a function for user to update new value.
+
+This generator stops when a success update committed to zk.
 
 
 #   Other methods

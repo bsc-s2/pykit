@@ -2,6 +2,10 @@ from .exceptions import (
     ZKWaitTimeout,
 )
 
+from .zkacid import (
+    cas_loop,
+)
+
 from .zkconf import (
     ZKConf,
 )
@@ -35,6 +39,8 @@ from .zklock import (
 __all__ = [
     "PermTypeError",
     "ZKWaitTimeout",
+
+    "cas_loop",
 
     "init_hierarchy",
     "is_backward_locking",
