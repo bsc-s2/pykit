@@ -342,9 +342,10 @@ def _conditioned_get_loop(zkclient, path, conditioned_get, timeout=None, **kwarg
                 continue
 
             raise ZKWaitTimeout("timeout({timeout} sec)"
-                                " waiting for {path} to be absent".format(
+                                " waiting for {path} to satisfy: {cond}".format(
                                     timeout=timeout,
-                                    path=path))
+                                    path=path,
+                                    cond=str(kwargs)))
     finally:
         try:
             zkclient.remove_listener(on_connection_change)
