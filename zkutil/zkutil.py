@@ -5,6 +5,7 @@ import threading
 import time
 import types
 import uuid
+from collections import namedtuple
 
 from kazoo import security
 from kazoo.client import KazooClient
@@ -247,59 +248,7 @@ def init_hierarchy(hosts, hierarchy, users, auth):
     zkcli.stop()
 
 
-def wait_absent(zkclient, path, timeout=None):
-
-    if timeout is None:
-        timeout = 86400 * 365
-
-    expire_at = time.time() + timeout
-
-    lck = threading.RLock()
-
-    maybe_changed = threading.Event()
-    maybe_changed.clear()
-
-    def set_available(watchevent):
-
-        logger.info('node state change: {0} {1} {2}'.format(
-            watchevent.type, watchevent.state, watchevent.path))
-        with lck:
-            maybe_changed.set()
-
-    def on_connection_change(state):
-
-        logger.info('connection state change: {0}'.format(state))
-
-        # notify it to re-get, then raise Connection related error
-        with lck:
-            maybe_changed.set()
-
-    zkclient.add_listener(on_connection_change)
-
-    try:
-        while True:
-
-            # prevent clear() runs after set() in set_available()
-            with lck:
-                try:
-                    val, zstat = zkclient.get(path, watch=set_available)
-                    maybe_changed.clear()
-                except NoNodeError as e:
-                    logger.info(repr(e) + ' found, return')
-                    return
-
-            if maybe_changed.wait(expire_at - time.time()):
-                continue
-            else:
-                raise ZKWaitTimeout("timeout({timeout} sec)"
-                                    " waiting for {path} to be absent".format(
-                                        timeout=timeout,
-                                        path=path))
-    finally:
-        try:
-            zkclient.remove_listener(on_connection_change)
-        except Exception as e:
-            logger.info(repr(e) + ' while removing on_connection_change')
+NeedWait = namedtuple('NeedWait', [])
 
 
 def _conditioned_get_loop(zkclient, path, conditioned_get, timeout=None, **kwargs):
@@ -323,17 +272,15 @@ def _conditioned_get_loop(zkclient, path, conditioned_get, timeout=None, **kwarg
 
     zkclient.add_listener(on_connection_change)
 
-    rst_wait = {}
-
     try:
         while True:
 
             with lck:
                 it = conditioned_get(zkclient, path, **kwargs)
                 it.next()
-                rst = it.send((rst_wait, set_available))
+                rst = it.send((NeedWait, set_available))
 
-                if rst is rst_wait:
+                if rst is NeedWait:
                     maybe_available.clear()
                 else:
                     return rst
@@ -366,10 +313,24 @@ def make_conditioned_getter(conditioned_get):
 @make_conditioned_getter
 def get_next(zkclient, path, version=-1):
 
-    rst_wait, set_available = yield
+    NeedWait, set_available = yield
 
     val, zstat = zkclient.get(path, watch=lambda watchevent: set_available())
     if zstat.version > version:
         yield val, zstat
 
-    yield rst_wait
+    yield NeedWait
+
+
+@make_conditioned_getter
+def wait_absent(zkclient, path):
+
+    NeedWait, set_available = yield
+
+    try:
+        zkclient.get(path, watch=lambda watchevent: set_available())
+    except NoNodeError as e:
+        logger.info(repr(e) + ' found, return')
+        yield None
+
+    yield NeedWait
