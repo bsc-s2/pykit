@@ -369,7 +369,7 @@ node value and `zstat`.
     the version that `path` version must be greater than.
 
 **return**:
-zk node value an `zstat`.
+zk node value and `zstat`.
 
 
 ##  zkutil.wait_absent
