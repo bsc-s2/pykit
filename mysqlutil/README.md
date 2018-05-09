@@ -13,11 +13,11 @@
   - [mysqlutil.gtidset.dump](#mysqlutilgtidsetdump)
   - [mysqlutil.gtidset.load](#mysqlutilgtidsetload)
   - [mysqlutil.make_delete_sql](#mysqlutilmake_delete_sql)
+  - [mysqlutil.make_index_scan_sql](#mysqlutilmake_index_scan_sql)
   - [mysqlutil.make_insert_sql](#mysqlutilmake_insert_sql)
   - [mysqlutil.make_select_sql](#mysqlutilmake_select_sql)
   - [mysqlutil.make_update_sql](#mysqlutilmake_update_sql)
   - [mysqlutil.scan_index](#mysqlutilscan_index)
-  - [mysqlutil.make_index_scan_sql](#mysqlutilmake_index_scan_sql)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -202,6 +202,67 @@ mysqlutil.make_delete_sql('errlog', ('service', 'ip'), ('common0', '127.0.0.1'),
 
 **return**:
 a string which is a sql delete statement.
+
+
+## mysqlutil.make_index_scan_sql
+
+**syntax**:
+`mysqlutil.make_index_scan_sql(table, result_fields, index, index_values, left_open=False, limit=1024, index_name=None)`
+
+make a sql select statement to scan table with index used.
+
+example:
+
+```
+make_index_scan_sql("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"])
+# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`idx_key_val`) WHERE `key` = "a" AND `val` >= "b" LIMIT 1024'
+
+make_index_scan_sql("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"], index_name="bar")
+# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`bar`) WHERE `key` = "a" AND `val` >= "b" LIMIT 1024'
+
+make_index_scan_sql("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"], left_open=True)
+# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`idx_key_val`) WHERE `key` = "a" AND `val` > "b" LIMIT 1024'
+
+make_index_scan_sql(("mydb","foo"), ['_id', 'key'], ['key', 'val'], ["a", "b"], index_name="bar", left_open=True)
+# 'SELECT `_id`, `key` FROM `mydb`.`foo` FORCE INDEX (`bar`) WHERE `key` = "a" AND `val` > "b" LIMIT 1024'
+```
+
+**arguments**:
+
+-   `table`:
+    table name from which to find rows. A string.
+    Can also be a list or tuple like `(dbname, tablename)`.
+
+-   `result_fields`:
+    column names expected to be returned in result set.
+    If it is a blank list or tuple, all columns in the `table` will be returned.
+    A list or tuple of strings.
+
+-   `index`:
+    specifies condition fields to find rows.
+    A list or tuple of strings has the same length with `index_values`.
+    If it is `None`, means no `where` condition used in sql select statement.
+
+-   `index_values`:
+    specifies condition values to find rows.
+    A list or tuple of strings has the same length with `index`.
+
+-   `left_open`:
+    if specified and is `True`, the last column in `index` and the corresponding value joined with `>`.
+    Otherwise, joined with `>=`.
+    By default, it is `False`.
+
+-   `limit`:
+    specifies a limited number of rows in the result set to be returned.
+    By default, it is 1024.
+
+-   `index_name`:
+    specifies an index to use to find rows in the table.
+    If it is not `None`, use `index_name` as the force index filed, otherwise `index` is used.
+    By default, it is `None`.
+
+**return**:
+a string which is a sql select statement.
 
 
 ##  mysqlutil.make_insert_sql
@@ -449,67 +510,6 @@ for rr in rst:
 
 **return**:
 a generator which generates rows of the sql select result with those arguments once a time.
-
-
-## mysqlutil.make_index_scan_sql
-
-**syntax**:
-`mysqlutil.make_index_scan_sql(table, result_fields, index, index_values, left_open=False, limit=1024, index_name=None)`
-
-make a sql select statement to scan table with index used.
-
-example:
-
-```
-make_index_scan_sql("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"])
-# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`idx_key_val`) WHERE `key` = "a" AND `val` >= "b" LIMIT 1024'
-
-make_index_scan_sql("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"], index_name="bar")
-# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`bar`) WHERE `key` = "a" AND `val` >= "b" LIMIT 1024'
-
-make_index_scan_sql("foo", ['_id', 'key'], ['key', 'val'], ["a", "b"], left_open=True)
-# 'SELECT `_id`, `key` FROM `foo` FORCE INDEX (`idx_key_val`) WHERE `key` = "a" AND `val` > "b" LIMIT 1024'
-
-make_index_scan_sql(("mydb","foo"), ['_id', 'key'], ['key', 'val'], ["a", "b"], index_name="bar", left_open=True)
-# 'SELECT `_id`, `key` FROM `mydb`.`foo` FORCE INDEX (`bar`) WHERE `key` = "a" AND `val` > "b" LIMIT 1024'
-```
-
-**arguments**:
-
--   `table`:
-    table name from which to find rows. A string.
-    Can also be a list or tuple like `(dbname, tablename)`.
-
--   `result_fields`:
-    column names expected to be returned in result set.
-    If it is a blank list or tuple, all columns in the `table` will be returned.
-    A list or tuple of strings.
-
--   `index`:
-    specifies condition fields to find rows.
-    A list or tuple of strings has the same length with `index_values`.
-    If it is `None`, means no `where` condition used in sql select statement.
-
--   `index_values`:
-    specifies condition values to find rows.
-    A list or tuple of strings has the same length with `index`.
-
--   `left_open`:
-    if specified and is `True`, the last column in `index` and the corresponding value joined with `>`.
-    Otherwise, joined with `>=`.
-    By default, it is `False`.
-
--   `limit`:
-    specifies a limited number of rows in the result set to be returned.
-    By default, it is 1024.
-
--   `index_name`:
-    specifies an index to use to find rows in the table.
-    If it is not `None`, use `index_name` as the force index filed, otherwise `index` is used.
-    By default, it is `None`.
-
-**return**:
-a string which is a sql select statement.
 
 
 #   Author
