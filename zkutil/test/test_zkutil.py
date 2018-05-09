@@ -467,11 +467,10 @@ class TestWait(unittest.TestCase):
             expected = max([0, wait_time])
 
             with ututil.Timer() as t:
-                try:
-                    zkutil.wait_absent(self.zk, 'a', wait_time)
-                    self.fail('must timeout')
-                except zkutil.ZKWaitTimeout:
-                    self.assertAlmostEqual(expected, t.spent(), delta=0.2)
+                self.assertRaises(zkutil.ZKWaitTimeout,
+                                  zkutil.wait_absent,
+                                  self.zk, 'a', timeout=wait_time)
+                self.assertAlmostEqual(expected, t.spent(), delta=0.2)
 
         self.zk.delete('a')
 
@@ -517,11 +516,10 @@ class TestWait(unittest.TestCase):
 
             th = threadutil.start_daemon(target=_change)
             with ututil.Timer() as t:
-                try:
-                    zkutil.wait_absent(self.zk, 'a', wait_time)
-                    self.fail('must timeout')
-                except zkutil.ZKWaitTimeout:
-                    self.assertAlmostEqual(expected, t.spent(), delta=0.1)
+                self.assertRaises(zkutil.ZKWaitTimeout,
+                                  zkutil.wait_absent,
+                                  self.zk, 'a', timeout=wait_time)
+                self.assertAlmostEqual(expected, t.spent(), delta=0.1)
 
             th.join()
 
@@ -538,11 +536,9 @@ class TestWait(unittest.TestCase):
         th = threadutil.start_daemon(target=_close)
 
         with ututil.Timer() as t:
-            try:
-                zkutil.wait_absent(self.zk, 'a')
-                self.fail('ConnectionClosedError is expected')
-            except ConnectionClosedError:
-                pass
+            self.assertRaises(ConnectionClosedError,
+                              zkutil.wait_absent,
+                              self.zk, 'a')
             self.assertAlmostEqual(.3, t.spent(), delta=0.1)
 
         th.join()
@@ -585,11 +581,9 @@ class TestWait(unittest.TestCase):
             self.zk.create('a', 'a-val')
 
             with ututil.Timer() as t:
-                try:
-                    zkutil.get_next(self.zk, 'a', timeout=timeout, version=0)
-                    self.fail('expected ZKWaitTimeout')
-                except zkutil.ZKWaitTimeout:
-                    pass
+                self.assertRaises(zkutil.ZKWaitTimeout,
+                                  zkutil.get_next,
+                                  self.zk, 'a', timeout=timeout, version=0)
                 self.assertAlmostEqual(expected, t.spent(), delta=0.2)
 
             self.zk.delete('a')
@@ -634,11 +628,9 @@ class TestWait(unittest.TestCase):
             th = threadutil.start_daemon(target=_set_a, after=0.3)
 
             with ututil.Timer() as t:
-                try:
-                    val, zstat = zkutil.get_next(self.zk, 'a', timeout=timeout, version=5)
-                    self.fail('expected ZKWaitTimeout')
-                except zkutil.ZKWaitTimeout:
-                    pass
+                self.assertRaises(zkutil.ZKWaitTimeout,
+                                  zkutil.get_next,
+                                  self.zk, 'a', timeout=timeout, version=5)
                 self.assertAlmostEqual(timeout, t.spent(), delta=0.2)
 
             th.join()
@@ -660,11 +652,9 @@ class TestWait(unittest.TestCase):
             th = threadutil.start_daemon(target=_del_a, after=0.3)
 
             with ututil.Timer() as t:
-                try:
-                    zkutil.get_next(self.zk, 'a', timeout=timeout, version=0)
-                    self.fail('expected NoNodeError')
-                except NoNodeError:
-                    pass
+                self.assertRaises(NoNodeError,
+                                  zkutil.get_next,
+                                  self.zk, 'a', timeout=timeout, version=0)
                 self.assertAlmostEqual(0.3, t.spent(), delta=0.2)
 
             th.join()
@@ -675,11 +665,9 @@ class TestWait(unittest.TestCase):
         th = threadutil.start_daemon(target=self.zk.stop, after=0.3)
 
         with ututil.Timer() as t:
-            try:
-                zkutil.get_next(self.zk, 'a', timeout=1, version=0)
-                self.fail('expected ConnectionClosedError')
-            except ConnectionClosedError:
-                pass
+            self.assertRaises(ConnectionClosedError,
+                              zkutil.get_next,
+                              self.zk, 'a', timeout=1, version=0)
             self.assertAlmostEqual(0.3, t.spent(), delta=0.2)
 
         th.join()
