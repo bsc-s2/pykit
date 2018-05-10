@@ -10,6 +10,7 @@ from .mysqlutil import (
     make_index_scan_sql,
     make_insert_sql,
     make_select_sql,
+    make_sql_range_conditions,
     make_update_sql,
     scan_index,
 )
@@ -27,6 +28,7 @@ __all__ = [
     "make_index_scan_sql",
     "make_insert_sql",
     "make_select_sql",
+    "make_sql_range_conditions",
     "make_update_sql",
     "privileges",
     "scan_index",

@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import MySQLdb
+
 from pykit import mysqlconnpool
 
 
@@ -189,6 +190,109 @@ def make_select_sql(table, result_fields, index, index_values,
                              limit_clause=limit_clause)
 
     return sql
+
+
+def make_sql_range_conditions(fields, start, end=None):
+
+    fld_len = len(fields)
+
+    if len(start) != fld_len:
+        raise InvalidLength(
+                "the number of fields in 'start' and 'shard_fields' is not equal:"
+                " start: {start}"
+                " fields: {fields}".format(start=start, fields=fields))
+
+    if end is None:
+        end = type(start)([None] * len(start))
+
+    elif len(end) != fld_len:
+        raise InvalidLength(
+                "the number of fields in 'end' and 'shard_fields' is not equal:"
+                " end: {end}"
+                " fields: {fields}".format(end=end, fields=fields))
+
+    elif start >= end:
+        return []
+
+    fld_ranges = []
+    for i in xrange(fld_len):
+        fld_ranges.append((fields[i], (start[i], end[i]),))
+
+    conditions = make_range_conditions(fld_ranges)
+
+    result = []
+    for cond in conditions:
+
+        sql_conds = []
+        for fld, operator, val in cond:
+            sql_conds.append(quote(fld, '`') + operator + _safe(val))
+
+        result.append(' AND '.join(sql_conds))
+
+    return result
+
+
+def make_range_conditions(fld_ranges, left_close=True):
+
+    result = []
+    start = 0
+    end = 1
+
+    # field[i] range is [start[i], end[i]), if start equals to end, it is a blank range.
+    # continuose blank ranges in the beginning should not show as:
+    # `fld > start[i] and fld < end[i]` but `fld = start[i]`.
+    n_pref_blank_flds = 0
+    for fld, _range in fld_ranges:
+        if _range[start] == _range[end]:
+            n_pref_blank_flds += 1
+        else:
+            break
+
+    first_effective_fld = fld_ranges[n_pref_blank_flds][0]
+
+    len_flds = len(fld_ranges)
+
+    # init
+    operator = ' > '
+    range_use = start
+    n_flds_use = len_flds
+
+    while True:
+
+        cond = []
+        for fld, _range in fld_ranges[:n_flds_use - 1]:
+            cond.append((fld, ' = ', _range[range_use]))
+
+        fld, _range = fld_ranges[n_flds_use-1]
+
+        if range_use == start and left_close:
+            cond.append((fld, ' >= ', _range[start]))
+            left_close = False
+        else:
+            cond.append((fld, operator, _range[range_use]))
+
+        if fld == first_effective_fld:
+            # no right boundary
+            if _range[end] is None:
+                result.append(cond)
+                return result
+
+            cond.append((fld, ' < ', _range[end]))
+
+            operator = ' < '
+            range_use = end
+
+        if range_use == start:
+            n_flds_use -= 1
+        else:
+            n_flds_use += 1
+
+        result.append(cond)
+
+        if n_flds_use > len_flds:
+            break
+
+    return result
 
 
 def quote(s, quote):

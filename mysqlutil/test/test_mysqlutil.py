@@ -456,6 +456,88 @@ class TestMysqlutil(unittest.TestCase):
 
             self.assertEqual(expected, rst)
 
+    def test_make_sql_range_conditions(self):
+
+        cases = (
+            ((['id'], ['10']),
+                ['`id` >= "10"'],
+                '1 shard field, no end shard'),
+
+            ((['id'], ['10'], ['15']),
+                ['`id` >= "10" AND `id` < "15"'],
+                '1 shard field normal'),
+
+            ((['id', 'service'], ['10', 'a']),
+                ['`id` = "10" AND `service` >= "a"',
+                 '`id` > "10"',
+                 ],
+                '2 shard fields, no end shard'),
+
+            ((['id', 'service'], ['10', 'a'], ['10', 'd']),
+                ['`id` = "10" AND `service` >= "a" AND `service` < "d"'],
+                '2 shard field, 1 same fields'),
+
+            ((['id', 'service'], ['10', 'a'], ['15', 'd']),
+                ['`id` = "10" AND `service` >= "a"',
+                 '`id` > "10" AND `id` < "15"',
+                 '`id` = "15" AND `service` < "d"',
+                 ],
+                '2 shard fields normal'),
+
+            ((['id', 'service', 'level'], ['10', 'a', 'a3']),
+                ['`id` = "10" AND `service` = "a" AND `level` >= "a3"',
+                 '`id` = "10" AND `service` > "a"',
+                 '`id` > "10"',
+                 ],
+                '3 shard fields, no end shard'),
+
+            ((['id', 'service', 'level'], ['10', 'a', 'a3'], ['10', 'a', 'b2']),
+                ['`id` = "10" AND `service` = "a" AND `level` >= "a3" AND `level` < "b2"'],
+                '3 shard fields, 2 same fields'),
+
+            ((['id', 'service', 'level'], ['10', 'a', 'a3'], ['10', 'd', 'b2']),
+                ['`id` = "10" AND `service` = "a" AND `level` >= "a3"',
+                 '`id` = "10" AND `service` > "a" AND `service` < "d"',
+                 '`id` = "10" AND `service` = "d" AND `level` < "b2"',
+                 ],
+                '3 shard fields, 1 same fields'),
+
+            ((['id', 'service', 'level'], ['10', 'a', 'a3'], ['15', 'd', 'b2']),
+                ['`id` = "10" AND `service` = "a" AND `level` >= "a3"',
+                 '`id` = "10" AND `service` > "a"',
+                 '`id` > "10" AND `id` < "15"',
+                 '`id` = "15" AND `service` < "d"',
+                 '`id` = "15" AND `service` = "d" AND `level` < "b2"',
+                 ],
+                '3 shard fields normal'),
+
+            ((['id', 'service', 'level'], ['15', 'd', 'b2'], ['10', 'a', 'a3']),
+                [],
+                'start > end'),
+
+            ((['id', 'service', 'level'], ['10', 'a', 'a3'], ['10', 'a', 'a3']),
+                [],
+                'start == end'),
+
+            ((['id', 'service', 'level'], ['10', 'a"c', 'a"3"'], ['15', 'd\\b', 'b\'2']),
+                ['`id` = "10" AND `service` = "a\\\"c" AND `level` >= "a\\\"3\\\""',
+                 '`id` = "10" AND `service` > "a\\\"c"',
+                 '`id` > "10" AND `id` < "15"',
+                 '`id` = "15" AND `service` < "d\\\\b"',
+                 '`id` = "15" AND `service` = "d\\\\b" AND `level` < "b\\\'2"',
+                 ],
+                'special characters'),
+        )
+
+        for args, rst_expected, msg in cases:
+            dd('msg: ', msg)
+            dd('expected: ', rst_expected)
+
+            rst = mysqlutil.make_sql_range_conditions(*args)
+            dd('rst     : ', rst)
+
+            self.assertEqual(rst, rst_expected)
+
 def docker_does_container_exist(name):
 
     dcli = _docker_cli()
