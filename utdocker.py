@@ -125,6 +125,11 @@ def start_container(name, image,
 def pull_image(image):
 
     dcli = get_client()
+    rst = dcli.images(image)
+    if len(rst) > 0:
+        dd(image + ' is ready')
+        dd(rst)
+        return
 
     # 'daocloud.io/zookeeper:3.4.10' --> ('daocloud.io/zookeeper', '3.4.10')
     rst = dcli.pull(*image.split(':'))
