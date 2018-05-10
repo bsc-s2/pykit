@@ -54,6 +54,16 @@ class TestAcid(unittest.TestCase):
         dd(final_val, zstat)
         self.assertEqual('3', final_val)
 
+    def test_cas_abort(self):
+
+        for curr, set_val in zkutil.cas_loop(self.zk, self.path):
+            set_val(curr + 2)
+            break
+
+        final_val, zstat = self.zk.get(self.path)
+        dd(final_val, zstat)
+        self.assertEqual('1', final_val, 'a break statement cancel set_val()')
+
     def test_cas_create_zk(self):
 
         for first_arg in (
