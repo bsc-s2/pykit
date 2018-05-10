@@ -17,6 +17,7 @@
   - [mysqlutil.make_insert_sql](#mysqlutilmake_insert_sql)
   - [mysqlutil.make_range_mysqldump_cmd](#mysqlutilmake_range_mysqldump_cmd)
   - [mysqlutil.make_select_sql](#mysqlutilmake_select_sql)
+  - [mysqlutil.make_sharding](#mysqlutilmake_sharding)
   - [mysqlutil.make_sql_range_conditions](#mysqlutilmake_sql_range_conditions)
   - [mysqlutil.make_update_sql](#mysqlutilmake_update_sql)
   - [mysqlutil.scan_index](#mysqlutilscan_index)
@@ -421,6 +422,65 @@ make_select_sql('errlog', ['_id', 'key'], ('key', 'val'), ('a', 'b'),
 
 **return**:
 a string which is a sql select statement.
+
+
+## mysqlutil.make_sharding
+
+**syntax**:
+`mysqlutil.make_sharding(conf)`
+
+Scan a database table and generate sharding info according configurations in `conf`.
+Return sharding result as a dictionary like:
+```
+{
+    "shard": [(), (), ...],
+    "number": [number, number, ...],
+    "total": number,
+}
+```
+
+**argument**:
+
+-   `db`: which database to sharding. A string.
+-   `table`: which table to sharding. A string.
+-   `conn`: database connect info:
+
+    ```
+    {
+        'host': '127.0.0.1',
+        'port': 3306,
+        'user': 'mysql',
+        'passwd': 'password',
+    }
+    ```
+
+-   `shard_fields`: are index fields to sharding by, a list or tuple of strings.
+-   `start`: is the start condition to scan table, a list or tuple of strings.
+-   `number_per_shard`: specifies the number of rows a shard contains, an integer.
+-   `tolerance_of_shard`: the tolerance of one shard's capacity, an integer.
+-   `shard_maker`: a function which accepts one list of strings argument and return a value as
+    a "shard" in the result. For example:
+
+    ```
+    def shard_maker(shard):
+        new_shard = shard + ['']*3
+        return new_shard[:3]
+    ```
+    By default, it is `list`.
+
+**return**:
+a dictionary of sharding result, like:
+```
+{
+    "shard": [['10000', 'a', '1'], ['11000', 'b', '3'], ['12000', 'd', '9']],
+    "number": [100, 104, 80],
+    "total": 284,
+}
+```
+
+-   `shard`: sharding info, a list of first row of every shard.
+-   `number`: numbers of rows of every shard.
+-   `total`: number of rows of all shards.
 
 
 ## mysqlutil.make_sql_range_conditions

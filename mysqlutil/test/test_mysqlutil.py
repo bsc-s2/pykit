@@ -119,6 +119,114 @@ class TestMysqlScanIndex(base.Base):
             except error as e:
                 self.assertEqual(type(e), error)
 
+    def test_make_sharding(self):
+
+        db = mysql_test_db
+        table = mysql_test_table
+        conn = {
+            'host': base.mysql_test_ip,
+            'port': base.mysql_test_port,
+            'user': mysql_test_user,
+            'passwd': base.mysql_test_password,
+        }
+
+        def shard_maker(shard):
+
+            new_shard = [str(x) for x in shard]
+            new_shard += ['', '', '']
+
+            return tuple(new_shard[:3])
+
+        cases = (
+            (
+                {
+                    "shard_fields": ('service', 'ip', '_id'),
+                    "start": ['common0', '', ''],
+                    "number_per_shard": 10,
+                    "tolerance_of_shard": 1,
+                    "shard_maker": tuple,
+                },
+                {
+                    'total': 32,
+                    'number': [10, 10, 10, 2],
+                    'shard': [('common0', '', ''), ('common0', '127.0.0.3', 27L),
+                              ('common2', '127.0.0.1'), ('common4', '127.0.0.1', 7L)],
+                },
+            ),
+
+            (
+                {
+                    "shard_fields": ('service', 'ip', '_id'),
+                    "start": ['common0', '127.0.0.3', '27'],
+                    "number_per_shard": 10,
+                    "tolerance_of_shard": 1,
+                },
+                {
+                    'total': 22,
+                    'number': [10, 10, 2],
+                    'shard': [['common0', '127.0.0.3', '27'],
+                              ['common2', '127.0.0.1'], ['common4', '127.0.0.1', 7L]],
+                },
+            ),
+
+            (
+                {
+                    "shard_fields": ('service', 'ip', '_id'),
+                    "start": ['common0', '', ''],
+                    "number_per_shard": 10,
+                    "tolerance_of_shard": 1,
+                    "shard_maker": shard_maker,
+                },
+                {
+                    'total': 32,
+                    'number': [10, 10, 10, 2],
+                    'shard': [('common0', '', ''), ('common0', '127.0.0.3', '27'),
+                              ('common2', '127.0.0.1', ''), ('common4', '127.0.0.1', '7')],
+                },
+            ),
+
+            (
+                {
+                    "shard_fields": ('service', 'ip', '_id'),
+                    "start": ['common0', '', ''],
+                    "number_per_shard": 15,
+                    "tolerance_of_shard": 2,
+                    "shard_maker": shard_maker,
+                },
+                {
+                    'total': 32,
+                    'number': [15, 15, 2],
+                    'shard': [('common0', '', ''), ('common1', '127.0.0.1', '31'), ('common4', '', '')],
+                },
+            ),
+
+            (
+                {
+                    "shard_fields": ('time', '_id'),
+                    "start": ['201706060600', '1'],
+                    "number_per_shard": 10,
+                    "tolerance_of_shard": 1,
+                },
+                {
+                    'total': 32,
+                    'number': [10, 10, 10, 2],
+                    'shard': [['201706060600', '1'], [201706060610L,], [201706060620L,],
+                              [201706060630L,]],
+                },
+            ),
+        )
+
+        for kwargs, expected in cases:
+
+            kwargs['db'] = db
+            kwargs['table'] = table
+            kwargs['conn'] = conn
+
+            dd('expected: ', expected)
+            result = mysqlutil.make_sharding(**kwargs)
+            dd('result  : ', result)
+            self.assertEqual(result, expected)
+
 
 class TestMysqlutil(unittest.TestCase):
 
