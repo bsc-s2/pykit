@@ -1,8 +1,12 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import MySQLdb
+import os
 
+import MySQLdb
+import urllib
+
+from pykit import dictutil
 from pykit import mysqlconnpool
 
 
@@ -293,6 +297,43 @@ def make_range_conditions(fld_ranges, left_close=True):
             break
 
     return result
+
+
+def make_range_mysqldump_cmd(fields, conn, db, table, path_dump_to, dump_exec, start, end=None):
+
+    cmd_pattern = ('{dump} --host={host} --port={port} --user={user} --password={passwd}'
+                   ' {db} {table} -w {cond} > {rst_path}')
+
+    if path_dump_to is None:
+        rst_path = '{table}.sql'.format(table=urllib.quote_plus(table))
+    elif isinstance(path_dump_to, basestring):
+        rst_path = path_dump_to
+    else:
+        rst_path = os.path.join(*path_dump_to)
+
+    if dump_exec is None:
+        dump = 'mysqldump'
+    elif isinstance(dump_exec, basestring):
+        dump = dump_exec
+    else:
+        dump = os.path.join(*dump_exec)
+
+    conditions = make_sql_range_conditions(fields, start, end)
+    cond_expression = '(' + ') OR ('.join(conditions) + ')'
+
+    pattern_args = dictutil.subdict(conn, ['host', 'port', 'user', 'passwd'],
+                                    use_default=True, default='')
+
+    pattern_args['dump'] = dump
+    pattern_args['db'] = db
+    pattern_args['table'] = table
+    pattern_args['cond'] = cond_expression
+    pattern_args['rst_path'] = rst_path
+
+    for k, v in pattern_args.items():
+        pattern_args[k] = quote(str(v), "'")
+
+    return cmd_pattern.format(**pattern_args)
 
 
 def quote(s, quote):

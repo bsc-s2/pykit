@@ -538,6 +538,101 @@ class TestMysqlutil(unittest.TestCase):
 
             self.assertEqual(rst, rst_expected)
 
+    def test_make_range_mysqldump_cmd(self):
+
+        conn = {
+            'host': '127.0.0.1',
+            'user': 'root',
+            'passwd': 'password',
+            'port': 3306,
+        }
+
+        conn_special = {
+            'host': '127.0.0.1',
+            'user': 'root"1',
+            'passwd': 'pass\'word',
+            'port': 3306,
+        }
+
+        db = 'mysql'
+        table = 'key'
+        table_special = 'key"00"'
+
+        cases = (
+            ((['id', 'service'], conn, db, table, ['/tmp', 'key.sql'], ['/usr', 'bin', 'mysqldump'],
+                ['10', 'a'], ['15', 'd']),
+                ("'/usr/bin/mysqldump' --host='127.0.0.1' --port='3306' --user='root' --password='password' " +
+                 "'mysql' 'key' -w '" +
+                 "(`id` = \"10\" AND `service` >= \"a\") OR " +
+                 "(`id` > \"10\" AND `id` < \"15\") OR " +
+                 "(`id` = \"15\" AND `service` < \"d\")" +
+                 "' > '/tmp/key.sql'"),
+                'test normal'
+             ),
+
+            ((['id', 'service'], conn, db, table, '/tmp/key.sql', ['/usr', 'bin', 'mysqldump'],
+                ['10', 'a'], ['15', 'd']),
+                ("'/usr/bin/mysqldump' --host='127.0.0.1' --port='3306' --user='root' --password='password' " +
+                 "'mysql' 'key' -w '" +
+                 "(`id` = \"10\" AND `service` >= \"a\") OR " +
+                 "(`id` > \"10\" AND `id` < \"15\") OR " +
+                 "(`id` = \"15\" AND `service` < \"d\")" +
+                 "' > '/tmp/key.sql'"),
+                'test string path_dump_to'
+             ),
+
+            ((['id', 'service'], conn, db, table, ['/tmp', 'key.sql'], '/usr/bin/mysqldump',
+                ['10', 'a'], ['15', 'd']),
+                ("'/usr/bin/mysqldump' --host='127.0.0.1' --port='3306' --user='root' --password='password' " +
+                 "'mysql' 'key' -w '" +
+                 "(`id` = \"10\" AND `service` >= \"a\") OR " +
+                 "(`id` > \"10\" AND `id` < \"15\") OR " +
+                 "(`id` = \"15\" AND `service` < \"d\")" +
+                 "' > '/tmp/key.sql'"),
+                'test string mysqldump path'
+             ),
+
+            ((['id', 'service'], conn, db, table, ['/tmp', 'key.sql'], ['/usr', 'bin', 'mysqldump'],
+                ['10', 'a']),
+                ("'/usr/bin/mysqldump' --host='127.0.0.1' --port='3306' --user='root' --password='password' " +
+                 "'mysql' 'key' -w '" +
+                 "(`id` = \"10\" AND `service` >= \"a\") OR " +
+                 "(`id` > \"10\")" +
+                 "' > '/tmp/key.sql'"),
+                'test no end shard'
+             ),
+
+            ((['id', 'service'], conn, db, table, ['/tmp', 'key.sql'], ['/usr', 'bin', 'mysqldump'],
+                ['10', 'a"'], ['15', 'd"3"']),
+                ("'/usr/bin/mysqldump' --host='127.0.0.1' --port='3306' --user='root' --password='password' " +
+                 "'mysql' 'key' -w '"
+                 "(`id` = \"10\" AND `service` >= \"a\\\"\") OR " +
+                 "(`id` > \"10\" AND `id` < \"15\") OR " +
+                 "(`id` = \"15\" AND `service` < \"d\\\"3\\\"\")" +
+                 "' > '/tmp/key.sql'"),
+                'test special characters in shards'
+             ),
+
+            ((['id', 'service'], conn_special, db, table_special, ['/tmp', 'key.sql'], ['/usr', 'bin', 'mysqldump'],
+                ['10', 'a'], ['15', 'd']),
+                ("'/usr/bin/mysqldump' --host='127.0.0.1' --port='3306' --user='root\"1' --password='pass\\\'word' " +
+                 "'mysql' 'key\"00\"' -w '" +
+                 "(`id` = \"10\" AND `service` >= \"a\") OR " +
+                 "(`id` > \"10\" AND `id` < \"15\") OR " +
+                 "(`id` = \"15\" AND `service` < \"d\")" +
+                 "' > '/tmp/key.sql'"),
+                'test special characters in dbinfo'
+             ),
+        )
+
+        for args, rst_expected, msg in cases:
+            dd('msg: ', msg)
+            dd('expected: ', rst_expected)
+            rst = mysqlutil.make_range_mysqldump_cmd(*args)
+            dd('rst     : ', rst)
+
+            self.assertEquals(rst_expected, rst)
+
 def docker_does_container_exist(name):
 
     dcli = _docker_cli()

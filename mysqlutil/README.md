@@ -15,6 +15,7 @@
   - [mysqlutil.make_delete_sql](#mysqlutilmake_delete_sql)
   - [mysqlutil.make_index_scan_sql](#mysqlutilmake_index_scan_sql)
   - [mysqlutil.make_insert_sql](#mysqlutilmake_insert_sql)
+  - [mysqlutil.make_range_mysqldump_cmd](#mysqlutilmake_range_mysqldump_cmd)
   - [mysqlutil.make_select_sql](#mysqlutilmake_select_sql)
   - [mysqlutil.make_sql_range_conditions](#mysqlutilmake_sql_range_conditions)
   - [mysqlutil.make_update_sql](#mysqlutilmake_update_sql)
@@ -299,6 +300,75 @@ mysqlutil.make_insert_sql(('test', 'errlog'), ['common1', '127.0.0.3', '3'], ['s
 
 **return**:
 a string which is a sql insert statement.
+
+
+## mysqlutil.make_range_mysqldump_cmd
+
+**syntax**:
+`mysqlutil.make_range_mysqldump_cmd(fields, conn, db, table, path_dump_to, dump_exec, start, end=None)`
+
+Generate mysql dump command for those rows between `start` and `end`: "[`start`, `end`)".
+
+```
+make_range_mysqldump_cmd(
+    ['bucket_id', 'scope', 'key'],
+    {
+        'host': '127.0.0.1',
+        'user': 'root',
+        'passwd': 'password',
+        'port': 3306,
+    },
+    'mysql',
+    'key',
+    ['/tmp', 'key.sql'],
+    ['/user', 'bin', 'mysqldump'],
+    ['10', 'a'], ['15', 'd']
+)
+
+# "'/usr/bin/mysqldump' --host='127.0.0.1' --port='3306' --user='root' --password='password' 'mysql' 'key' -w "\
+# "'(`id` = \"10\" AND `service` >= \"a\") OR (`id` = \"15\" AND `service` < \"d\") OR "\
+# "(`id` > \"10\" AND `id` < \"15\")' > '/tmp/key.sql'"
+```
+
+**argument**:
+
+-   `fields`:
+    is table fields used to find those rows to dump. A list or tuple of string.
+
+-   `conn`:
+    is the connection info of the database which dump data from. A dict like:
+    ```
+    {
+        'host': '127.0.0.1',
+        'user': 'root',
+        'passwd': 'password',
+        'port': 3306,
+    }
+    ```
+
+-   `db`:
+    is the database from which dump data. A string.
+
+-   `table`:
+    is the name of the table which dump data from. A string.
+
+-   `path_dump_to`:
+    is the path which dump data to. A list or tuple of strings, like: `['/tmp', 'table.sql']`. Or a
+    string, like `'/tmp/table.sql'`.
+
+-   `dump_exec`:
+    is the path where `mysqldump` is. A list or tuple of strings, like:
+    `['/usr', 'bin', 'mysqldump']`. Or a string, like `'/usr/bin/mysqldump'`.
+
+-   `start`:
+    is the beginning boundary of the condition value, a list or tuple of string.
+
+-   `end`:
+    is the ending boundary of the condition value, a list or tuple of string. If `end` is `None`,
+    then condtion in result has no ending boundary.
+
+**return**:
+a string.
 
 
 ##  mysqlutil.make_select_sql
