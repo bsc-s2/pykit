@@ -48,6 +48,8 @@ class ZKConf(object):
 
     def tx_alive(self, txid=''): return ''.join([self.journal_dir(), 'tx_alive/', txid])
 
+    def tx_applied(self, txid=''): return ''.join([self.journal_dir(), 'tx_applied/', txid])
+
     def tx(self, txid=''): return ''.join([self.journal_dir(), 'tx/', txid])
 
     def txid_range(self): return ''.join([self.journal_dir(), 'txid_range'])
