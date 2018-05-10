@@ -633,6 +633,118 @@ class TestMysqlutil(unittest.TestCase):
 
             self.assertEquals(rst_expected, rst)
 
+    def test_make_sharding(self):
+
+        mysql_ip = start_mysql_server()
+
+        db = mysql_test_db
+        table = mysql_test_table
+        conn = {
+            'host': mysql_ip,
+            'port': mysql_test_port,
+            'user': mysql_test_user,
+            'passwd': mysql_test_password,
+        }
+
+        def sharding_generator(shard):
+
+            new_shard = [str(x) for x in shard]
+            new_shard += ['', '', '']
+
+            return tuple(new_shard[:3])
+
+        cases = (
+            (
+                {
+                    "shard_fields": ('service', 'ip', '_id'),
+                    "start_shard": ['common0', '', ''],
+                    "number_per_shard": 10,
+                    "tolerance_of_shard": 1,
+                    "sharding_generator": tuple,
+                },
+                {
+                    'total': 32,
+                    'num': [10, 10, 10, 2],
+                    'shard': [('common0', '', ''), ('common0', '127.0.0.3', 27L),
+                              ('common2', '127.0.0.1'), ('common4', '127.0.0.1', 7L)],
+                },
+            ),
+
+            (
+                {
+                    "shard_fields": ('service', 'ip', '_id'),
+                    "start_shard": ['common0', '127.0.0.3', '27'],
+                    "number_per_shard": 10,
+                    "tolerance_of_shard": 1,
+                },
+                {
+                    'total': 22,
+                    'num': [10, 10, 2],
+                    'shard': [['common0', '127.0.0.3', '27'],
+                              ['common2', '127.0.0.1'], ['common4', '127.0.0.1', 7L]],
+                },
+            ),
+
+            (
+                {
+                    "shard_fields": ('service', 'ip', '_id'),
+                    "start_shard": ['common0', '', ''],
+                    "number_per_shard": 10,
+                    "tolerance_of_shard": 1,
+                    "sharding_generator": sharding_generator,
+                },
+                {
+                    'total': 32,
+                    'num': [10, 10, 10, 2],
+                    'shard': [('common0', '', ''), ('common0', '127.0.0.3', '27'),
+                              ('common2', '127.0.0.1', ''), ('common4', '127.0.0.1', '7')],
+                },
+            ),
+
+            (
+                {
+                    "shard_fields": ('service', 'ip', '_id'),
+                    "start_shard": ['common0', '', ''],
+                    "number_per_shard": 15,
+                    "tolerance_of_shard": 2,
+                    "sharding_generator": sharding_generator,
+                },
+                {
+                    'total': 32,
+                    'num': [15, 15, 2],
+                    'shard': [('common0', '', ''), ('common1', '127.0.0.1', '31'), ('common4', '', '')],
+                },
+            ),
+
+            (
+                {
+                    "shard_fields": ('time', '_id'),
+                    "start_shard": ['201706060600', '1'],
+                    "number_per_shard": 10,
+                    "tolerance_of_shard": 1,
+                },
+                {
+                    'total': 32,
+                    'num': [10, 10, 10, 2],
+                    'shard': [['201706060600', '1'], [201706060610L,], [201706060620L,],
+                              [201706060630L,]],
+                },
+            ),
+        )
+
+        try:
+            for conf, expected in cases:
+
+                conf['db'] = db
+                conf['table'] = table
+                conf['conn'] = conn
+                dd('expected: ', expected)
+                result = mysqlutil.make_sharding(conf)
+                dd('result  : ', result)
+                self.assertEqual(result, expected)
+        finally:
+            stop_mysql_server()
+
 def docker_does_container_exist(name):
 
     dcli = _docker_cli()
