@@ -159,6 +159,10 @@ class ZKLock(object):
             else:
                 logger.info('not acquired, do not need to release')
 
+        self.close()
+
+    def close(self):
+
         try:
             self.zkclient.remove_listener(self.on_connection_change)
         except Exception as e:
