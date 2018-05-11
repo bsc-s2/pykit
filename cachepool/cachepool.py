@@ -1,5 +1,6 @@
 import logging
 import sys
+import threading
 
 if sys.version_info > (3,):
     import queue as Queue
@@ -35,10 +36,12 @@ class CachePool(object):
         self._pool_size = pool_size
         self.queue = Queue.Queue(self._pool_size)
 
-        self.stat = {'new': 0,
-                     'get': 0,
-                     'put': 0,
-                     }
+        self._stat_lock = threading.RLock()
+        self.stat = {
+            'new': 0,
+            'get': 0,
+            'put': 0,
+        }
 
         if not callable(self._generator):
             raise CachePoolGeneratorError('generator is not callable')
@@ -47,7 +50,8 @@ class CachePool(object):
 
         try:
             element = self.queue.get(block=False)
-            self.stat['get'] += 1
+            with self._stat_lock:
+                self.stat['get'] += 1
 
             logger.debug('reuse: ' + repr(self.stat))
             logger.debug('qzise: ' + repr(self.queue.qsize()))
@@ -59,8 +63,9 @@ class CachePool(object):
             element = self._generator(
                 *self._generator_args, **self._generator_argkw)
 
-            self.stat['new'] += 1
-            self.stat['get'] += 1
+            with self._stat_lock:
+                self.stat['new'] += 1
+                self.stat['get'] += 1
 
             logger.debug('new  : ' + repr(self.stat))
 
@@ -70,7 +75,8 @@ class CachePool(object):
 
         try:
             self.queue.put(element, block=False)
-            self.stat['put'] += 1
+            with self._stat_lock:
+                self.stat['put'] += 1
 
             logger.debug('put  : ' + repr(self.stat))
             logger.debug('qzise: ' + repr(self.queue.qsize()))
