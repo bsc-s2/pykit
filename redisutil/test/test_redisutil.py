@@ -1,12 +1,18 @@
+import mock
 import os
 import sys
 import time
 import unittest
+import urlparse
+
+from BaseHTTPServer import BaseHTTPRequestHandler
+from BaseHTTPServer import HTTPServer
 
 from pykit import redisutil
 from pykit import threadutil
 from pykit import utdocker
 from pykit import ututil
+from pykit import utfjson
 
 dd = ututil.dd
 
@@ -284,6 +290,251 @@ class TestRedis(unittest.TestCase):
         for ii in range(2):
             self.assertEqual('c2s2', s.rpeek_msg())
             self.assertEqual('s2c2', c.rpeek_msg())
+
+
+class TestRedisProxyClient(unittest.TestCase):
+
+    response = {}
+    request = {}
+    access_key = 'test_accesskey'
+    secret_key = 'test_secretkey'
+
+    def setUp(self):
+        self.addr = ('127.0.0.1', 22038)
+
+        self.response['http-status'] = 200
+
+        def _start_http_svr():
+            self.http_server = HTTPServer(self.addr, HttpHandle)
+            self.http_server.serve_forever()
+
+        threadutil.start_daemon_thread(_start_http_svr)
+        time.sleep(0.1)
+
+        self.cli = redisutil.RedisProxyClient([self.addr])
+        self.n = self.cli.n
+        self.w = self.cli.w
+        self.r = self.cli.r
+
+    def tearDown(self):
+        self.http_server.shutdown()
+        self.http_server.server_close()
+
+    def test_send_request_failed(self):
+        # close http server
+        self.tearDown()
+
+        self.assertRaises(redisutil.SendRequestError, self.cli.get, 'foo')
+        self.assertRaises(redisutil.SendRequestError, self.cli.set, 'foo', 'bar')
+
+        self.assertRaises(redisutil.SendRequestError, self.cli.hget, 'foo', 'bar')
+        self.assertRaises(redisutil.SendRequestError, self.cli.hset, 'foo', 'bar', 'xx')
+
+    def test_not_found(self):
+        self.response['http-status'] = 404
+        self.assertRaises(redisutil.KeyNotFoundError, self.cli.get, 'foo')
+        self.assertRaises(redisutil.KeyNotFoundError, self.cli.hget, 'foo', 'bar')
+
+    def test_server_response_error(self):
+        cases = (
+            201,
+            302,
+            403,
+            500,
+        )
+
+        for status in cases:
+            self.response['http-status'] = status
+            self.assertRaises(redisutil.ServerResponseError, self.cli.get, 'foo')
+            self.assertRaises(redisutil.ServerResponseError, self.cli.hget, 'foo', 'bar')
+            self.assertRaises(redisutil.ServerResponseError, self.cli.set, 'foo', 'val')
+            self.assertRaises(redisutil.ServerResponseError, self.cli.hset, 'foo', 'bar', 'val')
+
+    def test_get(self):
+        cases = (
+            ('foo', None),
+            ('bar', 1),
+            ('123', 2),
+            ('foobar123', 3)
+        )
+
+        for key, retry_cnt in cases:
+            res = self.cli.get(key, retry_cnt)
+            time.sleep(0.1)
+
+            exp_path = '{ver}/GET/{k}'.format(ver=self.cli.ver, k=key)
+            self.assertEqual(exp_path, TestRedisProxyClient.request['req-path'])
+
+            exp_qs = 'n=3&w=2&r=2'
+            self.assertIn(exp_qs, TestRedisProxyClient.request['req-qs'])
+
+            exp_res = {
+                'foo': 1,
+                'bar': 2,
+            }
+            self.assertDictEqual(exp_res, res)
+
+    def test_hget(self):
+        cases = (
+            ('hname1', 'hval1'),
+            ('hname2', 'hval2'),
+            ('hname3', 'hval3'),
+            ('hname4', 'hval4'),
+        )
+
+        for hname, hkey in cases:
+            res = self.cli.hget(hname, hkey)
+            time.sleep(0.1)
+
+            exp_path = '{ver}/HGET/{hn}/{hk}'.format(ver=self.cli.ver, hn=hname, hk=hkey)
+            self.assertEqual(exp_path, TestRedisProxyClient.request['req-path'])
+
+            exp_qs = 'n=3&w=2&r=2'
+            self.assertIn(exp_qs, TestRedisProxyClient.request['req-qs'])
+
+            exp_res = {
+                'foo': 1,
+                'bar': 2,
+            }
+
+            self.assertDictEqual(exp_res, res)
+
+    def test_set(self):
+        cases = (
+            ('key1', 'val1', None),
+            ('key2', 'val2', 1),
+            ('key3', 'val3', 2),
+            ('key4', 'val4', 3),
+
+            ('key5', 11, 4),
+            ('key6', 22, 5),
+        )
+
+        for key, val, expire in cases:
+            self.cli.set(key, val, expire)
+            time.sleep(0.1)
+
+            exp_path = '{ver}/SET/{k}'.format(ver=self.cli.ver, k=key)
+            self.assertEqual(exp_path, TestRedisProxyClient.request['req-path'])
+
+            exp_qs = 'n=3&w=2&r=2'
+            if expire is not None:
+                exp_qs += '&expire={e}'.format(e=expire)
+
+            self.assertIn(exp_qs, TestRedisProxyClient.request['req-qs'])
+            self.assertEqual(utfjson.dump(val), TestRedisProxyClient.request['req-body'])
+
+    def test_hset(self):
+        cases = (
+            ('hname1', 'key1', 'val1', None),
+            ('hname2', 'key2', 'val2', 1),
+            ('hname3', 'key3', 'val3', 2),
+            ('hname4', 'key4', 'val4', 3),
+
+            ('hname5', 'key5', 11, 4),
+            ('hname6', 'key6', 22, 5),
+        )
+
+        for hname, key, val, expire in cases:
+            self.cli.hset(hname, key, val, expire=expire)
+            time.sleep(0.1)
+
+            exp_path = '{ver}/HSET/{hn}/{hk}'.format(ver=self.cli.ver, hn=hname, hk=key)
+            self.assertEqual(exp_path, TestRedisProxyClient.request['req-path'])
+
+            exp_qs = 'n=3&w=2&r=2'
+            if expire is not None:
+                exp_qs += '&expire={e}'.format(e=expire)
+
+            self.assertIn(exp_qs, TestRedisProxyClient.request['req-qs'])
+            self.assertEqual(utfjson.dump(val), TestRedisProxyClient.request['req-body'])
+
+    def test_retry(self):
+        # close http server
+        self.tearDown()
+
+        cases = (
+            (None, 4),
+            (0, 4),
+            (1, 8),
+            (2, 12),
+            (3, 16),
+            (4, 20),
+        )
+
+        sess = {'run_times': 0}
+
+        def _mock_for_retry(req):
+            sess['run_times'] += 1
+            return req
+
+        for retry_cnt, exp_cnt in cases:
+            sess['run_times'] = 0
+            with mock.patch('pykit.redisutil.RedisProxyClient._sign_req', side_effect=_mock_for_retry):
+                try:
+                    self.cli.get('foo', retry=retry_cnt)
+                except:
+                    pass
+
+                try:
+                    self.cli.hget('foo', 'bar', retry=retry_cnt)
+                except:
+                    pass
+
+                try:
+                    self.cli.set('foo', 'val', retry=retry_cnt)
+                except:
+                    pass
+
+                try:
+                    self.cli.hset('foo', 'bar', 'val', retry=retry_cnt)
+                except:
+                    pass
+
+            self.assertEqual(exp_cnt, sess['run_times'])
+
+
+class HttpHandle(BaseHTTPRequestHandler):
+
+    def do_PUT(self):
+        length = int(self.headers.getheader('Content-Length'))
+        rst = []
+
+        while length > 0:
+            buf = self.rfile.read(length)
+            rst.append(buf)
+            length -= len(buf)
+
+        path_res = urlparse.urlparse(self.path)
+
+        TestRedisProxyClient.request['req-body'] = ''.join(rst)
+        TestRedisProxyClient.request['req-path'] = path_res.path
+        TestRedisProxyClient.request['req-qs'] = path_res.query
+
+        body = TestRedisProxyClient.response.get('body', '')
+        self.send_response(TestRedisProxyClient.response['http-status'])
+        self.send_header('Content-Length', len(body))
+        self.end_headers()
+
+        if len(body) > 0:
+            self.wfile.write(body)
+
+    def do_GET(self):
+        response = utfjson.dump({
+            'foo': 1,
+            'bar': 2,
+        })
+
+        path_res = urlparse.urlparse(self.path)
+
+        TestRedisProxyClient.request['req-path'] = path_res.path
+        TestRedisProxyClient.request['req-qs'] = path_res.query
+
+        self.send_response(TestRedisProxyClient.response['http-status'])
+        self.send_header('Content-Length', len(response))
+        self.end_headers()
+
+        self.wfile.write(response)
 
 
 def child_exit():

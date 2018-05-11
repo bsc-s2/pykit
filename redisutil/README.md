@@ -6,6 +6,11 @@
 - [Status](#status)
 - [Description](#description)
 - [Synopsis](#synopsis)
+- [Exceptions](#exceptions)
+  - [redisutil.RedisProxyError](#redisutilredisproxyerror)
+  - [redisutil.SendRequestError](#redisutilsendrequesterror)
+  - [redisutil.KeyNotFoundError](#redisutilkeynotfounderror)
+  - [redisutil.ServerResponseError](#redisutilserverresponseerror)
 - [Methods](#methods)
   - [redisutil.get_client](#redisutilget_client)
   - [redisutil.wait_serve](#redisutilwait_serve)
@@ -19,6 +24,11 @@
     - [RedisChannel.peek_msg](#redischannelpeek_msg)
     - [RedisChannel.rpeek_msg](#redischannelrpeek_msg)
     - [RedisChannel.list_channel](#redischannellist_channel)
+  - [redisutil.RedisProxyClient](#redisutilredisproxyclient)
+    - [RedisProxyClient.get](#redisproxyclientget)
+    - [RedisProxyClient.set](#redisproxyclientset)
+    - [RedisProxyClient.hget](#redisproxyclienthget)
+    - [RedisProxyClient.hset](#redisproxyclienthset)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -54,6 +64,71 @@ print s.recv_msg()        # c2s
 print c.recv_msg()        # s2c
 
 ```
+
+```python
+cli = redisutil.RedisProxyClient([('127.0.0.1', 2222), ('192.168.0.100', 222)])
+
+cli.set('k1', 'v1', retry=1)
+cli.set('k2', 'v2', expire=1000) # msec
+
+print cli.get('k1', retry=2)
+# out: 'v1'
+
+print cli.get('k2')
+# out: 'v2'
+
+time.sleep(1)
+cli.get('k2')
+# raise a 'redisutil.KeyNotFoundError' because it is timeout
+
+cli.hset('hashname1', 'k3', 'v3')
+cli.hset('hashname2', 'k4', 'v4', expire=1000)
+
+print cli.hget('hashname1', 'k3')
+# out: 'v3'
+
+print cli.hget('hashname2', 'k4')
+# out: 'v4'
+
+time.sleep(1)
+cli.hget('hashname2', 'k4')
+# raise a 'redisutil.KeyNotFoundError' because it is timeout
+
+```
+
+#   Exceptions
+
+##  redisutil.RedisProxyError
+
+**syntax**:
+`redisutil.RedisProxyError`
+
+The base class of other exceptions of `RedisProxyClient`.
+It is a subclass of `Exception`.
+
+##  redisutil.SendRequestError
+
+**syntax**:
+`redisutil.SendRequestError`
+
+It is a subclass of `redisutil.RedisProxyError`.
+Raise if failed to send request to redis proxy server.
+
+##  redisutil.KeyNotFoundError
+
+**syntax**:
+`redisutil.KeyNotFoundError`
+
+It is a subclass of `redisutil.RedisProxyError`.
+Raise if key not found (redis proxy server return a `404`).
+
+##  redisutil.ServerResponseError
+
+**syntax**:
+`redisutil.ServerResponseError`
+
+It is a subclass of `redisutil.RedisProxyError`.
+Raise if http-status not in `(200, 404)` return from redis proxy server.
 
 #   Methods
 
@@ -264,6 +339,124 @@ List all channel names those start with `prefix`.
 **return**:
 a list of channel names.
 
+##  redisutil.RedisProxyClient
+
+**syntax**:
+`redisutil.RedisProxyClient(hosts, nwr=None, ak_sk=None, timeout=None)`
+
+A client for redis proxy server.
+
+**arguments**:
+
+-   `hosts`:
+    a `tuple` each element is a `(ip, port)`, retry with next addr while failed to use prev one.
+
+-   `nwr`:
+    `tuple` of `(n, w, r)`, count of replicas, count of write, count of read.
+    If it is `None`, `config.rp_cli_nwr` is used.
+
+-   `ak_sk`:
+    `tuple` of `(access_key, secret_key)` to sign the request.
+    If it is `None`, `config.rp_cli_ak_sk` is used.
+
+-   `timeout`:
+    timeout of connecting redis proxy server in seconds. Defaults to `None`.
+
+###  RedisProxyClient.get
+
+**syntax**:
+`RedisProxyClient.get(key, retry=0)`
+
+Get the value with `key`.
+Raise a `redisutil.KeyNotFoundError` if the key doesn’t exist.
+
+**arguments**:
+
+-   `key`:
+    specifies the key to redis.
+
+-   `retry`:
+    try to send request for another N times while failed to send request.
+    By default, it is `0`.
+
+**return**:
+the value at `key`.
+
+###  RedisProxyClient.set
+
+**syntax**:
+`RedisProxyClient.set(key, val, expire=None, retry=0)`
+
+Set the value at `key` to `val`.
+
+**arguments**:
+
+-   `key`:
+    specifies the key to redis.
+
+-   `val`:
+    specifies the value to redis.
+
+-   `expire`:
+    the expire time on `key` in msec. Defaults to `None`.
+
+-   `retry`:
+    try to send request for another N times while failed to send request.
+    By default, it is `0`.
+
+**return**:
+nothing
+
+###  RedisProxyClient.hget
+
+**syntax**:
+`RedisProxyClient.hget(hashname, hashkey, retry=0)`
+
+Return the value of `haskkey` within the `haskname`.
+Raise a `redisutil.KeyNotFoundError` if it doesn’t exist.
+
+**arguments**:
+
+-   `hashname`:
+    specifies the hash name to redis.
+
+-   `hashkey`:
+    specifies the hash key to redis.
+
+-   `retry`:
+    try to send request for another N times while failed to send request.
+    By default, it is `0`.
+
+**return**:
+the value of `hashkey` within the `hashname`.
+
+###  RedisProxyClient.hset
+
+**syntax**:
+`RedisProxyClient.hset(hashname, hashkey, val, expire=None, retry=0)`
+
+Set `hashkey` to `val` within `hashname`.
+
+**arguments**:
+
+-   `hashname`:
+    specifies the hash name to redis.
+
+-   `hashkey`:
+    specifies the hash key to redis.
+
+-   `val`:
+    specifies the value to redis.
+
+-   `expire`:
+    the expire time on `hashkey` within `hashname` in msec. Defaults to `None`.
+
+-   `retry`:
+    try to send request for another N times while failed to send request.
+    By default, it is `0`.
+
+**return**:
+nothing
 
 #   Author
 
