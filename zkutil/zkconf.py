@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+from kazoo.client import KazooClient
+
 from pykit import config
 
 from . import zkutil
@@ -77,3 +79,48 @@ class ZKConf(object):
             return getattr(config, 'zk_' + name)
         else:
             return self.conf[name]
+
+
+class KazooClientExt(KazooClient):
+
+    def __init__(self, *args, **kwargs):
+        super(KazooClientExt, self).__init__(*args, **kwargs)
+
+        self._zkconf = None
+
+
+def kazoo_client(zk):
+    """
+    return zkclient created or original zkclient, and if zkclient is created
+    """
+
+    zkconf = None
+
+    if isinstance(zk, str):
+        zkconf = ZKConf(hosts=zk)
+
+    if isinstance(zk, dict):
+        zkconf = ZKConf(**zk)
+
+    if isinstance(zk, ZKConf):
+        zkconf = zk
+
+    if zkconf is None:
+
+        if isinstance(zk, KazooClientExt):
+            zk._zkconf = ZKConf()
+
+        return zk, False
+
+    else:
+
+        zkclient = KazooClientExt(zkconf.hosts())
+        zkclient._zkconf = zkconf
+
+        zkclient.start()
+
+        auth = zkconf.kazoo_auth()
+        if auth is not None:
+            zkclient.add_auth(*auth)
+
+        return zkclient, True

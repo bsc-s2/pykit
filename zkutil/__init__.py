@@ -8,6 +8,8 @@ from .zkacid import (
 
 from .zkconf import (
     ZKConf,
+
+    kazoo_client,
 )
 
 from .zkutil import (
@@ -42,6 +44,10 @@ __all__ = [
 
     "cas_loop",
 
+    "ZKConf",
+
+    "kazoo_client",
+
     "init_hierarchy",
     "is_backward_locking",
     "lock_id",
@@ -58,7 +64,5 @@ __all__ = [
 
     "LockTimeout",
 
-    "ZKConf",
     "ZKLock",
-
 ]

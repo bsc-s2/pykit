@@ -1,36 +1,17 @@
 import logging
 
-from kazoo.client import KazooClient
 from kazoo.exceptions import BadVersionError
 
 from pykit import utfjson
 
-from .zkconf import ZKConf
+from .zkconf import kazoo_client
 
 logger = logging.getLogger(__name__)
 
 
 def cas_loop(zkclient, path, json=True):
 
-    zkconf = None
-    if isinstance(zkclient, str):
-        zkconf = ZKConf(hosts=zkclient)
-
-    if isinstance(zkclient, dict):
-        zkconf = ZKConf(**zkclient)
-
-    if isinstance(zkclient, ZKConf):
-        zkconf = zkclient
-
-    owning_zk = False
-
-    if zkconf is not None:
-        zkclient = KazooClient(zkconf.hosts())
-        zkclient.start()
-        owning_zk = True
-        auth = zkconf.kazoo_auth()
-        if auth is not None:
-            zkclient.add_auth(*auth)
+    zkclient, owning_zk = kazoo_client(zkclient)
 
     sess = {}
 
