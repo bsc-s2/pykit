@@ -4,6 +4,7 @@
 from kazoo.client import KazooClient
 
 from pykit import config
+from pykit import utfjson
 
 from . import zkutil
 
@@ -83,13 +84,56 @@ class ZKConf(object):
 
 class KazooClientExt(KazooClient):
 
-    def __init__(self, *args, **kwargs):
-        super(KazooClientExt, self).__init__(*args, **kwargs)
+    def __init__(self, zkclient, json=True):
 
-        self._zkconf = None
+        if isinstance(zkclient, KazooClientExt):
+            self._zk = zkclient._zk
+            self._zkconf = ZKConf(**zkclient._zkconf.conf)
+
+        elif isinstance(zkclient, KazooClient):
+            self._zk = zkclient
+            self._zkconf = None
+        else:
+            raise TypeError('invalid zkclient type: expect KazooClient or KazooClientExt')
+
+        self._json = json
+
+    def __getattr__(self, n):
+        return getattr(self._zk, n)
+
+    def _jl(self, v):
+        if self._json:
+            return utfjson.load(v)
+        else:
+            return v
+
+    def _jd(self, v):
+        if self._json:
+            return utfjson.dump(v)
+        else:
+            return v
+
+    def get(self, path, watch=None):
+        val, zstat = self._zk.get(path, watch=watch)
+        return self._jl(val), zstat
+
+    def set(self, path, value, version=-1):
+        value = self._jd(value)
+        return self._zk.set(path, value, version=version)
+
+    def create(self, path, value=b"", acl=None, ephemeral=False,
+               sequence=False, makepath=False):
+
+        value = self._jd(value)
+
+        return self._zk.create(path, value=value,
+                               acl=acl,
+                               ephemeral=ephemeral,
+                               sequence=sequence,
+                               makepath=makepath)
 
 
-def kazoo_client(zk):
+def kazoo_client_ext(zk, json=True):
     """
     return zkclient created or original zkclient, and if zkclient is created
     """
@@ -106,21 +150,19 @@ def kazoo_client(zk):
         zkconf = zk
 
     if zkconf is None:
-
-        if isinstance(zk, KazooClientExt):
-            zk._zkconf = ZKConf()
-
-        return zk, False
-
+        zkconf = ZKConf()
+        owning = False
     else:
+        zk = KazooClient(zkconf.hosts())
+        owning = True
 
-        zkclient = KazooClientExt(zkconf.hosts())
-        zkclient._zkconf = zkconf
+    zkclient = KazooClientExt(zk, json=json)
+    zkclient._zkconf = zkconf
 
-        zkclient.start()
+    zkclient.start()
 
-        auth = zkconf.kazoo_auth()
-        if auth is not None:
-            zkclient.add_auth(*auth)
+    auth = zkconf.kazoo_auth()
+    if auth is not None:
+        zkclient.add_auth(*auth)
 
-        return zkclient, True
+    return zkclient, owning

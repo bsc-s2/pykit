@@ -2,16 +2,14 @@ import logging
 
 from kazoo.exceptions import BadVersionError
 
-from pykit import utfjson
-
-from .zkconf import kazoo_client
+from .zkconf import kazoo_client_ext
 
 logger = logging.getLogger(__name__)
 
 
 def cas_loop(zkclient, path, json=True):
 
-    zkclient, owning_zk = kazoo_client(zkclient)
+    zkclient, owning_zk = kazoo_client_ext(zkclient, json=json)
 
     sess = {}
 
@@ -22,8 +20,6 @@ def cas_loop(zkclient, path, json=True):
         while True:
 
             val, zstat = zkclient.get(path)
-            if json:
-                val = utfjson.load(val)
 
             if 'val' in sess:
                 del sess['val']
@@ -33,9 +29,6 @@ def cas_loop(zkclient, path, json=True):
             if 'val' not in sess:
                 # user does not call set_val(), nothing to set to zk
                 return
-
-            if json:
-                sess['val'] = utfjson.dump(sess['val'])
 
             try:
                 zkclient.set(path, sess['val'],

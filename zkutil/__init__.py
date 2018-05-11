@@ -9,7 +9,7 @@ from .zkacid import (
 from .zkconf import (
     ZKConf,
 
-    kazoo_client,
+    kazoo_client_ext,
 )
 
 from .zkutil import (
@@ -46,7 +46,7 @@ __all__ = [
 
     "ZKConf",
 
-    "kazoo_client",
+    "kazoo_client_ext",
 
     "init_hierarchy",
     "is_backward_locking",
