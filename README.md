@@ -77,6 +77,11 @@ There is a `README.md` for each module.
 | [wsjobd](wsjobd)               | Job daemon based on websocket protocol                                                |
 | [zkutil](zkutil)               | Utility functions for zookeeper                                                       |
 
+
+## Module dependency
+
+![](dep-graph.jpg)
+
 #   Install
 
 Just clone it and copy it into your project source folder.
