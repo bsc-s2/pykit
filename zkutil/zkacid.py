@@ -2,6 +2,8 @@ import logging
 
 from kazoo.exceptions import BadVersionError
 
+from pykit import txutil
+
 from .zkconf import kazoo_client_ext
 
 logger = logging.getLogger(__name__)
@@ -11,33 +13,18 @@ def cas_loop(zkclient, path, json=True):
 
     zkclient, owning_zk = kazoo_client_ext(zkclient, json=json)
 
-    sess = {}
+    def setter(path, val, zstat):
+        try:
+            zkclient.set(path, val, version=zstat.version)
+            return True
 
-    def _update(val):
-        sess['val'] = val
+        except BadVersionError as e:
+            logger.info(repr(e) + ' concurrent updated to ' + repr(path))
+            return False
 
     try:
-        while True:
-
-            val, zstat = zkclient.get(path)
-
-            if 'val' in sess:
-                del sess['val']
-
-            yield val, _update
-
-            if 'val' not in sess:
-                # user does not call set_val(), nothing to set to zk
-                return
-
-            try:
-                zkclient.set(path, sess['val'],
-                             version=zstat.version)
-
-            except BadVersionError as e:
-                logger.info(repr(e) + ' concurrent updated to ' + repr(path))
-            else:
-                return
+        for curr in txutil.cas_loop(zkclient.get, setter, path):
+            yield curr
     finally:
         if owning_zk:
             try:

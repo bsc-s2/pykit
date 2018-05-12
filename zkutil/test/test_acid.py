@@ -47,8 +47,8 @@ class TestAcid(unittest.TestCase):
 
     def test_cas(self):
 
-        for curr, set_val in zkutil.cas_loop(self.zk, self.path):
-            set_val(curr + 2)
+        for curr in zkutil.cas_loop(self.zk, self.path):
+            curr.v += 2
 
         final_val, zstat = self.zk.get(self.path)
         dd(final_val, zstat)
@@ -56,8 +56,8 @@ class TestAcid(unittest.TestCase):
 
     def test_cas_abort(self):
 
-        for curr, set_val in zkutil.cas_loop(self.zk, self.path):
-            set_val(curr + 2)
+        for curr in zkutil.cas_loop(self.zk, self.path):
+            curr.v += 2
             break
 
         final_val, zstat = self.zk.get(self.path)
@@ -73,8 +73,8 @@ class TestAcid(unittest.TestCase):
         ):
             self.zk.set(self.path, '1')
 
-            for curr, set_val in zkutil.cas_loop(first_arg, self.path):
-                set_val(curr + 2)
+            for curr in zkutil.cas_loop(first_arg, self.path):
+                curr.v += 2
 
             final_val, zstat = self.zk.get(self.path)
             dd(final_val, zstat)
@@ -82,9 +82,9 @@ class TestAcid(unittest.TestCase):
 
     def test_cas_non_json(self):
 
-        for curr, set_val in zkutil.cas_loop(self.zk, self.path, json=False):
-            self.assertIsInstance(curr, str)
-            set_val(curr + "a")
+        for curr in zkutil.cas_loop(self.zk, self.path, json=False):
+            self.assertIsInstance(curr.v, str)
+            curr.v += 'a'
 
         final_val, zstat = self.zk.get(self.path)
         dd(final_val, zstat)
@@ -94,8 +94,8 @@ class TestAcid(unittest.TestCase):
 
         def _update():
             for ii in range(10):
-                for curr, set_val in zkutil.cas_loop('127.0.0.1:2181', self.path):
-                    set_val(curr + 1)
+                for curr in zkutil.cas_loop('127.0.0.1:2181', self.path):
+                    curr.v += 1
 
         ths = [threadutil.start_daemon(_update)
                for _ in range(5)]
