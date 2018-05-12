@@ -11,9 +11,27 @@ from . import zkutil
 
 class ZKConf(object):
 
+    """
+    zk dir:
+        <prefix>/record/<key>
+        <prefix>/lock/<key>
+        <prefix>/tx/
+                    alive/0000000001
+                    journal/0000000001
+                    txidset
+                    txid_maker
+
+    alive:      Contains `ephemeral` node each of which represents a transaction.
+                Its modifications is used.
+
+    journal:    Contains journal transaction modifications. Each of them is a complete transaction.
+
+    txidset: Last committed txid number.
+    """
+
     def __init__(self,
                  hosts=None,
-                 journal_dir=None,
+                 tx_dir=None,
                  record_dir=None,
                  lock_dir=None,
                  node_id=None,
@@ -22,18 +40,16 @@ class ZKConf(object):
                  ):
 
         self.conf = {
-            'hosts':       hosts,
-            'journal_dir': journal_dir,
-            'record_dir':  record_dir,
-            'lock_dir':    lock_dir,
-            'node_id':     node_id,
-            'auth':        auth,
-            'acl':         acl,
+            'hosts':      hosts,
+            'tx_dir':     tx_dir,
+            'record_dir': record_dir,
+            'lock_dir':   lock_dir,
+            'node_id':    node_id,
+            'auth':       auth,
+            'acl':        acl,
         }
 
     def hosts(self): return self._get_config('hosts')
-
-    def journal_dir(self): return self._get_config('journal_dir')
 
     def record_dir(self): return self._get_config('record_dir')
 
@@ -49,15 +65,15 @@ class ZKConf(object):
 
     def record(self, key=''): return ''.join([self.record_dir(), key])
 
-    def tx_alive(self, txid=''): return ''.join([self.journal_dir(), 'tx_alive/', txid])
+    def tx_dir(self): return self._get_config('tx_dir')
 
-    def tx_applied(self, txid=''): return ''.join([self.journal_dir(), 'tx_applied/', txid])
+    def tx_alive(self, txid=''): return ''.join([self.tx_dir(), 'alive/', txid])
 
-    def tx(self, txid=''): return ''.join([self.journal_dir(), 'tx/', txid])
+    def journal(self, txid=''): return ''.join([self.tx_dir(), 'journal/', txid])
 
-    def txid_range(self): return ''.join([self.journal_dir(), 'txid_range'])
+    def txidset(self): return ''.join([self.tx_dir(), 'txidset'])
 
-    def txid_maker(self): return ''.join([self.journal_dir(), 'txid_maker'])
+    def txid_maker(self): return ''.join([self.tx_dir(), 'txid_maker'])
 
     def kazoo_digest_acl(self):
         a = self.acl()

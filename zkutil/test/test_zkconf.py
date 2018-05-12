@@ -13,7 +13,7 @@ class TestZKConf(unittest.TestCase):
 
         c = zkutil.ZKConf(
             hosts='hosts',
-            journal_dir='journal_dir/',
+            tx_dir='tx_dir/',
             record_dir='record_dir/',
             lock_dir='lock_dir/',
             node_id='node_id',
@@ -22,26 +22,26 @@ class TestZKConf(unittest.TestCase):
         )
 
         self.assertEqual('hosts',              c.hosts())
-        self.assertEqual('journal_dir/',       c.journal_dir())
+        self.assertEqual('tx_dir/',            c.tx_dir())
         self.assertEqual('record_dir/',        c.record_dir())
         self.assertEqual('lock_dir/',          c.lock_dir())
         self.assertEqual('node_id',            c.node_id())
         self.assertEqual(('digest', 'a', 'b'), c.auth())
-        self.assertEqual((('foo', 'bar', 'cd'),
-                          ('xp', '123', 'cdrwa')),                c.acl())
 
-        self.assertEqual('lock_dir/',              c.lock())
-        self.assertEqual('lock_dir/a',             c.lock('a'))
-        self.assertEqual('record_dir/',            c.record())
-        self.assertEqual('record_dir/a',           c.record('a'))
-        self.assertEqual('journal_dir/tx_alive/',  c.tx_alive())
-        self.assertEqual('journal_dir/tx_alive/a', c.tx_alive('a'))
-        self.assertEqual('journal_dir/tx_applied/',  c.tx_applied())
-        self.assertEqual('journal_dir/tx_applied/a', c.tx_applied('a'))
-        self.assertEqual('journal_dir/tx/',        c.tx())
-        self.assertEqual('journal_dir/tx/a',       c.tx('a'))
-        self.assertEqual('journal_dir/txid_range', c.txid_range())
-        self.assertEqual('journal_dir/txid_maker', c.txid_maker())
+        self.assertEqual((('foo', 'bar', 'cd'),
+                          ('xp', '123', 'cdrwa')),
+                         c.acl())
+
+        self.assertEqual('lock_dir/',         c.lock())
+        self.assertEqual('lock_dir/a',        c.lock('a'))
+        self.assertEqual('record_dir/',       c.record())
+        self.assertEqual('record_dir/a',      c.record('a'))
+        self.assertEqual('tx_dir/alive/',     c.tx_alive())
+        self.assertEqual('tx_dir/alive/a',    c.tx_alive('a'))
+        self.assertEqual('tx_dir/journal/',   c.journal())
+        self.assertEqual('tx_dir/journal/a',  c.journal('a'))
+        self.assertEqual('tx_dir/txidset',    c.txidset())
+        self.assertEqual('tx_dir/txid_maker', c.txid_maker())
 
         self.assertEqual(zkutil.make_kazoo_digest_acl((('foo', 'bar', 'cd'), ('xp', '123', 'cdrwa'))),
                          c.kazoo_digest_acl())
@@ -50,7 +50,7 @@ class TestZKConf(unittest.TestCase):
     def test_default(self):
         old = (
             config.zk_hosts,
-            config.zk_journal_dir,
+            config.zk_tx_dir,
             config.zk_record_dir,
             config.zk_lock_dir,
             config.zk_node_id,
@@ -59,7 +59,7 @@ class TestZKConf(unittest.TestCase):
         )
 
         config.zk_hosts = 'HOSTS'
-        config.zk_journal_dir = 'JOURNAL_DIR/'
+        config.zk_tx_dir = 'TX_DIR/'
         config.zk_record_dir = 'RECORD_DIR/'
         config.zk_lock_dir = 'LOCK_DIR/'
         config.zk_node_id = 'NODE_ID'
@@ -69,26 +69,26 @@ class TestZKConf(unittest.TestCase):
         c = zkutil.ZKConf()
 
         self.assertEqual('HOSTS',              c.hosts())
-        self.assertEqual('JOURNAL_DIR/',       c.journal_dir())
+        self.assertEqual('TX_DIR/',            c.tx_dir())
         self.assertEqual('RECORD_DIR/',        c.record_dir())
         self.assertEqual('LOCK_DIR/',          c.lock_dir())
         self.assertEqual('NODE_ID',            c.node_id())
         self.assertEqual(('DIGEST', 'A', 'B'), c.auth())
-        self.assertEqual((('FOO', 'BAR', 'CD'),
-                          ('XP', '123', 'CDRWA')),                c.acl())
 
-        self.assertEqual('LOCK_DIR/',              c.lock())
-        self.assertEqual('LOCK_DIR/a',             c.lock('a'))
-        self.assertEqual('RECORD_DIR/',            c.record())
-        self.assertEqual('RECORD_DIR/a',           c.record('a'))
-        self.assertEqual('JOURNAL_DIR/tx_alive/',  c.tx_alive())
-        self.assertEqual('JOURNAL_DIR/tx_alive/a', c.tx_alive('a'))
-        self.assertEqual('JOURNAL_DIR/tx_applied/',  c.tx_applied())
-        self.assertEqual('JOURNAL_DIR/tx_applied/a', c.tx_applied('a'))
-        self.assertEqual('JOURNAL_DIR/tx/',        c.tx())
-        self.assertEqual('JOURNAL_DIR/tx/a',       c.tx('a'))
-        self.assertEqual('JOURNAL_DIR/txid_range', c.txid_range())
-        self.assertEqual('JOURNAL_DIR/txid_maker', c.txid_maker())
+        self.assertEqual((('FOO', 'BAR', 'CD'),
+                          ('XP', '123', 'CDRWA')),
+                         c.acl())
+
+        self.assertEqual('LOCK_DIR/',         c.lock())
+        self.assertEqual('LOCK_DIR/a',        c.lock('a'))
+        self.assertEqual('RECORD_DIR/',       c.record())
+        self.assertEqual('RECORD_DIR/a',      c.record('a'))
+        self.assertEqual('TX_DIR/alive/',     c.tx_alive())
+        self.assertEqual('TX_DIR/alive/a',    c.tx_alive('a'))
+        self.assertEqual('TX_DIR/journal/',   c.journal())
+        self.assertEqual('TX_DIR/journal/a',  c.journal('a'))
+        self.assertEqual('TX_DIR/txidset',    c.txidset())
+        self.assertEqual('TX_DIR/txid_maker', c.txid_maker())
 
         self.assertEqual(zkutil.make_kazoo_digest_acl((('FOO', 'BAR', 'CD'), ('XP', '123', 'CDRWA'))),
                          c.kazoo_digest_acl())
@@ -96,7 +96,7 @@ class TestZKConf(unittest.TestCase):
 
         (
             config.zk_hosts,
-            config.zk_journal_dir,
+            config.zk_tx_dir,
             config.zk_record_dir,
             config.zk_lock_dir,
             config.zk_node_id,
