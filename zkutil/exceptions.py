@@ -2,5 +2,9 @@
 # coding: utf-8
 
 
-class ZKWaitTimeout(Exception):
+class ZKUtilError(Exception):
+    pass
+
+
+class ZKWaitTimeout(ZKUtilError):
     pass

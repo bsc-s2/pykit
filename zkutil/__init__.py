@@ -7,6 +7,7 @@ from .zkacid import (
 )
 
 from .zkconf import (
+    KazooClientExt,
     ZKConf,
 
     kazoo_client_ext,
@@ -44,6 +45,7 @@ __all__ = [
 
     "cas_loop",
 
+    "KazooClientExt",
     "ZKConf",
 
     "kazoo_client_ext",
