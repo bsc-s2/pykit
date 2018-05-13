@@ -7,6 +7,28 @@ path="${1-.}"
 fns="$(find "$path" -name "*.py" -exec echo '"{}"' \;)"
 
 autopep8_options='--max-line-length 120'
+autoflake_options=''
+
+if [ "$PYKIT_AGGRESIVE" = "1" ]; then
+    # --expand-star-imports
+    #                       expand wildcard star imports with undefined names;
+    #                       this only triggers if there is only one star import in
+    #                       the file; this is skipped if there are any uses of
+    #                       `__all__` or `del` in the file
+    # --remove-all-unused-imports
+    #                       remove all unused imports (not just those from the
+    #                       standard library)
+    # --remove-duplicate-keys
+    #                       remove all duplicate keys in objects
+    # --remove-unused-variables
+    #                       remove unused variables
+    autoflake_options='
+    --expand-star-imports
+    --remove-all-unused-imports
+    --remove-duplicate-keys
+    --remove-unused-variables
+    '
+fi
 
 die_if_strict()
 {
@@ -34,7 +56,7 @@ die_if_changed()
 
 eval pyflakes                              $fns || die_if_strict
 eval autopep8  -i $autopep8_options        $fns
-eval autoflake -i                          $fns
+eval autoflake -i $autoflake_options       $fns
 eval isort     --force-single-line-imports $fns
 
 die_if_changed
