@@ -5,6 +5,8 @@
 - [Name](#name)
 - [Status](#status)
 - [Description](#description)
+- [Exceptions](#exceptions)
+  - [CASConflict](#casconflict)
 - [Classes](#classes)
   - [CASRecord](#casrecord)
 - [Methods](#methods)
@@ -27,17 +29,32 @@ This library is considered production ready.
 
 A collection of helper functions to implement transactional operations.
 
+#   Exceptions
+
+##  CASConflict
+
+**syntax**:
+`CASConflict()`
+
+User should raise this exception when a CAS conflict detect in a user defined
+`set` function.
+
+
 #   Classes
 
 ##  CASRecord
 
 **syntax**:
-`CASRecord(v, stat)`
+`CASRecord(v, stat, n)`
 
 The class of a record yielded from `txutil.cas_loop()`.
-It has two attribute `v` and `stat`.
+It has 3 attributes `v`, `stat` and `n`.
+
 `v` stores the value and the `stat` stores value stat information that is used
 to identify in `setter` whether the stat changed.
+
+`n` is the number of times it CAS runs.
+The first time `n` is 0.
 
 
 #   Methods
@@ -45,7 +62,7 @@ to identify in `setter` whether the stat changed.
 ##  txutil.cas_loop
 
 **syntax**:
-`txutil.cas_loop(getter, setter, key=None)`
+`txutil.cas_loop(getter, setter, args=(), kwargs=None, conflicterror=CASConflict)`
 
 A helper generator for doing CAS(check and set or compare and swap).
 See [CAS](https://en.wikipedia.org/wiki/Compare-and-swap)
@@ -54,17 +71,20 @@ A general CAS loop is like following(check the version when update):
 
 ```python
 while True:
-    curr_val, stat = getter(key)
+    curr_val, stat = getter(key="mykey")
     new_val = curr_val + ':foo'
-    ok = setter(key, new_val, stat)
-    if ok:
+    try:
+        setter(new_val, stat, key="mykey")
+    except CASConflict:
+        continue
+    else:
         break
 ```
 
 `cas_loop` simplifies the above workflow to:
 
 ```python
-for curr in cas_loop(getter, setter, key):
+for curr in cas_loop(getter, setter, args=("mykey", )):
     curr.v += ':foo'
 ```
 
@@ -80,40 +100,47 @@ The loop body runs several times until a successful update is made(`setter` retu
 -   `setter`:
     is a `callable` to check and set the changed value.
 
+
+
     A fine sample is:
 
     ```python
     class Foo(object):
 
-    def __init__(self):
-        self.lock = threading.RLock()
-        self.val = 0
-        self.ver = 0
+        def __init__(self):
+            self.lock = threading.RLock()
+            self.val = 0
+            self.ver = 0
 
-        def _get(self, key):
+        def _get(self, db, key, **kwargs):
+            # db, key == 'dbname', 'mykey'
             with self.lock:
                 return self.val, self.ver
 
-        def _set(self, key, val, prev_stat):
+        def _set(self, db, key, val, prev_stat, **kwargs):
+            # db, key == 'dbname', 'mykey'
             with self.lock:
                 if prev_stat != self.ver:
-                    return False
-                else:
-                    self.val = val
-                    self.ver += 1
-                    return True
+                    raise CASConflict(prev_stat, self.ver)
+
+                self.val = val
+                self.ver += 1
 
         def test_cas(self):
 
-            for curr in txutil.cas_loop(self._get, self._set):
+            for curr in txutil.cas_loop(self._get, self._set, args=('dbname', 'mykey', )):
                 curr.v += 2
 
             print((self.val, self.ver)) # (2, 1)
     ```
 
--   `key`:
-    an optional argument that will be passed to `getter` and `setter`.
-    By default it is `None`.
+-   `args` and `kwargs`:
+    optional positioned arguments and key-value arguments that will be passed to `getter` and `setter`.
+    By default it is an empty tuple `()` and `None`.
+
+-   `conflicterror`:
+    specifies what raised error indicating a CAS conflict, instead of using the
+    default `CASConflict`.
 
 **return**:
 a `generator` that yields a `CASRecord` for user to update its attribute `v`.

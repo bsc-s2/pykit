@@ -8,18 +8,33 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class CASError(Exception):
+    pass
+
+
+class CASConflict(CASError):
+    pass
+
+
 class CASRecord(object):
-    def __init__(self, v, stat):
+    def __init__(self, v, stat, n):
         self.v = v
         self.stat = stat
+        self.n = n
 
 
-def cas_loop(getter, setter, key=None):
+def cas_loop(getter, setter, args=(), kwargs=None, conflicterror=CASConflict):
 
+    if kwargs is None:
+        kwargs = {}
+
+    i = -1
     while True:
 
-        val, stat = getter(key)
-        rec = CASRecord(copy.deepcopy(val), stat)
+        i += 1
+
+        val, stat = getter(*args, **kwargs)
+        rec = CASRecord(copy.deepcopy(val), stat, i)
 
         yield rec
 
@@ -27,6 +42,9 @@ def cas_loop(getter, setter, key=None):
             # nothing to update
             return
 
-        ok = setter(key, rec.v, rec.stat)
-        if ok:
+        try:
+            setter(*(args + (rec.v, rec.stat)), **kwargs)
             return
+        except conflicterror as e:
+            logger.info(repr(e) + ' while cas set')
+            continue
