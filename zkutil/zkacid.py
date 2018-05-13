@@ -14,16 +14,11 @@ def cas_loop(zkclient, path, json=True):
     zkclient, owning_zk = kazoo_client_ext(zkclient, json=json)
 
     def setter(path, val, zstat):
-        try:
-            zkclient.set(path, val, version=zstat.version)
-            return True
-
-        except BadVersionError as e:
-            logger.info(repr(e) + ' concurrent updated to ' + repr(path))
-            return False
+        zkclient.set(path, val, version=zstat.version)
 
     try:
-        for curr in txutil.cas_loop(zkclient.get, setter, path):
+        for curr in txutil.cas_loop(zkclient.get, setter, args=(path, ),
+                                    conflicterror=BadVersionError):
             yield curr
     finally:
         if owning_zk:
