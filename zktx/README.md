@@ -191,7 +191,7 @@ It requires 1 accessor method: `self.record.get(key)`.
     specifies the `key` of the record.
 
 **return**:
-a dict in form of `{"txid": ..., "value": ...}` and a implementation defined version.
+a dict in form of `{"txid": ..., "value": ...}` and an implementation defined version.
 
 
 ###  TXStorageHelper.apply_record
