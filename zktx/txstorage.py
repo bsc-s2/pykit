@@ -57,40 +57,28 @@ class ZKKVAccessor(object):
             return val
 
 
-class ZKValueAccessor(object):
+class ZKValueAccessor(ZKKVAccessor):
 
-    def __init__(self, zkclient, get_path, load=None, dump=None):
+    def __init__(self, zkclient, get_path, load=None, dump=None, nonode_callback=None):
+
         self.zkclient = zkclient
-        self.get_path = get_path
+        self._get_path = get_path
         self.load = load
         self.dump = dump
+        self.nonode_callback = nonode_callback
 
-    def create(self, value):
-        value = self._dump(value)
-        return self.zkclient.create(self.get_path(), value)
+    # super.get_path requires 1 argument.
+    # override it and proxy it to our no-argument _get_path()
+    def get_path(self, dumb):
+        return self._get_path()
 
-    def delete(self, version=None):
-        return self.zkclient.delete(self.get_path(), version=version)
+    def create(self, value): return super(ZKValueAccessor, self).create('', value)
 
-    def set(self, value, version=None):
-        value = self._dump(value)
-        self.zkclient.set(self.get_path(), value, version=version)
+    def delete(self, version=None): return super(ZKValueAccessor, self).delete('', version=None)
 
-    def get(self):
-        val, zstat = self.zkclient.get(self.get_path())
-        return self._load(val), zstat.version
+    def set(self, value, version=None): return super(ZKValueAccessor, self).set('', value, version=None)
 
-    def _load(self, val):
-        if self.load is not None:
-            return self.load(val)
-        else:
-            return val
-
-    def _dump(self, val):
-        if self.dump is not None:
-            return self.dump(val)
-        else:
-            return val
+    def get(self): return super(ZKValueAccessor, self).get('')
 
 
 def rangeset_load(value):
