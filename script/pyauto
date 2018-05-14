@@ -54,9 +54,9 @@ die_if_changed()
     fi
 }
 
-eval pyflakes                              $fns || die_if_strict
 eval autopep8  -i $autopep8_options        $fns
 eval autoflake -i $autoflake_options       $fns
 eval isort     --force-single-line-imports $fns
+eval pyflakes                              $fns || die_if_strict
 
 die_if_changed
