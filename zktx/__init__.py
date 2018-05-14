@@ -22,9 +22,12 @@ from .txstatus import (
     STATUS,
 )
 
-from .txstorage import (
+from .storage import (
     TXStorageHelper,
     TXStorage,
+)
+
+from .txstorage import (
     ZKStorage,
 )
 
@@ -51,5 +54,6 @@ __all__ = [
 
     "TXStorageHelper",
     "TXStorage",
+
     "ZKStorage",
 ]
