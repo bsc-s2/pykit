@@ -11,11 +11,15 @@ from .txstatus import (
     STATUS,
 )
 
-from .txstorage import (
+from .storage import (
     TXStorageHelper,
     TXStorage,
 )
 
+from .zkaccessor import (
+    ZKKeyValue,
+    ZKValue,
+)
 
 __all__ = [
     "KVAccessor",
@@ -29,4 +33,7 @@ __all__ = [
 
     "TXStorageHelper",
     "TXStorage",
+
+    "ZKKeyValue",
+    "ZKValue",
 ]

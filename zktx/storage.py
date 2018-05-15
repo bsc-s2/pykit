@@ -4,11 +4,9 @@
 import logging
 
 from kazoo.exceptions import BadVersionError
-from kazoo.exceptions import NoNodeError
 
 from pykit import rangeset
 from pykit import txutil
-from pykit import zkutil
 
 from .accessor import KVAccessor
 from .accessor import ValueAccessor

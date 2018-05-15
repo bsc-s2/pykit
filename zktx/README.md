@@ -1,3 +1,31 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+#   Table of Content
+
+- [Name](#name)
+- [Status](#status)
+- [Description](#description)
+- [Accessor classes](#accessor-classes)
+  - [zktx.KVAccessor](#zktxkvaccessor)
+  - [zktx.ValueAccessor](#zktxvalueaccessor)
+  - [zktx.ZKKeyValue](#zktxzkkeyvalue)
+  - [zktx.ZKValue](#zktxzkvalue)
+- [Storage classes](#storage-classes)
+  - [zktx.TXStorage](#zktxtxstorage)
+    - [TXStorage attributes](#txstorage-attributes)
+    - [TXStorage methods](#txstorage-methods)
+      - [TXStorage.try_lock_key](#txstoragetry_lock_key)
+      - [TXStorage.try_release_key](#txstoragetry_release_key)
+    - [TXStorage helper methods](#txstorage-helper-methods)
+  - [zktx.TXStorageHelper](#zktxtxstoragehelper)
+    - [TXStorageHelper.get_latest](#txstoragehelperget_latest)
+    - [TXStorageHelper.apply_record](#txstoragehelperapply_record)
+    - [TXStorageHelper.add_to_txidset](#txstoragehelperadd_to_txidset)
+- [Author](#author)
+- [Copyright and License](#copyright-and-license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 
 #   Name
 
@@ -11,7 +39,7 @@ This library is considered production ready.
 
 Transaction implementation on Zookeeper.
 
-#   Classes
+#   Accessor classes
 
 ##  zktx.KVAccessor
 
@@ -45,6 +73,67 @@ def delete(self, version=None):
 def set(self, value, version=None):
 def get(self):
 ```
+
+##  zktx.ZKKeyValue
+
+**syntax**:
+`zktx.ZKKeyValue(zkclient, get_path=None, load=None, dump=None, nonode_callback=None)`
+
+An zk based `KVAccessor` implementation.
+It provides 4 API `get`, `set`, `create` and `delete` to operate a zk-node.
+
+**arguments**:
+
+-   `zkclient`:
+    is a `kazoo.client.Client` instance.
+
+-   `get_path`:
+    is a callback to convert `key`(the first argument for the 4 methods.) to a zk-node path.
+
+    By default it is `None`: to use `key` directly as path.
+
+-   `load`:
+    is an optional callback to convert value for `get`.
+    E.g.
+
+    ```python
+    def foo_load(val):
+        return '(%s)' % val
+    ```
+
+-   `dump`:
+    is an optional callback to convert value for `set` and `create`.
+    E.g.
+
+    ```python
+    def foo_dump(val):
+        return val.strip('()')
+    ```
+
+-   `nonode_callback`:
+    is an optional callback to make a tuple of `value, version` when `get`
+    encountered a `NoNodeError` error.
+
+    If it is `None`, `NoNodeError` is raised.
+
+    E.g.:
+
+    ```python
+    def nonode_callback():
+        return '', -1
+    ```
+
+
+##  zktx.ZKValue
+
+**syntax**:
+`zktx.ZKValue(zkclient, get_path=None, load=None, dump=None, nonode_callback=None)`
+
+Same as `ZKKeyValue` except that `get_path` does not receive an argument `key`,
+Because a single value accessor operates on only one zk-node.
+
+
+#   Storage classes
 
 
 ##  zktx.TXStorage
