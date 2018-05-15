@@ -15,7 +15,7 @@ from .txstatus import STATUS
 logger = logging.getLogger(__name__)
 
 
-class TXStorageHelper(object):
+class StorageHelper(object):
 
     # keeps the last n modifications in a record
     max_value_history = 16
@@ -32,7 +32,7 @@ class TXStorageHelper(object):
 
         txids = sorted(c.keys())
         max_txid = txids[-1]
-        return {'txid': max_txid, 'value': c[max_txid]}, ver
+        return {max_txid: c[max_txid]}, ver
 
     def apply_record(self, txid, key, value):
 
@@ -77,7 +77,7 @@ class TXStorageHelper(object):
             curr.v[status].add([txid, txid + 1])
 
 
-class TXStorage(TXStorageHelper):
+class Storage(StorageHelper):
 
     record = KVAccessor()
     journal = KVAccessor()

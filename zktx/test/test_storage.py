@@ -59,7 +59,7 @@ class TxidsetAccessor(object):
             self.version = version + 1
 
 
-class PseudoStorage(zktx.TXStorageHelper):
+class PseudoStorage(zktx.StorageHelper):
 
     def __init__(self):
         self.record = PseudoKVAccessor({
@@ -80,10 +80,10 @@ class TestTXStorageHelper(unittest.TestCase):
         # get_latest relies on storage.record.get
 
         rst = self.sto.get_latest('foo')
-        self.assertEqual(({'txid': 17, 'value': 17}, 0), rst)
+        self.assertEqual(({17: 17}, 0), rst)
 
         rst = self.sto.get_latest('bar')
-        self.assertEqual(({'txid': -1, 'value': None}, 1), rst)
+        self.assertEqual(({-1: None}, 1), rst)
 
     def test_apply_record(self):
 
@@ -155,8 +155,8 @@ class TestTXStorageHelper(unittest.TestCase):
         dd(latest, ver)
 
         self.assertLessEqual(ver, 1+n_thread*n_repeat)
-        self.assertEqual(n_thread*n_repeat, latest['txid'])
-        self.assertEqual(n_thread*n_repeat, latest['value'])
+        self.assertEqual(n_thread*n_repeat, latest.keys()[0])
+        self.assertEqual(n_thread*n_repeat, latest.values()[0])
 
     def _rand_txids(self):
         for ii in range(100):

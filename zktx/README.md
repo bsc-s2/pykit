@@ -11,16 +11,17 @@
   - [zktx.ZKKeyValue](#zktxzkkeyvalue)
   - [zktx.ZKValue](#zktxzkvalue)
 - [Storage classes](#storage-classes)
-  - [zktx.TXStorage](#zktxtxstorage)
-    - [TXStorage attributes](#txstorage-attributes)
-    - [TXStorage methods](#txstorage-methods)
-      - [TXStorage.try_lock_key](#txstoragetry_lock_key)
-      - [TXStorage.try_release_key](#txstoragetry_release_key)
-    - [TXStorage helper methods](#txstorage-helper-methods)
-  - [zktx.TXStorageHelper](#zktxtxstoragehelper)
-    - [TXStorageHelper.get_latest](#txstoragehelperget_latest)
-    - [TXStorageHelper.apply_record](#txstoragehelperapply_record)
-    - [TXStorageHelper.add_to_txidset](#txstoragehelperadd_to_txidset)
+  - [zktx.Storage](#zktxstorage)
+    - [Storage attributes](#storage-attributes)
+    - [Storage methods](#storage-methods)
+      - [Storage.try_lock_key](#storagetry_lock_key)
+      - [Storage.try_release_key](#storagetry_release_key)
+    - [Storage helper methods](#storage-helper-methods)
+  - [zktx.StorageHelper](#zktxstoragehelper)
+    - [StorageHelper.get_latest](#storagehelperget_latest)
+    - [StorageHelper.apply_record](#storagehelperapply_record)
+    - [StorageHelper.add_to_txidset](#storagehelperadd_to_txidset)
+  - [zktx.ZKStorage](#zktxzkstorage)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -136,21 +137,21 @@ Because a single value accessor operates on only one zk-node.
 #   Storage classes
 
 
-##  zktx.TXStorage
+##  zktx.Storage
 
 **syntax**:
-`zktx.TXStorage()`
+`zktx.Storage()`
 
 This is an abstract class that defines what a storage layer should provides for
 a transaction engine.
 
-Our TX engine is able to run on any storage that implements `TXStorage`.
+Our TX engine is able to run on any storage that implements `Storage`.
 
 
-### TXStorage attributes
+### Storage attributes
 
 To support a transaction to run,
-a class that implements `TXStorage` must provides 3 accessors(`KVAccessor` and `ValueAccessor`):
+a class that implements `Storage` must provides 3 accessors(`KVAccessor` and `ValueAccessor`):
 
 -   `record`:
     is a `KVAccessor` to get or set a user-data record.
@@ -195,14 +196,14 @@ a class that implements `TXStorage` must provides 3 accessors(`KVAccessor` and `
     > `COMMITTED`, `ABORTED` and `PURGED` has no intersection.
 
 
-### TXStorage methods
+### Storage methods
 
-An implementation of `TXStorage` must implement 2 locking methods:
+An implementation of `Storage` must implement 2 locking methods:
 
-####  TXStorage.try_lock_key
+####  Storage.try_lock_key
 
 **syntax**:
-`TXStorage.try_lock_key(txid, key)`
+`Storage.try_lock_key(txid, key)`
 
 It is defined as `def try_lock_key(self, txid, key)`.
 
@@ -223,10 +224,10 @@ It should return a 3 element `tuple`:
 -   A 3rd value indicates lock stat(not used yet).
 
 
-####  TXStorage.try_release_key
+####  Storage.try_release_key
 
 **syntax**:
-`TXStorage.try_release_key(txid, key)`
+`Storage.try_release_key(txid, key)`
 
 It should release the lock identified by `key`, if and only if the lock is held
 by `txid`
@@ -246,29 +247,29 @@ It should returns 3 element `tuple`:
 
 -   A 3rd value indicates lock stat(not used yet).
 
-### TXStorage helper methods
+### Storage helper methods
 
 There are also 3 methods an TX engine requires, which are already provided
-by `TXStorageHelper`.
+by `StorageHelper`.
 
-An implementation class could just extend `TXStorageHelper` to make these 3 methods available.
-See `TXStorageHelper`.
+An implementation class could just extend `StorageHelper` to make these 3 methods available.
+See `StorageHelper`.
 
 
-##  zktx.TXStorageHelper
+##  zktx.StorageHelper
 
 **syntax**:
-`class TXStorageHelper(object)`
+`class StorageHelper(object)`
 
 It provides 3 methods those a TX engine relies on.
 Since underlying accessors has already been provided, these 3 methods are
 implementation unrelated.
 
 
-###  TXStorageHelper.get_latest
+###  StorageHelper.get_latest
 
 **syntax**:
-`TXStorageHelper.get_latest(key)`
+`StorageHelper.get_latest(key)`
 
 It returns the latest update(the update with the greatest txid) of a record identified by `key`.
 
@@ -280,13 +281,13 @@ It requires 1 accessor method: `self.record.get(key)`.
     specifies the `key` of the record.
 
 **return**:
-a dict in form of `{"txid": ..., "value": ...}` and an implementation defined version.
+a dict in form of `{<txid>: <value>}` and an implementation defined version.
 
 
-###  TXStorageHelper.apply_record
+###  StorageHelper.apply_record
 
 **syntax**:
-`TXStorageHelper.apply_record(txid, key, value)`
+`StorageHelper.apply_record(txid, key, value)`
 
 This method applies an update to underlying storage.
 
@@ -309,10 +310,10 @@ a `bool` indicates if change has been made to underlying storage.
 Normal it is `False` if a higher txid has already been applied.
 
 
-###  TXStorageHelper.add_to_txidset
+###  StorageHelper.add_to_txidset
 
 **syntax**:
-`TXStorageHelper.add_to_txidset(status, txid)`
+`StorageHelper.add_to_txidset(status, txid)`
 
 It records a txid as one of the possible status: COMMITTED, ABORTED or PURGED.
 
@@ -329,6 +330,20 @@ and `self.txidset.set(value, version=None)`.
 
 **return**:
 Nothing
+
+##  zktx.ZKStorage
+
+**syntax**:
+`zktx.ZKStorage(zkclient)`
+
+`ZKStorage` is an implementation of `Storage`, whose accessors and locks a re
+stored in zk.
+
+**arguments**:
+
+-   `zkclient`:
+    must be a `zkutil.KazooClientExt` instance.
+
 
 
 #   Author
