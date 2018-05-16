@@ -67,9 +67,9 @@ class ZKConf(object):
 
     def tx_dir(self): return self._get_config('tx_dir')
 
-    def tx_alive(self, txid=''): return ''.join([self.tx_dir(), 'alive/', txid])
+    def tx_alive(self, txid=''): return ''.join([self.tx_dir(), 'alive/', _dump_txid(txid)])
 
-    def journal(self, txid=''): return ''.join([self.tx_dir(), 'journal/', txid])
+    def journal(self, txid=''): return ''.join([self.tx_dir(), 'journal/', _dump_txid(txid)])
 
     def txidset(self): return ''.join([self.tx_dir(), 'txidset'])
 
@@ -147,6 +147,15 @@ class KazooClientExt(KazooClient):
                                ephemeral=ephemeral,
                                sequence=sequence,
                                makepath=makepath)
+
+
+def _dump_txid(txid):
+    if isinstance(txid, str):
+        return txid
+    elif isinstance(txid, (int, long)):
+        return '%010d' % txid
+    else:
+        raise TypeError('invalid type txid: ' + repr(txid))
 
 
 def kazoo_client_ext(zk, json=True):
