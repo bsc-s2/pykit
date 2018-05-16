@@ -3,8 +3,6 @@
 
 import logging
 
-from kazoo.exceptions import BadVersionError
-
 from pykit import rangeset
 from pykit import txutil
 
@@ -19,6 +17,7 @@ class StorageHelper(object):
 
     # keeps the last n modifications in a record
     max_value_history = 16
+    conflicterror = None
 
     def get_latest(self, key):
         """
@@ -44,9 +43,9 @@ class StorageHelper(object):
         # }
 
         for curr in txutil.cas_loop(self.record.get,
-                                    self.record.set,
+                                    self.record.set_or_create,
                                     args=(key, ),
-                                    conflicterror=BadVersionError):
+                                    conflicterror=self.conflicterror):
 
             max_txid = -1
             txids = sorted(curr.v.keys())
@@ -67,12 +66,17 @@ class StorageHelper(object):
         if status not in STATUS:
             raise KeyError('invalid status: ' + repr(status))
 
+        logger.info('add {status}:{txid}'
+                    ' to txidset'.format(
+                        status=status, txid=txid))
+
         for curr in txutil.cas_loop(self.txidset.get,
                                     self.txidset.set,
-                                    conflicterror=BadVersionError):
+                                    conflicterror=self.conflicterror):
 
-            if status not in curr.v:
-                curr.v[status] = rangeset.RangeSet([])
+            for st in STATUS:
+                if st not in curr.v:
+                    curr.v[st] = rangeset.RangeSet([])
 
             curr.v[status].add([txid, txid + 1])
 
@@ -81,7 +85,6 @@ class Storage(StorageHelper):
 
     record = KVAccessor()
     journal = KVAccessor()
-
     txidset = ValueAccessor()
 
     def try_lock_key(self, txid, key): raise TypeError('unimplemented')

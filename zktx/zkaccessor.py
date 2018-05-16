@@ -25,9 +25,10 @@ class ZKKeyValue(object):
         else:
             return self._get_path(key)
 
-    def create(self, key, value):
+    def create(self, key, value, ephemeral=False, sequence=False):
         value = self._dump(value)
-        return self.zkclient.create(self.get_path(key), value)
+        return self.zkclient.create(self.get_path(key), value,
+                                    ephemeral=ephemeral, sequence=sequence)
 
     def delete(self, key, version=-1):
         return self.zkclient.delete(self.get_path(key), version=version)
@@ -81,8 +82,9 @@ class ZKValue(ZKKeyValue):
     def get_path(self, key):
         return self._get_path()
 
-    def create(self, value):
-        return super(ZKValue, self).create('', value)
+    def create(self, value, ephemeral=False, sequence=False):
+        return super(ZKValue, self).create('', value,
+                                           ephemeral=ephemeral, sequence=sequence)
 
     def delete(self, version=-1):
         return super(ZKValue, self).delete('', version=version)

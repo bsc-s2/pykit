@@ -6,7 +6,9 @@ from pykit import utfjson
 from pykit import ututil
 from pykit import zktx
 from pykit import zkutil
+from pykit.zktx import ABORTED
 from pykit.zktx import COMMITTED
+from pykit.zktx import PURGED
 from pykit.zktx.test import base
 
 dd = ututil.dd
@@ -31,7 +33,10 @@ class TestZKStorage(base.ZKTestBase):
         self.zs.add_to_txidset(COMMITTED, 1)
         rst, ver = self.zs.txidset.get()
 
-        self.assertEqual({COMMITTED: [[1, 2]]}, rst)
+        self.assertEqual({COMMITTED: [[1, 2]],
+                          ABORTED: [],
+                          PURGED: [],
+                          }, rst)
 
     def test_journal(self):
 

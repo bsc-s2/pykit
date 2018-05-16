@@ -15,6 +15,16 @@ _glb = {
 debug_to_stdout = os.environ.get('UT_DEBUG') == '1'
 
 
+# TODO make this configurable
+# logging.basicConfig(level='INFO',
+#                     format='[%(asctime)s,%(process)d-%(thread)d,%(filename)s,%(lineno)d,%(levelname)s] %(message)s',
+#                     datefmt='%H:%M:%S'
+#                     )
+
+# logger = logging.getLogger('kazoo')
+# logger.setLevel('INFO')
+
+
 class Timer(object):
 
     def __init__(self):

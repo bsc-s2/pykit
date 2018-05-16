@@ -5,6 +5,18 @@
 - [Name](#name)
 - [Status](#status)
 - [Description](#description)
+- [Synopsis](#synopsis)
+  - [Use with statement](#use-with-statement)
+  - [Use transaction function](#use-transaction-function)
+- [Exceptions](#exceptions)
+  - [TXError](#txerror)
+  - [Aborted](#aborted)
+  - [RetriableError](#retriableerror)
+    - [`HigherTXApplied(Aborted, RetriableError)`](#highertxappliedaborted-retriableerror)
+    - [`Deadlock(Aborted, RetriableError)`](#deadlockaborted-retriableerror)
+  - [UserAborted](#useraborted)
+  - [TXTimeout](#txtimeout)
+  - [ConnectionLoss](#connectionloss)
 - [Accessor classes](#accessor-classes)
   - [zktx.KVAccessor](#zktxkvaccessor)
   - [zktx.ValueAccessor](#zktxvalueaccessor)
@@ -22,6 +34,14 @@
     - [StorageHelper.apply_record](#storagehelperapply_record)
     - [StorageHelper.add_to_txidset](#storagehelperadd_to_txidset)
   - [zktx.ZKStorage](#zktxzkstorage)
+- [Transaction classes](#transaction-classes)
+  - [zktx.TXRecord](#zktxtxrecord)
+  - [zktx.ZKTransaction](#zktxzktransaction)
+    - [ZKTransaction.lock_get](#zktransactionlock_get)
+    - [ZKTransaction.set](#zktransactionset)
+    - [ZKTransaction.commit](#zktransactioncommit)
+    - [ZKTransaction.abort](#zktransactionabort)
+  - [zktx.run_tx](#zktxrun_tx)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -40,6 +60,125 @@ This library is considered production ready.
 
 Transaction implementation on Zookeeper.
 
+
+#   Synopsis
+
+## Use with statement
+
+```python
+while True:
+    try:
+        with ZKTransaction('127.0.0.1:2181', timeout=3) as tx:
+
+            foo = tx.lock_get('foo')
+            print foo.k    # "foo"
+            print foo.txid # 1 or other integer
+
+            foo.v = 1
+            tx.set(foo)
+
+            bar = tx.lock_get('bar')
+            if bar.v == 1:
+                bar.v = 2
+                tx.set(bar)
+                tx.commit()
+            else:
+                tx.abort()
+
+    except (Deadlock, HigherTXApplied):
+        continue
+    except (TXTimeout, ConnectionLoss) as e:
+        print repr(e)
+        break
+```
+
+## Use transaction function
+
+```python
+def tx_work(tx, val):
+    foo = tx.lock_get('foo')
+    foo.v = val
+    tx.set(foo)
+    tx.commit()
+
+try:
+    # run_tx() handles RetriableError internally.
+    zktx.run_tx('127.0.0.1:2181', tx_work, args=(100, ))
+except (TXTimeout, ConnectionLoss) as e:
+    print repr(e)
+```
+
+
+#   Exceptions
+
+##  TXError
+
+Super class of all zktx exceptions
+
+
+##  Aborted
+
+`Aborted` is the super class of all errors that abort a tx.
+It should **NOT** be used directly.
+
+
+##  RetriableError
+
+It is a super class of all retrieable errors.
+
+Sub classes are:
+
+### `HigherTXApplied(Aborted, RetriableError)`
+
+It is raised if a higher txid than current tx has been seen when reading a `record`.
+
+Because tx must be applied in order, if a higher txid is seen user should
+abort current tx and retry(with a new higher txid).
+
+E.g.:
+
+```
+| tx-1                       | tx-2                        |
+| :---                       | :---                        |
+| created                    | created                     |
+|                            | lock('foo') OK              |
+| lock('foo') blocked        |                             |
+|                            | get('foo') latest-txid = -1 |
+|                            | set('foo', 10)              |
+|                            | commit()                    |
+| lock('foo') OK             |                             |
+| get('foo') latest-txid = 2 |                             |
+| raise HigherTXApplied()    |                             |
+```
+
+### `Deadlock(Aborted, RetriableError)`
+
+It is raised if a **potential** dead lock is detected:
+If a higher txid tries to lock a key which is held by a smaller txid.
+
+
+## UserAborted
+
+It is raised if user calls `tx.abort()`.
+
+**A program does not need to catch this error**.
+It is used only for internal communication.
+
+
+## TXTimeout
+
+It is raised if tx fails to commit before specified running time(`timeout`).
+
+**A program should always catch this error**.
+
+
+##  ConnectionLoss
+
+It is raised if tx loses connection to zk.
+
+**A program should always catch this error**.
+
+
 #   Accessor classes
 
 ##  zktx.KVAccessor
@@ -47,7 +186,7 @@ Transaction implementation on Zookeeper.
 **syntax**:
 `zktx.KVAccessor()`
 
-An abstract class that defines an underlaying storage access API.
+An abstract class that defines an underlying storage access API.
 An implementation of `KVAccessor` must provides with 4 API:
 
 ```python
@@ -331,6 +470,7 @@ and `self.txidset.set(value, version=None)`.
 **return**:
 Nothing
 
+
 ##  zktx.ZKStorage
 
 **syntax**:
@@ -344,6 +484,170 @@ stored in zk.
 -   `zkclient`:
     must be a `zkutil.KazooClientExt` instance.
 
+
+#  Transaction classes
+
+
+##  zktx.TXRecord
+
+**syntax**:
+`zktx.TXRecord(k, v, txid)`
+
+It is a simple wrapper class of key, value and the `txid` in which the value is
+updated.
+
+`ZKTransaction.lock_get()` returns a `TXRecord` instance.
+
+
+##  zktx.ZKTransaction
+
+**syntax**:
+`zktx.ZKTransaction(zk, timeout=None)`
+
+It is a transaction engine.
+
+**arguments**:
+
+-   `zk`:
+    is the connection argument, which can be: 
+
+    -   Comma separated host list, such as
+        `"127.0.0.1:2181,127.0.0.2:2181"`.
+
+    -   A `zkutil.ZKConf` instance specifying connection argument with other
+        config.
+
+    -   A plain `dict` to create a `zkutil.ZKConf` instance.
+
+-   `timeout`:
+    specifies the total time for tx to run.
+
+    If `timeout` exceeded, a `TXTimeout` error will be raised.
+
+
+###  ZKTransaction.lock_get
+
+**syntax**:
+`ZKTransaction.lock_get(key)`
+
+Lock a record identified by `key` and retrieve the record and return.
+
+To guarantee atomic update to multiple records, a record must be locked before
+reading it.
+Even if a tx does not need to write to this record.
+
+`lock_get()` on a same key more than one time is OK.
+But it always returns a copy of the first returned `TXRecord`.
+
+**arguments**:
+
+-   `key`:
+    is the record key in string.
+
+**return**:
+a `TXRecord` instance.
+
+
+###  ZKTransaction.set
+
+**syntax**:
+`ZKTransaction.set(rec)`
+
+Tell the tx instance the `rec` should be update when committing.
+
+A record that the tx not `set()` it will not be written when committing.
+
+Calling `set(rec)` twice with a same record is OK and has no side effect.
+
+
+**arguments**:
+
+-   `rec`:
+    is a `TXRecord` instance returned from `ZKTransaction.lock_get()`
+
+**return**:
+nothing.
+
+
+###  ZKTransaction.commit
+
+**syntax**:
+`ZKTransaction.commit()`
+
+Write all update to zk.
+
+It might raise errors: `TXTimeout`, `ConnectionLoss`.
+
+**return**:
+nothing.
+
+
+###  ZKTransaction.abort
+
+**syntax**:
+`ZKTransaction.abort()`
+
+Cancel a tx and write nothing to zk.
+
+**return**:
+nothing.
+
+
+##  zktx.run_tx
+
+**syntax**:
+`zktx.run_tx(zk, func, timeout=None, args=(), kwargs=None)`
+
+Start a tx and run it.
+Tx operations are define by a callable: `func`.
+
+`func` accepts at least one argument `tx`.
+More arguments specified by `args` and `kwargs` are also passed to `func`.
+
+If a `RetriableError` is raised during tx running, `run()` will catch it
+and create a new tx and call `func` again,
+until tx commits or `timeout` exceeds.
+
+When using `run()`, `timeout` is the total time for all tx `run()` created.
+
+**Synopsis**:
+
+```python
+def tx_work(tx, val):
+    foo = tx.lock_get('foo')
+    foo.v = val
+    tx.set(foo)
+    tx.commit()
+
+try:
+    zktx.run_tx('127.0.0.1:2181', tx_work, timeout=3, args=(100, ))
+except (TXTimeout, ConnectionLoss) as e:
+    print repr(e)
+```
+
+**arguments**:
+
+-   `zk`:
+    is same as the `zk` in `ZKTransaction`.
+
+-   `func`:
+    a callable object that defines tx operations.
+
+-   `timeout`:
+    specifies the total time for tx to run.
+
+    If `timeout` exceeded, a `TXTimeout` error will be raised.
+
+-   `args`:
+    specifies additional positioned arguments.
+    Such as `args=(1, )`.
+
+-   `kwargs`:
+    specifies additional key-word arguments.
+    Such as `kwargs={"a": "foo"}`.
+
+**return**:
+nothing.
 
 
 #   Author

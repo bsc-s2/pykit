@@ -4,14 +4,14 @@ from .accessor import (
 )
 
 from .exceptions import (
-    TXAborted,
-    TXConnectionLost,
-    TXDuplicatedLock,
+    Aborted,
+    ConnectionLoss,
+    Deadlock,
+    HigherTXApplied,
+    RetriableError,
     TXError,
-    TXHigherTXApplied,
-    TXPotentialDeadlock,
     TXTimeout,
-    TXUserAborted,
+    UserAborted,
 )
 
 from .status import (
@@ -36,18 +36,25 @@ from .zkaccessor import (
     ZKValue,
 )
 
+from .zktx import (
+    TXRecord,
+    ZKTransaction,
+
+    run_tx,
+)
+
 __all__ = [
     "KVAccessor",
     "ValueAccessor",
 
-    "TXAborted",
-    "TXConnectionLost",
-    "TXDuplicatedLock",
+    "Aborted",
+    "ConnectionLoss",
+    "Deadlock",
+    "HigherTXApplied",
+    "RetriableError",
     "TXError",
-    "TXHigherTXApplied",
-    "TXPotentialDeadlock",
     "TXTimeout",
-    "TXUserAborted",
+    "UserAborted",
 
     "ABORTED",
     "COMMITTED",
@@ -62,4 +69,9 @@ __all__ = [
     "ZKValue",
 
     "ZKStorage",
+
+    "TXRecord",
+    "ZKTransaction",
+
+    "run_tx",
 ]

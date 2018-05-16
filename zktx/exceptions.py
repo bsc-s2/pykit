@@ -1,34 +1,36 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import kazoo.exceptions
+
 
 class TXError(Exception):
     pass
 
 
-class TXAborted(TXError):
+class Aborted(TXError):
     pass
 
 
-class TXUserAborted(TXAborted):
+class RetriableError(TXError):
     pass
 
 
-class TXHigherTXApplied(TXAborted):
+class UserAborted(Aborted):
     pass
 
 
-class TXDuplicatedLock(TXAborted):
+class HigherTXApplied(Aborted, RetriableError):
     pass
 
 
-class TXTimeout(TXAborted):
+class Deadlock(Aborted, RetriableError):
     pass
 
 
-class TXPotentialDeadlock(TXAborted):
+class TXTimeout(Aborted):
     pass
 
 
-class TXConnectionLost(TXError):
+class ConnectionLoss(TXError, kazoo.exceptions.ConnectionLoss):
     pass

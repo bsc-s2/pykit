@@ -39,6 +39,18 @@ class PseudoKVAccessor(dict):
 
             self[key] = (value, version+1)
 
+    def set_or_create(self, key, value, version):
+
+        with self.lock:
+
+            if key in self:
+                return self.set(key, value, version)
+            else:
+                if version == -1:
+                    self[key] = (value, 0)
+                else:
+                    raise BadVersionError()
+
 
 class TxidsetAccessor(object):
     def __init__(self):
@@ -55,11 +67,19 @@ class TxidsetAccessor(object):
 
     def set(self, value, version=None):
         with self.lock:
+            if version is not None and version != self.ver:
+                raise BadVersionError()
+
             self.d = value
-            self.version = version + 1
+            self.ver = version + 1
+
+    def set_or_create(self, key, value, version):
+        return self.set(value, version)
 
 
 class PseudoStorage(zktx.StorageHelper):
+
+    conflicterror = BadVersionError
 
     def __init__(self):
         self.record = PseudoKVAccessor({

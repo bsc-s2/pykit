@@ -3,9 +3,13 @@
 
 import logging
 
+from kazoo.exceptions import BadVersionError
+
 from pykit import rangeset
+from pykit import utfjson
 from pykit import zkutil
 
+from .status import STATUS
 from .storage import Storage
 from .zkaccessor import ZKKeyValue
 from .zkaccessor import ZKValue
@@ -14,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 class ZKStorage(Storage):
+
+    conflicterror = BadVersionError
 
     def __init__(self, zkclient):
 
@@ -33,6 +39,15 @@ class ZKStorage(Storage):
                                  load=record_load,
                                  nonode_callback=record_nonode_cb)
 
+    def watch_acquire_key(self, txid, key, timeout):
+
+        logger.info('watch acquire: {txid} {key}'.format(txid=txid, key=key))
+
+        keylock = self._make_key_lock(txid, key)
+
+        for holder, ver in keylock.watch_acquire(timeout=timeout):
+            yield int(holder), ver
+
     def try_lock_key(self, txid, key):
 
         # Use the txid as lock identifier, thus when tx processor recovered,
@@ -41,18 +56,22 @@ class ZKStorage(Storage):
         # But we have to guarantee there is only one processor for this tx.
         # And this is done by let the tx processor to acquire a lock named with txid first.
 
+        logger.info('locking: {txid} {key}'.format(txid=txid, key=key))
+
         keylock = None
         try:
             keylock = self._make_key_lock(txid, key)
 
             locked, txid, ver = keylock.try_lock()
-            return locked, txid, ver
+            return locked, utfjson.load(txid), ver
 
         finally:
             if keylock is not None:
                 keylock.close()
 
     def try_release_key(self, txid, key):
+
+        logger.info('releasing: {txid} {key}'.format(txid=txid, key=key))
 
         keylock = self._make_key_lock(txid, key)
 
@@ -62,21 +81,23 @@ class ZKStorage(Storage):
         else:
             keylock.close()
 
-        return locked, txid, ver
+        return locked, utfjson.load(txid), ver
 
     def _make_key_lock(self, txid, key):
         keylock = zkutil.ZKLock(key,
                                 zkclient=self.zkclient,
                                 zkconf=self.zkclient._zkconf,
                                 ephemeral=False,
-                                identifier=txid)
+                                identifier=utfjson.dump(txid))
 
         return keylock
 
 
 def txidset_load(value):
     rst = {}
-    for k in value:
+    for k in STATUS:
+        if k not in value:
+            value[k] = []
         rst[k] = rangeset.RangeSet(value[k])
     return rst
 
