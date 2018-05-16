@@ -54,12 +54,12 @@ def _retry(func):
 
 class SetAPI(object):
 
-    def __init__(self, cli, mtd_info):
+    def __init__(self, cli, redis_op, mtd_info):
         self.cli = cli
+        self.redis_op = redis_op.upper()
         self.http_mtd = mtd_info[0]
-        self.redis_op = mtd_info[1]
-        self.args_count = mtd_info[2]
-        self.opts = list(mtd_info[3]) + ['retry']
+        self.args_count = mtd_info[1]
+        self.opts = list(mtd_info[2]) + ['retry']
 
     def api(self, *args, **argkv):
         mtd_args = []
@@ -95,16 +95,16 @@ class RedisProxyClient(object):
     # http method, redis opeartion, count of args, optional args name
     methods = {
         # get(key, retry=0)
-        'get': ('GET', 'GET', 2, ()),
+        'get': ('GET', 2, ()),
 
         # set(key, val, expire=None, retry=0)
-        'set': ('PUT', 'SET', 4, ('expire',)),
+        'set': ('PUT', 4, ('expire',)),
 
         # hget(hashname, hashkey, retry=0)
-        'hget': ('GET', 'HGET', 3, ()),
+        'hget': ('GET', 3, ()),
 
         # hset(hashname, hashkey, val, expire=None, retry=0)
-        'hset': ('PUT', 'HSET', 5, ('expire',)),
+        'hset': ('PUT', 5, ('expire',)),
     }
 
     def __init__(self, hosts, nwr=None, ak_sk=None, timeout=None):
@@ -123,7 +123,7 @@ class RedisProxyClient(object):
         self.ver = '/redisproxy/v1'
 
         for mtd_name, mtd_info in self.methods.items():
-            api_obj = SetAPI(self, mtd_info)
+            api_obj = SetAPI(self, mtd_name, mtd_info)
             setattr(self, mtd_name, api_obj.api)
 
     def _sign_req(self, req):
