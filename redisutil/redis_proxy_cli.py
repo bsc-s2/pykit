@@ -92,7 +92,7 @@ class SetAPI(object):
 
 class RedisProxyClient(object):
 
-    # http method, redis opeartion, count of args, optional args name
+    # http method, count of args, optional args name
     methods = {
         # get(key, retry=0)
         'get': ('GET', 2, ()),
