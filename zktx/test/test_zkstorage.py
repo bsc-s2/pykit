@@ -50,8 +50,13 @@ class TestZKStorage(base.ZKTestBase):
 
     def test_record(self):
 
+        # nonode_callback
+        rst, ver = self.zs.record.get('foo')
+        self.assertEqual({-1: None}, rst)
+
         self.zs.record.create('foo', {1: 1})
 
+        # record_load
         rst, ver = self.zs.record.get('foo')
         self.assertEqual({1: 1}, rst)
 
@@ -59,10 +64,12 @@ class TestZKStorage(base.ZKTestBase):
         rst, ver = self.zs.record.get('foo')
         self.assertEqual({1: 2}, rst)
 
+        # apply_record
         self.zs.apply_record(2, 'foo', 3)
         rst, ver = self.zs.record.get('foo')
         self.assertEqual({1: 2, 2: 3}, rst)
 
+        # get_latest
         rst, ver = self.zs.get_latest('foo')
         self.assertEqual({2: 3}, rst)
 

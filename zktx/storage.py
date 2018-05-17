@@ -23,7 +23,7 @@ class StorageHelper(object):
     def get_latest(self, key):
         """
         return: (
-                    {"txid": "0000000001", "value": ...},
+                    {<txid> : <value>},
                     zk_version,
                 )
         """

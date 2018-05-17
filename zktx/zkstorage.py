@@ -99,4 +99,4 @@ def record_nonode_cb():
     If NoNodeError received, make a default value for a record
     """
 
-    return {'txid': -1, 'value': None}, -1
+    return {-1: None}, -1
