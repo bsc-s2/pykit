@@ -6,14 +6,14 @@ import logging
 from pykit import rangeset
 from pykit import zkutil
 
-from .storage import StorageHelper
+from .storage import Storage
 from .zkaccessor import ZKKeyValue
 from .zkaccessor import ZKValue
 
 logger = logging.getLogger(__name__)
 
 
-class ZKStorage(StorageHelper):
+class ZKStorage(Storage):
 
     def __init__(self, zkclient):
 
