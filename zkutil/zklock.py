@@ -226,7 +226,7 @@ class ZKLock(object):
                 logger.debug('got lock holder: {s}'.format(s=str(self)))
 
                 if holder == self.identifier:
-                    logger.info('ACQUIRED(by get): {s}'.format(s=str(self)))
+                    logger.info('ACQUIRED: {s}'.format(s=str(self)))
                     return
 
                 logger.debug('other holds: {s}'.format(s=str(self)))
@@ -240,7 +240,7 @@ class ZKLock(object):
                 self.maybe_available.set()
 
     def __str__(self):
-        return '({id}) {l}:[{holder}] on {h}'.format(
+        return '<id={id} {l}:[{holder}] on {h}>'.format(
             id=self.identifier,
             l=self.lock_path,
             holder=(self.lock_holder or ''),
