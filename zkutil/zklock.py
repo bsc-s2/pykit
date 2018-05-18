@@ -65,8 +65,6 @@ class ZKLock(object):
         self.zkclient = zkclient
         self.on_lost = on_lost
 
-        self.zkclient.add_listener(self.on_connection_change)
-
         self.lock_name = lock_name
         self.lock_path = zkconf.lock(self.lock_name)
         self.identifier = identifier
@@ -77,6 +75,9 @@ class ZKLock(object):
         self.maybe_available = threading.Event()
         self.maybe_available.set()
         self.lock_holder = None
+
+        logger.info('adding event listener: {s}'.format(s=self))
+        self.zkclient.add_listener(self.on_connection_change)
 
     def on_node_change(self, watchevent):
 
