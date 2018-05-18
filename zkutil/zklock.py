@@ -91,7 +91,7 @@ class ZKLock(object):
                 if self.on_lost is not None:
                     self.on_lost()
 
-        logger.info('node state changed, lock might be released: {s}'.format(s=str(self)))
+        logger.info('node state changed:{ev}, lock might be released: {s}'.format(ev=watchevent, s=str(self)))
 
     def on_connection_change(self, state):
         # notify zklock to re-do acquiring procedure, to trigger Connection Error
