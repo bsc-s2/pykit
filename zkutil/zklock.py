@@ -150,6 +150,12 @@ class ZKLock(object):
 
             if self.is_locked():
 
+                # remove listener to avoid useless event triggering
+                try:
+                    self.zkclient.remove_listener(self.on_connection_change)
+                except Exception as e:
+                    logger.info(repr(e) + ' while remove on_connection_change')
+
                 try:
                     self.zkclient.delete(self.lock_path)
                 except KazooException as e:
