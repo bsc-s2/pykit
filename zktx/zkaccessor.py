@@ -3,6 +3,7 @@
 
 import logging
 
+from kazoo.exceptions import NodeExistsError
 from kazoo.exceptions import NoNodeError
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,22 @@ class ZKKeyValue(object):
     def set(self, key, value, version=-1):
         value = self._dump(value)
         self.zkclient.set(self.get_path(key), value, version=version)
+
+    def set_or_create(self, key, value, version=-1):
+        value = self._dump(value)
+        while True:
+            try:
+                self.zkclient.set(self.get_path(key), value, version=version)
+                return
+            except NoNodeError:
+                if version == -1:
+                    try:
+                        self.zkclient.create(self.get_path(key), value)
+                        return
+                    except NodeExistsError:
+                        continue
+                else:
+                    raise
 
     def get(self, key):
         try:
@@ -72,6 +89,9 @@ class ZKValue(ZKKeyValue):
 
     def set(self, value, version=-1):
         return super(ZKValue, self).set('', value, version=version)
+
+    def set_or_create(self, value, version=-1):
+        return super(ZKValue, self).set_or_create('', value, version=version)
 
     def get(self):
         return super(ZKValue, self).get('')

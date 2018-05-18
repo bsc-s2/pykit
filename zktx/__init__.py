@@ -3,7 +3,7 @@ from .accessor import (
     ValueAccessor,
 )
 
-from .txstatus import (
+from .status import (
     ABORTED,
     COMMITTED,
     PURGED,

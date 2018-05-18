@@ -109,6 +109,28 @@ class TestZKKVAccessor(ZKTestBase):
 
         kv.delete('bar')
 
+    def test_set_or_create(self):
+
+        kv = zktx.ZKKeyValue(self.zk)
+
+        # create
+
+        kv.set_or_create('foo', '1')
+
+        rst, ver = kv.get('foo')
+        self.assertEqual('1', rst)
+        self.assertEqual(0, ver)
+
+        # set
+
+        self.assertRaises(BadVersionError, kv.set_or_create, 'foo', '2', version=2)
+
+        kv.set_or_create('foo', '2', version=0)
+        kv.set_or_create('foo', '2', version=1)
+        rst, ver = kv.get('foo')
+        self.assertEqual('2', rst)
+        self.assertEqual(2, ver)
+
 
 class TestZKValueAccessor(ZKTestBase):
 
@@ -163,18 +185,40 @@ class TestZKValueAccessor(ZKTestBase):
 
     def test_version(self):
 
-        kv = zktx.ZKValue(self.zk, get_path=lambda: 'foopath')
+        v = zktx.ZKValue(self.zk, get_path=lambda: 'foopath')
 
         self.zk.create('foopath', '1')
 
-        kv.set('2', version=0)
-        rst, ver = kv.get()
+        v.set('2', version=0)
+        rst, ver = v.get()
         self.assertEqual('2', rst)
 
-        self.assertRaises(BadVersionError, kv.set, '2', version=0)
-        self.assertRaises(BadVersionError, kv.set, '2', version=2)
+        self.assertRaises(BadVersionError, v.set, '2', version=0)
+        self.assertRaises(BadVersionError, v.set, '2', version=2)
 
-        self.assertRaises(BadVersionError, kv.delete, version=0)
-        self.assertRaises(BadVersionError, kv.delete, version=2)
+        self.assertRaises(BadVersionError, v.delete, version=0)
+        self.assertRaises(BadVersionError, v.delete, version=2)
 
-        kv.delete()
+        v.delete()
+
+    def test_set_or_create(self):
+
+        v = zktx.ZKValue(self.zk, get_path=lambda: 'foopath')
+
+        # create
+
+        v.set_or_create('1')
+
+        rst, ver = v.get()
+        self.assertEqual('1', rst)
+        self.assertEqual(0, ver)
+
+        # set
+
+        self.assertRaises(BadVersionError, v.set_or_create, '2', version=2)
+
+        v.set_or_create('2', version=0)
+        v.set_or_create('2', version=1)
+        rst, ver = v.get()
+        self.assertEqual('2', rst)
+        self.assertEqual(2, ver)

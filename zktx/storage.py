@@ -10,7 +10,7 @@ from pykit import txutil
 
 from .accessor import KVAccessor
 from .accessor import ValueAccessor
-from .txstatus import STATUS
+from .status import STATUS
 
 logger = logging.getLogger(__name__)
 
