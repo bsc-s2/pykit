@@ -100,7 +100,7 @@ class Cat(object):
                     h(line)
                 except Exception as e:
                     logger.exception(repr(e)
-                                     + ' while handling {line}'.foramt(line=repr(line)))
+                                     + ' while handling {line}'.format(line=repr(line)))
 
     def iterate(self, timeout=None, default_seek=None):
         self.running = True
