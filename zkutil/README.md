@@ -32,6 +32,7 @@
     - [Why we need this](#why-we-need-this)
     - [zkutil.ZKLock.acquire](#zkutilzklockacquire)
     - [zkutil.ZKLock.try_lock](#zkutilzklocktry_lock)
+    - [zkutil.ZKLock.try_release](#zkutilzklocktry_release)
     - [zkutil.ZKLock.release](#zkutilzklockrelease)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
@@ -748,6 +749,32 @@ If lock is acquired:
 - the 3rd is `-1`.
 
 If lock is not acquired:
+- the 1st element is `False`,
+- the 2nd is identifier of the lock holder,
+- the 3rd is a non-negative integer, which is the version of the zk node.
+
+
+###  zkutil.ZKLock.try_release
+
+**syntax**:
+`ZKLock.try_release()`
+
+Release lock if current lock holder is this lock.
+It never blocks.
+
+**return**:
+a tuple of result, lock holder and lock holder version.
+Such as `(True, "aa-xx-bb", -1)` or `(False, "aa-xx-cc", 12)`
+
+If lock holder is this `ZKLock`(checked by identifier), or lock is not acquired
+by anyone):
+
+- the 1st element is `True`,
+- the 2nd is identifier of this lock,
+- the 3rd is `-1` or `zstat.version` or the lock zknode.
+
+Otherwise:
+
 - the 1st element is `False`,
 - the 2nd is identifier of the lock holder,
 - the 3rd is a non-negative integer, which is the version of the zk node.

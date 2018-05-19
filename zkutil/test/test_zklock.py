@@ -210,6 +210,21 @@ class TestZKLock(unittest.TestCase):
 
             self.assertAlmostEqual(0.0, t.spent(), delta=0.05)
 
+    def test_try_release(self):
+
+        l1 = zkutil.ZKLock('foo_name', on_lost=lambda: True)
+        l2 = zkutil.ZKLock('foo_name', on_lost=lambda: True)
+
+        released, holder, ver = l1.try_release()
+        self.assertEqual((True, l1.identifier, -1), (released, holder, ver))
+
+        with l2:
+            released, holder, ver = l1.try_release()
+            self.assertEqual((False, l2.identifier, 0), (released, holder, ver))
+
+            released, holder, ver = l2.try_release()
+            self.assertEqual((True, l2.identifier, 0), (released, holder, ver))
+
     def test_zk_lost(self):
 
         sess = {'acquired': True}

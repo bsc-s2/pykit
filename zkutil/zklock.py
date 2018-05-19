@@ -145,6 +145,26 @@ class ZKLock(object):
         # if_locked, lock holder identifier, holder version
         return self.is_locked(), self.lock_holder[0], self.lock_holder[1]
 
+    def try_release(self):
+
+        logger.debug('try to release if I am locker holder: {s}'.format(s=str(self)))
+
+        try:
+            holder, zstat = self.zkclient.get(self.lock_path)
+            self.lock_holder = (holder, zstat.version)
+
+            logger.debug('got lock holder: {s}'.format(s=str(self)))
+
+            if holder == self.identifier:
+                self.zkclient.delete(self.lock_path, version=zstat.version)
+                return True, holder, zstat.version
+            else:
+                return False, holder, zstat.version
+
+        except NoNodeError as e:
+            logger.info(repr(e) + ' while try_release: {s}'.format(s=str(self)))
+            return True, self.identifier, -1
+
     def release(self):
 
         with self.mutex:
@@ -216,7 +236,7 @@ class ZKLock(object):
 
     def _acquire_by_get(self):
 
-        logger.debug('to get(after NodeExistsError): {s}'.format(s=str(self)))
+        logger.debug('to get: {s}'.format(s=str(self)))
 
         try:
             with self.mutex:
