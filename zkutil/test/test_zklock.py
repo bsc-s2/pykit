@@ -109,17 +109,18 @@ class TestZKLock(unittest.TestCase):
 
         self.assertEqual(1, self.lsn_count)
 
-    def _loop_acquire(self, ident):
+    def _loop_acquire(self, n, ident):
 
         zk = KazooClient(hosts='127.0.0.1:2181')
         zk.start()
         scheme, name, passw = zk_test_auth
         zk.add_auth(scheme, name + ':' + passw)
 
-        for ii in range(40):
+        for ii in range(n):
             l = zkutil.ZKLock('foo_name', zkclient=zk)
             with l:
 
+                self.total += 1
                 self.counter += 1
 
                 self.assertTrue(self.counter == 1)
@@ -137,16 +138,20 @@ class TestZKLock(unittest.TestCase):
     def test_concurrent(self):
 
         self.running = True
+        self.total = 0
+        n_repeat = 40
+        n_thread = 5
 
         ths = []
-        for ii in range(5):
-            t = threadutil.start_daemon_thread(self._loop_acquire, args=(ii,))
+        for ii in range(n_thread):
+            t = threadutil.start_daemon_thread(self._loop_acquire, args=(n_repeat, ii,))
             ths.append(t)
 
         for th in ths:
             th.join()
 
         self.running = False
+        self.assertEqual(n_repeat * n_thread, self.total)
 
     def test_persistent(self):
         l = zkutil.ZKLock('foo_name', ephemeral=False, on_lost=lambda: True)
@@ -187,6 +192,38 @@ class TestZKLock(unittest.TestCase):
             self.assertFalse(locked)
             self.assertEqual((a.identifier, 0), (holder, ver))
             self.assertEqual((val, zstate.version), (holder, ver))
+
+    def test_watch_acquire(self):
+
+        a = zkutil.ZKLock('foo', on_lost=lambda: True)
+        b = zkutil.ZKLock('foo', on_lost=lambda: True)
+
+        # no one locked
+
+        n = 0
+        for holder, ver in a.watch_acquire():
+            n += 1
+        self.assertEqual(0, n, 'acquired directly')
+
+        # watch node change
+
+        it = b.watch_acquire()
+
+        holder, ver = it.next()
+        self.assertEqual((a.identifier, 0), (holder, ver))
+
+        self.zk.set(a.lock_path, 'xx')
+        holder, ver = it.next()
+        self.assertEqual(('xx', 1), (holder, ver), 'watched node change')
+
+        a.release()
+        try:
+            holder, ver = it.next()
+            self.fail('should not have next yield')
+        except StopIteration:
+            pass
+
+        self.assertTrue(b.is_locked())
 
     def test_try_lock(self):
 
