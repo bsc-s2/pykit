@@ -156,7 +156,14 @@ class ZKLock(object):
             logger.debug('got lock holder: {s}'.format(s=str(self)))
 
             if holder == self.identifier:
-                self.zkclient.delete(self.lock_path, version=zstat.version)
+
+                self.zkclient.remove_listener(self.on_connection_change)
+
+                try:
+                    self.zkclient.delete(self.lock_path, version=zstat.version)
+                except NoNodeError as e:
+                    logger.info(repr(e) + ' while delete lock: ' + str(self))
+
                 return True, holder, zstat.version
             else:
                 return False, holder, zstat.version
@@ -172,14 +179,11 @@ class ZKLock(object):
             if self.is_locked():
 
                 # remove listener to avoid useless event triggering
-                try:
-                    self.zkclient.remove_listener(self.on_connection_change)
-                except Exception as e:
-                    logger.info(repr(e) + ' while remove on_connection_change')
+                self.zkclient.remove_listener(self.on_connection_change)
 
                 try:
                     self.zkclient.delete(self.lock_path)
-                except KazooException as e:
+                except NoNodeError as e:
                     logger.info(repr(e) + ' while delete lock: ' + str(self))
 
                 logger.info('RELEASED: {s}'.format(s=str(self)))
@@ -190,10 +194,7 @@ class ZKLock(object):
 
     def close(self):
 
-        try:
-            self.zkclient.remove_listener(self.on_connection_change)
-        except Exception as e:
-            logger.info(repr(e) + ' while remove on_connection_change')
+        self.zkclient.remove_listener(self.on_connection_change)
 
         if self.owning_client:
 

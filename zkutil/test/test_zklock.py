@@ -150,8 +150,11 @@ class TestZKLock(unittest.TestCase):
 
     def test_persistent(self):
         l = zkutil.ZKLock('foo_name', ephemeral=False, on_lost=lambda: True)
-        with l:
-            l.zkclient.stop()
+        try:
+            with l:
+                l.zkclient.stop()
+        except ConnectionClosedError:
+            pass
 
         self.assertRaises(zkutil.LockTimeout, self.lck.acquire, timeout=0.2)
 
@@ -239,11 +242,10 @@ class TestZKLock(unittest.TestCase):
 
         l = zkutil.ZKLock('foo_name', zkclient=self.zk)
 
-        with l:
-            time.sleep(0.1)
-            self.zk.stop()
-            time.sleep(0.1)
-            self.assertFalse(sess['acquired'])
+        l.acquire()
+        self.zk.stop()
+        time.sleep(0.1)
+        self.assertFalse(sess['acquired'])
 
         # test node delete
 
