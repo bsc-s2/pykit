@@ -102,7 +102,7 @@ class ZKLock(object):
         if self.on_lost is not None:
             self.on_lost()
 
-    def acquire(self, timeout=None):
+    def watch_acquire(self, timeout=None):
 
         if timeout is None:
             timeout = self.timeout
@@ -135,7 +135,19 @@ class ZKLock(object):
             if self.is_locked():
                 return
 
+            # If it is possible to acquire the lock in next retry, do not yield
+            if self.maybe_available.is_set():
+                continue
+            else:
+                yield self.lock_holder[0], self.lock_holder[1]
+
+    def acquire(self, timeout=None):
+
+        for holder, ver in self.watch_acquire(timeout=timeout):
+            continue
+
     def try_lock(self):
+        # TODO rename it to try_acquire
 
         try:
             self.acquire(timeout=-1)
