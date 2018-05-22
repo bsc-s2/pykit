@@ -61,7 +61,7 @@ class ZKConf(object):
 
     def acl(self): return self._get_config('acl')
 
-    def lock(self, key=''): return ''.join([self.lock_dir(), key])
+    def lock(self, key=''): return ''.join([self.lock_dir(), _dump_txid(key)])
 
     def record(self, key=''): return ''.join([self.record_dir(), key])
 
