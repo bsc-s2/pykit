@@ -26,7 +26,7 @@
   - [zktx.Storage](#zktxstorage)
     - [Storage attributes](#storage-attributes)
     - [Storage methods](#storage-methods)
-      - [Storage.try_lock_key](#storagetry_lock_key)
+      - [Storage.watch_acquire_key](#storagewatch_acquire_key)
       - [Storage.try_release_key](#storagetry_release_key)
     - [Storage helper methods](#storage-helper-methods)
   - [zktx.StorageHelper](#zktxstoragehelper)
@@ -339,28 +339,16 @@ a class that implements `Storage` must provides 3 accessors(`KVAccessor` and `Va
 
 An implementation of `Storage` must implement 2 locking methods:
 
-####  Storage.try_lock_key
+####  Storage.watch_acquire_key
 
 **syntax**:
-`Storage.try_lock_key(txid, key)`
+`Storage.watch_acquire_key(txid, key)`
 
-It is defined as `def try_lock_key(self, txid, key)`.
+It is defined as `def watch_acquire_key(self, txid, key)`.
 
 It tries to lock a `key` for a `txid`: Same `txid` can lock a `key` more than once.
 
-This function should never block and should return at once.
-
-> Because our TX engine need to detect and resolve deadlock, thus locking should
-> be non-blocking.
-
-It should return a 3 element `tuple`:
-
--   A `bool` indicates if locking succeeds.
-
--   A `txid` indicates current lock holder.
-    If locking succeeded, it is the passed in `txid`
-
--   A 3rd value indicates lock stat(not used yet).
+It is a wrapper of `zkutil.ZKLock.watch_acquire`.
 
 
 ####  Storage.try_release_key

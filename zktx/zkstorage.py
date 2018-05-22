@@ -48,27 +48,6 @@ class ZKStorage(Storage):
         for holder, ver in keylock.watch_acquire(timeout=timeout):
             yield int(holder), ver
 
-    def try_lock_key(self, txid, key):
-
-        # Use the txid as lock identifier, thus when tx processor recovered,
-        # it could re-acquire this lock with no trouble.
-        #
-        # But we have to guarantee there is only one processor for this tx.
-        # And this is done by let the tx processor to acquire a lock named with txid first.
-
-        logger.info('locking: {txid} {key}'.format(txid=txid, key=key))
-
-        keylock = None
-        try:
-            keylock = self._make_key_lock(txid, key)
-
-            locked, txid, ver = keylock.try_lock()
-            return locked, utfjson.load(txid), ver
-
-        finally:
-            if keylock is not None:
-                keylock.close()
-
     def try_release_key(self, txid, key):
 
         logger.info('releasing: {txid} {key}'.format(txid=txid, key=key))

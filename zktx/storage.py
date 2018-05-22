@@ -87,6 +87,6 @@ class Storage(StorageHelper):
     journal = KVAccessor()
     txidset = ValueAccessor()
 
-    def try_lock_key(self, txid, key): raise TypeError('unimplemented')
+    def watch_acquire_key(self, txid, key): raise TypeError('unimplemented')
 
     def try_release_key(self, txid, key): raise TypeError('unimplemented')
