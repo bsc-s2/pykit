@@ -114,13 +114,17 @@ def sharding(sorted_iterable, size, accuracy=None, joiner=''.join):
     prev_key = None
     rst = []
 
+    # iterate root node.
+    t = {'':t}
+
     for ks, node in dictutil.depth_iter(t, is_allowed=lambda ks, v: v.is_eol or len(v) == 0):
 
         if n >= size:
 
             rst.append((prev_key, n))
 
-            prev_key = ks
+            # strip empty root path
+            prev_key = ks[1:]
             prev_key = joiner(prev_key)
             n = 0
 

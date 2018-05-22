@@ -80,6 +80,45 @@ class TestTrie(unittest.TestCase):
             dd('{start:<20} {n:>10}'.format(start=start, n=n))
             self.assertEqual(expected[i], (start, n))
 
+    def test_sharding_accuracy(self):
+
+        dd()
+
+        cases = (
+                [ 5,
+                  ((None,           5),
+                   ((1, 'd',    ),  5),
+                   ((2, 'b', 'x'),  5),
+                   ((2, 'b', 'xx'), 3),
+                  ),
+                ],
+                [ 9,
+                  ((None,  9),
+                   ((2,),  9),
+                  ),
+                ],
+                [ len(self.iterables),
+                  ((None,  len(self.iterables)),
+                  ),
+                ],
+                [ len(self.iterables)+1,
+                  ((None,  len(self.iterables)),
+                  ),
+                ],
+        )
+
+        for accuracy, expected in cases:
+            rst = strutil.sharding(self.iterables, size=5,
+                                   accuracy=accuracy, joiner=tuple)
+
+            dd("accuracy:", accuracy)
+            dd("rst:")
+            dd(rst)
+
+            for i, (start, n) in enumerate(rst):
+                dd('{start:<20} {n:>10}'.format(start=start, n=n))
+                self.assertEqual(expected[i], (start, n))
+
     def test_trie_whole_string(self):
 
         t = strutil.make_trie(self.strs, node_max_num=3)
