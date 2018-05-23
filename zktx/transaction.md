@@ -97,6 +97,23 @@ Record format:
 ...
 ```
 
+> By default a record value keeps the last 16 txid
+
+
+## Transaction journal and record example
+
+```
+/<cluster>/tx/journal/0000000001      # content: {"meta/server/<server_id>": {...}}
+/<cluster>/tx/journal/0000000002      # content: {"meta/dirve/<drive_id>": {...}}
+/<cluster>/record/meta/server/<server_id>
+/<cluster>/record/meta/drive/<drive_id>
+```
+
+From above, the journal `0000000001` will be applied to
+`/<cluster>/record/meta/server/<server_id>`,
+and `0000000002` will be applied to
+`/<cluster>/record/meta/drive/<drive_id>`,
+
 
 # Concept
 

@@ -60,6 +60,9 @@ This library is considered production ready.
 
 Transaction implementation on Zookeeper.
 
+Following chapters describes API of this module.
+To see more about transaction design, See [transaction](transaction.md)
+
 
 #   Synopsis
 
