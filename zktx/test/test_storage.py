@@ -100,10 +100,10 @@ class TestTXStorageHelper(unittest.TestCase):
         # get_latest relies on storage.record.get
 
         rst = self.sto.get_latest('foo')
-        self.assertEqual(({17: 17}, 0), rst)
+        self.assertEqual(((17, 17), 0), rst)
 
         rst = self.sto.get_latest('bar')
-        self.assertEqual(({-1: None}, 1), rst)
+        self.assertEqual(((-1,  None), 1), rst)
 
     def test_apply_record(self):
 
@@ -175,8 +175,8 @@ class TestTXStorageHelper(unittest.TestCase):
         dd(latest, ver)
 
         self.assertLessEqual(ver, 1+n_thread*n_repeat)
-        self.assertEqual(n_thread*n_repeat, latest.keys()[0])
-        self.assertEqual(n_thread*n_repeat, latest.values()[0])
+        self.assertEqual(n_thread*n_repeat, latest[0])
+        self.assertEqual(n_thread*n_repeat, latest[1])
 
     def _rand_txids(self):
         for ii in range(100):

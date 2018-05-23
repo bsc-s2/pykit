@@ -76,7 +76,7 @@ class TestZKStorage(base.ZKTestBase):
 
         # get_latest
         rst, ver = self.zs.get_latest('foo')
-        self.assertEqual({2: 3}, rst)
+        self.assertEqual((2, 3), rst)
 
     def test_lock(self):
 

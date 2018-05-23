@@ -112,7 +112,7 @@ class TestTX(base.ZKTestBase):
 
         t = ZKTransaction(zkhost)
         rst, ver = t.zkstorage.get_latest('foo')
-        self.assertEqual(100, rst.values()[0])
+        self.assertEqual(100, rst[1])
 
         rst, ver = self.zk.get('tx/txidset')
         self.assertEqual({COMMITTED: [[1, 2]],
@@ -168,7 +168,7 @@ class TestTX(base.ZKTestBase):
 
         t = ZKTransaction(zkhost)
         rst, ver = t.zkstorage.get_latest('foo')
-        self.assertEqual(100, rst.values()[0])
+        self.assertEqual(100, rst[1])
 
     def test_run_unretriable_error(self):
 
@@ -198,7 +198,7 @@ class TestTX(base.ZKTestBase):
 
         tx = ZKTransaction(zkhost)
         rst, ver = tx.zkstorage.get_latest('foo')
-        self.assertEqual(100, rst.values()[0])
+        self.assertEqual(100, rst[1])
 
     def test_sequential(self):
 
@@ -221,7 +221,7 @@ class TestTX(base.ZKTestBase):
 
         rst, ver = t.zkstorage.get_latest(k)
         dd(rst)
-        self.assertEqual(n_tx, rst.values()[0])
+        self.assertEqual(n_tx, rst[1])
 
         rst, ver = t.zkstorage.txidset.get()
         dd(rst)
@@ -258,7 +258,7 @@ class TestTX(base.ZKTestBase):
 
         rst, ver = t.zkstorage.get_latest('foo')
         dd(rst)
-        self.assertEqual(n_tx, rst.values()[0])
+        self.assertEqual(n_tx, rst[1])
 
         rst, ver = t.zkstorage.txidset.get()
         dd(rst)
@@ -309,7 +309,7 @@ class TestTX(base.ZKTestBase):
         for k in ks:
             rst, ver = t.zkstorage.get_latest(k)
             dd(rst)
-            self.assertEqual(n_tx, rst.values()[0])
+            self.assertEqual(n_tx, rst[1])
 
         rst, ver = t.zkstorage.txidset.get()
         dd(rst)
@@ -340,7 +340,7 @@ class TestTX(base.ZKTestBase):
 
         rst, ver = t.zkstorage.get_latest('foo')
         dd(rst)
-        self.assertEqual(1, rst.values()[0])
+        self.assertEqual(1, rst[1])
 
         rst, ver = t.zkstorage.txidset.get()
         dd(rst)
@@ -370,11 +370,11 @@ class TestTX(base.ZKTestBase):
 
         rst, ver = t.zkstorage.get_latest('foo')
         dd(rst)
-        self.assertEqual(556, rst.values()[0])
+        self.assertEqual(556, rst[1])
 
         rst, ver = t.zkstorage.get_latest('bar')
         dd(rst)
-        self.assertEqual(666, rst.values()[0])
+        self.assertEqual(666, rst[1])
 
         rst, ver = t.zkstorage.txidset.get()
         dd(rst)
@@ -392,7 +392,7 @@ class TestTX(base.ZKTestBase):
 
         rst, ver = t.zkstorage.get_latest('foo')
         dd(rst)
-        self.assertEqual(None, rst.values()[0])
+        self.assertEqual(None, rst[1])
 
         rst, ver = t.zkstorage.txidset.get()
         dd(rst)

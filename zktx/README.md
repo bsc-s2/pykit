@@ -408,7 +408,7 @@ It requires 1 accessor method: `self.record.get(key)`.
     specifies the `key` of the record.
 
 **return**:
-a dict in form of `{<txid>: <value>}` and an implementation defined version.
+a tuple `(<txid>, <value>)` and an implementation defined version.
 
 
 ###  StorageHelper.apply_record

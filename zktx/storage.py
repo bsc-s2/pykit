@@ -31,7 +31,7 @@ class StorageHelper(object):
 
         txids = sorted(c.keys())
         max_txid = txids[-1]
-        return {max_txid: c[max_txid]}, ver
+        return (max_txid, c[max_txid]), ver
 
     def apply_record(self, txid, key, value):
 
