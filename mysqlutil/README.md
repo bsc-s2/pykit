@@ -441,7 +441,7 @@ Return sharding result as a dictionary like:
 **argument**:
 
 -   `conf`:
-    is a dictionary which provide configuration for sharding. Fields like:
+    is a dictionary which provides configuration for sharding. Fields like:
 
     -   `db`: which database to sharding. A string.
     -   `table`: which table to sharding. A string.
@@ -456,21 +456,26 @@ Return sharding result as a dictionary like:
         }
         ```
 
-    -   `shard_fields`: those index fields to sharding by, a list or tuple.
-    -   `start_shard`: first shard value in the table, use as the start condition to scan table. a
-        list or tuple.
-    -   `number_per_shard`: how many rows of data a shard can contain. a number.
-    -   `tolerance_of_shard`: the tolerance of one shard's capacity. a number.
-    -   `sharding_generator`: a function that formats a shard. It accepts one list of string
-        argument "shard". `list` is the default `sharding_generator`.
+    -   `shard_fields`: are index fields to sharding by, a list or tuple of strings.
+    -   `start`: is the start condition to scan table, a list or tuple of strings.
+    -   `number_per_shard`: specifies the number of rows a shard contains, an integer.
+    -   `tolerance_of_shard`: the tolerance of one shard's capacity, an integer.
+    -   `shard_maker`: a function which accepts one list of strings argument and return a value as
+        a "shard" in the result. For example:
+
+        ```
+        def shard_maker(shard):
+            new_shard = shard + ['']*3
+            return new_shard[:3]
+        ```
 
 **return**:
 a dictionary of sharding result, like:
 ```
 {
-    "shard": [(), (), ...],
-    "number": [number, number, ...],
-    "total": number,
+    "shard": [['10000', 'a', '1'], ['11000', 'b', '3'], ['12000', 'd', '9']],
+    "number": [100, 104, 80],
+    "total": 284,
 }
 ```
 
