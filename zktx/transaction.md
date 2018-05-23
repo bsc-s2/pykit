@@ -3,6 +3,9 @@
 #   Table of Content
 
 - [Transaction](#transaction)
+  - [Proceeding a transaction](#proceeding-a-transaction)
+  - [Journal format](#journal-format)
+  - [Record](#record)
 - [Concept](#concept)
 - [A typical transaction running phases](#a-typical-transaction-running-phases)
   - [For tx killed in phase 0, 1, 2, 3](#for-tx-killed-in-phase-0-1-2-3)
@@ -17,6 +20,82 @@
 # Transaction
 
 > In this doc `tx` is an abbreviation of `transaction`.
+
+Transaction is an operation that includes one or many records
+
+> All modifications involved in a transaction should be all committed or be all rollback.
+
+A transaction is protected by a zookeeper lock(a ephemeral node in `<cluster>/lock/*`).
+If connection to zookeeper lost, a transaction must stop at once.
+Because the locks might be lost.
+
+
+## Proceeding a transaction
+
+-   Create a transaction id(`txid`, which must be globally unique), by set a zk
+    node `<cluster>/tx/txid_maker` and retrieve its latest `version`.
+
+-   Lock this tx, by creating an ephemeral node `<cluster>/tx/alive/<txid>`.
+
+-   Lock and get all records the tx required, such as a region, a block group or
+    a server in zookeeper, by creating normal node(**NOT** ephemeral) in
+    `<cluster>/lock/*`
+
+    If locking encountered a conflict, wait for the lock holder tx to finish,
+    or re-do a dead tx.
+
+    Deadlock detection: if a higher txid found a lower txid holding a lock,
+    there is a potential dead lock.
+    In this case, the higher txid should release all locks it has held and
+    retry.
+
+-   Check if any record has a value with newer txid than this txid,
+    to ensure no lower txid will be applied after a higher txid applied.
+
+-   Write all modifications into `journal`:
+
+-   Apply this journal.
+
+-   Unlock all locked records.
+
+-   Update `<cluster>/tx/txidset`, mark this journal(tx) has
+    been applied and can be removed from `journal` dir safely.
+
+
+## Journal format
+
+A journal contains all record modifications belonging to a single transaction.
+
+The journal node name is the corresponding txid: `00000000001` in
+`<cluster>/tx/journal/00000000001`.
+
+Data format:
+
+```yaml
+"<key>": <value>
+"<key>": <value>
+```
+
+Where `key` is relative path of a zk node, and `value` is arbitrary json data.
+
+
+##  Record
+
+A tx would update one or more records.
+A record is a zk node in user-defined record base dir, such as
+`<cluster>/record/meta/server/<server_id>`.
+
+Value of a record is a json(or yaml), it contains one or more mapping of txid to value.
+
+`txid` is the txid in which a value is applied, value is any json data.
+
+Record format:
+
+```yaml
+<txid-1>: {...}
+<txid-2>: {...}
+...
+```
 
 
 # Concept
