@@ -391,13 +391,13 @@ def make_sharding(conf):
     conn = conf['conn']
     connpool = mysqlconnpool.make(conn)
 
-    records = scan_index(connpool, *args, **kwargs)
+    record_iter = scan_index(connpool, *args, **kwargs)
 
     number_per_shard = conf['number_per_shard']
     tolerance = conf['tolerance_of_shard']
 
     shards = strutil.sharding(
-        records, number_per_shard, accuracy=tolerance, joiner=list)
+        record_iter, number_per_shard, accuracy=tolerance, joiner=list)
 
     shard_maker = conf.get('shard_maker', list)
 

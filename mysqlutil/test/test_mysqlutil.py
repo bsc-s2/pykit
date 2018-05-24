@@ -1,35 +1,84 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
+import os
 import time
 import unittest
-
-import docker
 
 from pykit import mysqlconnpool
 from pykit import mysqlutil
 from pykit import proc
+from pykit import utdocker
 from pykit import ututil
 
 dd = ututil.dd
 
-mysql_test_password = '123qwe'
+mysql_test_host = None
 mysql_test_port = 3306
 mysql_test_user = 'root'
-mysql_test_name = 'mysql_test'
-mysql_test_tag = 'test-mysql:0.0.1'
+mysql_test_password = '123qwe'
+mysql_test_container = 'mysql_test'
+mysql_test_image = 'test-mysql:0.0.1'
 mysql_test_db = 'test'
 mysql_test_table = 'errlog'
 
 
 class TestMysqlutil(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+
+        dcli = utdocker.get_client()
+        rst = dcli.images(mysql_test_image)
+
+        if len(rst) > 0:
+            dd(mysql_test_image, ' is ready')
+            dd(rst)
+        else:
+            dd('start to build image', mysql_test_image)
+            build_image = os.path.join('pykit', 'mysqlutil', 'test', 'dep', 'build_img.sh')
+            code, out, err = proc.shell_script(build_image)
+            if code != 0:
+                raise Exception('build image failed. return code: {c}, out: {o}, err: {e}'.format(
+                    c=code, o=out, e=err))
+            dd('build image finished')
+
+        dd('start mysql: ' + mysql_test_container)
+
+        utdocker.start_container(name=mysql_test_container,
+                                image=mysql_test_image,
+                                env={
+                                    'MYSQL_ROOT_PASSWORD': mysql_test_password,
+                                },
+                                )
+
+        time.sleep(1)
+
+        dd('get mysql ip inside container')
+        rc, out, err = proc.command(
+            'docker',
+            'run',
+            '-i',
+            '--link', mysql_test_container + ':mysql',
+            '--rm', mysql_test_image,
+            'sh', '-c', 'exec echo "$MYSQL_PORT_3306_TCP_ADDR"',
+        )
+
+        ip = out.strip()
+        dd('ip: ' + repr(ip))
+
+        global mysql_test_host
+        mysql_test_host = ip
+
+    @classmethod
+    def tearDownClass(cls):
+
+        utdocker.remove_container(mysql_test_container)
+
     def test_scan_index(self):
 
-        mysql_ip = start_mysql_server()
-
         addr = {
-            'host': mysql_ip,
+            'host': mysql_test_host,
             'port': mysql_test_port,
             'user': mysql_test_user,
             'passwd': mysql_test_password,
@@ -78,28 +127,25 @@ class TestMysqlutil(unittest.TestCase):
             ),
         )
 
-        try:
-            for conn in conns:
-                dd('conn: ', conn)
+        for conn in conns:
+            dd('conn: ', conn)
 
-                for args, kwargs, rst_expect, msg in cases:
+            for args, kwargs, rst_expect, msg in cases:
 
-                    args = [conn, table, result_fields] + args
-                    kwargs['use_dict'] = False
+                args = [conn, table, result_fields] + args
+                kwargs['use_dict'] = False
 
-                    dd('msg: ', msg)
+                dd('msg: ', msg)
 
-                    rst = mysqlutil.scan_index(*args, **kwargs)
+                rst = mysqlutil.scan_index(*args, **kwargs)
 
-                    for i, rr in enumerate(rst):
-                        dd('rst:', rr)
-                        dd('except: ', rst_expect[i])
+                for i, rr in enumerate(rst):
+                    dd('rst:', rr)
+                    dd('except: ', rst_expect[i])
 
-                        self.assertEqual(rr[0], long(rst_expect[i]))
+                    self.assertEqual(rr[0], long(rst_expect[i]))
 
-                    self.assertEqual(len(rst_expect), i+1)
-        finally:
-            stop_mysql_server()
+                self.assertEqual(len(rst_expect), i+1)
 
         error_cases = (
             ([addr, table, result_fields, ['service', 'ip', '_id'], ['common0', '127.0.0.2']],
@@ -635,12 +681,10 @@ class TestMysqlutil(unittest.TestCase):
 
     def test_make_sharding(self):
 
-        mysql_ip = start_mysql_server()
-
         db = mysql_test_db
         table = mysql_test_table
         conn = {
-            'host': mysql_ip,
+            'host': mysql_test_host,
             'port': mysql_test_port,
             'user': mysql_test_user,
             'passwd': mysql_test_password,
@@ -732,68 +776,13 @@ class TestMysqlutil(unittest.TestCase):
             ),
         )
 
-        try:
-            for conf, expected in cases:
+        for conf, expected in cases:
 
-                conf['db'] = db
-                conf['table'] = table
-                conf['conn'] = conn
-                dd('expected: ', expected)
-                result = mysqlutil.make_sharding(conf)
-                dd('result  : ', result)
-                self.assertEqual(result, expected)
-        finally:
-            stop_mysql_server()
+            conf['db'] = db
+            conf['table'] = table
+            conf['conn'] = conn
+            dd('expected: ', expected)
+            result = mysqlutil.make_sharding(conf)
+            dd('result  : ', result)
+            self.assertEqual(result, expected)
 
-def docker_does_container_exist(name):
-
-    dcli = _docker_cli()
-    try:
-        dcli.inspect_container(name)
-        return True
-    except docker.errors.NotFound:
-        return False
-
-def _docker_cli():
-    dcli = docker.Client(base_url='unix://var/run/docker.sock')
-    return dcli
-
-def start_mysql_server():
-
-    # create docker image by run mysqlutil/test/dep/build_img.sh before test
-    if not docker_does_container_exist(mysql_test_name):
-
-        dd('create container: ' + mysql_test_name)
-        dcli = _docker_cli()
-        dcli.create_container(name=mysql_test_name,
-                              environment={
-                                  'MYSQL_ROOT_PASSWORD': mysql_test_password,
-                              },
-                              image=mysql_test_tag,
-                              )
-        time.sleep(2)
-
-    dd('start mysql: ' + mysql_test_name)
-    dcli = _docker_cli()
-    dcli.start(container=mysql_test_name)
-
-    dd('get mysql ip inside container')
-    rc, out, err = proc.command(
-        'docker',
-        'run',
-        '-i',
-        '--link', mysql_test_name + ':mysql',
-        '--rm', mysql_test_tag,
-        'sh', '-c', 'exec echo "$MYSQL_PORT_3306_TCP_ADDR"',
-    )
-
-    ip = out.strip()
-    dd('ip: ' + repr(ip))
-
-    return ip
-
-def stop_mysql_server():
-
-    # remove docker image by run mysqlutil/test/dep/rm_imd.sh after test
-    dcli = _docker_cli()
-    dcli.stop(container=mysql_test_name)
