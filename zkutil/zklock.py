@@ -146,8 +146,7 @@ class ZKLock(object):
         for holder, ver in self.watch_acquire(timeout=timeout):
             continue
 
-    def try_lock(self):
-        # TODO rename it to try_acquire
+    def try_acquire(self):
 
         try:
             self.acquire(timeout=-1)

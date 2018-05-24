@@ -53,7 +53,7 @@ class ZKStorage(Storage):
 
         keylock = self._make_key_lock(txid, key)
 
-        locked, txid, ver = keylock.try_lock()
+        locked, txid, ver = keylock.try_acquire()
         if locked:
             keylock.release()
         else:

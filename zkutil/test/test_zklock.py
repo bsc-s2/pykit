@@ -191,7 +191,7 @@ class TestZKLock(unittest.TestCase):
             val, zstate = self.zk.get(a.lock_path)
             self.assertEqual((val, zstate.version), a.lock_holder)
 
-            locked, holder, ver = b.try_lock()
+            locked, holder, ver = b.try_acquire()
             self.assertFalse(locked)
             self.assertEqual((a.identifier, 0), (holder, ver))
             self.assertEqual((val, zstate.version), (holder, ver))
@@ -235,7 +235,7 @@ class TestZKLock(unittest.TestCase):
 
         with l1:
             with ututil.Timer() as t:
-                locked, holder, ver = l2.try_lock()
+                locked, holder, ver = l2.try_acquire()
                 self.assertFalse(locked)
                 self.assertEqual(l1.identifier, holder)
                 self.assertGreaterEqual(ver, 0)
@@ -243,7 +243,7 @@ class TestZKLock(unittest.TestCase):
                 self.assertAlmostEqual(0.0, t.spent(), delta=0.05)
 
         with ututil.Timer() as t:
-            locked, holder, ver = l2.try_lock()
+            locked, holder, ver = l2.try_acquire()
             self.assertTrue(locked)
             self.assertEqual(l2.identifier, holder)
             self.assertEqual(ver, 0)

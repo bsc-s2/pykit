@@ -32,7 +32,7 @@
     - [Why we need this](#why-we-need-this)
     - [zkutil.ZKLock.acquire](#zkutilzklockacquire)
     - [zkutil.ZKLock.watch_acquire](#zkutilzklockwatch_acquire)
-    - [zkutil.ZKLock.try_lock](#zkutilzklocktry_lock)
+    - [zkutil.ZKLock.try_acquire](#zkutilzklocktry_acquire)
     - [zkutil.ZKLock.try_release](#zkutilzklocktry_release)
     - [zkutil.ZKLock.release](#zkutilzklockrelease)
 - [Author](#author)
@@ -766,10 +766,10 @@ except zkutil.LockTimeout as e:
 **return**:
 a `generator`
 
-###  zkutil.ZKLock.try_lock
+###  zkutil.ZKLock.try_acquire
 
 **syntax**:
-`ZKLock.try_lock()`
+`ZKLock.try_acquire()`
 
 Try to acquire the lock and return result.
 It never blocks.
