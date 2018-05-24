@@ -144,7 +144,7 @@ class ZKTransaction(object):
                         logger.info('{tx} wait[{key}]-> {other_txid} deadlock'.format(
                             tx=self, key=key, other_txid=txidstr(other_txid)))
 
-                        self.unlock_all_keys()
+                        self.release_all_key_locks()
                         for i in range(other_txid, self.txid):
                             self.wait_tx_to_finish(i)
 
@@ -241,7 +241,7 @@ class ZKTransaction(object):
         for k, v in jour.items():
             self.zkstorage.apply_record(self.txid, k, v)
 
-        # unlock all
+        # release all key locks
         for key in jour:
             self.zkstorage.try_release_key(self.txid, key)
 
@@ -310,9 +310,9 @@ class ZKTransaction(object):
             self.zkstorage.apply_record(self.txid, k, v)
             logger.info('{tx} applied: {k}={v}'.format(tx=self, k=k, v=v))
 
-        # Must unlock keys before add to txidset.
+        # Must release key locks before add to txidset.
         # A txid presents in txidset means everything is done.
-        self.unlock_all_keys()
+        self.release_all_key_locks()
         self.zkstorage.add_to_txidset(COMMITTED, self.txid)
 
         logger.info('{tx} updated txidset: {status}'.format(
@@ -333,7 +333,7 @@ class ZKTransaction(object):
 
     def _close(self):
 
-        self.unlock_all_keys()
+        self.release_all_key_locks()
 
         if self.tx_alive_lock is not None:
 
@@ -358,7 +358,7 @@ class ZKTransaction(object):
             except KazooException as e:
                 logger.info(repr(e) + ' while zkclient.stop()')
 
-    def unlock_all_keys(self):
+    def release_all_key_locks(self):
 
         for key in self.got_keys:
 
