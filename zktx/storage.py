@@ -19,22 +19,14 @@ class StorageHelper(object):
     max_value_history = 16
     conflicterror = None
 
-    def get_latest(self, key):
-        """
-        return: (<txid>, <value>), zk_version
-        """
-
-        c, ver = self.record.get(key)
-        return c[-1], ver
-
     def apply_record(self, txid, key, value):
 
         # the data in underlying storage is multi-version record:
-        # {
-        #     <txid>: <value>
-        #     <txid>: <value>
+        # [
+        #     [<txid>, <value>]
+        #     [<txid>, <value>]
         #     ...
-        # }
+        # ]
 
         for curr in txutil.cas_loop(self.record.get,
                                     self.record.set_or_create,

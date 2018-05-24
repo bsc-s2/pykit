@@ -30,7 +30,6 @@
       - [Storage.try_release_key](#storagetry_release_key)
     - [Storage helper methods](#storage-helper-methods)
   - [zktx.StorageHelper](#zktxstoragehelper)
-    - [StorageHelper.get_latest](#storagehelperget_latest)
     - [StorageHelper.apply_record](#storagehelperapply_record)
     - [StorageHelper.add_to_txidset](#storagehelperadd_to_txidset)
   - [zktx.ZKStorage](#zktxzkstorage)
@@ -392,24 +391,6 @@ See `StorageHelper`.
 It provides 3 methods those a TX engine relies on.
 Since underlying accessors has already been provided, these 3 methods are
 implementation unrelated.
-
-
-###  StorageHelper.get_latest
-
-**syntax**:
-`StorageHelper.get_latest(key)`
-
-It returns the latest update(the update with the greatest txid) of a record identified by `key`.
-
-It requires 1 accessor method: `self.record.get(key)`.
-
-**arguments**:
-
--   `key`:
-    specifies the `key` of the record.
-
-**return**:
-a 2 element list `[<txid>, <value>]` and an implementation defined version.
 
 
 ###  StorageHelper.apply_record
