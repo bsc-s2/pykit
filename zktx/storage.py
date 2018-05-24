@@ -6,8 +6,8 @@ import logging
 from pykit import rangeset
 from pykit import txutil
 
-from .accessor import KVAccessor
-from .accessor import ValueAccessor
+from .accessor import KeyValue
+from .accessor import Value
 from .status import STATUS
 
 logger = logging.getLogger(__name__)
@@ -66,9 +66,9 @@ class StorageHelper(object):
 
 class Storage(StorageHelper):
 
-    record = KVAccessor()
-    journal = KVAccessor()
-    txidset = ValueAccessor()
+    record = KeyValue()
+    journal = KeyValue()
+    txidset = Value()
 
     def watch_acquire_key(self, txid, key): raise TypeError('unimplemented')
 

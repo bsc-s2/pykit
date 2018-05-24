@@ -1,6 +1,6 @@
 from .accessor import (
-    KVAccessor,
-    ValueAccessor,
+    KeyValue,
+    Value,
 )
 
 from .exceptions import (
@@ -44,8 +44,8 @@ from .zktx import (
 )
 
 __all__ = [
-    "KVAccessor",
-    "ValueAccessor",
+    "KeyValue",
+    "Value",
 
     "Aborted",
     "ConnectionLoss",

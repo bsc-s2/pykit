@@ -2,7 +2,7 @@
 # coding: utf-8
 
 
-class KVAccessor(object):
+class KeyValue(object):
 
     def create(self, key, value): raise TypeError('unimplemented')
 
@@ -13,7 +13,7 @@ class KVAccessor(object):
     def get(self, key): raise TypeError('unimplemented')
 
 
-class ValueAccessor(object):
+class Value(object):
 
     def create(self, value): raise TypeError('unimplemented')
 

@@ -18,8 +18,8 @@
   - [TXTimeout](#txtimeout)
   - [ConnectionLoss](#connectionloss)
 - [Accessor classes](#accessor-classes)
-  - [zktx.KVAccessor](#zktxkvaccessor)
-  - [zktx.ValueAccessor](#zktxvalueaccessor)
+  - [zktx.KeyValue](#zktxkeyvalue)
+  - [zktx.Value](#zktxvalue)
   - [zktx.ZKKeyValue](#zktxzkkeyvalue)
   - [zktx.ZKValue](#zktxzkvalue)
 - [Storage classes](#storage-classes)
@@ -183,13 +183,13 @@ It is raised if tx loses connection to zk.
 
 #   Accessor classes
 
-##  zktx.KVAccessor
+##  zktx.KeyValue
 
 **syntax**:
-`zktx.KVAccessor()`
+`zktx.KeyValue()`
 
 An abstract class that defines an underlying storage access API.
-An implementation of `KVAccessor` must provides with 4 API:
+An implementation of `KeyValue` must provides with 4 API:
 
 ```python
 def create(self, key, value):
@@ -203,9 +203,9 @@ number.
 It could be any data type the implementation could understand.
 
 
-##  zktx.ValueAccessor
+##  zktx.Value
 
-Same as `KVAccessor` except the API it defines does not require the argument
+Same as `KeyValue` except the API it defines does not require the argument
 `key`.
 It is used to access a single node:
 
@@ -221,7 +221,7 @@ def get(self):
 **syntax**:
 `zktx.ZKKeyValue(zkclient, get_path=None, load=None, dump=None, nonode_callback=None)`
 
-An zk based `KVAccessor` implementation.
+An zk based `KeyValue` implementation.
 It provides 4 API `get`, `set`, `create` and `delete` to operate a zk-node.
 
 **arguments**:
@@ -292,10 +292,10 @@ Our TX engine is able to run on any storage that implements `Storage`.
 ### Storage attributes
 
 To support a transaction to run,
-a class that implements `Storage` must provides 3 accessors(`KVAccessor` and `ValueAccessor`):
+a class that implements `Storage` must provides 3 accessors(`KeyValue` and `Value`):
 
 -   `record`:
-    is a `KVAccessor` to get or set a user-data record.
+    is a `KeyValue` to get or set a user-data record.
 
     A record value is a `list` of `[txid, value]`:
 
@@ -306,13 +306,13 @@ a class that implements `Storage` must provides 3 accessors(`KVAccessor` and `Va
     ```
 
 -   `journal`:
-    is a `KVAccessor` to get or set a tx journal.
+    is a `KeyValue` to get or set a tx journal.
 
     Journal value is not define on storage layer.
     A TX engine defines the value format itself.
 
 -   `txidset`:
-    is a `ValueAccessor`.
+    is a `Value`.
     It is a single value accessor to get or set transaction id set.
 
     Value of `txidset` is a `dict` of 3 `RangeSet`(see module `rangeset`):
