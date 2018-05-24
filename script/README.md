@@ -33,12 +33,30 @@
     test:
 
     ```
-    ./script/t
-    ./script/t zkutil
-    ./script/t zkutil.test
-    ./script/t zkutil.test.test_zkutil
-    ./script/t zkutil.test.test_zkutil.TestZKUtil
-    ./script/t zkutil.test.test_zkutil.TestZKUtil.test_lock_data
+    # test all
+    cd pykit; script/t.sh
+
+    # test a module
+    cd pykit; script/t.sh zkutil
+    cd pykit; script/t.sh zkutil.test
+
+    # test a file
+    cd pykit; script/t.sh zkutil.test.test_zkutil
+
+    # test a class
+    cd pykit; script/t.sh zkutil.test.test_zkutil.TestZKUtil
+
+    # test a function
+    cd pykit; script/t.sh zkutil.test.test_zkutil.TestZKUtil.test_lock_data
+
+
+    # absolute package path
+    cd pykit; script/t.sh pykit.zkutil.test.test_zkutil.TestZKUtil.test_lock_data
+
+    # relative path: following are the same:
+    cd pykit;                    script/t.sh pykit.zkutil.test.test_zkutil
+    cd pykit/zkutil;          ../script/t.sh              test.test_zkutil
+    cd pykit/zkutil/test/; ../../script/t.sh                   test_zkutil
     ```
 
     One can use `-v` to tell `t` to display verbose info during test:

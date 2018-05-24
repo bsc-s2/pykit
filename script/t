@@ -4,12 +4,32 @@ usage()
 {
     cat <<-END
 Usage:
+    # test all
     script/t.sh
+
+    # test a module
     script/t.sh zkutil
     script/t.sh zkutil.test
+
+    # test a file
     script/t.sh zkutil.test.test_zkutil
+
+    # test a class
     script/t.sh zkutil.test.test_zkutil.TestZKUtil
+
+    # test a function
     script/t.sh zkutil.test.test_zkutil.TestZKUtil.test_lock_data
+
+
+    # absolute package path
+    script/t.sh pykit.zkutil.test.test_zkutil.TestZKUtil.test_lock_data
+
+
+    # relative path: following are the same:
+    cd pykit;                    script/t.sh pykit.zkutil.test.test_zkutil
+    cd pykit;                    script/t.sh       zkutil.test.test_zkutil
+    cd pykit/zkutil;          ../script/t.sh              test.test_zkutil
+    cd pykit/zkutil/test/; ../../script/t.sh                   test_zkutil
 
 Options:
     -v                  Display dependency check.
@@ -75,12 +95,19 @@ fi
 
 pkg="${1%/}"
 
-while [ ! -d pykit ]; do
-    pkg="$(basename $(pwd)).$pkg"
-    cd ..
-done
+if [ "${pkg%%.*}" = "pykit" ]; then
+    # abosulue package path
+    while [ ! -d pykit ]; do
+        cd ..
+    done
+else
+    while [ ! -d pykit ]; do
+        pkg="$(basename $(pwd)).$pkg"
+        cd ..
+    done
 
-pkg="${pkg%.}"
+    pkg="${pkg%.}"
+fi
 
 if [ "$check_dep" = "1" ]; then
     # Check if all module can be imported properly, to find uninstalled dependency
@@ -120,10 +147,9 @@ fi
 # UT_DEBUG controls if dd() should output debug log to stdout.
 # see ututil.py
 
-if $pyth -c 'import '$pkg 2>/dev/null; then
-    # it is a module
+pkg_path="${pkg//.//}"
+if [ -f "$pkg_path/__init__.py" ]; then
     PYTHONPATH="$(pwd)" UT_DEBUG=$ut_debug $pyth -m unittest discover -c $flag --failfast -s "$pkg"
 else
-    # it is a class or function: pykit.zkutil.test.test_zkutil.TestXXX
     PYTHONPATH="$(pwd)" UT_DEBUG=$ut_debug $pyth -m unittest -c $flag --failfast "$pkg"
 fi
