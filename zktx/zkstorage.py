@@ -21,21 +21,21 @@ class ZKStorage(Storage):
 
     conflicterror = BadVersionError
 
-    def __init__(self, zkclient):
+    def __init__(self, zke):
 
-        assert isinstance(zkclient, zkutil.KazooClientExt)
+        assert isinstance(zke, zkutil.KazooClientExt)
 
-        self.zkclient = zkclient
+        self.zke = zke
 
-        self.txidset = ZKValue(self.zkclient,
-                               self.zkclient._zkconf.txidset,
+        self.txidset = ZKValue(self.zke,
+                               self.zke._zkconf.txidset,
                                load=txidset_load)
 
-        self.journal = ZKKeyValue(self.zkclient,
-                                  self.zkclient._zkconf.journal)
+        self.journal = ZKKeyValue(self.zke,
+                                  self.zke._zkconf.journal)
 
-        self.record = ZKKeyValue(self.zkclient,
-                                 self.zkclient._zkconf.record,
+        self.record = ZKKeyValue(self.zke,
+                                 self.zke._zkconf.record,
                                  nonode_callback=record_nonode_cb)
 
     def watch_acquire_key(self, txid, key, timeout):
@@ -63,8 +63,8 @@ class ZKStorage(Storage):
 
     def _make_key_lock(self, txid, key):
         keylock = zkutil.ZKLock(key,
-                                zkclient=self.zkclient,
-                                zkconf=self.zkclient._zkconf,
+                                zkclient=self.zke,
+                                zkconf=self.zke._zkconf,
                                 ephemeral=False,
                                 identifier=utfjson.dump(txid))
 
