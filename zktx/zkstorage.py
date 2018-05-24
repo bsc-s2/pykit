@@ -44,7 +44,7 @@ class ZKStorage(Storage):
 
         keylock = self._make_key_lock(txid, key)
 
-        for holder, ver in keylock.watch_acquire(timeout=timeout):
+        for holder, ver in keylock.acquire_loop(timeout=timeout):
             yield int(holder), ver
 
     def try_release_key(self, txid, key):

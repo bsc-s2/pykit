@@ -95,6 +95,7 @@ class ZKLock(object):
         logger.info('node state changed:{ev}, lock might be released: {s}'.format(ev=watchevent, s=str(self)))
 
     def on_connection_change(self, state):
+
         # notify zklock to re-do acquiring procedure, to trigger Connection Error
         with self.mutex:
             self.maybe_available.set()
@@ -102,7 +103,7 @@ class ZKLock(object):
         if self.on_lost is not None:
             self.on_lost()
 
-    def watch_acquire(self, timeout=None):
+    def acquire_loop(self, timeout=None):
 
         if timeout is None:
             timeout = self.timeout
@@ -143,7 +144,7 @@ class ZKLock(object):
 
     def acquire(self, timeout=None):
 
-        for holder, ver in self.watch_acquire(timeout=timeout):
+        for holder, ver in self.acquire_loop(timeout=timeout):
             continue
 
     def try_acquire(self):

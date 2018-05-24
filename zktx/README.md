@@ -348,7 +348,7 @@ It is defined as `def watch_acquire_key(self, txid, key)`.
 
 It tries to lock a `key` for a `txid`: Same `txid` can lock a `key` more than once.
 
-It is a wrapper of `zkutil.ZKLock.watch_acquire`.
+It is a wrapper of `zkutil.ZKLock.acquire_loop`.
 
 
 ####  Storage.try_release_key

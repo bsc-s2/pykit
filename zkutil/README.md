@@ -31,7 +31,7 @@
     - [Synopsis](#synopsis)
     - [Why we need this](#why-we-need-this)
     - [zkutil.ZKLock.acquire](#zkutilzklockacquire)
-    - [zkutil.ZKLock.watch_acquire](#zkutilzklockwatch_acquire)
+    - [zkutil.ZKLock.acquire_loop](#zkutilzklockacquire_loop)
     - [zkutil.ZKLock.try_acquire](#zkutilzklocktry_acquire)
     - [zkutil.ZKLock.try_release](#zkutilzklocktry_release)
     - [zkutil.ZKLock.release](#zkutilzklockrelease)
@@ -733,12 +733,12 @@ Acquire the lock in blocking mode.
 Nothing
 
 
-###  zkutil.ZKLock.watch_acquire
+###  zkutil.ZKLock.acquire_loop
 
 **syntax**:
-`zkutil.ZKLock.watch_acquire(timeout=None)`
+`zkutil.ZKLock.acquire_loop(timeout=None)`
 
-It returns a generator that yields tuple of lock holder id(`identifier`) and
+It returns a generator that yields tuple of lock-holder-id(`identifier`) and
 lock node version, if lock is held by others.
 
 Once lock is acquired, this generator stops.
@@ -750,7 +750,7 @@ This generator provides a way to customize behaviors during blocking acquiring.
 ```python
 lock = zkutil.ZKLock('foo')
 try:
-    for holder, ver in lock.watch_acquire(timeout=3):
+    for holder, ver in lock.acquire_loop(timeout=3):
         print 'lock is currently held by:', holder, ver
 
     print 'lock is acquired'

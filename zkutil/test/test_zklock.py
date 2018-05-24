@@ -204,13 +204,13 @@ class TestZKLock(unittest.TestCase):
         # no one locked
 
         n = 0
-        for holder, ver in a.watch_acquire():
+        for holder, ver in a.acquire_loop():
             n += 1
         self.assertEqual(0, n, 'acquired directly')
 
         # watch node change
 
-        it = b.watch_acquire()
+        it = b.acquire_loop()
 
         holder, ver = it.next()
         self.assertEqual((a.identifier, 0), (holder, ver))
