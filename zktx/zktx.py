@@ -184,7 +184,7 @@ class ZKTransaction(object):
 
     def redo_all_dead_tx(self):
 
-        sets = self.zkstorage.get_txidset()
+        sets = self.zkstorage.txidset.get()
 
         # Only check for holes in the txid range set.
         # With `txidset = [[1, 2], [4, 5]]`, tx-2 and tx-3 is unfinished tx.
