@@ -90,7 +90,8 @@ class ZKTransaction(object):
 
         self.lock_key(key)
 
-        (ltxid, lvalue), version = self.zkstorage.get_latest(key)
+        val, version = self.zkstorage.record.get(key)
+        ltxid, lvalue = val[-1]
 
         curr = TXRecord(k=key, v=lvalue, txid=ltxid)
         self.got_keys[key] = curr

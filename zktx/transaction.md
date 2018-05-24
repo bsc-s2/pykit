@@ -6,6 +6,7 @@
   - [Proceeding a transaction](#proceeding-a-transaction)
   - [Journal format](#journal-format)
   - [Record](#record)
+  - [Transaction journal and record example](#transaction-journal-and-record-example)
 - [Concept](#concept)
 - [A typical transaction running phases](#a-typical-transaction-running-phases)
   - [For tx killed in phase 0, 1, 2, 3](#for-tx-killed-in-phase-0-1-2-3)
@@ -85,15 +86,16 @@ A tx would update one or more records.
 A record is a zk node in user-defined record base dir, such as
 `<cluster>/record/meta/server/<server_id>`.
 
-Value of a record is a json(or yaml), it contains one or more mapping of txid to value.
+Value of a record is a json(or yaml) list, which contains one or more `(txid, value)`
+pairs(empty list is illegal!).
 
 `txid` is the txid in which a value is applied, value is any json data.
 
 Record format:
 
 ```yaml
-<txid-1>: {...}
-<txid-2>: {...}
+- [1, {...}]
+- [2, {...}]
 ...
 ```
 

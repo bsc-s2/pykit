@@ -298,14 +298,12 @@ a class that implements `Storage` must provides 3 accessors(`KVAccessor` and `Va
 -   `record`:
     is a `KVAccessor` to get or set a user-data record.
 
-    A record value is a `dict` map of `txid` to value:
+    A record value is a `list` of `[txid, value]`:
 
     ```python
-    {
-        <txid>: <value>
-        <txid>: <value>
-        ...
-    }
+    [[1, "foo"],
+     [2, "bar"],
+    ]
     ```
 
 -   `journal`:
@@ -411,7 +409,7 @@ It requires 1 accessor method: `self.record.get(key)`.
     specifies the `key` of the record.
 
 **return**:
-a tuple `(<txid>, <value>)` and an implementation defined version.
+a 2 element list `[<txid>, <value>]` and an implementation defined version.
 
 
 ###  StorageHelper.apply_record

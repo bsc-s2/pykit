@@ -83,8 +83,8 @@ class PseudoStorage(zktx.StorageHelper):
 
     def __init__(self):
         self.record = PseudoKVAccessor({
-            'foo': ({k: k for k in (1, 17)}, 0),
-            'bar': ({-1: None}, 1),
+            'foo': ([[1, 1], [17, 17]], 0),
+            'bar': ([[-1, None]], 1),
         })
 
         self.txidset = TxidsetAccessor()
@@ -100,10 +100,10 @@ class TestTXStorageHelper(unittest.TestCase):
         # get_latest relies on storage.record.get
 
         rst = self.sto.get_latest('foo')
-        self.assertEqual(((17, 17), 0), rst)
+        self.assertEqual(([17, 17], 0), rst)
 
         rst = self.sto.get_latest('bar')
-        self.assertEqual(((-1,  None), 1), rst)
+        self.assertEqual(([-1,  None], 1), rst)
 
     def test_apply_record(self):
 
@@ -124,7 +124,8 @@ class TestTXStorageHelper(unittest.TestCase):
             self.sto.apply_record(txid, key, value)
 
             rec, ver = self.sto.record.get(key)
-            self.assertEqual(expected, (rec.get(txid), ver))
+            val_of_txid = dict(rec).get(txid)
+            self.assertEqual(expected, (val_of_txid, ver))
 
     def test_apply_record_max_history(self):
 
@@ -169,7 +170,7 @@ class TestTXStorageHelper(unittest.TestCase):
         dd(ver)
 
         self.assertEqual(set(success_tx.keys()),
-                         set(rec.keys()))
+                         set([x[0] for x in rec]))
 
         latest, ver = self.sto.get_latest('bar')
         dd(latest, ver)

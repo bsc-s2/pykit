@@ -21,17 +21,11 @@ class StorageHelper(object):
 
     def get_latest(self, key):
         """
-        return: (
-                    {<txid> : <value>},
-                    zk_version,
-                )
+        return: (<txid>, <value>), zk_version
         """
 
         c, ver = self.record.get(key)
-
-        txids = sorted(c.keys())
-        max_txid = txids[-1]
-        return (max_txid, c[max_txid]), ver
+        return c[-1], ver
 
     def apply_record(self, txid, key, value):
 
@@ -47,17 +41,14 @@ class StorageHelper(object):
                                     args=(key, ),
                                     conflicterror=self.conflicterror):
 
-            max_txid = -1
-            txids = sorted(curr.v.keys())
-            if len(txids) > 0:
-                max_txid = max(txids)
+            max_txid = curr.v[-1][0]
 
             if max_txid >= txid:
                 return False
 
-            curr.v[txid] = value
-            if len(curr.v) > self.max_value_history:
-                del curr.v[txids[0]]
+            curr.v.append((txid, value))
+            while len(curr.v) > self.max_value_history:
+                curr.v.pop(0)
 
         return True
 

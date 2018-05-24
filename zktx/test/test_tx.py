@@ -53,7 +53,7 @@ class TestTX(base.ZKTestBase):
         tx.commit()
 
         rst, ver = self.zk.get('record/foo')
-        self.assertEqual({'-1': None, '1': 1}, utfjson.load(rst))
+        self.assertEqual([[-1, None], [1, 1]], utfjson.load(rst))
 
         rst, ver = self.zk.get('tx/txidset')
         self.assertEqual({COMMITTED: [[1, 2]],
@@ -73,7 +73,7 @@ class TestTX(base.ZKTestBase):
             t1.commit()
 
         rst, ver = self.zk.get('record/foo')
-        self.assertEqual({'-1': None, '1': 1}, utfjson.load(rst))
+        self.assertEqual([[-1, None], [1, 1]], utfjson.load(rst))
 
         rst, ver = self.zk.get('tx/txidset')
         self.assertEqual({COMMITTED: [[1, 2]],
@@ -97,7 +97,7 @@ class TestTX(base.ZKTestBase):
             t1.commit()
 
         rst, ver = self.zk.get('record/foo')
-        self.assertEqual({'-1': None, '1': 2}, utfjson.load(rst))
+        self.assertEqual([[-1, None], [1, 2]], utfjson.load(rst))
 
     def test_run(self):
 

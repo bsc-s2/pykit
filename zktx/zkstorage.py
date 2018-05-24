@@ -36,7 +36,6 @@ class ZKStorage(Storage):
 
         self.record = ZKKeyValue(self.zkclient,
                                  self.zkclient._zkconf.record,
-                                 load=record_load,
                                  nonode_callback=record_nonode_cb)
 
     def watch_acquire_key(self, txid, key, timeout):
@@ -81,22 +80,9 @@ def txidset_load(value):
     return rst
 
 
-def record_load(value):
-
-    # json does not support int as key.
-    # It converts int to str.
-    # We need to convert it back to int
-
-    rst = {int(k): v
-           for k, v in value.items()}
-    if len(rst) == 0:
-        rst[-1] = None
-    return rst
-
-
 def record_nonode_cb():
     """
     If NoNodeError received, make a default value for a record
     """
 
-    return {-1: None}, -1
+    return [(-1, None)], -1
