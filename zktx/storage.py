@@ -70,6 +70,6 @@ class Storage(StorageHelper):
     journal = KeyValue()
     txidset = Value()
 
-    def watch_acquire_key(self, txid, key): raise TypeError('unimplemented')
+    def acquire_key_loop(self, txid, key): raise TypeError('unimplemented')
 
     def try_release_key(self, txid, key): raise TypeError('unimplemented')

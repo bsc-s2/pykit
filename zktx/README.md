@@ -26,7 +26,7 @@
   - [zktx.Storage](#zktxstorage)
     - [Storage attributes](#storage-attributes)
     - [Storage methods](#storage-methods)
-      - [Storage.watch_acquire_key](#storagewatch_acquire_key)
+      - [Storage.acquire_key_loop](#storageacquire_key_loop)
       - [Storage.try_release_key](#storagetry_release_key)
     - [Storage helper methods](#storage-helper-methods)
   - [zktx.StorageHelper](#zktxstoragehelper)
@@ -339,12 +339,12 @@ a class that implements `Storage` must provides 3 accessors(`KeyValue` and `Valu
 
 An implementation of `Storage` must implement 2 locking methods:
 
-####  Storage.watch_acquire_key
+####  Storage.acquire_key_loop
 
 **syntax**:
-`Storage.watch_acquire_key(txid, key)`
+`Storage.acquire_key_loop(txid, key)`
 
-It is defined as `def watch_acquire_key(self, txid, key)`.
+It is defined as `def acquire_key_loop(self, txid, key)`.
 
 It tries to lock a `key` for a `txid`: Same `txid` can lock a `key` more than once.
 

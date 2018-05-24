@@ -38,7 +38,7 @@ class ZKStorage(Storage):
                                  self.zke._zkconf.record,
                                  nonode_callback=record_nonode_cb)
 
-    def watch_acquire_key(self, txid, key, timeout):
+    def acquire_key_loop(self, txid, key, timeout):
 
         logger.info('watch acquire: {txid} {key}'.format(txid=txid, key=key))
 

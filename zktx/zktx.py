@@ -110,7 +110,7 @@ class ZKTransaction(object):
     def lock_key(self, key):
 
         try:
-            for other_txid, ver in self.zkstorage.watch_acquire_key(
+            for other_txid, ver in self.zkstorage.acquire_key_loop(
                     self.txid, key, timeout=self.time_left()):
 
                 logger.info('{tx} wait[{key}]-> {other_txid} ver: {ver}'.format(

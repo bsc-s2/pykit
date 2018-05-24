@@ -76,14 +76,14 @@ class TestZKStorage(base.ZKTestBase):
 
     def test_lock(self):
 
-        for holder, ver in self.zs.watch_acquire_key(2, 'foo', 10):
+        for holder, ver in self.zs.acquire_key_loop(2, 'foo', 10):
             self.fail("should not yield other lock holder")
 
-        for holder, ver in self.zs.watch_acquire_key(2, 'foo', 10):
+        for holder, ver in self.zs.acquire_key_loop(2, 'foo', 10):
             self.fail("lock twice should be allowed.")
 
         try:
-            for holder, ver in self.zs.watch_acquire_key(3, 'foo', 0.1):
+            for holder, ver in self.zs.acquire_key_loop(3, 'foo', 0.1):
                 self.assertEqual(2, holder)
             self.fail('expect lock timeout')
         except zkutil.LockTimeout:
