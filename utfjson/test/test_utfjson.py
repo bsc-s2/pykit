@@ -46,6 +46,21 @@ class TestUTFJson(unittest.TestCase):
         self.assertEqual('\xbb', rst)
         self.assertEqual(str, type(rst))
 
+    def test_load_backslash_x_encoded(self):
+
+        s = '"\\x61"'
+        self.assertEqual('a', utfjson.load(s))
+
+        s = '"\\X61"'
+        self.assertEqual('a', utfjson.load(s))
+
+        s = '"\\xe6\\x88\\x91"'
+        self.assertEqual('我', utfjson.load(s))
+
+        self.assertRaises(utfjson.JSONDecodeError, utfjson.load, '"\\"')
+        self.assertRaises(utfjson.JSONDecodeError, utfjson.load, '"\\x"')
+        self.assertRaises(utfjson.JSONDecodeError, utfjson.load, '"\\x6"')
+
     def test_load_decode(self):
         self.assertEqual('我', utfjson.load('"我"'))
         self.assertEqual(u'我', utfjson.load('"我"', encoding='utf-8'))

@@ -50,6 +50,8 @@ Load json string.
     a valid json string or `None`. If it is None, `utfjson.load` does not
     raise error, but returns None instead.
 
+    `"\\x61"`(4 chars) is loaded into `'a'`(ascii 61).
+
 -   `encoding`:
     specifies if to decode strings in result to unicode.
 
