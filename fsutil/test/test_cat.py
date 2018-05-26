@@ -64,6 +64,31 @@ class TestCat(unittest.TestCase):
 
         self.assertEqual(expected, rst)
 
+    def test_half_line(self):
+
+        n = 1024
+
+        def _append():
+            for i in range(n):
+                time.sleep(0.001)
+                append_bytes(self.fn, 'a' * 2048)
+                time.sleep(0.001)
+                append_bytes(self.fn, 'b' * 2048 + '\n')
+
+        th = threadutil.start_daemon(_append)
+
+        i = 0
+
+        try:
+            for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0.1):
+                self.assertEqual('b', l[-1])
+                i += 1
+        except fsutil.NoData:
+            pass
+
+        th.join()
+        self.assertEqual(n, i)
+
     def test_offset_record_when_destory(self):
 
         expected = [x * 32 for x in 'qwertyuiop']
@@ -90,9 +115,9 @@ class TestCat(unittest.TestCase):
 
     def test_data_chucked(self):
 
-        expected = [ 'a' * 32 ]
-        new_data = [ 'b' * 32 ]
-        chucked  = [ 'c' * 31 ]
+        expected = ['a' * 32]
+        new_data = ['b' * 32]
+        chucked = ['c' * 31]
 
         cat_handle = fsutil.Cat(self.fn, strip=True)
         rst = []
@@ -114,6 +139,7 @@ class TestCat(unittest.TestCase):
         fsutil.write_file(self.fn, chucked[0])
         for l in cat_handle.iterate(timeout=0):
             rst.append(l)
+        dd(rst)
         self.assertEqual(expected + new_data + chucked, rst)
 
     def test_continue_read(self):
@@ -149,7 +175,7 @@ class TestCat(unittest.TestCase):
                 append_lines(self.fn, [l])
                 dd('overrided: ', l)
 
-        th = threadutil.start_daemon_thread(_override)
+        th = threadutil.start_daemon(_override)
 
         try:
             for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0.4):
@@ -174,7 +200,7 @@ class TestCat(unittest.TestCase):
             append_lines(self.fn, expected)
             dd('appended')
 
-        th = threadutil.start_daemon_thread(_append)
+        th = threadutil.start_daemon(_append)
 
         try:
             for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0.4):
@@ -199,7 +225,7 @@ class TestCat(unittest.TestCase):
             append_lines(self.fn, expected)
             dd('appended')
 
-        th = threadutil.start_daemon_thread(_append)
+        th = threadutil.start_daemon(_append)
 
         try:
             for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0.1):
@@ -229,7 +255,7 @@ class TestCat(unittest.TestCase):
                 append_lines(self.fn, expected)
             dd('appended')
 
-        th = threadutil.start_daemon_thread(_append)
+        th = threadutil.start_daemon(_append)
 
         try:
             for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0.3):
@@ -258,7 +284,7 @@ class TestCat(unittest.TestCase):
             append_lines(self.fn, expected)
             dd('appended')
 
-        th = threadutil.start_daemon_thread(_append)
+        th = threadutil.start_daemon(_append)
 
         try:
             for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0.1):
@@ -356,7 +382,7 @@ class TestCat(unittest.TestCase):
             time.sleep(0.1)
             append_lines(self.fn, expected)
 
-        th = threadutil.start_daemon_thread(_append)
+        th = threadutil.start_daemon(_append)
 
         try:
             for line in fsutil.Cat(self.fn, strip=True, file_end_handler=_end).iterate(timeout=0.2):
@@ -543,5 +569,14 @@ def append_lines(fn, lines):
     with open(fn, 'a') as f:
         for l in lines:
             f.write(l + '\n')
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def append_bytes(fn, *strings):
+
+    with open(fn, 'a') as f:
+        for s in strings:
+            f.write(s)
         f.flush()
         os.fsync(f.fileno())

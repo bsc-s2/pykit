@@ -20,12 +20,13 @@ from .fsutil import (
 )
 
 from .cat import (
+    SEEK_END,
+    SEEK_START,
+
     CatError,
     LockTimeout,
     NoData,
     NoSuchFile,
-    SEEK_END,
-    SEEK_START,
     Cat
 )
 
@@ -49,6 +50,9 @@ __all__ = [
     "remove",
     "write_file",
 
+
+    "SEEK_END",
+    "SEEK_START",
 
     "CatError",
     "LockTimeout",

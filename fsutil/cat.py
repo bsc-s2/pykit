@@ -85,6 +85,7 @@ class Cat(object):
         self.read_chunk_size = read_chunk_size
 
         self.running = None
+        self.bufferred = None  # (offset, content)
 
         if (self.handler is not None
                 and callable(self.handler)):
@@ -168,6 +169,14 @@ class Cat(object):
                     if time.time() > expire_at:
                         # caller expect to return at once when it has read once,
                         # timeout < 0
+
+                        # When timeout, it means no more data will be appended.
+                        # Thus the bufferred must be a whole line, even there is
+                        # not a trailing '\n' presents
+                        if self.bufferred is not None:
+                            l = self.bufferred[1]
+                            self.bufferred = None
+                            yield l
                         return
 
                 except NoData as e:
@@ -341,17 +350,33 @@ class Cat(object):
 
         while True:
             offset = f.tell()
-            if offset >= _file_size(f):
+            fsize = _file_size(f)
+            if offset >= fsize:
                 break
 
             lines = f.readlines(self.read_chunk_size)
+            if self.bufferred is not None:
+                offset = self.bufferred[0]
+                lines[0] = self.bufferred[1] + lines[0]
+                self.bufferred = None
 
             try:
-                for l in lines:
+                for l in lines[:-1]:
                     line = l
                     if self.strip:
                         line = line.strip('\r\n')
 
+                    offset += len(l)
+                    yield line
+
+                l = lines[-1]
+                if not l.endswith(('\r', '\n')):
+                    self.bufferred = (offset, l)
+                    offset += len(l)
+                else:
+                    line = l
+                    if self.strip:
+                        line = line.strip('\r\n')
                     offset += len(l)
                     yield line
             finally:
