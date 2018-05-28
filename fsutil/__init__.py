@@ -30,6 +30,12 @@ from .cat import (
     Cat
 )
 
+from .iostat import (
+    DeviceNotFound,
+
+    iostat,
+)
+
 __all__ = [
     "FSUtilError",
     "NotMountPoint",
@@ -58,5 +64,9 @@ __all__ = [
     "LockTimeout",
     "NoData",
     "NoSuchFile",
-    "Cat"
+    "Cat",
+
+    "DeviceNotFound",
+
+    "iostat",
 ]

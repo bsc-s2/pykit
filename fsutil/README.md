@@ -34,6 +34,8 @@
 - [Stat methods](#stat-methods)
   - [fsutil.get_path_inode_usage](#fsutilget_path_inode_usage)
   - [fsutil.get_path_usage](#fsutilget_path_usage)
+  - [fsutil.iostat](#fsutiliostat)
+    - [Implementation](#implementation)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -667,6 +669,71 @@ then it can not use the reserved space.
 Thus this function provides with the `available` bytes by default.
 
 
+##  fsutil.iostat
+
+**syntax**:
+`fsutil.iostat(device=None, path=None, stat_path=None)`
+
+Collect IO stat.
+
+**Synopsis**:
+
+```python
+print fsutil.iostat('/dev/sda1') # {'read': 6151, 'write': 34073, 'ioutil': 0}
+print fsutil.iostat(path='/')    # {'read': 6151, 'write': 34073, 'ioutil': 100}
+```
+
+It accepts either `device` or `path` as target to collect IO stat from:
+
+-   `device` should be a path starts with `/dev`, such as `/dev/sda1`.
+
+-   `path` is any path on a valid mounted fs. If `path` is used and `device` is
+    `None`, it uses the device on which the `path` is mounted.
+
+One must specify either `device` or `path`.
+
+
+### Implementation
+
+`/proc/diskstats` provides accumulated IO stat since a host boots up.
+Such as total count of read/write operation on a disk.
+
+This function records changes in `/proc/diskstats` and calculates the diff
+between two recorded stat as return value.
+
+`fsutil.iostat` reads instant IO stat from `/proc/diskstats` and save it in
+`stat_path`. When next time `fsutil.iostat` is called, it calculates the
+difference between the current stat from `/proce/diskstats` and the saved stat.
+
+If no previous recorded stat saved in `stat_path`, it waits a second and load
+`/proc/diskstats` again, and calculate the diff.
+
+**arguments**:
+
+-   `device`:
+    specifies from which device to collect IO stat.
+
+-   `path`:
+    specifies from which fs path to collect IO stat.
+
+-   `stat_path`:
+    specifies where to store and load IO stat.
+
+    By default it is `None`, then it uses `config.iostat_stat_path`(`/tmp/pykit-iostat`) to save
+    stat.
+
+**return**:
+a dict contains 3 field:
+```json
+{
+'read': 6151,
+'write': 34073,
+'ioutil': 0
+}
+```
+
+`read` and `write` is in byte/second.
+`ioutil` is a percentage number between 0 and 100.
 
 
 #   Author
