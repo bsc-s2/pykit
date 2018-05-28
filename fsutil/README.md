@@ -17,7 +17,7 @@
     - [Cat.cat](#catcat)
     - [Cat.stat_path](#catstat_path)
     - [Cat.reset_stat](#catreset_stat)
-- [Methods](#methods)
+- [File system operation methods](#file-system-operation-methods)
   - [fsutil.assert_mountpoint](#fsutilassert_mountpoint)
   - [fsutil.get_all_mountpoint](#fsutilget_all_mountpoint)
   - [fsutil.get_device](#fsutilget_device)
@@ -25,14 +25,15 @@
   - [fsutil.get_disk_partitions](#fsutilget_disk_partitions)
   - [fsutil.get_mountpoint](#fsutilget_mountpoint)
   - [fsutil.get_path_fs](#fsutilget_path_fs)
-  - [fsutil.get_path_inode_usage](#fsutilget_path_inode_usage)
-  - [fsutil.get_path_usage](#fsutilget_path_usage)
   - [fsutil.makedirs](#fsutilmakedirs)
   - [fsutil.get_sub_dirs](#fsutilget_sub_dirs)
   - [fsutil.read_file](#fsutilread_file)
   - [fsutil.remove](#fsutilremove)
   - [fsutil.write_file](#fsutilwrite_file)
   - [fsutil.calc_checksums](#fsutilcalc_checksums)
+- [Stat methods](#stat-methods)
+  - [fsutil.get_path_inode_usage](#fsutilget_path_inode_usage)
+  - [fsutil.get_path_usage](#fsutilget_path_usage)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -291,7 +292,7 @@ Remove the file used to store scanning offset.
 **return**:
 Nothing
 
-# Methods
+# File system operation methods
 
 ##  fsutil.assert_mountpoint
 
@@ -427,69 +428,6 @@ Return the name of device where the `path` is mounted.
 
 **return**:
 the file-system name, such as `ext4` or `hfs`.
-
-
-##  fsutil.get_path_inode_usage
-
-**syntax**:
-`fsutil.get_path_inode_usage(path)`
-
-Collect inode usage information of the file system `path` is mounted on.
-
-**arguments**:
-
-- `path`:
-specifies the fs - path to collect usage info.
-Such as `/tmp` or `/home/alice`.
-
-**return**:
-a dictionary in the following format:
-
-```json
-{
-    'total':     total number of inode,
-    'used':      used inode(includes inode reserved for super user),
-    'available': total - used,
-    'percent':   float(used) / 'total'
-}
-```
-
-
-##  fsutil.get_path_usage
-
-**syntax**:
-`fsutil.get_path_usage(path)`
-
-Collect space usage information of the file system `path` is mounted on.
-
-**arguments**:
-
--   `path`:
-    specifies the fs-path to collect usage info.
-    Such as `/tmp` or `/home/alice`.
-
-**return**:
-a dictionary in the following format:
-
-```
-{
-    'total':     total space in byte,
-    'used':      used space in byte(includes space reserved for super user),
-    'available': total - used,
-    'percent':   float(used) / 'total',
-}
-```
-
-There two concept for unused space: `free` and `available`
-because some file systems have a reserved(maybe 5%) for super user like `root`:
-
-- free:      with    blocks reserved for super users.
-
-- available: without blocks reserved for super users.
-
-Since most of the time an application can not run as `root`
-then it can not use the reserved space.
-Thus this function provides with the `available` bytes by default.
 
 
 ##  fsutil.makedirs
@@ -662,6 +600,73 @@ print fsutil.calc_checksums(file_name, sha1=True, md5=True, crc32=False, sha256=
 
 **return**:
 a dict with keys `sha1` and `md5` and `crc32` and `sha256`.
+
+
+#   Stat methods
+
+##  fsutil.get_path_inode_usage
+
+**syntax**:
+`fsutil.get_path_inode_usage(path)`
+
+Collect inode usage information of the file system `path` is mounted on.
+
+**arguments**:
+
+- `path`:
+specifies the fs - path to collect usage info.
+Such as `/tmp` or `/home/alice`.
+
+**return**:
+a dictionary in the following format:
+
+```json
+{
+    'total':     total number of inode,
+    'used':      used inode(includes inode reserved for super user),
+    'available': total - used,
+    'percent':   float(used) / 'total'
+}
+```
+
+
+##  fsutil.get_path_usage
+
+**syntax**:
+`fsutil.get_path_usage(path)`
+
+Collect space usage information of the file system `path` is mounted on.
+
+**arguments**:
+
+-   `path`:
+    specifies the fs-path to collect usage info.
+    Such as `/tmp` or `/home/alice`.
+
+**return**:
+a dictionary in the following format:
+
+```
+{
+    'total':     total space in byte,
+    'used':      used space in byte(includes space reserved for super user),
+    'available': total - used,
+    'percent':   float(used) / 'total',
+}
+```
+
+There two concept for unused space: `free` and `available`
+because some file systems have a reserved(maybe 5%) for super user like `root`:
+
+- free:      with    blocks reserved for super users.
+
+- available: without blocks reserved for super users.
+
+Since most of the time an application can not run as `root`
+then it can not use the reserved space.
+Thus this function provides with the `available` bytes by default.
+
+
 
 
 #   Author
