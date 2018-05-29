@@ -43,6 +43,19 @@ from .zktx import (
     run_tx,
 )
 
+from .redisstorage import (
+    RedisStorage,
+)
+
+from .redisaccessor import (
+    RedisKeyValue,
+    RedisValue,
+)
+
+from .slave import (
+    Slave,
+)
+
 __all__ = [
     "KeyValue",
     "Value",
@@ -74,4 +87,11 @@ __all__ = [
     "ZKTransaction",
 
     "run_tx",
+
+    "RedisStorage",
+
+    "RedisKeyValue",
+    "RedisValue",
+
+    "Slave",
 ]
