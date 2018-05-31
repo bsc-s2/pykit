@@ -61,7 +61,7 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for idc, idc_type, roles, argkv in cases:
-            serverrec = cluster.make_serverrec(idc, idc_type, roles, **argkv)
+            serverrec = cluster.make_serverrec(idc, idc_type, roles, '/s2', **argkv)
 
             dd('serverrec:' + repr(serverrec))
 
@@ -75,6 +75,12 @@ class TestClusterServer(unittest.TestCase):
                 self.assertIn('frequency', serverrec['cpu'])
 
             self.assertIn('mountpoints', serverrec)
+            self.assertEqual(1, serverrec['next_mount_index'])
+            self.assertIn('allocated_drive', serverrec)
+
+            for k, v in serverrec['allocated_drive'].items():
+                self.assertIn('/s2', k)
+                self.assertEqual({'status': 'normal'}, v)
 
             self.assertEqual(socket.gethostname(), serverrec['hostname'])
             self.assertEqual(idc, serverrec['idc'])
@@ -87,9 +93,11 @@ class TestClusterServer(unittest.TestCase):
             serverrec_str = cluster.get_serverrec_str(serverrec)
             dd('serverrec_str:' + repr(serverrec_str))
 
-            exp_str = 'server_id: {sid}; idc: {idc}; idc_type: {idct}; roles: {r}; mountpoints_count: {mp_cnt}'.format(
-                      sid=serverrec['server_id'], idc=idc, idct=idc_type,
-                      r=roles, mp_cnt=len(serverrec['mountpoints']))
+            exp_str = ('server_id: {sid}; idc: {idc}; idc_type: {idct}; roles: {r};'
+                ' mountpoints_count: {mp_cnt}; allocated_drive_count: {ad_cnt}').format(
+                sid=serverrec['server_id'], idc=idc, idct=idc_type,
+                r=roles, mp_cnt=len(serverrec['mountpoints']),
+                ad_cnt=len(serverrec['allocated_drive']))
 
             self.assertEqual(exp_str, serverrec_str)
 

@@ -42,7 +42,18 @@ def _make_mountpoints_info():
     return dict(mps_info)
 
 
-def make_serverrec(idc, idc_type, roles, **argkv):
+def _get_allocated_drive(allocated_drive_pre, mountpoints):
+    rst = {}
+    for m in mountpoints:
+        if not m.startswith(allocated_drive_pre):
+            continue
+
+        rst[m] = {'status': 'normal'}
+
+    return rst
+
+
+def make_serverrec(idc, idc_type, roles, allocated_drive_pre, **argkv):
     serverrec = {}
 
     ips = net.get_host_ip4()
@@ -66,7 +77,11 @@ def make_serverrec(idc, idc_type, roles, **argkv):
     serverrec['idc'] = idc
     serverrec['idc_type'] = idc_type
     serverrec['roles'] = roles
-    serverrec['mountpoints'] = _make_mountpoints_info()
+
+    mps = _make_mountpoints_info()
+    serverrec['mountpoints'] = mps
+    serverrec['next_mount_index'] = 1
+    serverrec['allocated_drive'] = _get_allocated_drive(allocated_drive_pre, mps)
     serverrec.update(argkv)
 
     return serverrec
@@ -80,6 +95,9 @@ def get_serverrec_str(serverrec):
 
     rst.append('mountpoints_count: {cnt}'.format(
                cnt=len(serverrec['mountpoints'])))
+
+    rst.append('allocated_drive_count: {cnt}'.format(
+        cnt=len(serverrec['allocated_drive'])))
 
     return '; '.join(rst)
 

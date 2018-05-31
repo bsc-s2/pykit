@@ -40,7 +40,7 @@ server_id = cluster.make_server_id()
 is_valid = cluster.validate_server_id(server_id)
 # return True or False
 
-serverrec = cluster.make_serverrec('.l1', 'center', {'role1': 1})
+serverrec = cluster.make_serverrec('.l1', 'center', {'role1': 1}, allocated_drive_pre="/s2")
 # out:
 #{
 #   'cpu': {
@@ -59,7 +59,12 @@ serverrec = cluster.make_serverrec('.l1', 'center', {'role1': 1})
 #   },
 #   'pub_ips': ['118.1.1.1'],
 #   'roles': {'role1': 1},
-#   'server_id': '00163e0630f7'
+#   'server_id': '00163e0630f7',
+#   'next_mount_index': 1,
+#   "allocated_drive": {
+#       "/s2/dirve/001": {"status": "normal",},
+#       "/s2/dirve/002": {"status": "normal",},
+#   },
 #}
 ```
 
@@ -97,7 +102,7 @@ Check a server_id is valid or not.
 ##  cluster.make_serverrec
 
 **syntax**:
-`cluster.make_serverrec(idc, idc_type, roles, **argkv)`
+`cluster.make_serverrec(idc, idc_type, roles, allocated_drive_pre, **argkv)`
 
 Make a `dict` (a server record).
 
@@ -117,6 +122,9 @@ Make a `dict` (a server record).
 
 -   `roles`:
     A `dict` whose values are `1`, the roles in the server.
+
+-   `allocated_drive_pre`:
+    Init status(`normal`) of the mountpoint which startswith it.
 
 -   `argkv`:
     Other fields if needed.
@@ -143,6 +151,11 @@ A `dict`, like:
     'pub_ips': ['118.1.1.1'],
     'roles': {'role1': 1},
     'server_id': '00163e0630f7'
+    'next_mount_index': 1,
+    "allocated_drive": {
+        "/s2/dirve/001": {"status": "normal",},
+        "/s2/dirve/002": {"status": "normal",},
+    },
 }
 ```
 
@@ -152,7 +165,7 @@ A `dict`, like:
 `cluster.get_serverrec_str(serverrec)`
 
 Collect some important info(`server_id`, `idc`, `idc_type`, `roles`,
-`mountpoints_count`) of `serverrec` into a `str`.
+`mountpoints_count`, `allocated_drive_count`) of `serverrec` into a `str`.
 
 **arguments**:
 
@@ -163,7 +176,7 @@ Collect some important info(`server_id`, `idc`, `idc_type`, `roles`,
 A `str`, like:
 
 ```
-"server_id: 00aabbccddee; idc: .l1; idc_type: zz; roles: {'role1': 1}; mountpoints_count: 3"
+"server_id: 00aabbccddee; idc: .l1; idc_type: zz; roles: {'role1': 1}; mountpoints_count: 3; allocated_drive_count: 0"
 ```
 
 ##  cluster.make_drive_id
