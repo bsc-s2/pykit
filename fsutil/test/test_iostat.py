@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import os
+import shelve
 import time
 import unittest
 
@@ -49,6 +50,35 @@ class TestIostat(unittest.TestCase):
 
             self.assertAlmostEqual(0.0, t.spent(), delta=0.1)
 
+    def test_duration_is_negative(self):
+
+        force_remove(config.iostat_stat_path)
+
+        with ututil.Timer() as t:
+            rst = fsutil.iostat('/dev/sda1')
+            dd(rst)
+
+            self.assertIsNotNone(rst)
+            self.assertEqual(set(rst_keys),
+                             set(rst.keys()))
+            self.assertGreaterEqual(t.spent(), 1.0)
+
+        d = shelve.open(config.iostat_stat_path)
+        x = d['sda1']
+        x['ts'] += 2
+        d['sda1'] = x
+        d.close()
+
+        with ututil.Timer() as t:
+            rst = fsutil.iostat('/dev/sda1')
+            dd(rst)
+
+            self.assertIsNotNone(rst)
+            self.assertEqual(set(rst_keys),
+                             set(rst.keys()))
+            self.assertGreater(rst['write'], 0)
+            self.assertGreaterEqual(t.spent(), 1.0)
+
     def test_path(self):
 
         rst = fsutil.iostat(path='/')
@@ -61,7 +91,7 @@ class TestIostat(unittest.TestCase):
         for k in rst_keys:
             self.assertGreaterEqual(rst[k], 0)
 
-    def test_ioutil(self):
+    def test_ioutil_heavy_load(self):
 
         sess = {'running': True}
 

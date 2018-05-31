@@ -74,21 +74,25 @@ def iostat(device=None, path=None, stat_path=None):
 
     devname = device.split('/', 2)[2]
 
-    curr = load_st(devname)
-    prev = read_prev(stat_path, devname)
-
-    if prev is None or curr['ts'] - prev['ts'] > 60:
-        write_prev(stat_path, devname, curr)
-
-    if prev is None:
-        # for the first time reading, use a small interval
-        time.sleep(1)
+    while True:
         curr = load_st(devname)
         prev = read_prev(stat_path, devname)
 
-    duration = curr['ts'] - prev['ts']
-    if duration == 0:
-        return None
+        if prev is None:
+            write_prev(stat_path, devname, curr)
+            time.sleep(1)
+            continue
+
+        duration = curr['ts'] - prev['ts']
+        if curr['ts'] - prev['ts'] <= 0:
+            write_prev(stat_path, devname, curr)
+            time.sleep(1)
+            continue
+
+        if duration > 20:
+            write_prev(stat_path, devname, curr)
+
+        break
 
     st = {'ioutil': curr['io']['ms'] - prev['io']['ms'],
           'read':  curr['r']['byte'] - prev['r']['byte'],
