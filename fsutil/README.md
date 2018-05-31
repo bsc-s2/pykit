@@ -367,12 +367,16 @@ the file-system name, such as `ext4` or `hfs`.
 ##  fsutil.get_disk_partitions
 
 **syntax**:
-`fsutil.get_disk_partitions()`
+`fsutil.get_disk_partitions(all=True)`
 
 Find and return all mounted path and its mount point information in a
 dictionary.
 
-All mount points including non-disk path are also returned.
+**arguments**:
+
+-   `all`:
+    By default it is `True` thus all mount points including non-disk path are also returned,
+    otherwise `tmpfs` or `/proc` are not returned.
 
 **return**:
 an dictionary indexed by mount point path:

@@ -68,9 +68,9 @@ def get_device_fs(device):
         return 'unknown'
 
 
-def get_disk_partitions():
+def get_disk_partitions(all=True):
 
-    partitions = psutil.disk_partitions(all=True)
+    partitions = psutil.disk_partitions(all=all)
 
     by_mount_point = {}
     for pt in partitions:

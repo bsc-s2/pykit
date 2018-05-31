@@ -73,6 +73,10 @@ class TestFSUtil(unittest.TestCase):
         for k in ('device', 'mountpoint', 'fstype', 'opts'):
             self.assertIn(k, root)
 
+        notall = fsutil.get_disk_partitions(all=False)
+        self.assertTrue(len(rst) > len(notall))
+        self.assertEqual(set([]), set(notall) - set(rst))
+
     def test_get_device(self):
 
         rst = fsutil.get_device('/inexistent')
