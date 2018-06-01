@@ -40,7 +40,7 @@ server_id = cluster.make_server_id()
 is_valid = cluster.validate_server_id(server_id)
 # return True or False
 
-serverrec = cluster.make_serverrec('.l1', 'center', {'role1': 1}, allocated_drive_pre="/s2")
+serverrec = cluster.make_serverrec('.l1', 'center', {'role1': 1}, "/s2")
 # out:
 #{
 #   'cpu': {
