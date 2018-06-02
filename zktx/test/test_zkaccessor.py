@@ -5,11 +5,22 @@ from kazoo.exceptions import NoNodeError
 from pykit import ututil
 from pykit import zktx
 from pykit.zktx.test import base
+from pykit import zkutil
 
 dd = ututil.dd
 
 
 class TestZKKVAccessor(base.ZKTestBase):
+
+    def test_set_or_create_acl(self):
+
+        kv = zktx.ZKKeyValue(self.zkauthed)
+
+        kv.set_or_create('tacl', '1')
+
+        acl, _ = self.zkauthed.get_acls('tacl')
+
+        self.assertEqual(acl, self.zkauthed._zkconf.kazoo_digest_acl())
 
     def test_get_path(self):
 
@@ -188,3 +199,13 @@ class TestZKValueAccessor(base.ZKTestBase):
         rst, ver = v.get()
         self.assertEqual('2', rst)
         self.assertEqual(2, ver)
+
+    def test_set_or_create_acl(self):
+        v = zktx.ZKValue(self.zkauthed, get_path=lambda: 'taclvalue')
+
+        # create
+
+        v.set_or_create('1')
+
+        acl, _ = self.zkauthed.get_acls('taclvalue')
+        self.assertEqual(acl, self.zkauthed._zkconf.kazoo_digest_acl())

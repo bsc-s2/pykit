@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 class ZKKeyValue(object):
-
     def __init__(self, zkclient, get_path=None, load=None, dump=None, nonode_callback=None):
 
         self.zkclient = zkclient
@@ -26,8 +25,9 @@ class ZKKeyValue(object):
             return self._get_path(key)
 
     def create(self, key, value, ephemeral=False, sequence=False):
+
         value = self._dump(value)
-        return self.zkclient.create(self.get_path(key), value,
+        return self.zkclient.create(self.get_path(key), value, acl=self._get_acl(),
                                     ephemeral=ephemeral, sequence=sequence)
 
     def delete(self, key, version=-1):
@@ -38,6 +38,7 @@ class ZKKeyValue(object):
         self.zkclient.set(self.get_path(key), value, version=version)
 
     def set_or_create(self, key, value, version=-1):
+
         value = self._dump(value)
         while True:
             try:
@@ -46,7 +47,7 @@ class ZKKeyValue(object):
             except NoNodeError:
                 if version == -1:
                     try:
-                        self.zkclient.create(self.get_path(key), value)
+                        self.zkclient.create(self.get_path(key), value, acl=self._get_acl())
                         return
                     except NodeExistsError:
                         continue
@@ -76,9 +77,15 @@ class ZKKeyValue(object):
         else:
             return val
 
+    def _get_acl(self):
+        acl = None
+        zkconf = getattr(self.zkclient, '_zkconf', None)
+        if zkconf is not None:
+            acl = zkconf.kazoo_digest_acl()
+        return acl
+
 
 class ZKValue(ZKKeyValue):
-
     def get_path(self, key):
         return self._get_path()
 

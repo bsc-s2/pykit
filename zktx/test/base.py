@@ -4,6 +4,7 @@ from kazoo.client import KazooClient
 
 from pykit import utdocker
 from pykit import ututil
+from pykit import zkutil
 
 dd = ututil.dd
 
@@ -32,9 +33,14 @@ class ZKTestBase(unittest.TestCase):
         self.zk = KazooClient('127.0.0.1:2181')
         self.zk.start()
 
+        self.zkauthed, _ = zkutil.kazoo_client_ext(
+            {'hosts': '127.0.0.1:2181', 'auth': ('digest', 'xp', '123'),
+             'acl': (('xp', '123', 'cdrwa'), ('foo', 'bar', 'rw'))})
+
         dd('start zk-test in docker')
 
     def tearDown(self):
 
         self.zk.stop()
+        self.zkauthed.stop()
         utdocker.remove_container(zk_name)

@@ -224,6 +224,8 @@ def get(self):
 An zk based `KeyValue` implementation.
 It provides 4 API `get`, `set`, `create` and `delete` to operate a zk-node.
 
+Note: If `zkclient._zkconf` has acl, znode's acl would set automatically when created.
+
 **arguments**:
 
 -   `zkclient`:
@@ -274,6 +276,7 @@ It provides 4 API `get`, `set`, `create` and `delete` to operate a zk-node.
 Same as `ZKKeyValue` except that `get_path` does not receive an argument `key`,
 Because a single value accessor operates on only one zk-node.
 
+Note: If `zkclient._zkconf` has acl, znode's acl would set automatically when created.
 
 #   Storage classes
 
