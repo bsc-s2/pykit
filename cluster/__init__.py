@@ -1,3 +1,11 @@
+from .block import (
+    BlockID,
+)
+
+from .block_group import (
+    BlockGroupID,
+)
+
 from .server import (
     get_serverrec_str,
     idc_distance,
@@ -11,6 +19,10 @@ from .server import (
 )
 
 __all__ = [
+    "BlockID",
+
+    "BlockGroupID",
+
     "get_serverrec_str",
     "idc_distance",
     "make_drive_id",
