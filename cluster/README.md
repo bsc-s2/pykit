@@ -6,14 +6,17 @@
 - [Status](#status)
 - [Synopsis](#synopsis)
 - [Description](#description)
+- [Exceptions](#exceptions)
+  - [cluster.DriveIDError](#clusterdriveiderror)
+- [Classes](#classes)
+  - [cluster.ServerID](#clusterserverid)
+    - [cluster.ServerID.validate](#clusterserveridvalidate)
+  - [cluster.DriveID](#clusterdriveid)
+    - [cluster.DriveID.validate](#clusterdriveidvalidate)
+    - [cluster.DriveID.parse](#clusterdriveidparse)
 - [Methods](#methods)
-  - [cluster.make_server_id](#clustermake_server_id)
-  - [cluster.validate_server_id](#clustervalidate_server_id)
   - [cluster.make_serverrec](#clustermake_serverrec)
   - [cluster.get_serverrec_str](#clusterget_serverrec_str)
-  - [cluster.make_drive_id](#clustermake_drive_id)
-  - [cluster.parse_drive_id](#clusterparse_drive_id)
-  - [cluster.validate_drive_id](#clustervalidate_drive_id)
   - [cluster.validate_idc](#clustervalidate_idc)
   - [cluster.idc_distance](#clusteridc_distance)
 - [Classes](#classes)
@@ -43,10 +46,10 @@ The library is considered production ready.
 ```python
 from pykit import cluster
 
-server_id = cluster.make_server_id()
+server_id = str(cluster.ServerID())
 # 12 chars from primary MAC addr: "c62d8736c728"
 
-is_valid = cluster.validate_server_id(server_id)
+is_valid = cluster.ServerID.validate(server_id)
 # return True or False
 
 serverrec = cluster.make_serverrec('.l1', 'center', {'role1': 1}, "/s2")
@@ -81,32 +84,102 @@ serverrec = cluster.make_serverrec('.l1', 'center', {'role1': 1}, "/s2")
 
 Some helper function for the server in a cluster.
 
-#   Methods
+#   Exceptions
 
-##  cluster.make_server_id
-
-**syntax**:
-`cluster.make_server_id()`
-
-Identifies a server.
-
-**return**:
-A string, Format: 12 chars from primary MAC addr(e.g.: "c62d8736c728").
-
-##  cluster.validate_server_id
+##  cluster.DriveIDError
 
 **syntax**:
-`cluster.validate_server_id(server_id)`
+`cluster.DriveIDError`
 
-Check a server_id is valid or not.
+Raise if the drive id is invalid while parse it.
+
+#   Classes
+
+##  cluster.ServerID
+
+**syntax**:
+`cluster.ServerID()`
+
+Make a server id, format: 12 chars from primary MAC addr(e.g.: "c62d8736c728").
+
+```
+from pykit import cluster
+
+print str(cluster.ServerID())
+# out: 00163e0630f7
+```
+
+### cluster.ServerID.validate
+
+**syntax**:
+`cluster.ServerID.validate(server_id)`
+
+It is a classmethod for checking a server id.
 
 **arguments**:
 
 -   `server_id`:
-    The server_id which will be checked.
+    A `str` which will be checked.
 
 **return**:
-`True` or `False`, means the server_id is valid or not.
+`True` or `False`, means the `server_id` is valid or not.
+
+##  cluster.DriveID
+
+**syntax**:
+`cluster.DriveID(server_id, mount_point_index)`
+
+Make a drive id, format: 16 chars `<server_id>0<mount_point_index>`
+
+**arguments**:
+
+    `server_id`:
+    A string, Format: 12 chars from primary MAC addr.
+
+    `mount_point_index`:
+    It is a 3-digit mount path, `001` for `/drives/001`.
+
+```
+from pykit import cluster
+
+print str(cluster.DriveID('aabbccddeeff', 10))
+# out: aabbccddeeff0010
+```
+
+### cluster.DriveID.validate
+
+**syntax**:
+`cluster.DriveID.validate(drive_id)`
+
+It is a classmethod for checking a drive id.
+
+**arguments**:
+
+-   `drive_id`:
+    A `str` which will be checked.
+
+**return**:
+`True` or `False`, means the `drive_id` is valid or not.
+
+### cluster.DriveID.parse
+
+**syntax**:
+`cluster.DriveID.parse(drive_id)`
+
+It is a classmethod, parse drive_id into a `namedtuple`
+that contains separated fields.
+
+Raise a `DriveIDError` if the `drive_id` is invalid.
+
+**arguments**:
+
+-   `drive_id`:
+    A string, Format: 16 chars `<server_id>0<mount_point_index>`.
+
+**return**:
+A `namedtuple` contains `server_id` and `mount_point_index`.
+
+#   Methods
 
 ##  cluster.make_serverrec
 
@@ -187,61 +260,6 @@ A `str`, like:
 ```
 "server_id: 00aabbccddee; idc: .l1; idc_type: zz; roles: {'role1': 1}; mountpoints_count: 3; allocated_drive_count: 0"
 ```
-
-##  cluster.make_drive_id
-
-**syntax**:
-`cluster.make_drive_id(server_id, mount_point_index)`
-
-Make a `drive_id` which identifies a disk drive.
-
-**arguments**:
-
--   `server_id`:
-    A string, Format: 12 chars from primary MAC addr
-
--   `mount_point_index`:
-    It is a 3-digit mount path, `001` for `/drives/001`.
-
-**return**:
-The drive id `<server_id>0<mount_point_index>`, Format: 16 chars.
-
-##  cluster.parse_drive_id
-
-**syntax**:
-`cluster.parse_drive_id(drive_id)`
-
-Parse drive_id into a dict that contains separated fields.
-
-**arguments**:
-
--   `drive_id`:
-    A string, Format: 16 chars `<server_id>0<mount_point_index>`.
-
-**return**:
-A `dict` like:
-
-```
-{
-    'server_id': 'aabbccddeeff',
-    'mount_point_index': 10,
-}
-```
-
-##  cluster.validate_drive_id
-
-**syntax**:
-`cluster.validate_drive_id(drive_id)`
-
-Check a `drive_id` is valid or not.
-
-**arguments**:
-
--   `drive_id`:
-    A string, Format: 16 chars `<server_id>0<mount_point_index>`.
-
-**return**:
-`True` or `False`, means the `drive_id` is valid or not.
 
 ##  cluster.validate_idc
 

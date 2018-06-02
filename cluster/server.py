@@ -2,6 +2,7 @@
 # coding: utf-8
 
 from collections import defaultdict
+from collections import namedtuple
 import psutil
 import re
 import socket
@@ -12,16 +13,52 @@ from pykit import net
 from pykit import strutil
 
 
-def make_server_id():
-    node = '%032x' % uuid.getnode()
-    return node[-12:]
+class DriveIDError(Exception):
+    pass
 
 
-def validate_server_id(server_id):
-    if not isinstance(server_id, basestring):
-        return False
+class ServerID(namedtuple('_ServerID', '')):
 
-    return re.match("^[0-9a-f]{12}$", server_id) is not None
+    @classmethod
+    def validate(cls, server_id):
+        if not isinstance(server_id, basestring):
+            return False
+
+        return re.match("^[0-9a-f]{12}$", server_id) is not None
+
+    def __str__(self):
+        node = '%032x' % uuid.getnode()
+        return node[-12:]
+
+
+class DriveID(namedtuple('_DriveID', 'server_id mount_point_index')):
+
+    @classmethod
+    def validate(cls, drive_id):
+        if not isinstance(drive_id, basestring):
+            return False
+
+        if len(drive_id) != 16:
+            return False
+
+        server_id = drive_id[:12]
+        padding = drive_id[12:13]
+        mp_idx = drive_id[13:]
+
+        return (ServerID.validate(server_id)
+                and padding == '0'
+                and re.match("^[0-9]{3}$", mp_idx) is not None)
+
+    @classmethod
+    def parse(cls, drive_id):
+        if not DriveID.validate(drive_id):
+            raise DriveIDError('invalid drive id: {d}'.format(d=drive_id))
+
+        return DriveID(drive_id[:12], int(drive_id[13:]))
+
+    def __str__(self):
+        return '{sid}0{idx:0>3}'.format(sid=self.server_id,
+                                        idx=self.mount_point_index % 1000)
 
 
 def _make_mountpoints_info():
@@ -68,7 +105,7 @@ def make_serverrec(idc, idc_type, roles, allocated_drive_pre, **argkv):
     if hasattr(psutil, 'cpu_freq'):
         cpu_info['frequency'] = psutil.cpu_freq().max
 
-    serverrec['server_id'] = make_server_id()
+    serverrec['server_id'] = str(ServerID())
     serverrec['pub_ips'] = pub_ips
     serverrec['inn_ips'] = inn_ips
     serverrec['hostname'] = socket.gethostname()
@@ -100,38 +137,6 @@ def get_serverrec_str(serverrec):
         cnt=len(serverrec['allocated_drive'])))
 
     return '; '.join(rst)
-
-
-def make_drive_id(server_id, mount_point_index):
-    return '{sid}0{idx:0>3}'.format(
-           sid=server_id,
-           idx=mount_point_index % 1000)
-
-
-def parse_drive_id(drive_id):
-    server_id = drive_id[:12]
-    mp_idx = int(drive_id[13:16])
-
-    return {
-        'server_id': server_id,
-        'mount_point_index': mp_idx,
-    }
-
-
-def validate_drive_id(drive_id):
-    if not isinstance(drive_id, basestring):
-        return False
-
-    if len(drive_id) != 16:
-        return False
-
-    server_id = drive_id[:12]
-    padding = drive_id[12:13]
-    mp_idx = drive_id[13:]
-
-    return (validate_server_id(server_id)
-            and padding == '0'
-            and re.match("^[0-9]{3}$", mp_idx) is not None)
 
 
 def validate_idc(idc):

@@ -16,7 +16,7 @@ dd = ututil.dd
 class TestClusterServer(unittest.TestCase):
 
     def test_make_server_id(self):
-        server_id = cluster.make_server_id()
+        server_id = str(cluster.ServerID())
         self.assertEqual(12, len(server_id))
         self.assertRegexpMatches(server_id, "^[0-9a-f]{12}$")
         out = proc.shell_script('ifconfig')
@@ -40,7 +40,7 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in invalid_cases:
-            self.assertFalse(cluster.validate_server_id(c))
+            self.assertFalse(cluster.ServerID.validate(c))
 
         cases = (
             '112233aabbcc',
@@ -50,7 +50,7 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in cases:
-            self.assertTrue(cluster.validate_server_id(c))
+            self.assertTrue(cluster.ServerID.validate(c))
 
     def test_serverrec(self):
         cases = (
@@ -120,12 +120,12 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for sid, mp_idx in cases:
-            drive_id = cluster.make_drive_id(sid, mp_idx)
+            drive_id = str(cluster.DriveID(sid, mp_idx))
             self.assertEqual('%s0%03d' % (sid[:12], mp_idx % 1000),
                              drive_id)
 
-            self.assertDictEqual({'server_id': sid[:12], 'mount_point_index': mp_idx % 1000},
-                                 cluster.parse_drive_id(drive_id))
+            self.assertEqual(sid, cluster.DriveID.parse(drive_id).server_id)
+            self.assertEqual(mp_idx % 1000, cluster.DriveID.parse(drive_id).mount_point_index)
 
     def test_validate_drive_id(self):
         invalid_cases = (
@@ -142,7 +142,7 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in invalid_cases:
-            self.assertFalse(cluster.validate_drive_id(c))
+            self.assertFalse(cluster.DriveID.validate(c))
 
         cases = (
             'aabbccddeeff0001',
@@ -153,7 +153,7 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in cases:
-            self.assertTrue(cluster.validate_drive_id(c))
+            self.assertTrue(cluster.DriveID.validate(c))
 
     def test_validate_idc(self):
         invalid_cases = (
