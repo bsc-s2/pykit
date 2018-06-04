@@ -22,6 +22,8 @@
   - [zktx.Value](#zktxvalue)
   - [zktx.ZKKeyValue](#zktxzkkeyvalue)
   - [zktx.ZKValue](#zktxzkvalue)
+  - [zktx.RedisKeyValue](#zktxrediskeyvalue)
+  - [zktx.RedisValue](#zktxredisvalue)
 - [Storage classes](#storage-classes)
   - [zktx.Storage](#zktxstorage)
     - [Storage attributes](#storage-attributes)
@@ -33,6 +35,11 @@
     - [StorageHelper.apply_record](#storagehelperapply_record)
     - [StorageHelper.add_to_txidset](#storagehelperadd_to_txidset)
   - [zktx.ZKStorage](#zktxzkstorage)
+  - [zktx.RedisStorage](#zktxredisstorage)
+    - [zktx.RedisStorage.apply_jour](#zktxredisstorageapply_jour)
+    - [zktx.RedisStorage.apply_record](#zktxredisstorageapply_record)
+    - [zktx.RedisStorage.add_to_txidset](#zktxredisstorageadd_to_txidset)
+    - [zktx.RedisStorage.set_txidset](#zktxredisstorageset_txidset)
 - [Transaction classes](#transaction-classes)
   - [zktx.TXRecord](#zktxtxrecord)
   - [zktx.ZKTransaction](#zktxzktransaction)
@@ -41,6 +48,9 @@
     - [ZKTransaction.commit](#zktransactioncommit)
     - [ZKTransaction.abort](#zktransactionabort)
   - [zktx.run_tx](#zktxrun_tx)
+- [Slave class](#slave-class)
+  - [zktx.Slave](#zktxslave)
+    - [zktx.Slave.apply](#zktxslaveapply)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -278,6 +288,42 @@ Because a single value accessor operates on only one zk-node.
 
 Note: If `zkclient._zkconf` has acl, znode's acl would set automatically when created.
 
+##  zktx.RedisKeyValue
+
+**syntax**:
+`zktx.RedisKeyValue(redis_cli, get_path=None, load=None)`
+
+It provides 4 API `get`, `set`, `hget` and `hset` to operate a redis-node.
+
+**arguments**:
+
+-   `redis_cli`:
+    is a `redis.StrictRedis` instance.
+
+-   `get_path`:
+    is a callback to convert `key`(the first argument for the 4 methods.) to a redis-node path.
+
+    By default it is `None`: to use `key` directly as path.
+
+-   `load`:
+    is an optional callback to convert value for `get`.
+    E.g.
+
+    ```python
+    def foo_load(val):
+        return '(%s)' % val
+    ```
+
+
+##  zktx.RedisValue
+
+**syntax**:
+`zktx.RedisValue(redis_cli, get_path=None, load=None)`
+
+Same as `RedisKeyValue` except that `get_path` does not receive an argument `key`,
+Because a single value accessor operates on only one redis-node.
+
+
 #   Storage classes
 
 
@@ -458,6 +504,95 @@ stored in zk.
     must be a `zkutil.KazooClientExt` instance.
 
 
+##  zktx.RedisStorage
+
+**syntax**:
+`zktx.RedisStorage(redis_cli, txidset_path)`
+
+It provide some functions to save data with redis.
+
+**arguments**:
+
+-   `redis_cli`:
+    is a `redis.StrictRedis` instance.
+
+-   `txidset_path`:
+    the path of txidset in redis.
+
+
+### zktx.RedisStorage.apply_jour
+
+**syntax**:
+`zktx.RedisStorage.apply_jour(jour)`
+
+Set journal to redis.
+
+**arguments**:
+
+-   `jour`:
+    a `dict`, the values that will be saved.
+
+**return**:
+nothing
+
+
+### zktx.RedisStorage.apply_record
+
+**syntax**:
+`zktx.RedisStorage.apply_record(key, val)`:
+
+Set `val` to redis with `key`.
+
+**arguments**:
+
+-   `key`:
+    a `str`, format `meta/<hashname>/<hashkey>`.
+
+-   `val`:
+    specifies the value to redis.
+
+**return**:
+nothing
+
+
+### zktx.RedisStorage.add_to_txidset
+
+**syntax**:
+`zktx.RedisStorage.add_to_txidset(status, txid)`:
+
+It records a txid as one of the possible status: COMMITTED, ABORTED or PURGED.
+
+**arguments**:
+
+-   `status`:
+    specifies tx status.
+
+-   `txid`:
+    transaction id.
+
+**return**:
+nothing
+
+
+### zktx.RedisStorage.set_txidset
+
+**syntax**:
+`zktx.RedisStorage.set_txidset(status, txidset)`:
+
+It records a txidset as one of the possible status: COMMITTED, ABORTED or PURGED.
+
+**arguments**:
+
+-   `status`:
+    specifies tx status.
+
+-   `txid`:
+    transaction id set.
+
+**return**:
+nothing
+
+
 #  Transaction classes
 
 
@@ -482,7 +617,7 @@ It is a transaction engine.
 **arguments**:
 
 -   `zk`:
-    is the connection argument, which can be: 
+    is the connection argument, which can be:
 
     -   Comma separated host list, such as
         `"127.0.0.1:2181,127.0.0.2:2181"`.
@@ -621,6 +756,50 @@ except (TXTimeout, ConnectionLoss) as e:
 
 **return**:
 nothing.
+
+
+#   Slave class
+
+
+##  zktx.Slave
+
+**syntax**:
+`zktx.Slave(zke, storage)`
+
+Sync data from Zookeeper to the `storage`.
+
+**arguments**:
+
+-   `zke`:
+    must be a `zkutil.KazooClientExt` instance.
+
+-   `storage`:
+    the instance that user specifies.
+    It must provide 4 methods(`apply_jour`, `apply_record`, `add_to_txidset`, `set_txidset`)
+    like `zktx.RedisStorage`.
+
+
+
+### zktx.Slave.apply
+
+**syntax**:
+`zktx.Slave.apply()`
+
+Write all update to the `storage` if there are uncommitted txids.
+
+**return**:
+nothing.
+
+```
+from pykit import zktx
+from pykit import zkutil
+
+storage = zktx.RedisStorage(redis_cli, 'txidset')
+zke, _ = zkutil.kazoo_client_ext('127.0.0.1:2181')
+
+slave = zktx.Slave(zke, storage)
+slave.apply()
+```
 
 
 #   Author
