@@ -1,9 +1,11 @@
 from .block import (
     BlockID,
+    BlockIDError,
 )
 
 from .block_group import (
     BlockGroupID,
+    BlockGroupIDError,
 )
 
 from .server import (
@@ -20,8 +22,10 @@ from .server import (
 
 __all__ = [
     "BlockID",
+    "BlockIDError",
 
     "BlockGroupID",
+    "BlockGroupIDError",
 
     "get_serverrec_str",
     "idc_distance",

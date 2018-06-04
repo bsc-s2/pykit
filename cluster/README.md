@@ -16,6 +16,15 @@
   - [cluster.validate_drive_id](#clustervalidate_drive_id)
   - [cluster.validate_idc](#clustervalidate_idc)
   - [cluster.idc_distance](#clusteridc_distance)
+- [Classes](#classes)
+  - [cluster.BlockID](#clusterblockid)
+    - [block id](#block-id)
+    - [cluster.BlockID.parse](#clusterblockidparse)
+    - [cluster.BlockID.`__str__`](#clusterblockid__str__)
+  - [cluster.BlockGroupID](#clusterblockgroupid)
+    - [block group id](#block-group-id)
+    - [cluster.BlockGroupID.parse](#clusterblockgroupidparse)
+    - [cluster.BlockGroupID.`__str__`](#clusterblockgroupid__str__)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -266,6 +275,173 @@ Estimate distance between two idc.
 
 **return**:
 The distance of them.
+
+#   Classes
+
+##  cluster.BlockID
+
+**syntax**:
+`BlockID(namedtuple('_BlockID', 'type block_group_id block_index drive_id pg_seq'))`
+
+Parse or generate block id.
+
+### block id
+
+`block_id`: identifies a single data or parity block.
+
+A block is a single file on disk that contains multiple user-file.
+
+Format: 47 chars
+
+```
+(d|p|x)<block_group_id><block_index><drive_id><pg_seq>
+1      16              4            16        10
+```
+
+Example: `d g000630000000123 0101 c62d8736c7280002 0000000001`(without
+space)
+
+-   `type`:
+
+    -   `d`(data) for a `data_block`.
+
+    -   `p`(parity) for a in-IDC `parity_block`.
+
+    -   `x`(xor-parity) for a cross-IDC `parity_block`.
+
+-   `block_group_id`:
+    to which block group this block belongs.
+
+-   `block_index`:
+    specifies the block position in a `block_group`.
+    It is a 4 digit decimal `number`:
+
+    -   The first 2 digits is the IDC index.
+
+    -   The latter 2 digits is the position in a IDC.
+
+    Both these 2 parts starts from 00.
+
+    E.g.: `block_index` of the 1st block in the first IDC is: `0000`.
+    `block_index` of the 2nd block in the 3rd IDC is: `0201`.
+
+-   `drive_id`:
+    specifies the disk drive where this block resides.
+
+-   `pg_seq`:
+    is a block group wise monotonic incremental id.
+    To ensure that any two blocks have different `block_id`.
+
+### cluster.BlockID.parse
+
+**syntax**:
+`cluster.BlockID.parse(block_id)`
+
+A class method. Parse `block_id` from string to `BlockID` instanse.
+If `block_id` length is wrong, `BlockIDError` raises.
+
+**arguments**:
+
+-   `block_id`
+    block_id in string
+
+**return**:
+A `cluster.BlockID` instance
+
+### cluster.BlockID.`__str__`
+
+**syntax**:
+`cluster.BlockID.__str__()`
+
+Rewrite `__str__`, convert `self` to `block_id` string.
+
+**return**:
+A `block_id`.
+
+```python
+block_id = 'dg0006300000001230101c62d8736c72800020000000001'
+
+# test parse()
+bid = cluster.BlockID.parse(block_id)
+print bid.type            # d
+print bid.block_group_id  # g000630000000123
+print bid.block_index     # 0101
+print bid.drive_id        # c62d8736c7280002
+print bid.pg_seq          # 0000000001
+
+# test __str__()
+print bid                 # dg0006300000001230101c62d8736c72800020000000001
+```
+
+##  cluster.BlockGroupID
+
+**syntax**:
+`BlockGroupID(namedtuple('_BlockGroupID', 'block_size seq'))`
+
+Parse or generate block group id.
+
+### block group id
+
+`block_group_id`: identifies a block group.
+
+A block group is responsible of managing a group of blocks and block replication.
+
+Format: 16 char
+
+```
+g<block_size_in_gb><seq>
+ 5 digit           10 digit
+```
+
+-   `block_size_in_gb`: 6 digit indicates max block size in this block group.
+    Right padding with 0.
+
+    > Thus the largest block is 99999 GB.
+
+-   `seq`:
+    zookeeper generates incremental sequence number. 10 digit, e.g.: `0000000001`.
+
+    A `seq` is unique in a cluster.
+
+Example: `g 00064 0000000123`(without space).
+
+### cluster.BlockGroupID.parse
+
+**syntax**:
+`cluster.BlockGroupID.parse(block_group_id)`
+
+A class method. Parse `block_group_id` from string to `BlockGroupID` instanse.
+If `block_group_id` length is wrong, `BlockGroupIDError` raises.
+
+**arguments**:
+
+-   `block_group_id`
+    block_group_id in string
+
+**return**:
+A `cluster.BlockGroupID` instance
+
+### cluster.BlockGroupID.`__str__`
+
+**syntax**:
+`cluster.BlockGroupID.__str__()`
+
+Rewrite `__str__`, convert `self` to `block_group_id` string.
+
+**return**:
+A `block_group_id`.
+
+```python
+block_group_id = 'g000640000000123'
+
+# test parse()
+bgid = cluster.BlockGroupID.parse(block_group_id)
+print bgid.block_size  # 00064
+print bgid.seq         # 0000000123
+
+# test __str__()
+print bgid             # g000640000000123
+```
 
 #   Author
 
