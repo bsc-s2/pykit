@@ -23,7 +23,14 @@ class BlockGroupID(namedtuple('_BlockGroupID', 'block_size seq')):
             raise BlockGroupIDError('Block group id length should be {0}, but is {1}: {2}'.format(
                 BlockGroupIDLen, len(block_group_id), block_group_id))
 
-        return BlockGroupID(block_group_id[1:6], block_group_id[6:])
+        size = int(block_group_id[1:6])
+        seq = int(block_group_id[6:])
+
+        return BlockGroupID(size, seq)
 
     def __str__(self):
-        return 'g' + self.block_size + self.seq
+
+        blk_size = '%05d' % self.block_size
+        seq = '%010d' % self.seq
+
+        return 'g' + blk_size + seq
