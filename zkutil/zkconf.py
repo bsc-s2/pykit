@@ -18,6 +18,7 @@ class ZKConf(object):
         <prefix>/tx/
                     alive/0000000001
                     journal/0000000001
+                    state/0000000001
                     txidset
                     txid_maker
 
@@ -68,6 +69,8 @@ class ZKConf(object):
     def tx_dir(self): return self._get_config('tx_dir')
 
     def tx_alive(self, txid=''): return ''.join([self.tx_dir(), 'alive/', _dump_txid(txid)])
+
+    def tx_state(self, txid=''): return ''.join([self.tx_dir(), 'state/', _dump_txid(txid)])
 
     def journal(self, txid=''): return ''.join([self.tx_dir(), 'journal/', _dump_txid(txid)])
 
