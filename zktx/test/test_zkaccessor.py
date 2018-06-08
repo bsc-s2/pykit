@@ -5,7 +5,6 @@ from kazoo.exceptions import NoNodeError
 from pykit import ututil
 from pykit import zktx
 from pykit.zktx.test import base
-from pykit import zkutil
 
 dd = ututil.dd
 

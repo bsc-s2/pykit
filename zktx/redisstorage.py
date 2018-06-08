@@ -4,14 +4,13 @@
 import logging
 
 from pykit import config
-from pykit import utfjson
 from pykit import rangeset
-
-from .status import COMMITTED
-from .status import STATUS
+from pykit import utfjson
 
 from .redisaccessor import RedisKeyValue
 from .redisaccessor import RedisValue
+from .status import COMMITTED
+from .status import STATUS
 from .storage import Storage
 
 logger = logging.getLogger(__name__)

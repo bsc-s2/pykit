@@ -40,7 +40,9 @@ from .zktx import (
     TXRecord,
     ZKTransaction,
 
+    list_recoverable,
     run_tx,
+
 )
 
 from .redisstorage import (
@@ -86,6 +88,7 @@ __all__ = [
     "TXRecord",
     "ZKTransaction",
 
+    "list_recoverable",
     "run_tx",
 
     "RedisStorage",

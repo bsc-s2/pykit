@@ -3,6 +3,8 @@
 
 import logging
 
+from kazoo.exceptions import NoNodeError
+
 from pykit import rangeset
 from pykit import zkutil
 
@@ -11,8 +13,6 @@ from .zkaccessor import ZKKeyValue
 from .zkaccessor import ZKValue
 from .zkstorage import record_nonode_cb
 from .zkstorage import txidset_load
-
-from kazoo.exceptions import NoNodeError
 
 logger = logging.getLogger(__name__)
 

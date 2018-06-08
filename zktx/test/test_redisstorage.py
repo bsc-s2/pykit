@@ -3,11 +3,11 @@
 
 import unittest
 
-from pykit import ututil
-from pykit import utdocker
 from pykit import redisutil
-from pykit import zktx
+from pykit import utdocker
 from pykit import utfjson
+from pykit import ututil
+from pykit import zktx
 from pykit.zktx.status import COMMITTED
 
 dd = ututil.dd

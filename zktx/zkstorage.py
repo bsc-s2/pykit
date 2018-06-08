@@ -38,6 +38,11 @@ class ZKStorage(Storage):
                                  self.zke._zkconf.record,
                                  nonode_callback=record_nonode_cb)
 
+        self.state = ZKKeyValue(self.zke,
+                                self.zke._zkconf.tx_state,
+                                nonode_callback=state_nonode_cb,
+                                )
+
     def acquire_key_loop(self, txid, key, timeout):
 
         logger.info('watch acquire: {txid} {key}'.format(txid=txid, key=key))
@@ -86,3 +91,7 @@ def record_nonode_cb():
     """
 
     return [(-1, None)], -1
+
+
+def state_nonode_cb():
+    return None, -1

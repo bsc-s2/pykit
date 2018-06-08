@@ -45,8 +45,11 @@
   - [zktx.ZKTransaction](#zktxzktransaction)
     - [ZKTransaction.lock_get](#zktransactionlock_get)
     - [ZKTransaction.set](#zktransactionset)
+    - [ZKTransaction.get_state](#zktransactionget_state)
+    - [ZKTransaction.set_state](#zktransactionset_state)
     - [ZKTransaction.commit](#zktransactioncommit)
     - [ZKTransaction.abort](#zktransactionabort)
+  - [zktx.list_recoverable](#zktxlist_recoverable)
   - [zktx.run_tx](#zktxrun_tx)
 - [Slave class](#slave-class)
   - [zktx.Slave](#zktxslave)
@@ -677,6 +680,67 @@ Calling `set(rec)` twice with a same record is OK and has no side effect.
 nothing.
 
 
+###  ZKTransaction.get_state
+
+**syntax**:
+`ZKTransaction.get_state()`
+
+Get saved transaction state.
+
+**Synopsis**:
+recoverable transaction:
+
+```python
+
+def tx_job(tx):
+
+    # load previous saved state
+    state = tx.get_state()
+
+    if state is None:
+        foo = tx.lock_get('foo')
+        foo.v += 1
+    else:
+        foo = tx.lock_get('foo')
+        foo.v = state['foo']
+
+    tx.set_state({'tx-func': 'job-1', 'foo': foo.v})
+
+with zktx.ZKTransaction(zkhost) as t1:
+    # start a tx but failed to commit
+    tx_job(tx)
+    raise
+
+for txid, state in zktx.list_recoverable(zkhost):
+
+    # recover dead tx I was previously in charge.
+    if state.get('tx-func') == 'job-1':
+        with zktx.ZKTransaction(zkhost, txid=txid) as t2:
+            tx_job(t2)
+            t2.commit()
+```
+
+
+**return**:
+the data saved with `ZKTransaction.set_state`
+
+
+###  ZKTransaction.set_state
+
+**syntax**:
+`ZKTransaction.set_state(data)`
+
+Save any valid json dumppable value as transaction state.
+
+**arguments**:
+
+-   `data`:
+     `str`, `dict`, `list`, `tuple` or `int`.
+
+**return**:
+Nothing.
+
+
 ###  ZKTransaction.commit
 
 **syntax**:
@@ -699,6 +763,23 @@ Cancel a tx and write nothing to zk.
 
 **return**:
 nothing.
+
+
+##  zktx.list_recoverable
+
+**syntax**:
+`zktx.list_recoverable(zk)`
+
+List txid and corresponding tx state of all tx-s those are dead and has state
+saved.
+
+**arguments**:
+
+-   `zk`:
+    is same as `zk` in `ZKTransaction`.
+
+**return**:
+a generotor yields tuple of (`txid`, `state`).
 
 
 ##  zktx.run_tx

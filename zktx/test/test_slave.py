@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from pykit import ututil
-from pykit import utdocker
+from pykit import rangeset
 from pykit import redisutil
+from pykit import utdocker
+from pykit import ututil
 from pykit import zktx
 from pykit import zkutil
-from pykit import rangeset
-
 from pykit.zktx.status import COMMITTED
-
 from pykit.zktx.test import base
 
 dd = ututil.dd

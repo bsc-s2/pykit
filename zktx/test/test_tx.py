@@ -25,10 +25,10 @@ dd = ututil.dd
 zkhost = '127.0.0.1:2181'
 
 
-class TestTX(base.ZKTestBase):
+class TXBase(base.ZKTestBase):
 
     def setUp(self):
-        super(TestTX, self).setUp()
+        super(TXBase, self).setUp()
 
         self.zk.create('tx', 'tx')
         self.zk.create('lock', '{}')
@@ -36,7 +36,11 @@ class TestTX(base.ZKTestBase):
         self.zk.create('tx/alive', '{}')
         self.zk.create('tx/txid_maker', '{}')
         self.zk.create('tx/journal', '{}')
+        self.zk.create('tx/state', '{}')
         self.zk.create('record', '{}')
+
+
+class TestTX(TXBase):
 
     def test_single_record(self):
 
@@ -397,3 +401,237 @@ class TestTX(base.ZKTestBase):
         rst, ver = t.zkstorage.txidset.get()
         dd(rst)
         self.assertEqual([1, 2], rst[ABORTED][0])
+
+
+class TestTXState(TXBase):
+
+    def test_committed(self):
+
+        t = ZKTransaction(zkhost)
+        txid = None
+
+        with ZKTransaction(zkhost) as t1:
+
+            txid = t1.txid
+
+            # not set yet
+            self.assertIsNone(t.zkstorage.state.get(txid)[0])
+
+            foo = t1.lock_get('foo')
+            foo.v = 100
+            t1.set(foo)
+            t1.set_state('bar')
+
+            val, ver = t.zkstorage.state.get(txid)
+            self.assertEqual({'got_keys': ['foo'], 'data': 'bar'}, val)
+
+            t1.commit()
+
+        self.assertIsNone(t.zkstorage.state.get(txid)[0])
+
+    def test_user_abort(self):
+
+        t = ZKTransaction(zkhost)
+        txid = None
+
+        with ZKTransaction(zkhost) as t1:
+
+            txid = t1.txid
+            t1.set_state('bar')
+
+            val, ver = t.zkstorage.state.get(txid)
+            self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
+
+            t1.abort()
+
+        self.assertIsNone(t.zkstorage.state.get(txid)[0])
+
+    def test_exception(self):
+
+        # tx raised by other exception is recoverable
+
+        t = ZKTransaction(zkhost)
+        txid = None
+
+        try:
+            with ZKTransaction(zkhost) as t1:
+
+                txid = t1.txid
+                t1.set_state('bar')
+
+                val, ver = t.zkstorage.state.get(txid)
+                self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
+
+                raise ValueError('foo')
+
+        except ValueError:
+            pass
+
+        val, ver = t.zkstorage.state.get(txid)
+        self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
+
+    def test_timeout(self):
+
+        # timeout on waiting is recoverable
+
+        t = ZKTransaction(zkhost)
+        txid = None
+
+        try:
+            with ZKTransaction(zkhost, timeout=0.5) as t1:
+
+                txid = t1.txid
+
+                # t.txid is higher
+                t.begin()
+                t.lock_get('foo')
+
+                t1.set_state('bar')
+                t1.lock_get('foo')  # should timeout waiting for higher txid
+
+        except TXTimeout:
+            pass
+
+        val, ver = t.zkstorage.state.get(txid)
+        self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
+
+    def test_deadlock(self):
+
+        # deadlock is not recoverable
+
+        t = ZKTransaction(zkhost)
+        # t.txid is lower
+        t.begin()
+        t.lock_get('foo')
+
+        def _commit():
+            t.commit()
+
+        txid = None
+
+        try:
+            with ZKTransaction(zkhost, timeout=0.5) as t1:
+
+                txid = t1.txid
+
+                # lock another key first to produce deadlock
+                t1.lock_get('woo')
+
+                t1.set_state('bar')
+                threadutil.start_daemon(_commit, after=0.2)
+                t1.lock_get('foo')  # should deadlock waiting for higher txid
+
+        except Deadlock:
+            pass
+
+        t = ZKTransaction(zkhost)
+        self.assertIsNone(t.zkstorage.state.get(txid)[0])
+
+    def test_uncommitted(self):
+
+        # uncommitted is recoverable
+
+        t = ZKTransaction(zkhost)
+        txid = None
+
+        with ZKTransaction(zkhost, timeout=0.5) as t1:
+
+            txid = t1.txid
+            t1.lock_get('foo')
+            t1.set_state('bar')
+
+        val, ver = t.zkstorage.state.get(txid)
+        self.assertEqual({'got_keys': ['foo'], 'data': 'bar'}, val)
+
+    def test_list_recoverable(self):
+
+        txid = None
+        with ZKTransaction(zkhost, timeout=0.5) as t1:
+
+            txid = t1.txid
+            t1.lock_get('foo')
+            t1.set_state('bar')
+
+            with ZKTransaction(zkhost, timeout=0.5) as t2:
+                txid = t2.txid
+                t2.lock_get('foo2')
+                t2.set_state('bar2')
+
+            self.assertEqual([(txid, 'bar2')],
+                             [x for x in zktx.list_recoverable(zkhost)])
+
+    def test_recover(self):
+
+        txid = None
+        with ZKTransaction(zkhost, timeout=0.5) as t1:
+
+            txid = t1.txid
+            t1.lock_get('foo')
+            t1.set_state('bar')
+
+        with ZKTransaction(zkhost, txid=txid, timeout=0.5) as t2:
+            st = t2.get_state()
+            self.assertEqual('bar', st)
+
+            try:
+                with ZKTransaction(zkhost, txid=txid, timeout=0.5) as t3:
+                    dd(t3)
+                self.fail("expected TXTimeout")
+            except TXTimeout:
+                pass
+
+    def test_redo_all(self):
+
+        # txid=1 committed
+        # txid=2 nothing
+        # txid=3 has journal
+        # txid=4 no tx but has state
+        # txid=5 committed
+
+        # txid=1
+        with ZKTransaction(zkhost) as t1:
+            foo = t1.lock_get('foo')
+            foo.v = 1
+            t1.set(foo)
+            t1.commit()
+
+        t = ZKTransaction(zkhost)
+
+        # make txid=2, leave it a hole
+        t.zke.set(t.zke._zkconf.txid_maker(), 'x')
+
+        # make txid=3
+        t.zke.set(t.zke._zkconf.txid_maker(), 'x')
+        txid = 3
+        # fake a journal
+        t.zkstorage.journal.create(txid, {'bar': 3})
+
+        # txid=4, has state
+        t.zke.set(t.zke._zkconf.txid_maker(), 'x')
+        t.zkstorage.state.create(4, {'xx': 'yy'})
+
+        # txid=5, committed
+        with ZKTransaction(zkhost) as t5:
+            foo = t5.lock_get('foo')
+            foo.v = 5
+            t5.set(foo)
+            t5.commit()
+
+        sets, ver = t.zkstorage.txidset.get()
+        dd('init txidset:', sets)
+        self.assertEqual({'PURGED': [], 'ABORTED': [], 'COMMITTED': [[1, 2], [5, 6]]}, sets)
+
+        t.redo_all_dead_tx()  # redo txid=2, abort
+        sets, ver = t.zkstorage.txidset.get()
+        dd('after redo 2:', sets)
+        self.assertEqual({'PURGED': [], 'ABORTED': [[2, 3]], 'COMMITTED': [[1, 2], [5, 6]]}, sets)
+
+        t.redo_all_dead_tx()  # redo txid=3, committed
+        sets, ver = t.zkstorage.txidset.get()
+        dd('after redo 3:', sets)
+        self.assertEqual({'PURGED': [], 'ABORTED': [[2, 3]], 'COMMITTED': [[1, 2], [3, 4], [5, 6]]}, sets)
+
+        t.redo_all_dead_tx()  # redo txid=4, can not redo a tx with state
+        sets, ver = t.zkstorage.txidset.get()
+        dd('after redo 4, ignored 4:', sets)
+        self.assertEqual({'PURGED': [], 'ABORTED': [[2, 3]], 'COMMITTED': [[1, 2], [3, 4], [5, 6]]}, sets)
