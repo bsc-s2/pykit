@@ -150,7 +150,33 @@ merged into one range.
 **syntax**:
 `Range.length()`
 
-Return range length if it is a numeric range such as `int`, `float`
+Return range length if it is a numeric range such as `int`, `float` or string
+range.
+
+If it is a string range, such as `["a", "abc"]`, the length is a float number
+between 0 and 1.
+
+It treats `a` and `b` as two base-257 float `va = 0.a[0]a[1]...` and
+`vb = 0.b[0]b[1]...`.
+And we define the length to be `vb - va`.
+
+For `i >= len(a)` `a[i]` is defined to be 0,
+Otherwize, `a[i]` is defined to be `ord(a[i]) + 1`.
+Thus:
+
+-   empty string `""` is 0,
+-   `"\0"` is 1,
+-   `"a"` is `0x62`(ascii of `"a"` is `0x61`).
+
+There are 257 possible value: empty string `""` and 256 chars `"\x00" ~ "\xff"`.
+
+In python the length of `[str(a), str(b)]` is defined as:
+```
+sum([ (b[i] - a[i]) / 257.0**(i+1)
+      for i in range(0, max([len(a), len(b)]))
+])
+```
+
 
 **return**:
 length in the same type of one of its boundary.

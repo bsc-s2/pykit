@@ -66,7 +66,30 @@ class Range(list):
         if self[0] is None or self[1] is None:
             return float('inf')
 
-        return self[1] - self[0]
+        if isinstance(self[0], basestring):
+
+            a, b = self
+            l = max([len(a), len(b)])
+
+            rst = 0.0
+            ratio = 1.0
+            for i in range(l):
+
+                if i >= len(a):
+                    va = 0.0
+                else:
+                    va = ord(a[i]) + 1.0
+
+                if i >= len(b):
+                    vb = 0.0
+                else:
+                    vb = ord(b[i]) + 1.0
+                rst += (vb - va) / 257.0 * ratio
+                ratio /= 257.0
+
+            return rst
+        else:
+            return self[1] - self[0]
 
     def dup(self):
         return self.__class__(self[0], self[1])

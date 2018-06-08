@@ -32,6 +32,17 @@ class TestRange(unittest.TestCase):
                 ([1,    3],    2, True),
                 ([1,    3],    3, False),
                 ([1,    3],    4, False),
+
+                ([None, None], '',  True),
+                (['',   None], '',  True),
+                ([None, ''],   '',  False),
+                ([None, 'a'],  '',  True),
+                (['',   'a'],  '',  True),
+                (['',   'a'],  'a', False),
+                (['',   'a'],  'b', False),
+                (['a',  'b'],  'a', True),
+                (['a',  'b'],  'b', False),
+                (['a',  'b'],  'c', False),
         )
 
         dd()
@@ -54,6 +65,12 @@ class TestRange(unittest.TestCase):
                 ([0,    1],    [1,    3],    True),
                 ([1,    1],    [1,    1],    True),
                 ([0,    1],    [2,    3],    False),
+
+                (['',    'a'],    ['a',    'b'],    True),
+                (['',    'a'],    ['aa',    'b'],    False),
+                (['',    'c'],    ['a',    'b'],    False),
+                (['',    None],    ['a',    'b'],    False),
+                (['',    'c'],    [None,    'b'],    False),
         )
 
         for a, b, expected in cases:
@@ -141,6 +158,15 @@ class TestRange(unittest.TestCase):
 
             ([1, 2], 1),
             ([1.0, 2.2], 1.2),
+            (['', '\0'], 1.0/257),
+            (['', '\xff'], 256/257.0),
+            (['\0', '\0'], 0),
+            (['\0', '\1'], 1.0/257.0),
+            (['\0', '\xff'], 255.0/257.0),
+            (['ab', 'ab'], 0),
+            (['ab', 'abc'], (0x63 + 1) / (257.0**3)),
+            (['abb', 'abc'], 1 / 257.0 ** 3),
+            (['', '\xff' * 20], 1),  # just like that 0.99999... == 1
         )
 
         for rng, expected in cases:
@@ -150,8 +176,6 @@ class TestRange(unittest.TestCase):
             dd('rst:', rst)
 
             self.assertAlmostEqual(expected, rst)
-
-        self.assertRaises(TypeError, rangeset.Range('', 'a').length)
 
 
 class TestRangeSet(unittest.TestCase):
@@ -455,7 +479,8 @@ class TestRangeSet(unittest.TestCase):
         rst = rangeset.RangeSet([[1, 2], [5, 8]]).length()
         self.assertEqual(4, rst)
 
-        self.assertRaises(TypeError, rangeset.RangeSet([['', 'a']]).length)
+        rst = rangeset.RangeSet([['a', 'b'], ['d', 'd\0']]).length()
+        self.assertEqual(1.0/257.0 + 1.0/257.0/257.0, rst)
 
 
 class TestIntIncRangeSet(unittest.TestCase):
@@ -573,4 +598,3 @@ class TestIntIncRangeSet(unittest.TestCase):
             self.assertIs(a[0].__class__, rst[0].__class__)
             rst = func(b, a)
             self.assertIs(a[0].__class__, rst[0].__class__)
-
