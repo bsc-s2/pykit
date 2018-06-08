@@ -15,6 +15,7 @@ class TestZKConf(unittest.TestCase):
             hosts='hosts',
             tx_dir='tx_dir/',
             record_dir='record_dir/',
+            seq_dir='seq_dir/',
             lock_dir='lock_dir/',
             node_id='node_id',
             auth=('digest', 'a', 'b'),
@@ -24,6 +25,7 @@ class TestZKConf(unittest.TestCase):
         self.assertEqual('hosts',              c.hosts())
         self.assertEqual('tx_dir/',            c.tx_dir())
         self.assertEqual('record_dir/',        c.record_dir())
+        self.assertEqual('seq_dir/',           c.seq_dir())
         self.assertEqual('lock_dir/',          c.lock_dir())
         self.assertEqual('node_id',            c.node_id())
         self.assertEqual(('digest', 'a', 'b'), c.auth())
@@ -47,6 +49,8 @@ class TestZKConf(unittest.TestCase):
         self.assertEqual('tx_dir/journal/0000000001', c.journal(1))
         self.assertEqual('tx_dir/txidset',            c.txidset())
         self.assertEqual('tx_dir/txid_maker',         c.txid_maker())
+        self.assertEqual('seq_dir/',                  c.seq())
+        self.assertEqual('seq_dir/a',                 c.seq('a'))
 
         self.assertEqual(zkutil.make_kazoo_digest_acl((('foo', 'bar', 'cd'), ('xp', '123', 'cdrwa'))),
                          c.kazoo_digest_acl())
@@ -66,6 +70,7 @@ class TestZKConf(unittest.TestCase):
         config.zk_hosts = 'HOSTS'
         config.zk_tx_dir = 'TX_DIR/'
         config.zk_record_dir = 'RECORD_DIR/'
+        config.zk_seq_dir = 'SEQ_DIR/'
         config.zk_lock_dir = 'LOCK_DIR/'
         config.zk_node_id = 'NODE_ID'
         config.zk_auth = ('DIGEST', 'A', 'B')
@@ -76,6 +81,7 @@ class TestZKConf(unittest.TestCase):
         self.assertEqual('HOSTS',              c.hosts())
         self.assertEqual('TX_DIR/',            c.tx_dir())
         self.assertEqual('RECORD_DIR/',        c.record_dir())
+        self.assertEqual('SEQ_DIR/',           c.seq_dir())
         self.assertEqual('LOCK_DIR/',          c.lock_dir())
         self.assertEqual('NODE_ID',            c.node_id())
         self.assertEqual(('DIGEST', 'A', 'B'), c.auth())
@@ -88,6 +94,8 @@ class TestZKConf(unittest.TestCase):
         self.assertEqual('LOCK_DIR/a',                c.lock('a'))
         self.assertEqual('RECORD_DIR/',               c.record())
         self.assertEqual('RECORD_DIR/a',              c.record('a'))
+        self.assertEqual('SEQ_DIR/',                  c.seq())
+        self.assertEqual('SEQ_DIR/a',                 c.seq('a'))
         self.assertEqual('TX_DIR/alive/',             c.tx_alive())
         self.assertEqual('TX_DIR/alive/a',            c.tx_alive('a'))
         self.assertEqual('TX_DIR/alive/0000000001',   c.tx_alive(1))
