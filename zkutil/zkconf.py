@@ -21,6 +21,7 @@ class ZKConf(object):
                     state/0000000001
                     txidset
                     txid_maker
+        <prefix>/seq/<key>
 
     alive:      Contains `ephemeral` node each of which represents a transaction.
                 Its modifications is used.
@@ -33,6 +34,7 @@ class ZKConf(object):
     def __init__(self,
                  hosts=None,
                  tx_dir=None,
+                 seq_dir=None,
                  record_dir=None,
                  lock_dir=None,
                  node_id=None,
@@ -43,6 +45,7 @@ class ZKConf(object):
         self.conf = {
             'hosts':      hosts,
             'tx_dir':     tx_dir,
+            'seq_dir':    seq_dir,
             'record_dir': record_dir,
             'lock_dir':   lock_dir,
             'node_id':    node_id,
@@ -65,6 +68,10 @@ class ZKConf(object):
     def lock(self, key=''): return ''.join([self.lock_dir(), _dump_txid(key)])
 
     def record(self, key=''): return ''.join([self.record_dir(), key])
+
+    def seq_dir(self): return self._get_config('seq_dir')
+
+    def seq(self, key=''): return ''.join([self.seq_dir(), key])
 
     def tx_dir(self): return self._get_config('tx_dir')
 
