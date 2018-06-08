@@ -385,7 +385,7 @@ print bid.type            # d
 print bid.block_group_id  # g000630000000123
 print bid.block_index     # 0101
 print bid.drive_id        # c62d8736c7280002
-print bid.pg_seq          # 0000000001
+print bid.pg_seq          # 1
 
 # test __str__()
 print bid                 # dg0006300000001230101c62d8736c72800020000000001
@@ -454,8 +454,8 @@ block_group_id = 'g000640000000123'
 
 # test parse()
 bgid = cluster.BlockGroupID.parse(block_group_id)
-print bgid.block_size  # 00064
-print bgid.seq         # 0000000123
+print bgid.block_size  # 64
+print bgid.seq         # 123
 
 # test __str__()
 print bgid             # g000640000000123
