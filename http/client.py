@@ -174,13 +174,14 @@ class Client(object):
         with self.stopwatch.timer('send_body'):
             self.sock.sendall(body)
 
-    def read_status(self):
+    def read_status(self, skip_100=True):
 
         if self.status is not None or self.sock is None:
             raise ResponseNotReadyError('response is unavailable')
 
-        self.recv_iter = _recv_loop(self.sock, self.timeout)
-        self.recv_iter.next()
+        if self.recv_iter is None:
+            self.recv_iter = _recv_loop(self.sock, self.timeout)
+            self.recv_iter.next()
 
         # read until we get a non-100 response
         while True:
@@ -197,6 +198,9 @@ class Client(object):
                     skip = self._readline()
                     if skip.strip() == '':
                         break
+
+            if skip_100 is False:
+                return status
 
         self.status = status
         return status

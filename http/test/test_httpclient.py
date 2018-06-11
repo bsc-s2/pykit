@@ -41,6 +41,9 @@ class TestHttpClient(unittest.TestCase):
 
         'test_raise_line_too_long_error':
         (0, KB, 'a' * 65536),
+
+        'test_return_100_continue':
+        ()
     }
     request_headers = {}
     request_body = {}
@@ -173,6 +176,22 @@ class TestHttpClient(unittest.TestCase):
             h.request(uri)
 
             self.assertEqual(expected_status, h.status)
+
+    def test_return_100_continue(self):
+
+        h = http.Client(HOST, PORT)
+        h.send_request('/', 'PUT', {'Transfer-Encoding': 'chunked'})
+
+        cases = (
+            ('aaaaaaaaa', 100),
+            ('bbbbbbbbbbbbbb', 100),
+            ('0000000000000', 100),
+            ('200_status', 200)
+                )
+
+        for body, status in cases:
+            h.send_body('{0}\r\n{1}\r\n\r\n'.format(len(body), body))
+            self.assertEqual(h.read_status(False), status)
 
     def test_request_headers(self):
 
@@ -392,22 +411,38 @@ class TestHttpClient(unittest.TestCase):
         sock.bind(addr)
         sock.listen(10)
 
-        conn, _ = sock.accept()
-        data = conn.recv(1024)
-        dd('recv data:' + data)
 
-        res = self.special_cases.get(self._testMethodName)
-        if res is None:
-            return
+        if self._testMethodName == 'test_return_100_continue':
 
-        sleep_time, each_send_size, content = res
-        try:
-            while len(content) > 0:
-                conn.sendall(content[:each_send_size])
-                content = content[each_send_size:]
-                time.sleep(sleep_time)
-        except socket.error as e:
-            dd(repr(e) + ' while response')
+            conn, _ = sock.accept()
+            for i in range(3):
+                data = conn.recv(1024)
+                dd('recv data:' + data)
+
+                res = 'HTTP/1.1 100 CONTINUE\r\n\r\n'
+                conn.sendall(res)
+
+            data = conn.recv(1024)
+            dd('recv data:' + data)
+            res = 'HTTP/1.1 200 OK\r\n\r\n'
+            conn.sendall(res)
+
+        else:
+            conn, _ = sock.accept()
+            data = conn.recv(1024)
+            dd('recv data:' + data)
+            res = self.special_cases.get(self._testMethodName)
+            if res is None:
+                return
+
+            sleep_time, each_send_size, content = res
+            try:
+                while len(content) > 0:
+                    conn.sendall(content[:each_send_size])
+                    content = content[each_send_size:]
+                    time.sleep(sleep_time)
+            except socket.error as e:
+                dd(repr(e) + ' while response')
 
         time.sleep(1)
         conn.close()
