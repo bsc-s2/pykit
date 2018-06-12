@@ -190,7 +190,7 @@ class TestHttpClient(unittest.TestCase):
                 )
 
         for body, status in cases:
-            h.send_body('{0}\r\n{1}\r\n\r\n'.format(len(body), body))
+            h.send_body('{0:x}\r\n{1}\r\n\r\n'.format(len(body), body))
             self.assertEqual(h.read_status(False), status)
 
     def test_request_headers(self):
