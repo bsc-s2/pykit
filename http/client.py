@@ -62,6 +62,7 @@ class Client(object):
         self.headers = {}
         self.recv_iter = None
         self.https_context = https_context
+        self.request_chunked_encoded = False
 
         self.stopwatch_kwargs = {
             # min_tracing_milliseconds=0 to trace all events. StopWatch trace
@@ -158,6 +159,9 @@ class Client(object):
         if 'Host' not in headers and 'host' not in headers:
             headers['Host'] = self.host
 
+        if headers.get('Transfer-Encoding') == 'chunked':
+            self.request_chunked_encoded = True
+
         for k, v in headers.items():
             bufs.append('%s: %s' % (k, v))
 
@@ -172,6 +176,9 @@ class Client(object):
             raise NotConnectedError('socket object is None')
 
         with self.stopwatch.timer('send_body'):
+            if self.request_chunked_encoded:
+                body = '{0:x}\r\n{1}\r\n\r\n'.format(len(body), body)
+
             self.sock.sendall(body)
 
     def read_status(self, skip_100=True):
@@ -253,6 +260,29 @@ class Client(object):
         with self.stopwatch.timer('recv_body'):
             return self._read_body(size)
 
+    def readlines(self, delimiter=None):
+
+        if delimiter is None:
+            delimiter = '\n'
+
+        buf = ''
+        while True:
+
+            tmp = self._read_body(MAX_LINE_LENGTH)
+
+            if tmp == '':
+                if buf != '':
+                    yield buf
+                break
+
+            buf += tmp
+
+            lines = buf.split(delimiter)
+            buf = lines.pop()
+
+            for l in lines:
+                yield l + delimiter
+
     def _read_body(self, size):
 
         if size is not None and size <= 0:
@@ -303,6 +333,7 @@ class Client(object):
         self.has_read = 0
         self.status = None
         self.headers = {}
+        self.request_chunked_encoded = False
 
     def _read(self, size):
         return self.recv_iter.send(('block', size))

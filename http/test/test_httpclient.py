@@ -42,8 +42,15 @@ class TestHttpClient(unittest.TestCase):
         'test_raise_line_too_long_error':
         (0, KB, 'a' * 65536),
 
-        'test_return_100_continue':
-        ()
+        'test_request_chunked':
+        (),
+
+        'test_readlines':
+        (0, 10, 'HTTP/1.1 200 OK\r\nContent-Length: 131086\r\n\r\n' + 'a'*65540 + '\r\nbb\r\n' + 'c'*65540),
+
+        'test_readlines_delimiter':
+        (0, 10, 'HTTP/1.1 200 OK\r\nContent-Length: 15\r\n\r\nabcd\rbcde\rcdef\r'),
+
     }
     request_headers = {}
     request_body = {}
@@ -177,10 +184,10 @@ class TestHttpClient(unittest.TestCase):
 
             self.assertEqual(expected_status, h.status)
 
-    def test_return_100_continue(self):
+    def test_request_chunked(self):
 
         h = http.Client(HOST, PORT)
-        h.send_request('/', 'PUT', {'Transfer-Encoding': 'chunked'})
+        h.send_request('', 'PUT', {'Transfer-Encoding': 'chunked'})
 
         cases = (
             ('aaaaaaaaa', 100),
@@ -190,7 +197,7 @@ class TestHttpClient(unittest.TestCase):
                 )
 
         for body, status in cases:
-            h.send_body('{0:x}\r\n{1}\r\n\r\n'.format(len(body), body))
+            h.send_body(body)
             self.assertEqual(h.read_status(False), status)
 
     def test_request_headers(self):
@@ -238,6 +245,24 @@ class TestHttpClient(unittest.TestCase):
             time.sleep(0.1)
 
             self.assertEqual(body, self.request_body)
+
+    def test_readlines(self):
+
+        h = http.Client(HOST, PORT)
+        h.request('')
+
+        expected_body = ('a' * 65540 + '\r\n', 'bb\r\n', 'c' * 65540)
+        for idx, line in enumerate(h.readlines()):
+            self.assertEqual(expected_body[idx], line)
+
+    def test_readlines_delimiter(self):
+
+        h = http.Client(HOST, PORT)
+        h.request('')
+
+        expected_body = ('abcd\r', 'bcde\r', 'cdef\r')
+        for idx, line in enumerate(h.readlines('\r')):
+            self.assertEqual(expected_body[idx], line)
 
     def test_recving_server_close(self):
 
@@ -412,7 +437,7 @@ class TestHttpClient(unittest.TestCase):
         sock.listen(10)
 
 
-        if self._testMethodName == 'test_return_100_continue':
+        if self._testMethodName == 'test_request_chunked':
 
             conn, _ = sock.accept()
             for i in range(3):

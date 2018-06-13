@@ -382,6 +382,21 @@ Read and return the response body.
 **return**:
 the response body.
 
+##  http.Client.readlines
+
+**syntax**:
+`http.Client.readlines(delimiter)`
+
+Read and yield one line in response body each time.
+
+**arguments**:
+
+-   `delimiter`:
+    specify the delimiter between each line, defalut supporting `\n`.
+
+**return**:
+a generator yileding one line including delimiter in response body each time.
+
 ##  http.Client.get_trace_str
 
 **syntax**:
