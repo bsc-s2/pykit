@@ -103,6 +103,19 @@ class TestTX(TXBase):
         rst, ver = self.zk.get('record/foo')
         self.assertEqual([[-1, None], [1, 2]], utfjson.load(rst))
 
+    def test_noblocking_lock_get(self):
+
+        with ZKTransaction(zkhost) as t1:
+
+            t1.lock_get('foo')
+            f2 = t1.lock_get('foo', blocking=False)
+            self.assertIsNotNone(f2)
+
+            with ZKTransaction(zkhost) as t2:
+
+                f4 = t2.lock_get('foo', blocking=False)
+                self.assertIsNone(f4)
+
     def test_run_tx(self):
 
         def _tx(tx):

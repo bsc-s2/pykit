@@ -82,7 +82,7 @@ class ZKTransaction(object):
             if state == KazooState.LOST or state == KazooState.SUSPENDED:
                 self.connected = False
 
-    def lock_get(self, key):
+    def lock_get(self, key, blocking=True):
 
         # We use persistent lock(ephemeral=False)
         # thus we do not need to care about connection loss during locking
@@ -92,7 +92,12 @@ class ZKTransaction(object):
         if key in self.got_keys:
             return copy.deepcopy(self.got_keys[key])
 
-        self.lock_key(key)
+        if blocking:
+            self.lock_key(key)
+        else:
+            locked, other_txid, ver = self.try_lock_key(key)
+            if not locked:
+                return None
 
         val, version = self.zkstorage.record.get(key)
         ltxid, lvalue = val[-1]
@@ -147,6 +152,15 @@ class ZKTransaction(object):
             raise TXTimeout('{tx} timeout waiting for lock: {key}'.format(tx=self, key=key))
 
         logger.info('{tx} [{key}] locked'.format(tx=self, key=key))
+
+    def try_lock_key(self, key):
+
+        for other_txid, ver in self.zkstorage.acquire_key_loop(
+                self.txid, key, timeout=-1):
+
+            return False, other_txid, ver
+
+        return True, self.txid, -1
 
     def _lock_key(self, key):
 

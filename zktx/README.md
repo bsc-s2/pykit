@@ -639,7 +639,7 @@ It is a transaction engine.
 ###  ZKTransaction.lock_get
 
 **syntax**:
-`ZKTransaction.lock_get(key)`
+`ZKTransaction.lock_get(key, blocking=True)`
 
 Lock a record identified by `key` and retrieve the record and return.
 
@@ -654,6 +654,11 @@ But it always returns a copy of the first returned `TXRecord`.
 
 -   `key`:
     is the record key in string.
+
+-   `blocking`:
+    if `blocking` is `False`, it does not block if the key lock is held by other
+    tx.
+    Instead it returns `None` at once.
 
 **return**:
 a `TXRecord` instance.
