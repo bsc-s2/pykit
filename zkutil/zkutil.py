@@ -13,6 +13,7 @@ from kazoo.exceptions import NoNodeError
 
 from pykit import config
 from pykit import net
+from pykit import utfjson
 
 from .exceptions import ZKWaitTimeout
 
@@ -233,7 +234,8 @@ def init_hierarchy(hosts, hierarchy, users, auth):
             return
 
         for node, attr_children in hierarchy.items():
-            val = attr_children.get('__val__', '{}')
+            val = attr_children.get('__val__', {})
+            val = utfjson.dump(val)
             acl = attr_children.get('__acl__')
 
             path = _init_node(zkcli, parent_path, node, val, acl, users)
