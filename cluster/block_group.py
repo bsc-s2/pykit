@@ -34,3 +34,6 @@ class BlockGroupID(namedtuple('_BlockGroupID', 'block_size seq')):
         seq = '%010d' % self.seq
 
         return 'g' + blk_size + seq
+
+    def tostr(self):
+        return str(self)

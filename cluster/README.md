@@ -14,20 +14,23 @@
   - [cluster.DriveID](#clusterdriveid)
     - [cluster.DriveID.validate](#clusterdriveidvalidate)
     - [cluster.DriveID.parse](#clusterdriveidparse)
+    - [cluster.DriveID.tostr](#clusterdriveidtostr)
 - [Methods](#methods)
   - [cluster.make_serverrec](#clustermake_serverrec)
   - [cluster.get_serverrec_str](#clusterget_serverrec_str)
   - [cluster.validate_idc](#clustervalidate_idc)
   - [cluster.idc_distance](#clusteridc_distance)
-- [Classes](#classes)
+- [Classes](#classes-1)
   - [cluster.BlockID](#clusterblockid)
     - [block id](#block-id)
     - [cluster.BlockID.parse](#clusterblockidparse)
     - [cluster.BlockID.`__str__`](#clusterblockid__str__)
+  - [cluster.BlockID.tostr](#clusterblockidtostr)
   - [cluster.BlockGroupID](#clusterblockgroupid)
     - [block group id](#block-group-id)
     - [cluster.BlockGroupID.parse](#clusterblockgroupidparse)
     - [cluster.BlockGroupID.`__str__`](#clusterblockgroupid__str__)
+  - [cluster.BlockGroupID.tostr](#clusterblockgroupidtostr)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -46,7 +49,7 @@ The library is considered production ready.
 ```python
 from pykit import cluster
 
-server_id = str(cluster.ServerID())
+server_id = cluster.ServerID.local_server_id()
 # 12 chars from primary MAC addr: "c62d8736c728"
 
 is_valid = cluster.ServerID.validate(server_id)
@@ -98,14 +101,15 @@ Raise if the drive id is invalid while parse it.
 ##  cluster.ServerID
 
 **syntax**:
-`cluster.ServerID()`
+`cluster.ServerID(str)`
 
 Make a server id, format: 12 chars from primary MAC addr(e.g.: "c62d8736c728").
 
-```
+```python
 from pykit import cluster
 
-print str(cluster.ServerID())
+print cluster.ServerID.local_server_id()
+
 # out: 00163e0630f7
 ```
 
@@ -139,7 +143,7 @@ Make a drive id, format: 16 chars `<server_id>0<mount_point_index>`
     `mount_point_index`:
     It is a 3-digit mount path, `001` for `/drives/001`.
 
-```
+```python
 from pykit import cluster
 
 print str(cluster.DriveID('aabbccddeeff', 10))
@@ -178,6 +182,22 @@ Raise a `DriveIDError` if the `drive_id` is invalid.
 
 **return**:
 A `namedtuple` contains `server_id` and `mount_point_index`.
+
+###  cluster.DriveID.tostr
+
+**syntax**:
+`cluster.DriveID.tostr()`
+
+Convert this DriveID instance into a string:
+
+```python
+print cluster.DriveID('aabbccddeeff', 10).tostr()
+# out: aabbccddeeff0010
+```
+
+**return**:
+a string
+
 
 #   Methods
 
@@ -309,23 +329,53 @@ Parse or generate block id.
 
 A block is a single file on disk that contains multiple user-file.
 
-Format: 47 chars
+Format: 48 chars
 
 ```
-(d|p|x)<block_group_id><block_index><drive_id><pg_seq>
-1      16              4            16        10
+(d0|d1|d2|dp|x0|xp)<block_group_id><block_index><drive_id><pg_seq>
+2                  16              4            16        10
 ```
 
 Example: `d g000630000000123 0101 c62d8736c7280002 0000000001`(without
 space)
 
+
 -   `type`:
 
-    -   `d`(data) for a `data_block`.
+    -   `d0`(data) for a `data_block`.
 
-    -   `p`(parity) for a in-IDC `parity_block`.
+    -   `d1`, `d2`(the 1st and 2nd copy of data) for a `data_block`.
 
-    -   `x`(xor-parity) for a cross-IDC `parity_block`.
+        If `config.ec.in_idc` config is `[4, 2]`,
+
+        Block index of the first copy of data block `i` with `type=d1` is:
+        `idc_index` `in_idc[0] + in_idc[1] + i`.
+
+        Block index of the second copy of data block `i` with `type=d2` is:
+        `idc_index` `in_idc[0] + in_idc[1] + in_idc[0] + i`.
+
+        E.g.
+
+        and lock `0002` has 2 copies, block indexes for these two copies are:
+        `0010` and `0012`
+
+    -   `dp`(parity of data) a in-IDC `parity_block`.
+
+    -   `x0`(xor-parity) for a cross-IDC xor based `parity_block`.
+
+    -   `xp`(parity of xor-parity).
+
+
+    `type` layout for a block group with copies:
+
+    ```
+    data          parity  1st-copy      2nd-copy
+    ----          ------  --------      --------
+    d0 d0 d0 d0   dp dp   d1 d1 d1 d1   d2 d2 d2 d2
+    d0 d0 d0 d0   dp dp   d1 d1 d1 d1   d2 d2 d2 d2
+
+    x0 x0 x0 x0   xp xp
+    ```
 
 -   `block_group_id`:
     to which block group this block belongs.
@@ -377,7 +427,7 @@ Rewrite `__str__`, convert `self` to `block_id` string.
 A `block_id`.
 
 ```python
-block_id = 'dg0006300000001230101c62d8736c72800020000000001'
+block_id = 'd0g0006300000001230101c62d8736c72800020000000001'
 
 # test parse()
 bid = cluster.BlockID.parse(block_id)
@@ -388,8 +438,16 @@ print bid.drive_id        # c62d8736c7280002
 print bid.pg_seq          # 1
 
 # test __str__()
-print bid                 # dg0006300000001230101c62d8736c72800020000000001
+print bid                 # d0g0006300000001230101c62d8736c72800020000000001
 ```
+
+##  cluster.BlockID.tostr
+
+**syntax**:
+`cluster.BlockID.tostr()`
+
+Same as `str(cluster.BlockID(...))`
+
 
 ##  cluster.BlockGroupID
 
@@ -460,6 +518,15 @@ print bgid.seq         # 123
 # test __str__()
 print bgid             # g000640000000123
 ```
+
+
+##  cluster.BlockGroupID.tostr
+
+**syntax**:
+`cluster.BlockGroupID.tostr()`
+
+Same as `str(cluster.BlockGroupID(...))`
+
 
 #   Author
 

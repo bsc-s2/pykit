@@ -29,3 +29,9 @@ class TestClusterBlockGroup(unittest.TestCase):
         block_group_id_invalid = 'g00064000000012345'
         self.assertRaises(cluster.BlockGroupIDError,
                           cluster.BlockGroupID.parse, block_group_id_invalid)
+
+    def test_tostr(self):
+        block_group_id = 'g000640000000123'
+        bgid = cluster.BlockGroupID.parse(block_group_id)
+        self.assertEqual(block_group_id, str(bgid))
+        self.assertEqual(block_group_id, bgid.tostr())

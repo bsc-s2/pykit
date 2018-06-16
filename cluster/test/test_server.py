@@ -1,10 +1,12 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import psutil
 import re
 import socket
 import unittest
+import uuid
+
+import psutil
 
 from pykit import cluster
 from pykit import proc
@@ -16,7 +18,7 @@ dd = ututil.dd
 class TestClusterServer(unittest.TestCase):
 
     def test_make_server_id(self):
-        server_id = str(cluster.ServerID())
+        server_id = str(cluster.ServerID.local_server_id())
         self.assertEqual(12, len(server_id))
         self.assertRegexpMatches(server_id, "^[0-9a-f]{12}$")
         out = proc.shell_script('ifconfig')
@@ -51,6 +53,12 @@ class TestClusterServer(unittest.TestCase):
 
         for c in cases:
             self.assertTrue(cluster.ServerID.validate(c))
+
+    def test_server_id_to_str(self):
+        sid = cluster.ServerID.local_server_id()
+        self.assertIsInstance(sid, cluster.ServerID)
+        self.assertEqual('%012x' % uuid.getnode(), str(sid))
+        self.assertEqual('%012x' % uuid.getnode(), sid)
 
     def test_serverrec(self):
         cases = (
@@ -94,7 +102,7 @@ class TestClusterServer(unittest.TestCase):
             dd('serverrec_str:' + repr(serverrec_str))
 
             exp_str = ('server_id: {sid}; idc: {idc}; idc_type: {idct}; roles: {r};'
-                ' mountpoints_count: {mp_cnt}; allocated_drive_count: {ad_cnt}').format(
+                       ' mountpoints_count: {mp_cnt}; allocated_drive_count: {ad_cnt}').format(
                 sid=serverrec['server_id'], idc=idc, idct=idc_type,
                 r=roles, mp_cnt=len(serverrec['mountpoints']),
                 ad_cnt=len(serverrec['allocated_drive']))
@@ -125,7 +133,19 @@ class TestClusterServer(unittest.TestCase):
                              drive_id)
 
             self.assertEqual(sid, cluster.DriveID.parse(drive_id).server_id)
-            self.assertEqual(mp_idx % 1000, cluster.DriveID.parse(drive_id).mount_point_index)
+            self.assertEqual(mp_idx % 1000, cluster.DriveID.parse(drive_id).mountpoint_index)
+
+    def test_drive_id_server_id(self):
+
+        for drive_id in (cluster.DriveID('112233445566', 1),
+                         cluster.DriveID.parse('1122334455660001')):
+
+            dd(drive_id)
+
+            self.assertIsInstance(drive_id.server_id, str)
+            self.assertEqual('112233445566', drive_id.server_id)
+            self.assertEqual('1122334455660001', drive_id.tostr())
+            self.assertEqual('1122334455660001', str(drive_id))
 
     def test_validate_drive_id(self):
         invalid_cases = (

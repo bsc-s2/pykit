@@ -1,12 +1,13 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-from collections import defaultdict
-from collections import namedtuple
-import psutil
 import re
 import socket
 import uuid
+from collections import defaultdict
+from collections import namedtuple
+
+import psutil
 
 from pykit import fsutil
 from pykit import net
@@ -17,7 +18,7 @@ class DriveIDError(Exception):
     pass
 
 
-class ServerID(namedtuple('_ServerID', '')):
+class ServerID(str):
 
     @classmethod
     def validate(cls, server_id):
@@ -26,12 +27,12 @@ class ServerID(namedtuple('_ServerID', '')):
 
         return re.match("^[0-9a-f]{12}$", server_id) is not None
 
-    def __str__(self):
-        node = '%032x' % uuid.getnode()
-        return node[-12:]
+    @classmethod
+    def local_server_id(self):
+        return ServerID('%012x' % uuid.getnode())
 
 
-class DriveID(namedtuple('_DriveID', 'server_id mount_point_index')):
+class DriveID(namedtuple('_DriveID', 'server_id mountpoint_index')):
 
     @classmethod
     def validate(cls, drive_id):
@@ -54,11 +55,15 @@ class DriveID(namedtuple('_DriveID', 'server_id mount_point_index')):
         if not DriveID.validate(drive_id):
             raise DriveIDError('invalid drive id: {d}'.format(d=drive_id))
 
-        return DriveID(drive_id[:12], int(drive_id[13:]))
+        return DriveID(ServerID(drive_id[:12]),
+                       int(drive_id[13:]))
 
     def __str__(self):
-        return '{sid}0{idx:0>3}'.format(sid=self.server_id,
-                                        idx=self.mount_point_index % 1000)
+        return '{sid}0{idx:0>3}'.format(sid=str(self.server_id),
+                                        idx=self.mountpoint_index % 1000)
+
+    def tostr(self):
+        return str(self)
 
 
 def _make_mountpoints_info():
