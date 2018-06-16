@@ -351,19 +351,19 @@ class TestZKinit(unittest.TestCase):
         zkcli.add_auth('digest', 'aa:pw_aa')
 
         expected_nodes = (
-            ('/node1', 'node1_val', [('digest', 'aa', 'cdrwa'),
-                                     ('digest', 'bb', 'rw')], set(['node11', 'node12', 'node13'])),
-            ('/node1/node11', 'node11_val',
+            ('/node1', '"node1_val"', [('digest', 'aa', 'cdrwa'),
+                                       ('digest', 'bb', 'rw')], set(['node11', 'node12', 'node13'])),
+            ('/node1/node11', '"node11_val"',
              [('digest', 'aa', 'cdrwa'), ('digest', 'cc', 'r')], set([])),
-            ('/node1/node12', 'node12_val',
+            ('/node1/node12', '"node12_val"',
              [('digest', 'aa', 'cdrwa'), ('digest', 'bb', 'rw')], set(['node121'])),
-            ('/node1/node12/node121', 'node121_val',
+            ('/node1/node12/node121', '"node121_val"',
              [('digest', 'aa', 'cdrwa'), ('digest', 'bb', 'rw')], set([])),
             ('/node1/node13', '{}', [('digest', 'aa', 'cdrwa')], set([])),
 
-            ('/node2', 'node2_val',
+            ('/node2', '"node2_val"',
              [('world', 'anyone', 'cdrwa')], set(['node21', 'node22'])),
-            ('/node2/node21', 'node21_val',
+            ('/node2/node21', '"node21_val"',
              [('world', 'anyone', 'cdrwa')],  set([])),
             ('/node2/node22', '{}', [('digest', 'aa', 'rwa')],  set([])),
 

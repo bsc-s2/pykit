@@ -176,6 +176,8 @@ class ZKLock(object):
                 except NoNodeError as e:
                     logger.info(repr(e) + ' while delete lock: ' + str(self))
 
+                self.lock_holder = None
+
                 return True, holder, zstat.version
             else:
                 return False, holder, zstat.version
@@ -197,6 +199,8 @@ class ZKLock(object):
                     self.zkclient.delete(self.lock_path)
                 except NoNodeError as e:
                     logger.info(repr(e) + ' while delete lock: ' + str(self))
+
+                self.lock_holder = None
 
                 logger.info('RELEASED: {s}'.format(s=str(self)))
             else:

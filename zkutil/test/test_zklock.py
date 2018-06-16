@@ -325,6 +325,38 @@ class TestZKLock(unittest.TestCase):
             time.sleep(0.1)
             self.assertFalse(sess['acquired'])
 
+    def test_node_change_after_released(self):
+
+        sess = {'acquired': True}
+
+        def on_lost():
+            sess['acquired'] = False
+
+        l = zkutil.ZKLock('foo_name',
+                          zkclient=self.zk,
+                          on_lost=on_lost)
+
+        with l:
+            sess['acquired'] = True
+
+        time.sleep(0.1)
+        self.assertTrue(sess['acquired'])
+
+    def test_is_locked(self):
+
+        l = zkutil.ZKLock('foo_name', zkclient=self.zk)
+
+        with l:
+            pass
+
+        self.assertFalse(l.is_locked())
+
+        l = zkutil.ZKLock('foo_name', zkclient=self.zk)
+        l.acquire()
+        self.assertTrue(l.is_locked())
+        l.try_release()
+        self.assertFalse(l.is_locked())
+
     def test_conn_lost_when_blocking_acquiring(self):
 
         l2 = zkutil.ZKLock('foo_name', on_lost=lambda: True)
