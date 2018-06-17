@@ -11,6 +11,8 @@ from .exceptions import (
     RetriableError,
     TXError,
     TXTimeout,
+    NotLocked,
+    UnlockNotAllowed,
     UserAborted,
 )
 
@@ -70,6 +72,9 @@ __all__ = [
     "TXError",
     "TXTimeout",
     "UserAborted",
+    "NotLocked",
+    "UnlockNotAllowed",
+
 
     "ABORTED",
     "COMMITTED",

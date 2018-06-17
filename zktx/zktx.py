@@ -17,8 +17,10 @@ from pykit import zkutil
 from .exceptions import ConnectionLoss
 from .exceptions import Deadlock
 from .exceptions import HigherTXApplied
+from .exceptions import NotLocked
 from .exceptions import RetriableError
 from .exceptions import TXTimeout
+from .exceptions import UnlockNotAllowed
 from .exceptions import UserAborted
 from .status import ABORTED
 from .status import COMMITTED
@@ -111,6 +113,18 @@ class ZKTransaction(object):
 
         rec = TXRecord(k=key, v=lvalue, txid=ltxid)
         return rec
+
+    def unlock(self, rec):
+
+        if rec.k not in self.got_keys:
+            raise NotLocked("Not allowed to unlock non-locked: {k}".format(k=rec.k))
+
+        if rec.k in self.modifications:
+            raise UnlockNotAllowed('{k} has set as changed'.format(k=rec.k))
+
+        self.zkstorage.try_release_key(self.txid, rec.k)
+
+        del self.got_keys[rec.k]
 
     def set(self, rec):
         logger.info('{tx} tx.set: {rec}'.format(tx=self, rec=rec))

@@ -14,8 +14,10 @@ from pykit.zktx import PURGED
 from pykit.zktx import ConnectionLoss
 from pykit.zktx import Deadlock
 from pykit.zktx import HigherTXApplied
+from pykit.zktx import NotLocked
 from pykit.zktx import TXError
 from pykit.zktx import TXTimeout
+from pykit.zktx import UnlockNotAllowed
 from pykit.zktx import UserAborted
 from pykit.zktx import ZKTransaction
 from pykit.zktx.test import base
@@ -115,6 +117,39 @@ class TestTX(TXBase):
 
                 f4 = t2.lock_get('foo', blocking=False)
                 self.assertIsNone(f4)
+
+    def test_unlock(self):
+
+        with ZKTransaction(zkhost) as t1:
+
+            foo = t1.lock_get('foo')
+            t1.unlock(foo)
+
+            self.assertEqual({}, t1.got_keys)
+
+            # re-get is ok
+            foo = t1.lock_get('foo')
+            t1.unlock(foo)
+
+            with ZKTransaction(zkhost) as t2:
+                # t2 can lock a unlocked key
+                t2.lock_get('foo')
+
+    def test_unlock_nonlocked(self):
+
+        with ZKTransaction(zkhost) as t1:
+
+            foo = t1.lock_get('foo')
+            t1.unlock(foo)
+            self.assertRaises(NotLocked, t1.unlock, foo)
+
+    def test_unlock_changed_record(self):
+
+        with ZKTransaction(zkhost) as t1:
+
+            foo = t1.lock_get('foo')
+            t1.set(foo)
+            self.assertRaises(UnlockNotAllowed, t1.unlock, foo)
 
     def test_run_tx(self):
 
@@ -648,3 +683,47 @@ class TestTXState(TXBase):
         sets, ver = t.zkstorage.txidset.get()
         dd('after redo 4, ignored 4:', sets)
         self.assertEqual({'PURGED': [], 'ABORTED': [[2, 3]], 'COMMITTED': [[1, 2], [3, 4], [5, 6]]}, sets)
+
+    def test_unlock_with_state(self):
+
+        # NotLocked is retrieable
+
+        txid = None
+
+        try:
+            with ZKTransaction(zkhost, timeout=0.5) as t1:
+
+                txid = t1.txid
+                t1.set_state('bar')
+
+                foo = t1.lock_get('foo')
+                t1.unlock(foo)
+                t1.unlock(foo)
+
+        except NotLocked:
+            pass
+
+        t = ZKTransaction(zkhost)
+        val, ver = t.zkstorage.state.get(txid)
+        self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
+
+        # UnlockNotAllowed is retrieable
+
+        txid = None
+
+        try:
+            with ZKTransaction(zkhost, timeout=0.5) as t1:
+
+                txid = t1.txid
+                t1.set_state('bar')
+
+                foo = t1.lock_get('foo')
+                t1.set(foo)
+                t1.unlock(foo)
+
+        except UnlockNotAllowed:
+            pass
+
+        t = ZKTransaction(zkhost)
+        val, ver = t.zkstorage.state.get(txid)
+        self.assertEqual({'got_keys': [], 'data': 'bar'}, val)

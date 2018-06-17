@@ -11,6 +11,8 @@
 - [Exceptions](#exceptions)
   - [TXError](#txerror)
   - [Aborted](#aborted)
+  - [NotLocked](#notlocked)
+  - [UnlockNotAllowed](#unlocknotallowed)
   - [RetriableError](#retriableerror)
     - [`HigherTXApplied(Aborted, RetriableError)`](#highertxappliedaborted-retriableerror)
     - [`Deadlock(Aborted, RetriableError)`](#deadlockaborted-retriableerror)
@@ -44,6 +46,7 @@
   - [zktx.TXRecord](#zktxtxrecord)
   - [zktx.ZKTransaction](#zktxzktransaction)
     - [ZKTransaction.lock_get](#zktransactionlock_get)
+    - [ZKTransaction.unlock](#zktransactionunlock)
     - [ZKTransaction.set](#zktransactionset)
     - [ZKTransaction.get_state](#zktransactionget_state)
     - [ZKTransaction.set_state](#zktransactionset_state)
@@ -135,6 +138,28 @@ Super class of all zktx exceptions
 
 `Aborted` is the super class of all errors that abort a tx.
 It should **NOT** be used directly.
+
+
+##  NotLocked
+
+`NotLocked` is raised if a user is trying to unlock a key which is not held by
+current `tx`.
+
+
+##  UnlockNotAllowed
+
+`UnlockNotAllowed` is raised if a user is trying to unlock a changed record(with `tx.set()`).
+
+```python
+with ZKTransaction(zkhost) as tx:
+
+    foo = tx.lock_get('foo')
+    tx.unlock(foo) # good
+
+    foo = tx.lock_get('foo')
+    tx.set(foo)
+    tx.unlock(foo) # UnlockNotAllowed
+```
 
 
 ##  RetriableError
@@ -662,6 +687,28 @@ But it always returns a copy of the first returned `TXRecord`.
 
 **return**:
 a `TXRecord` instance.
+
+
+###  ZKTransaction.unlock
+
+**syntax**:
+`ZKTransaction.unlock(rec)`
+
+Unlock a record returned from `tx.lock_get()`
+
+-   Trying to unlock a record not locked by current tx raises `NotLocked`.
+-   Trying to unlock a changed record(`tx.set(rec)`) raises `UnlockNotAllowed`.
+
+If one of the above error raises, tx is still consistent.
+Thus `state` will not be removed.
+
+**arguments**:
+
+-   `rec`:
+    record
+
+**return**:
+Nothing
 
 
 ###  ZKTransaction.set

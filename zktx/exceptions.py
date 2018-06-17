@@ -12,6 +12,14 @@ class Aborted(TXError):
     pass
 
 
+class NotLocked(Aborted):
+    pass
+
+
+class UnlockNotAllowed(Aborted):
+    pass
+
+
 class RetriableError(TXError):
     pass
 
