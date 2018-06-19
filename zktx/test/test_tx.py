@@ -96,7 +96,7 @@ class TestTX(TXBase):
             t1.set(foo)
 
             f2 = t1.lock_get('foo')
-            self.assertEqual(None, f2.v)
+            self.assertEqual(1, f2.v)
             f2.v = 2
             t1.set(f2)
 
@@ -104,6 +104,47 @@ class TestTX(TXBase):
 
         rst, ver = self.zk.get('record/foo')
         self.assertEqual([[-1, None], [1, 2]], utfjson.load(rst))
+
+    def test_lock_get_latest(self):
+
+        with ZKTransaction(zkhost) as t1:
+
+            foo = t1.lock_get('foo')
+            self.assertEqual(None, foo.v)
+
+            foo.v = 1
+
+            # lock_get retrieves original value without set
+            f1 = t1.lock_get('foo')
+            self.assertEqual(None, f1.v)
+
+            t1.set(foo)
+
+            # lock_get can retrieve latest value after set
+            f2 = t1.lock_get('foo')
+            self.assertEqual(1, f2.v)
+
+            t1.commit()
+
+        rst, ver = self.zk.get('record/foo')
+        self.assertEqual([[-1, None], [1, 1]], utfjson.load(rst))
+
+    def test_lock_get_not_latest(self):
+
+        with ZKTransaction(zkhost) as t1:
+
+            foo = t1.lock_get('foo')
+            foo.v = 1
+            t1.set(foo)
+
+            # lock_get retrieves original value when latest is False
+            f2 = t1.lock_get('foo', latest=False)
+            self.assertEqual(None, f2.v)
+
+            t1.commit()
+
+        rst, ver = self.zk.get('record/foo')
+        self.assertEqual([[-1, None], [1, 1]], utfjson.load(rst))
 
     def test_noblocking_lock_get(self):
 

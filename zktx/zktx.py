@@ -84,7 +84,7 @@ class ZKTransaction(object):
             if state == KazooState.LOST or state == KazooState.SUSPENDED:
                 self.connected = False
 
-    def lock_get(self, key, blocking=True):
+    def lock_get(self, key, blocking=True, latest=True):
 
         # We use persistent lock(ephemeral=False)
         # thus we do not need to care about connection loss during locking
@@ -92,6 +92,9 @@ class ZKTransaction(object):
         # But we still need to check connection when creating journal.
 
         if key in self.got_keys:
+            if latest and key in self.modifications:
+                return copy.deepcopy(self.modifications[key])
+
             return copy.deepcopy(self.got_keys[key])
 
         if blocking:

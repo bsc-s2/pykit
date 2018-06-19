@@ -664,7 +664,7 @@ It is a transaction engine.
 ###  ZKTransaction.lock_get
 
 **syntax**:
-`ZKTransaction.lock_get(key, blocking=True)`
+`ZKTransaction.lock_get(key, blocking=True, latest=True)`
 
 Lock a record identified by `key` and retrieve the record and return.
 
@@ -684,6 +684,11 @@ But it always returns a copy of the first returned `TXRecord`.
     if `blocking` is `False`, it does not block if the key lock is held by other
     tx.
     Instead it returns `None` at once.
+
+-   `latest`:
+    if `latest` is `True`, it retrieves the latest `key` record that set before
+    in this transaction.
+    Otherwise, it retrieves the `key` record from zookeeper node.
 
 **return**:
 a `TXRecord` instance.
