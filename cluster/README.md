@@ -8,6 +8,8 @@
 - [Description](#description)
 - [Exceptions](#exceptions)
   - [cluster.DriveIDError](#clusterdriveiderror)
+  - [cluster.BlockNotFoundError](#clusterblocknotfounderror)
+  - [cluster.BlockTypeNotSupported](#clusterblocktypenotsupported)
 - [Classes](#classes)
   - [cluster.ServerID](#clusterserverid)
     - [cluster.ServerID.validate](#clusterserveridvalidate)
@@ -31,6 +33,15 @@
     - [cluster.BlockGroupID.parse](#clusterblockgroupidparse)
     - [cluster.BlockGroupID.`__str__`](#clusterblockgroupid__str__)
   - [cluster.BlockGroupID.tostr](#clusterblockgroupidtostr)
+  - [cluster.BlockGroup](#clusterblockgroup)
+    - [block index](#block-index)
+    - [cluster.BlockGroup.make](#clusterblockgroupmake)
+    - [cluster.BlockGroup.get_block](#clusterblockgroupget_block)
+    - [cluster.BlockGroup.get_free_block_index](#clusterblockgroupget_free_block_index)
+    - [cluster.BlockGroup.mark_delete_block](#clusterblockgroupmark_delete_block)
+    - [cluster.BlockGroup.replace_block](#clusterblockgroupreplace_block)
+    - [cluster.BlockGroup.calc_block_type](#clusterblockgroupcalc_block_type)
+    - [cluster.BlockGroup.empty_block](#clusterblockgroupempty_block)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -95,6 +106,20 @@ Some helper function for the server in a cluster.
 `cluster.DriveIDError`
 
 Raise if the drive id is invalid while parse it.
+
+##  cluster.BlockNotFoundError
+
+**syntax**:
+`cluster.BlockNotFoundError`
+
+Raise if a block not found in a block group.
+
+##  cluster.BlockTypeNotSupported
+
+**syntax**:
+`cluster.BlockTypeNotSupported`
+
+Raise if block index do not have corresponding type.
 
 #   Classes
 
@@ -519,13 +544,163 @@ print bgid.seq         # 123
 print bgid             # g000640000000123
 ```
 
-
 ##  cluster.BlockGroupID.tostr
 
 **syntax**:
 `cluster.BlockGroupID.tostr()`
 
 Same as `str(cluster.BlockGroupID(...))`
+
+## cluster.BlockGroup
+
+BlockGroup meta operations.
+
+**syntax**:
+`cluster.BlockGroup(dict)`
+
+
+### block index
+
+`block_index`: specifies the block position in a `block_group`.
+
+It is a 4 digit decimal `number`:
+
+-   The first 2 digits is the IDC index.
+
+-   The latter 2 digits is the position in a IDC.
+
+Both these 2 parts starts from 00.
+
+E.g.: `block_index` of the 1st block in the first IDC is: `0000`.
+`block_index` of the 2nd block in the 3rd IDC is: `0201`.
+
+
+### cluster.BlockGroup.make
+
+**syntax**:
+`cluster.BlockGroup.make(block_group_id, idcs, config)`
+
+**arguments**:
+
+-   `block_group_id`:
+    block_group_id in string
+
+-   `idcs`:
+    a idc list
+
+-   `config`:
+    a config dict that looks like：
+     ```
+     {
+        'ec': {
+            'in_idc': [4, 2],
+            'cross_idc': [2, 1],
+            'ec_policy': 'lrc',
+            'data_replica': 2
+        }
+    }
+    ```
+
+**return**:
+A BlockGroup instance.
+
+### cluster.BlockGroup.get_block
+
+**syntax**:
+`cluster.BlockGroup.get_block(block_index=None, block_id=None, raise_error=False)`
+
+**arguments**:
+
+-   `block_index`:
+    block_index in string.
+
+-   `block_id`:
+    block_id in string.
+
+-   `raise_error`:
+    raise `BlockNotFoundError` if `raise_error` is `True` and block not found.
+    Default is `False`
+
+**return**:
+`(block_index, block)`
+
+### cluster.BlockGroup.get_free_block_index
+
+**syntax**:
+`cluster.BlockGroup.get_free_block_index(block_type=None)`
+
+**arguments**:
+
+-   `block_type`:
+    Type of the block.
+
+**return**
+A dict that key is idc and value is a list of `block_index`.
+
+### cluster.BlockGroup.mark_delete_block
+
+**syntax**:
+`cluster.BlockGroup.mark_delete_block(block_index=None, block_id=None)`
+
+-   `block_index`:
+    block_index in string.
+
+-   `block_id`:
+    block_id in string.
+
+**return**:
+Nothing.
+Will raise `BlockNotFoundError` if target block not found.
+
+### cluster.BlockGroup.replace_block
+
+**syntax**:
+`cluster.BlockGroup.replace_block(new_block, block_index=None, block_id=None)`
+
+-   `new_block`:
+    block used to replace.
+
+-   `block_index`:
+    block_index in string.
+
+-   `block_id`:
+    block_id in string.
+
+**return**:
+Nothing.
+Will raise `BlockNotFoundError` if target block not found.
+
+### cluster.BlockGroup.calc_block_type
+
+**syntax**:
+`cluster.BlockGroup.calc_block_type(block_index)`
+
+-   `block_index`:
+    block_index in string.
+
+**return**:
+block type.
+Will raise `BlockTypeNotSupported` if block index do not have corresponding type.
+
+### cluster.BlockGroup.empty_block
+
+**syntax**:
+`cluster.BlockGroup.empty_block(block_index)`
+
+-   `block_index`:
+    block_index in string.
+
+**return**:
+a empty block dict look like:
+```
+{
+    'block_id': None,
+    'is_del': 1,
+    'range': [None, None],
+    'type': 'd0',
+    'size': 0
+}
+```
 
 
 #   Author
