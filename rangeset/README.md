@@ -14,9 +14,14 @@
     - [Range.has(val)](#rangehasval)
     - [Range.is_adjacent](#rangeis_adjacent)
     - [Range.length](#rangelength)
+  - [rangeset.ValueRange](#rangesetvaluerange)
   - [rangeset.RangeSet](#rangesetrangeset)
     - [RangeSet.add](#rangesetadd)
     - [RangeSet.has](#rangesethas)
+  - [rangeset.RangeDict](#rangesetrangedict)
+    - [RangeDict.add](#rangedictadd)
+    - [RangeDict.get](#rangedictget)
+    - [RangeDict.normalize](#rangedictnormalize)
 - [Methods](#methods)
   - [rangeset.union](#rangesetunion)
   - [rangeset.substract](#rangesetsubstract)
@@ -185,6 +190,19 @@ If one of left and right boundary is `None`, in which case it is an infite
 range, `float('inf')` is returned.
 
 
+##  rangeset.ValueRange
+
+**syntax**:
+`rangeset.ValueRange(left, right, val=None)`
+
+It maps a range to a value.
+E.g.: `ValueRange(0, 1, 'foo')` defines that value for `[0, 1)` is `"foo"`.
+
+A `ValueRange` is left-close and right-open.
+
+`ValueRange` has the same methods as `Range`.
+
+
 ##  rangeset.RangeSet
 
 **syntax**:
@@ -247,6 +265,90 @@ RangeSet([[10, 20], [30, 40]]).has(50) # False
 
 **return**:
 `True` if `val` is in it. Or `False`.
+
+
+##  rangeset.RangeDict
+
+**syntax**:
+`rangeset.RangeDict(iterable=None, range_clz=None)`
+
+`RangeDict` defines a mapping from ranges to values.
+E.g.:
+
+```
+rd = RangeDict([(0, 1, 'foo'), (1, 2, 'bar')])
+rd.get(0)   # 'foo'
+rd.get(1)   # 'bar'
+rd.get(1.5) # 'bar'
+rd.get(2)   # KeyError
+```
+
+**Difference from `RangeSet`**:
+Adjacent ranges such as `(0, 1), (1, 2)` can exist in `RangeDict`
+but can not exist in `RangeSet`.
+Because in `RangeDict` each range there is a value bound.
+
+**arguments**:
+are same as `RangeSet` except the default value for `range_clz` is `ValueRange`
+instead of `Range`.
+
+Methods of `RangeDict` are the same as `RangeSet` except the following three:
+
+
+###  RangeDict.add
+
+**syntax**:
+`RangeDict.add(rng, val)`
+
+Add a mapping from range to value into `RangeDict`.
+
+**arguments**:
+
+-   `rng`:
+    a two element iterable that defines a range.
+
+-   `val`:
+    value of any data type.
+
+**return**:
+Nothing
+
+
+###  RangeDict.get
+
+**syntax**:
+`RangeDict.get(pos)`
+
+**arguments**:
+
+-   `pos`:
+    position in `RangeDict`
+
+**return**:
+the value of range that `pos` is in.
+
+If `pos` is not in any ranges, `KeyError` is raised.
+
+
+###  RangeDict.normalize
+
+**syntax**:
+`RangeDict.normalize()`
+
+Reduce number of elements by
+merging adjacent ranges those have the same value into one continuous range.
+
+**Values are compared with `==`, not `is`**
+
+E.g.:
+
+```python
+rd = rangeset.RangeDict([(1, 2, '12'), [2, 3, '12']])
+rd.normalize() # [[1, 3, '12']]
+```
+
+**return**:
+Nothing.
 
 
 #   Methods
