@@ -98,7 +98,7 @@ def _get_allocated_drive(allocated_drive_pre, mountpoints):
 def make_serverrec(idc, idc_type, roles, allocated_drive_pre, **argkv):
     serverrec = {}
 
-    ips = net.get_host_ip4()
+    ips = net.get_host_ip4(exclude_prefix="docker")
     inn_ips = net.choose_inn(ips)
     pub_ips = net.choose_pub(ips)
 
