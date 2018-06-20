@@ -48,6 +48,9 @@
     - [cluster.BlockGroup.get_replica_block_index](#clusterblockgroupget_replica_block_index)
     - [cluster.BlockGroup.parse_block_index](#clusterblockgroupparse_block_index)
     - [cluster.BlockGroup.make_block_index](#clusterblockgroupmake_block_index)
+  - [cluster.Region](#clusterregion)
+    - [cluster.Region.move_down](#clusterregionmove_down)
+    - [cluster.Region.find_merge](#clusterregionfind_merge)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -778,6 +781,59 @@ Return `[]` if block type support replica but do not have replica.
 
 **return**:
 Block index in string.
+
+
+## cluster.Region
+
+**syntax**:
+`cluster.Region(dict)`
+
+Region related operations.
+
+### cluster.Region.move_down
+
+**syntax**:
+`cluster.Region.move_down()`
+
+A move includes blocks from two different, adjacent levels.
+If block A overlaps with no lower level blocks, move it downward.
+`move_down` moves all movable blocks in this region.
+
+**arguments**:
+Nothing
+
+**return**:
+
+A list of `(source_level, target_level, block)`.
+This list of 3-tuple records all movable blocks which should move from
+`source_level` to `target_level`.
+
+
+### cluster.Region.find_merge
+
+**syntax**:
+`cluster.Region.find_merge()`
+
+A merge includes blocks from two different, adjacent level.
+If block A overlaps lower level blocks set s = {X, Y...}. and size(A) >= size(s)/4, merge them.
+`find_merge` find one block and its overlapped blocks that can merge and return.
+
+**arguments**:
+Nothing
+
+**return**:
+
+-   `src_level`
+    level of `src_block` that can merge downward.
+
+-   `src_block`
+    the block that can merge downward.
+
+-   `overlapped_blocks`
+    blocks in lower level that have overlap with `src_block`.
+
+If no blocks can merge, return None.
+
 
 #   Author
 

@@ -25,6 +25,10 @@ from .server import (
     DriveIDError,
 )
 
+from .region import (
+    Region,
+        )
+
 __all__ = [
     "BlockID",
     "BlockIDError",
@@ -46,4 +50,6 @@ __all__ = [
     "DriveID",
 
     "DriveIDError",
+
+    "Region",
 ]
