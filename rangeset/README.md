@@ -149,7 +149,7 @@ merged into one range.
 
 **return**:
 `True` for `[1, 2] and [2, 3]`
-`Fales` for `[1, 2] and [3, 4]` or `[1, 2] and [1, 3]`
+`False` for `[1, 2] and [3, 4]` or `[1, 2] and [1, 3]`
 
 
 ###  Range.intersect
