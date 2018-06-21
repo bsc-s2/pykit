@@ -7,8 +7,10 @@ from .block_group import (
     BlockGroup,
     BlockGroupID,
     BlockGroupIDError,
+    BlockIndexError,
     BlockNotFoundError,
     BlockTypeNotSupported,
+    BlockTypeNotSupportReplica,
 )
 
 from .server import (
@@ -30,8 +32,10 @@ __all__ = [
     "BlockGroup",
     "BlockGroupID",
     "BlockGroupIDError",
+    "BlockIndexError",
     "BlockNotFoundError",
     "BlockTypeNotSupported",
+    "BlockTypeNotSupportReplica",
 
     "get_serverrec_str",
     "idc_distance",

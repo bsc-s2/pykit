@@ -13,7 +13,7 @@ _ec_config = {
         'in_idc': [4, 2],
         'cross_idc': [2, 1],
         'ec_policy': 'lrc',
-        'data_replica': 2
+        'data_replica': 3
 
     }
 }
@@ -25,7 +25,7 @@ _empty_bkg = {
             'in_idc': [4, 2],
             'ec_policy': 'lrc',
             'cross_idc': [2, 1],
-            'data_replica': 2
+            'data_replica': 3
         }
     },
     'blocks': {
@@ -250,3 +250,163 @@ class TestClusterBlockGroup(unittest.TestCase):
             'type': 'd0',
             'size': 0
         }, block)
+
+    def test_get_block_idc(self):
+        block_group = cluster.BlockGroup.make('g000640000000123', ['a', 'b', 'c'], _ec_config)
+
+        self.assertEqual('a', block_group.get_block_idc(block_index='0000'))
+        self.assertEqual('b', block_group.get_block_idc(block_index='0100'))
+        self.assertEqual('c', block_group.get_block_idc(block_index='0200'))
+
+        d0 = {
+            'block_id': cluster.BlockID('d0',
+                                        'g000640000000123',
+                                        '0000',
+                                        cluster.DriveID.parse('c62d8736c7280002'),
+                                        1).tostr(),
+            'size': 1000,
+            'type': 'd0',
+            'range': ['0a', '0b'],
+            'is_del': 0
+        }
+        block_group.replace_block(d0, block_index='0000')
+        self.assertEqual('a', block_group.get_block_idc(block_id=d0['block_id']))
+
+    def test_get_replica_block_index(self):
+        block_group = cluster.BlockGroup.make('g000640000000123', ['a', 'b', 'c'], _ec_config)
+        self.assertEqual(['0006', '0010'], block_group.get_replica_block_index(block_index='0000'))
+        self.assertEqual(['0000', '0010'], block_group.get_replica_block_index(block_index='0006'))
+        self.assertEqual(['0000', '0006'], block_group.get_replica_block_index(block_index='0010'))
+
+        with self.assertRaises(cluster.BlockTypeNotSupportReplica):
+            block_group.get_replica_block_index(block_index='0004')
+
+        with self.assertRaises(cluster.BlockTypeNotSupportReplica):
+            block_group.get_replica_block_index(block_index='0200')
+
+        with self.assertRaises(cluster.BlockTypeNotSupportReplica):
+            block_group.get_replica_block_index(block_index='0204')
+
+        d0 = {
+            'block_id': cluster.BlockID('d0',
+                                        'g000640000000123',
+                                        '0000',
+                                        cluster.DriveID.parse('c62d8736c7280002'),
+                                        1).tostr(),
+            'size': 1000,
+            'type': 'd0',
+            'range': ['0a', '0b'],
+            'is_del': 0
+        }
+
+        d1 = {
+            'block_id': cluster.BlockID('d1',
+                                        'g000640000000123',
+                                        '0006',
+                                        cluster.DriveID.parse('c62d8736c7280002'),
+                                        1).tostr(),
+            'size': 1000,
+            'type': 'd1',
+            'range': ['0a', '0b'],
+            'is_del': 0
+        }
+
+        d2 = {
+            'block_id': cluster.BlockID('d2',
+                                        'g000640000000123',
+                                        '0010',
+                                        cluster.DriveID.parse('c62d8736c7280002'),
+                                        1).tostr(),
+            'size': 1000,
+            'type': 'd2',
+            'range': ['0a', '0b'],
+            'is_del': 0
+        }
+
+        dp = {
+            'block_id': cluster.BlockID('dp',
+                                        'g000640000000123',
+                                        '0004',
+                                        cluster.DriveID.parse('c62d8736c7280002'),
+                                        1).tostr(),
+            'size': 1000,
+            'type': 'dp',
+            'range': ['0a', '0b'],
+            'is_del': 0
+        }
+
+        x0 = {
+            'block_id': cluster.BlockID('x0',
+                                        'g000640000000123',
+                                        '0200',
+                                        cluster.DriveID.parse('c62d8736c7280002'),
+                                        1).tostr(),
+            'size': 1000,
+            'type': 'x0',
+            'range': ['0a', '0b'],
+            'is_del': 0
+        }
+
+        xp = {
+            'block_id': cluster.BlockID('xp',
+                                        'g000640000000123',
+                                        '0204',
+                                        cluster.DriveID.parse('c62d8736c7280002'),
+                                        1).tostr(),
+            'size': 1000,
+            'type': 'xp',
+            'range': ['0a', '0b'],
+            'is_del': 0
+        }
+
+        block_group.replace_block(d0, block_index='0000')
+
+        block_group['blocks']['0006'] = d1
+        block_group['blocks']['0010'] = d2
+
+        block_group['blocks']['0004'] = dp
+        block_group['blocks']['0200'] = x0
+        block_group['blocks']['0204'] = xp
+
+        self.assertEqual(['0006', '0010'], block_group.get_replica_block_index(block_id=d0['block_id']))
+        self.assertEqual(['0000', '0010'], block_group.get_replica_block_index(block_id=d1['block_id']))
+        self.assertEqual(['0000', '0006'], block_group.get_replica_block_index(block_id=d2['block_id']))
+
+        with self.assertRaises(cluster.BlockTypeNotSupportReplica):
+            block_group.get_replica_block_index(block_id=dp['block_id'])
+
+        with self.assertRaises(cluster.BlockTypeNotSupportReplica):
+            block_group.get_replica_block_index(block_id=x0['block_id'])
+
+        with self.assertRaises(cluster.BlockTypeNotSupportReplica):
+            block_group.get_replica_block_index(block_id=xp['block_id'])
+
+    def test_parse_block_index(self):
+        self.assertEqual((0, 0,), cluster.BlockGroup.parse_block_index('0000'))
+        self.assertEqual((10, 10,), cluster.BlockGroup.parse_block_index('1010'))
+
+        with self.assertRaises(cluster.BlockIndexError):
+            cluster.BlockGroup.parse_block_index('01010')
+
+        with self.assertRaises(cluster.BlockIndexError):
+            cluster.BlockGroup.parse_block_index('010')
+
+        with self.assertRaises(ValueError):
+            cluster.BlockGroup.parse_block_index('0a0b')
+
+    def test_make_block_index(self):
+        self.assertEqual('0000', cluster.BlockGroup.make_block_index(0, 0))
+        self.assertEqual('1010', cluster.BlockGroup.make_block_index(10, 10))
+
+        cases = (
+            (100, 0),
+            (-100, 0),
+            (0, 100),
+            (0, -100),
+            (100, 100),
+            (-100, -100),
+        )
+
+        for idc_idx, pos in cases:
+            with self.assertRaises(cluster.BlockIndexError):
+                cluster.BlockGroup.make_block_index(idc_idx, pos)

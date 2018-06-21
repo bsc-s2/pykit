@@ -10,6 +10,8 @@
   - [cluster.DriveIDError](#clusterdriveiderror)
   - [cluster.BlockNotFoundError](#clusterblocknotfounderror)
   - [cluster.BlockTypeNotSupported](#clusterblocktypenotsupported)
+  - [cluster.BlockTypeNotSupportReplica](#clusterblocktypenotsupportreplica)
+  - [cluster.BlockIndexError](#clusterblockindexerror)
 - [Classes](#classes)
   - [cluster.ServerID](#clusterserverid)
     - [cluster.ServerID.validate](#clusterserveridvalidate)
@@ -42,6 +44,10 @@
     - [cluster.BlockGroup.replace_block](#clusterblockgroupreplace_block)
     - [cluster.BlockGroup.calc_block_type](#clusterblockgroupcalc_block_type)
     - [cluster.BlockGroup.empty_block](#clusterblockgroupempty_block)
+    - [cluster.BlockGroup.get_block_idc](#clusterblockgroupget_block_idc)
+    - [cluster.BlockGroup.get_replica_block_index](#clusterblockgroupget_replica_block_index)
+    - [cluster.BlockGroup.parse_block_index](#clusterblockgroupparse_block_index)
+    - [cluster.BlockGroup.make_block_index](#clusterblockgroupmake_block_index)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -120,6 +126,20 @@ Raise if a block not found in a block group.
 `cluster.BlockTypeNotSupported`
 
 Raise if block index do not have corresponding type.
+
+## cluster.BlockTypeNotSupportReplica
+
+**syntax**:
+`cluster.BlockTypeNotSupportReplica`
+
+Raise if block type do not support replica.
+
+## cluster.BlockIndexError
+
+**syntax**:
+`cluster.BlockIndexError`
+
+Raise if block index parse or make error.
 
 #   Classes
 
@@ -702,6 +722,62 @@ a empty block dict look like:
 }
 ```
 
+### cluster.BlockGroup.get_block_idc
+
+**syntax**:
+`cluster.BlockGroup.get_block_idc(block_index=None, block_id=None)`
+
+-   `block_index`:
+    block_index in string.
+
+-   `block_id`:
+    block_id in string.
+
+**return**:
+The idc of the block.
+
+### cluster.BlockGroup.get_replica_block_index
+
+**syntax**:
+`cluster.BlockGroup.get_replica_block_index(block_index=None, block_id=None)`
+
+-   `block_index`:
+    block_index in string.
+
+-   `block_id`:
+    block_id in string.
+
+**return**:
+List of data replica block index except the input block.
+Will raise `BlockTypeNotSupportReplica` if block type do not support replica.
+Return `[]` if block type support replica but do not have replica.
+
+### cluster.BlockGroup.parse_block_index
+
+**syntax**:
+`cluster.BlockGroup.parse_block_index(block_index)`
+
+-   `block_index`:
+    block_index in string.
+
+**return**:
+`(idc_idx, pos)`
+
+### cluster.BlockGroup.make_block_index
+
+**syntax**:
+`cluster.BlockGroup.make_block_index(idc_idx, pos)`
+
+-   `idc_idx`:
+    the idc index.
+    Should be int.
+
+-   `pos`:
+    the position in a idc.
+    Should be int.
+
+**return**:
+Block index in string.
 
 #   Author
 
