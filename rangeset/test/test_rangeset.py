@@ -146,6 +146,46 @@ class TestRange(unittest.TestCase):
 
             self.assertEqual(expected, rst)
 
+    def test_intersect(self):
+
+        cases = (
+            ([None, None], [None, None], [None, None] ),
+            ([None, None], [1,    None], [1, None]    ),
+            ([None, None], [None, 1],    [None, 1]    ),
+            ([None, None], [1,    3],    [1, 3]       ),
+            ([None, 5],    [5,    8],    None         ),
+            ([None, 5],    [4,    8],    [4, 5]       ),
+            ([None, 5],    [1,    2],    [1, 2]       ),
+            ([None, 5],    [None, 2],    [None, 2]    ),
+            ([None, 5],    [None, 5],    [None, 5]    ),
+            ([5,    None], [1,    2],    None         ),
+            ([5,    None], [1,    8],    [5, 8]       ),
+            ([5,    None], [5,    8],    [5, 8]       ),
+            ([5,    None], [6,    8],    [6, 8]       ),
+            ([5,    None], [6,    None], [6, None]    ),
+            ([5,    None], [5,    None], [5, None]    ),
+            ([5,    None], [4,    None], [5, None]    ),
+            ([5,    10],   [5,    None], [5, 10]      ),
+            ([5,    10],   [6,    None], [6, 10]      ),
+            ([5,    10],   [6,    7],    [6, 7]       ),
+            ([5,    10],   [6,    10],   [6, 10]      ),
+        )
+
+        for a, b, expected in cases:
+            dd('case:', a, b, expected)
+
+            a = rangeset.Range(*a)
+
+            self.assertEqual(expected, a.intersect(rangeset.Range(*b)))
+            self.assertEqual(expected, a.intersect(rangeset.ValueRange(*(b+['bar']))))
+
+            a = rangeset.ValueRange(*(a+['ahh']))
+            if expected is not None:
+                expected = expected + ['ahh']
+
+            self.assertEqual(expected, a.intersect(rangeset.Range(*b)))
+            self.assertEqual(expected, a.intersect(rangeset.ValueRange(*(b+['bar']))))
+
     def test_length(self):
         inf = float('inf')
         cases = (
@@ -780,3 +820,51 @@ class TestRangeDict(unittest.TestCase):
         b = rangeset.RangeDict([[2, 8, 'x']])
 
         self.assertEqual([[2, 3, 'a'], [5, 8, 'b']], rangeset.intersect(a, b))
+
+    def test_find_overlapped(self):
+
+        cases = (
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [None, None], [[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [None, 1],    [[None, 10, 'a']                                ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [None, 10],   [[None, 10, 'a']                                ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [None, 11],   [[None, 10, 'a']                                ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [9,    11],   [[None, 10, 'a']                                ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [9,    21],   [[None, 10, 'a'], [20, 30, 'b']                 ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [9,    40],   [[None, 10, 'a'], [20, 30, 'b']                 ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [9,    41],   [[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [10,   11],   [                                               ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [11,   12],   [                                               ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [19,   20],   [                                               ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [19,   21],   [                 [20, 30, 'b']                 ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [20,   21],   [                 [20, 30, 'b']                 ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [24,   25],   [                 [20, 30, 'b']                 ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [29,   30],   [                 [20, 30, 'b']                 ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [29,   31],   [                 [20, 30, 'b']                 ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [29,   41],   [                 [20, 30, 'b'], [40, None, 'c']]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [30,   31],   [                                               ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [31,   32],   [                                               ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [39,   40],   [                                               ]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [39,   41],   [                                [40, None, 'c']]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [40,   41],   [                                [40, None, 'c']]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [41,   42],   [                                [40, None, 'c']]),
+            ([[None, 10, 'a'], [20, 30, 'b'], [40, None, 'c']], [41,   None], [                                [40, None, 'c']]),
+
+        )
+
+        dd()
+        for a, b, expected in cases:
+
+            dd('case:', a, b, expected)
+
+            a = rangeset.RangeDict(a)
+
+            self.assertEqual(expected, a.find_overlapped(b))
+            self.assertEqual(expected, a.find_overlapped(rangeset.Range(*b)))
+            self.assertEqual(expected, a.find_overlapped(rangeset.ValueRange(*(b+['bar']))))
+
+            a = rangeset.RangeSet([x[:2] for x in a])
+            expected = [x[:2] for x in expected]
+
+            self.assertEqual(expected, a.find_overlapped(b))
+            self.assertEqual(expected, a.find_overlapped(rangeset.Range(*b)))
+            self.assertEqual(expected, a.find_overlapped(rangeset.ValueRange(*(b+['bar']))))

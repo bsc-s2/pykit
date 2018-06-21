@@ -13,10 +13,12 @@
     - [Range.cmp](#rangecmp)
     - [Range.has(val)](#rangehasval)
     - [Range.is_adjacent](#rangeis_adjacent)
+    - [Range.intersect](#rangeintersect)
     - [Range.length](#rangelength)
   - [rangeset.ValueRange](#rangesetvaluerange)
   - [rangeset.RangeSet](#rangesetrangeset)
     - [RangeSet.add](#rangesetadd)
+    - [RangeSet.find_overlapped](#rangesetfind_overlapped)
     - [RangeSet.has](#rangesethas)
   - [rangeset.RangeDict](#rangesetrangedict)
     - [RangeDict.add](#rangedictadd)
@@ -150,6 +152,27 @@ merged into one range.
 `Fales` for `[1, 2] and [3, 4]` or `[1, 2] and [1, 3]`
 
 
+###  Range.intersect
+
+**syntax**:
+`Range.intersect(rng)`
+
+Intersect this range with another range.
+
+E.g.
+
+```python
+Range(1, 5).intersect(2, None) # Range(2, 5)
+```
+
+**arguments**:
+
+-   `rng`: is a`list`, `Range` or `ValueRange`
+
+**return**:
+`None` if it has no itersection with `rng`, or a new instance of intersection.
+
+
 ###  Range.length
 
 **syntax**:
@@ -240,6 +263,31 @@ RangeSet([[10, 20], [30, 40]].add([0, 35])  # [[0, 40]]
 nothing, but modify the range-set in place.
 
 
+###  RangeSet.find_overlapped
+
+**syntax**:
+`RangeSet.find_overlapped(rng)`
+
+Find all ranges those overlaps with `rng`.
+E.g.
+
+```python
+
+RangeSet([[None, 10], [20, 30], [40, None]]).find_overlapped([29, 41])
+# RangeSet([[20, 30, 'b'], [40, None, 'c']])
+```
+
+**arguments**:
+
+-   `rng`:
+    a range iterable with at least 2 elements, such `list`, `tuple`, `Range` or
+    `ValueRange`.
+
+**return**:
+a instance of `self.__class__` with `Range` or `ValueRange` elements those
+overlaps with `rng`.
+
+
 ###  RangeSet.has
 
 **syntax**:
@@ -265,6 +313,7 @@ RangeSet([[10, 20], [30, 40]]).has(50) # False
 
 **return**:
 `True` if `val` is in it. Or `False`.
+
 
 
 ##  rangeset.RangeDict

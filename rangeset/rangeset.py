@@ -50,6 +50,28 @@ class ValueRange(list):
         # incomparable: overlapping or adjacent ranges
         return 0
 
+    def intersect(self, b):
+
+        if self.cmp(b) != 0:
+            return None
+
+        rst = [None, None] + self[2:]
+
+        if self.cmp_left(b) < 0:
+            rst[0] = b[0]
+        else:
+            rst[0] = self[0]
+
+        if self.cmp_right(b) > 0:
+            rst[1] = b[1]
+        else:
+            rst[1] = self[1]
+
+        if rst[0] is not None and rst[0] == rst[1]:
+            return None
+
+        return rst
+
     def cmp_left(self, b):
         # left is None means it is negative infinite
         return cmp_val(self[0], b[0], none_cmp_finite=-1)
@@ -294,6 +316,27 @@ class RangeDict(list):
             else:
                 i += 1
                 continue
+
+    def find_overlapped(self, rng):
+
+        rng = list(rng)
+        rst = []
+
+        i = bisect_left(self, rng)
+        while i < len(self):
+
+            if self[i].cmp(rng) == 0:
+
+                if self[i].intersect(rng) is not None:
+                    rst.append(self.range_clz(*self[i]))
+                else:
+                    # adjacent ranges
+                    pass
+                i += 1
+            else:
+                break
+
+        return self.__class__(rst)
 
 
 class RangeSet(RangeDict):
