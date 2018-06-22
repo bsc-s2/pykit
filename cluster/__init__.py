@@ -5,12 +5,16 @@ from .block import (
 
 from .block_group import (
     BlockGroup,
-    BlockGroupID,
-    BlockGroupIDError,
     BlockIndexError,
     BlockNotFoundError,
     BlockTypeNotSupported,
     BlockTypeNotSupportReplica,
+)
+
+from .block_group_id import (
+    BlockGroupIDError,
+
+    BlockGroupID,
 )
 
 from .server import (

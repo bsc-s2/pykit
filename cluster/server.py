@@ -13,6 +13,8 @@ from pykit import fsutil
 from pykit import net
 from pykit import strutil
 
+from .idbase import IDBase
+
 
 class DriveIDError(Exception):
     pass
@@ -32,7 +34,9 @@ class ServerID(str):
         return ServerID('%012x' % uuid.getnode())
 
 
-class DriveID(namedtuple('_DriveID', 'server_id mountpoint_index')):
+class DriveID(namedtuple('_DriveID', 'server_id mountpoint_index'), IDBase):
+
+    _tostr_fmt = '{server_id}0{mountpoint_index:0>3}'
 
     @classmethod
     def validate(cls, drive_id):
@@ -57,13 +61,6 @@ class DriveID(namedtuple('_DriveID', 'server_id mountpoint_index')):
 
         return DriveID(ServerID(drive_id[:12]),
                        int(drive_id[13:]))
-
-    def __str__(self):
-        return '{sid}0{idx:0>3}'.format(sid=str(self.server_id),
-                                        idx=self.mountpoint_index % 1000)
-
-    def tostr(self):
-        return str(self)
 
 
 def _make_mountpoints_info():

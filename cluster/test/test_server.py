@@ -114,17 +114,17 @@ class TestClusterServer(unittest.TestCase):
             ('112233445566', 1),
             ('112233445566', 10),
             ('112233445566', 100),
-            ('112233445566', 1999),
+            ('112233445566', 999),
 
             ('aabbccddeeff', 1),
             ('aabbccddeeff', 10),
             ('aabbccddeeff', 100),
-            ('aabbccddeeff', 1999),
+            ('aabbccddeeff', 999),
 
             ('1122ccddeeff', 1),
             ('1122ccddeeff', 10),
             ('1122ccddeeff', 100),
-            ('1122ccddeeff', 1999),
+            ('1122ccddeeff', 999),
         )
 
         for sid, mp_idx in cases:
@@ -133,7 +133,7 @@ class TestClusterServer(unittest.TestCase):
                              drive_id)
 
             self.assertEqual(sid, cluster.DriveID.parse(drive_id).server_id)
-            self.assertEqual(mp_idx % 1000, cluster.DriveID.parse(drive_id).mountpoint_index)
+            self.assertEqual(mp_idx, cluster.DriveID.parse(drive_id).mountpoint_index)
 
     def test_drive_id_server_id(self):
 

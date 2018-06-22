@@ -18,7 +18,7 @@ class TestClusterBlock(unittest.TestCase):
         bid = cluster.BlockID.parse(block_id)
 
         self.assertEqual('d1', bid.type)
-        self.assertEqual('g000630000000123', bid.block_group_id)
+        self.assertEqual('g000630000000123', str(bid.block_group_id))
         self.assertEqual('0101', bid.block_index)
         self.assertEqual('c62d8736c7280002', bid.drive_id.tostr())
         self.assertEqual(1, bid.pg_seq)
@@ -26,13 +26,24 @@ class TestClusterBlock(unittest.TestCase):
         self.assertEqual(block_id, str(bid))
         self.assertEqual(block_id, '{0}'.format(bid))
         self.assertEqual(
-            "_BlockID(type='d1', block_group_id='g000630000000123', block_index='0101', drive_id=_DriveID(server_id='c62d8736c728', mountpoint_index=2), pg_seq=1)",
+            "_BlockID(type='d1', block_group_id=_BlockGroupID(block_size=63, seq=123), block_index='0101', drive_id=_DriveID(server_id='c62d8736c728', mountpoint_index=2), pg_seq=1)",
             repr(bid))
 
         # test invalid input
         block_id_invalid = 'd1g0006300000001230101c62d8736c728000200000'
         self.assertRaises(cluster.BlockIDError,
                           cluster.BlockID.parse, block_id_invalid)
+
+    def test_new(self):
+
+        block_id = 'd1g0006300000001230101c62d8736c72800020000000001'
+
+        # new with string drive id
+
+        bid = cluster.BlockID('d1', 'g000630000000123', '0101', 'c62d8736c7280002', 1)
+        self.assertEqual(block_id, str(bid))
+
+        self.assertIsInstance(bid.drive_id, cluster.DriveID)
 
     def test_tostr(self):
 
