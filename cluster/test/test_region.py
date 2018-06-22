@@ -27,7 +27,33 @@ class TestClusterRegion(unittest.TestCase):
         for case, excepted in region_cases:
 
             region = cluster.Region(case)
+
+            case['idc'] = 'beijing'
+            case['test'] = {'a': 1}
+            if 'levels' in case:
+                case['levels'].append(['d', 'e', 5])
+
             self.assertEqual(excepted, region)
+
+        region_cases_argkv = [
+            ([[['a', 'b', 1], ['c', 'd', 2]]],
+                {'idc': None, 'range': [None, None], 'levels': [[['a', 'b', 1], ['c', 'd', 2]]]}),
+            (['a', 'z'],
+                {'idc': None, 'range': ['a', 'z'], 'levels': []}),
+            ([],
+                {'idc': None, 'range': ['a', 'z'], 'levels': [[['a', 'b', 1], ['c', 'd', 2]], [['f', 'g', 5]]]}),
+        ]
+
+        region = cluster.Region(levels=region_cases_argkv[0][0])
+        region_cases_argkv[0][0].append([['f', 'g', 5]])
+        self.assertEqual(region_cases_argkv[0][1], region)
+
+        region = cluster.Region(range=region_cases_argkv[1][0])
+        self.assertEqual(region_cases_argkv[1][1], region)
+
+        region = cluster.Region(
+            levels=region_cases_argkv[0][0], range=region_cases_argkv[1][0])
+        self.assertEqual(region_cases_argkv[2][1], region)
 
     def test_move_down(self):
 

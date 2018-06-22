@@ -12,11 +12,14 @@ class Region(dict):
                       'range': [None, None],
                       'levels': [], }
 
-    def __init__(self, *args, **argkv):
+    def __init__(self, region=None, **argkv):
 
         self.update(copy.deepcopy(self.fields_default))
 
-        super(Region, self).__init__(*args, **argkv)
+        if region is not None:
+            self.update(copy.deepcopy(region))
+
+        self.update(copy.deepcopy(argkv))
 
         self['range'] = rangeset.Range(*self['range'])
 
