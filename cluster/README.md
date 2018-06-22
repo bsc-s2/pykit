@@ -51,6 +51,8 @@
   - [cluster.Region](#clusterregion)
     - [cluster.Region.move_down](#clusterregionmove_down)
     - [cluster.Region.find_merge](#clusterregionfind_merge)
+    - [cluster.Region.list_block_ids](#clusterregionlist_block_ids)
+    - [cluster.Region.replace_block_id](#clusterregionreplace_block_id)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -834,6 +836,42 @@ Nothing
 
 If no blocks can merge, return None.
 
+
+### cluster.Region.list_block_ids
+
+**syntax**:
+`cluster.Region.list_block_ids(start_block_id=None)`
+
+list all block ids in this region alphabetical from `start_block_id`.
+
+**arguments**:
+
+-   `start_block_id`
+    used as the starting of block id list.
+    If it not exists in block id list, the starting is the first one bigger than it.
+
+**return**:
+a block id list.
+
+
+### cluster.Region.replace_block_id
+
+**syntax**:
+`cluster.Region.replace_block_id(block_id, new_block_id)`
+
+replace block id from `block_id` to `new_block_id`.
+
+**arguments**:
+
+-   `block_id`
+    the block id to be replaced.
+
+-   `new_block_id`
+    the block id should be replaced to.
+
+**return**:
+Nothing.
+If `block_id` is not found in region levels, raise `BlockNotInRegion`.
 
 #   Author
 

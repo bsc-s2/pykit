@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import bisect
 import copy
 
 from pykit import rangeset
+
+
+class BlockNotInRegion(Exception):
+    pass
 
 
 class Region(dict):
@@ -92,3 +97,30 @@ class Region(dict):
 
                 if self.need_merge(src, overlapped):
                     return (level, src, overlapped)
+
+    def list_block_ids(self, start_block_id=None):
+
+        block_ids = []
+
+        for blocks in self['levels']:
+            level_bids = [b[2]['block_id'] for b in blocks]
+            block_ids.extend(level_bids)
+
+        block_ids.sort()
+
+        if start_block_id is not None:
+            idx = bisect.bisect_left(block_ids, start_block_id)
+            block_ids = block_ids[idx:]
+
+        return block_ids
+
+    def replace_block_id(self, block_id, new_block_id):
+
+        for blocks in self['levels']:
+
+            for block in blocks:
+                if block[2]['block_id'] == block_id:
+                    block[2]['block_id'] = new_block_id
+                    return
+
+        raise BlockNotInRegion('block_id: %s' % block_id)

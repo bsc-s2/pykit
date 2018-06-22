@@ -127,3 +127,43 @@ class TestClusterRegion(unittest.TestCase):
             res = region.find_merge()
 
             self.assertEqual(excepted, res)
+
+    def test_list_block_ids(self):
+        region_levels = [
+            [['aa', 'ee', {'block_id': 1}], ['hh', 'zz', {'block_id': 2}]],
+            [['ea', 'ff', {'block_id': 4}], ['mm', 'yy', {'block_id': 5}]],
+        ]
+
+        cases = (
+                (None, [1, 2, 4, 5]),
+                (3,    [4, 5]),
+                (5,     [5]),
+                (6,     []),
+        )
+
+        region = cluster.Region(levels=region_levels)
+
+        for bid, excepted in cases:
+            block_ids = region.list_block_ids(start_block_id=bid)
+            self.assertEqual(excepted, block_ids)
+
+    def test_replace_block_id(self):
+        region_levels = [
+            [['aa', 'ee', {'block_id': 1}], ['hh', 'zz', {'block_id': 2}]],
+            [['ea', 'ff', {'block_id': 4}], [
+                'mm', 'yy', {'block_id': 5}]]
+        ]
+
+        excepted_region_levels = [
+            [['aa', 'ee', {'block_id': 1}], ['hh', 'zz', {'block_id': 2}]],
+            [['ea', 'ff', {'block_id': 3}], [
+                'mm', 'yy', {'block_id': 5}]]
+        ]
+
+        region = cluster.Region(levels=region_levels)
+
+        region.replace_block_id(4, 3)
+        self.assertEqual(excepted_region_levels, region['levels'])
+
+        self.assertRaises(cluster.BlockNotInRegion,
+                          region.replace_block_id, 7, 9)

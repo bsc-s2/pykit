@@ -27,6 +27,8 @@ from .server import (
 
 from .region import (
     Region,
+
+    BlockNotInRegion,
         )
 
 __all__ = [
@@ -52,4 +54,6 @@ __all__ = [
     "DriveIDError",
 
     "Region",
+
+    "BlockNotInRegion",
 ]
