@@ -30,6 +30,12 @@ class BlockIndexError(BlockGroupBaseError):
 
 
 class BlockGroup(dict):
+    def __init__(self, block_group=None, **kwargs):
+        if block_group is not None:
+            self.update(copy.deepcopy(block_group))
+
+        self.update(copy.deepcopy(kwargs))
+
     @classmethod
     def make(cls, block_group_id, idcs, config):
 

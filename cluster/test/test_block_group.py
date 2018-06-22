@@ -410,3 +410,28 @@ class TestClusterBlockGroup(unittest.TestCase):
         for idc_idx, pos in cases:
             with self.assertRaises(cluster.BlockIndexError):
                 cluster.BlockGroup.make_block_index(idc_idx, pos)
+
+    def test_block_group_init(self):
+        block_group = cluster.BlockGroup(_empty_bkg)
+        new_block = {
+            'block_id': cluster.BlockID('d0',
+                                        'g000640000000123',
+                                        '0000',
+                                        cluster.DriveID.parse('c62d8736c7280002'),
+                                        1).tostr(),
+            'size': 1000,
+            'type': 'd0',
+            'range': ['0a', '0b'],
+            'is_del': 0
+        }
+
+        block_group.replace_block(new_block, block_index='0000')
+        self.assertNotEqual(_empty_bkg, block_group)
+
+        block_group = cluster.BlockGroup(**_empty_bkg)
+        block_group.replace_block(new_block, block_index='0000')
+        self.assertNotEqual(_empty_bkg, block_group)
+
+        block_group = cluster.BlockGroup(_empty_bkg, **_empty_bkg)
+        block_group.replace_block(new_block, block_index='0000')
+        self.assertNotEqual(_empty_bkg, block_group)

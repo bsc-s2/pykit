@@ -583,6 +583,9 @@ BlockGroup meta operations.
 **syntax**:
 `cluster.BlockGroup(dict)`
 
+Note: Although BlockGroup is subclass of dict,
+      `BlockGroup(block_group=None, **kwargs)` will deepcopy the arguments.
+      But `dict(seq=None, **kwargs)` just do a shadow copy.
 
 ### block index
 
