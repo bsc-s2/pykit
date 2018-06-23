@@ -83,9 +83,9 @@ class ValueRange(list):
     def is_adjacent(self, b):
         return cmp_boundary(b[0], self[1]) == 0
 
-    def has(self, val):
-        return (cmp_val(self[0], val, none_cmp_finite=-1) <= 0
-                and cmp_val(val, self[1], none_cmp_finite=1) < 0)
+    def has(self, pos):
+        return (cmp_val(self[0], pos, none_cmp_finite=-1) <= 0
+                and cmp_val(pos, self[1], none_cmp_finite=1) < 0)
 
     def length(self):
         if self[0] is None or self[1] is None:
@@ -190,10 +190,10 @@ class IntIncRange(Range):
         return (None not in (b[0], self[1])
                 and self[1] + 1 == b[0])
 
-    def has(self, val):
-        return (cmp_val(self[0], val, none_cmp_finite=-1) <= 0
-                and cmp_val(val, self[1], none_cmp_finite=1) <= 0
-                and type(val) in int_types)
+    def has(self, pos):
+        return (cmp_val(self[0], pos, none_cmp_finite=-1) <= 0
+                and cmp_val(pos, self[1], none_cmp_finite=1) <= 0
+                and type(pos) in int_types)
 
     def length(self):
         if None in self:
@@ -281,14 +281,14 @@ class RangeDict(list):
 
         return self[i][2]
 
-    def has(self, val):
-        rng = [val, None]
+    def has(self, pos):
+        rng = [pos, None]
         i = bisect_left(self, rng)
 
         if i == len(self):
             return False
 
-        return self[i].has(val)
+        return self[i].has(pos)
 
     def length(self):
         rst = 0
