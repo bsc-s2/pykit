@@ -41,7 +41,7 @@ class Region(dict):
 
         return 4 * src_blk_size >= target_blk_size
 
-    def find_target_level(self, src_block, src_level, region_levels):
+    def find_moved_to_level(self, src_block, src_level, region_levels):
 
         for level in reversed(range(src_level)):
 
@@ -50,9 +50,9 @@ class Region(dict):
 
             if len(overlapped) != 0:
                 level += 1
-                break
+                return level
 
-        return level
+        return 0
 
     def move_down(self):
 
@@ -64,7 +64,7 @@ class Region(dict):
                 continue
 
             for src in src_blocks[:]:
-                target_level = self.find_target_level(
+                target_level = self.find_moved_to_level(
                     src, level, region_levels)
                 if level == target_level:
                     continue
