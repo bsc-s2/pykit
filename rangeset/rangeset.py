@@ -57,12 +57,12 @@ class ValueRange(list):
 
         rst = [None, None] + self[2:]
 
-        if self.cmp_left(b) < 0:
+        if self.cmp_left(b[0]) < 0:
             rst[0] = b[0]
         else:
             rst[0] = self[0]
 
-        if self.cmp_right(b) > 0:
+        if self.cmp_right(b[1]) > 0:
             rst[1] = b[1]
         else:
             rst[1] = self[1]
@@ -72,20 +72,20 @@ class ValueRange(list):
 
         return rst
 
-    def cmp_left(self, b):
+    def cmp_left(self, pos):
         # left is None means it is negative infinite
-        return cmp_val(self[0], b[0], none_cmp_finite=-1)
+        return cmp_val(self[0], pos, none_cmp_finite=-1)
 
-    def cmp_right(self, b):
+    def cmp_right(self, pos):
         # right is None means it is positive infinite
-        return cmp_val(self[1], b[1], none_cmp_finite=1)
+        return cmp_val(self[1], pos, none_cmp_finite=1)
 
     def is_adjacent(self, b):
         return cmp_boundary(b[0], self[1]) == 0
 
     def has(self, pos):
-        return (cmp_val(self[0], pos, none_cmp_finite=-1) <= 0
-                and cmp_val(pos, self[1], none_cmp_finite=1) < 0)
+        return (self.cmp_left(pos) <= 0
+                and self.cmp_right(pos) > 0)
 
     def length(self):
         if self[0] is None or self[1] is None:
@@ -264,7 +264,7 @@ class RangeDict(list):
             self.insert(0, rng)
         else:
             for i in range(len(self)):
-                if self[i].cmp_left(rng) > 0:
+                if self[i].cmp_left(rng[0]) > 0:
                     self.insert(i, rng)
                     break
             else:
@@ -392,7 +392,7 @@ def _union(a, b):
         elif j == len(b):
             a_ge_b = False
         else:
-            a_ge_b = a[i].cmp_left(b[j]) >= 0
+            a_ge_b = a[i].cmp_left(b[j][0]) >= 0
 
         if a_ge_b:
             nxt = b[j]
@@ -549,11 +549,11 @@ def substract_range(a, b):
     # keep value for ValueRange
     rst = [None, None]
 
-    if a.cmp_left(b) < 0:
+    if a.cmp_left(b[0]) < 0:
         o = [a[0], b.prev_right()] + a[2:]
         rst[0] = a.__class__(*o)
 
-    if b.cmp_right(a) < 0:
+    if b.cmp_right(a[1]) < 0:
         o = [b.next_left(), a[1]] + a[2:]
         rst[1] = a.__class__(*o)
 
