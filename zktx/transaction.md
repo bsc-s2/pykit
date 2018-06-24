@@ -187,11 +187,11 @@ Normally tx resources includes:
     > trying to acquire a key-lock which is held by dead tx, and there is a
     > background process periodically looks up for dead tx).
 
-    A txid that is added into `txidset["PURGED"]` will not be removed from
-    ABORTED or COMMITTED(not necessary).
+    A txid that is added into `txidset["PURGED"]` will be removed from
+    ABORTED or COMMITTED(to reduce rangeset size).
 
     Thus all journals those are current available in zk are:
-    `txidset["COMMITTED"] - txidset["PURGED"]`.
+    `txidset["COMMITTED"]`.
 
 
 # A typical transaction running phases

@@ -12,6 +12,7 @@ from kazoo.exceptions import KazooException
 from kazoo.exceptions import NoNodeError
 
 from pykit import rangeset
+from pykit import utfjson
 from pykit import zkutil
 
 from .exceptions import ConnectionLoss
@@ -35,10 +36,12 @@ DEFAULT_TIMEOUT = 10
 
 class TXRecord(object):
 
-    def __init__(self, k, v, txid):
+    def __init__(self, k, v, txid, version, values):
         self.k = k
-        self.v = v
-        self.txid = txid
+        self.v = v             # the latest updated value
+        self.txid = txid       # the txid in which the `v` is written in `k`
+        self.version = version  # stat.version of zk node `k`
+        self.values = values
 
     def __str__(self):
         return '{k}={v}@{txid}'.format(
@@ -107,14 +110,16 @@ class ZKTransaction(object):
         val, version = self.zkstorage.record.get(key)
         ltxid, lvalue = val[-1]
 
-        curr = TXRecord(k=key, v=copy.deepcopy(lvalue), txid=ltxid)
+        curr = TXRecord(k=key, v=copy.deepcopy(lvalue), txid=ltxid,
+                        version=version, values=val)
         self.got_keys[key] = curr
 
         if ltxid > self.txid:
             raise HigherTXApplied('{tx} seen a higher txid applied: {txid}'.format(
                 tx=self, txid=ltxid))
 
-        rec = TXRecord(k=key, v=copy.deepcopy(lvalue), txid=ltxid)
+        rec = TXRecord(k=key, v=copy.deepcopy(lvalue), txid=ltxid,
+                       version=version, values=val)
         return rec
 
     def unlock(self, rec):
@@ -142,14 +147,22 @@ class ZKTransaction(object):
         self.zkstorage.state.set_or_create(self.txid, txst)
 
     def get_state(self, txid=None):
-        if txid is None:
-            txid = self.txid
-        txst, _ = self.zkstorage.state.get(txid)
 
+        txst, ver = self._get_state(txid=txid)
         if txst is None:
             return None
+        else:
+            return txst['data']
 
-        return txst['data']
+    def _get_state(self, txid=None):
+        if txid is None:
+            txid = self.txid
+        txst, ver = self.zkstorage.state.get(txid)
+
+        if txst is None:
+            return None, -1
+
+        return txst, ver
 
     def has_state(self, txid):
         st, _ = self.zkstorage.state.get(txid)
@@ -306,19 +319,6 @@ class ZKTransaction(object):
             self.zkstorage.add_to_txidset(ABORTED, self.txid)
             return ABORTED
 
-        # A tx maybe killed when its key locks are half released.
-        #
-        # Because unlocking always happens after applying all modifications.
-        # Thus applying without locking is ok:
-        # Non-locked keys must already have higher or equal txid thus re-apply
-        # does not affect.
-        for k, v in jour.items():
-            self.zkstorage.apply_record(self.txid, k, v)
-
-        # release all key locks
-        for key in jour:
-            self.zkstorage.try_release_key(self.txid, key)
-
         self.zkstorage.add_to_txidset(COMMITTED, self.txid)
         return COMMITTED
 
@@ -372,7 +372,10 @@ class ZKTransaction(object):
 
         self._assert_connected()
 
+        kazootx = self.zke.transaction()
+
         jour = {}
+        cnf = self.zke._zkconf
 
         for k, rec in self.modifications.items():
             curr = self.got_keys[k]
@@ -380,19 +383,25 @@ class ZKTransaction(object):
                 continue
 
             jour[k] = rec.v
+            if curr.version == -1:
+                kazootx.create(cnf.record(rec.k),
+                               utfjson.dump(curr.values + [[self.txid, rec.v]]))
+            else:
+                kazootx.set_data(cnf.record(rec.k),
+                                 utfjson.dump(curr.values + [[self.txid, rec.v]]),
+                                 version=curr.version)
 
-        self.zkstorage.journal.create(self.txid, jour)
-        logger.info('{tx} written journal: {jour}'.format(
-            tx=self, jour=jour))
+        kazootx.create(cnf.journal(self.txid),
+                       utfjson.dump(jour))
 
-        for k, v in jour.items():
-            self.zkstorage.apply_record(self.txid, k, v)
-            logger.info('{tx} applied: {k}={v}'.format(tx=self, k=k, v=v))
+        state, ver = self._get_state(self.txid)
+        if ver > -1:
+            kazootx.delete(cnf.tx_state(self.txid), version=ver)
 
-        # Must release key locks before add to txidset.
-        # A txid presents in txidset means everything is done.
-        self.release_all_key_locks()
-        self.delete_state(self.txid)
+        for key in self.got_keys:
+            kazootx.delete(cnf.lock(key), version=0)
+
+        kazootx.commit()
 
         self.zkstorage.add_to_txidset(COMMITTED, self.txid)
 

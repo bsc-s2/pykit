@@ -462,39 +462,6 @@ class TestTX(TXBase):
         self.assertEqual([1, 2], rst[ABORTED][0])
         self.assertEqual([2, 3], rst[COMMITTED][0])
 
-    def test_redo_dead_tx_with_journal(self):
-
-        t1 = ZKTransaction(zkhost)
-        t1.begin()
-        t1.lock_get('foo')
-        # fake a half-unlocked condition: bar is released but not foo
-        t1.zkstorage.journal.create(t1.txid, {'foo': 555, 'bar': 666})
-
-        t1.zke.stop()
-
-        with ZKTransaction(zkhost) as t2:
-
-            foo = t2.lock_get('foo')
-            foo.v = foo.v or 0
-            foo.v += 1
-
-            t2.set(foo)
-            t2.commit()
-
-        t = ZKTransaction(zkhost)
-
-        rst, ver = t.zkstorage.record.get('foo')
-        dd(rst)
-        self.assertEqual(556, rst[-1][1])
-
-        rst, ver = t.zkstorage.record.get('bar')
-        dd(rst)
-        self.assertEqual(666, rst[-1][1])
-
-        rst, ver = t.zkstorage.txidset.get()
-        dd(rst)
-        self.assertEqual([1, 3], rst[COMMITTED][0])
-
     def test_abort(self):
 
         with ZKTransaction(zkhost) as t1:
