@@ -67,6 +67,28 @@ class TestTX(TXBase):
                           PURGED: [],
                           }, utfjson.load(rst))
 
+    def test_deref(self):
+
+        with ZKTransaction(zkhost) as t1:
+
+            foo = t1.lock_get('foo')
+            foo.v = {'foo': 'foo'}
+            t1.set(foo)
+            t1.commit()
+
+        with ZKTransaction(zkhost) as t1:
+
+            # When retrieving a dict, it should be deep-copied.
+            # All zktx always though modified == original
+            foo = t1.lock_get('foo')
+            foo.v['foo'] = 'bar'
+            t1.set(foo)
+            t1.commit()
+
+        rst, ver = self.zk.get('record/foo')
+        self.assertEqual([[-1, None], [1, {'foo': 'foo'}], [2, {'foo': 'bar'}]],
+                         utfjson.load(rst))
+
     def test_with_statement(self):
 
         with ZKTransaction(zkhost) as t1:

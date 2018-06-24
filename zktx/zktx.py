@@ -107,14 +107,14 @@ class ZKTransaction(object):
         val, version = self.zkstorage.record.get(key)
         ltxid, lvalue = val[-1]
 
-        curr = TXRecord(k=key, v=lvalue, txid=ltxid)
+        curr = TXRecord(k=key, v=copy.deepcopy(lvalue), txid=ltxid)
         self.got_keys[key] = curr
 
         if ltxid > self.txid:
             raise HigherTXApplied('{tx} seen a higher txid applied: {txid}'.format(
                 tx=self, txid=ltxid))
 
-        rec = TXRecord(k=key, v=lvalue, txid=ltxid)
+        rec = TXRecord(k=key, v=copy.deepcopy(lvalue), txid=ltxid)
         return rec
 
     def unlock(self, rec):
