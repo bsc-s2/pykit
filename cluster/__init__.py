@@ -3,9 +3,15 @@ from .block import (
     BlockIDError,
 )
 
+from .block_index import (
+
+    BlockIndexError,
+
+    BlockIndex,
+)
+
 from .block_group import (
     BlockGroup,
-    BlockIndexError,
     BlockNotFoundError,
     BlockTypeNotSupported,
     BlockTypeNotSupportReplica,
@@ -33,16 +39,18 @@ from .region import (
     Region,
 
     BlockNotInRegion,
-        )
+)
 
 __all__ = [
     "BlockID",
     "BlockIDError",
 
+    "BlockIndexError",
+    "BlockIndex",
+
     "BlockGroup",
     "BlockGroupID",
     "BlockGroupIDError",
-    "BlockIndexError",
     "BlockNotFoundError",
     "BlockTypeNotSupported",
     "BlockTypeNotSupportReplica",

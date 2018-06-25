@@ -4,6 +4,7 @@
 from collections import namedtuple
 
 from .block_group_id import BlockGroupID
+from .block_index import BlockIndex
 from .idbase import IDBase
 from .server import DriveID
 
@@ -37,14 +38,13 @@ class BlockID(namedtuple('_BlockID', 'type block_group_id block_index drive_id b
 
     def __new__(clz, type, block_group_id, block_index, drive_id, bg_seq):
 
-        if isinstance(block_group_id, BlockGroupID):
-            pass
-        else:
+        if not isinstance(block_group_id, BlockGroupID):
             block_group_id = BlockGroupID.parse(block_group_id)
 
-        if isinstance(drive_id, DriveID):
-            pass
-        else:
+        if not isinstance(block_index, BlockIndex):
+            block_index = BlockIndex.parse(block_index)
+
+        if not isinstance(drive_id, DriveID):
             drive_id = DriveID.parse(drive_id)
 
         bg_seq = int(bg_seq)

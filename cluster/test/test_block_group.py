@@ -107,11 +107,11 @@ class TestClusterBlockGroup(unittest.TestCase):
             'size': 0
         }, block)
 
-        _, block = block_group.get_block(block_index='000')
+        _, block = block_group.get_block(block_index='9999')
         self.assertIsNone(block)
 
         with self.assertRaises(cluster.BlockNotFoundError):
-            block_group.get_block(block_index='000', raise_error=True)
+            block_group.get_block(block_index='9999', raise_error=True)
 
         new_block = {
             'block_id': cluster.BlockID('d0',
@@ -195,34 +195,34 @@ class TestClusterBlockGroup(unittest.TestCase):
 
         self.assertDictEqual({'a': ['0001', '0002', '0003'],
                               'b': ['0100', '0101', '0102', '0103']},
-                             block_group.get_free_block_index('d0'))
+                             block_group.get_free_block_indexes('d0'))
 
         self.assertDictEqual({'a': ['0004', '0005'],
                               'b': ['0104', '0105']},
-                             block_group.get_free_block_index('dp'))
+                             block_group.get_free_block_indexes('dp'))
 
         self.assertDictEqual({'c': ['0200', '0201', '0202', '0203'], },
-                             block_group.get_free_block_index('x0'))
+                             block_group.get_free_block_indexes('x0'))
 
         self.assertDictEqual({'c': ['0204', '0205'], },
-                             block_group.get_free_block_index('xp'))
+                             block_group.get_free_block_indexes('xp'))
 
-    def test_calc_block_type(self):
+    def test_get_block_type(self):
         block_group = cluster.BlockGroup.make('g000640000000123', ['a', 'b', 'c'], _ec_config)
 
-        self.assertEqual('d0', block_group.calc_block_type('0000'))
-        self.assertEqual('dp', block_group.calc_block_type('0004'))
-        self.assertEqual('d1', block_group.calc_block_type('0006'))
+        self.assertEqual('d0', block_group.get_block_type('0000'))
+        self.assertEqual('dp', block_group.get_block_type('0004'))
+        self.assertEqual('d1', block_group.get_block_type('0006'))
 
-        self.assertEqual('d0', block_group.calc_block_type('0100'))
-        self.assertEqual('dp', block_group.calc_block_type('0104'))
-        self.assertEqual('d1', block_group.calc_block_type('0106'))
+        self.assertEqual('d0', block_group.get_block_type('0100'))
+        self.assertEqual('dp', block_group.get_block_type('0104'))
+        self.assertEqual('d1', block_group.get_block_type('0106'))
 
-        self.assertEqual('x0', block_group.calc_block_type('0200'))
-        self.assertEqual('xp', block_group.calc_block_type('0204'))
+        self.assertEqual('x0', block_group.get_block_type('0200'))
+        self.assertEqual('xp', block_group.get_block_type('0204'))
 
         with self.assertRaises(cluster.BlockTypeNotSupported):
-            block_group.calc_block_type('0209')
+            block_group.get_block_type('0209')
 
     def test_empty_block(self):
         block_group = cluster.BlockGroup.make('g000640000000123', ['a', 'b', 'c'], _ec_config)
@@ -380,36 +380,6 @@ class TestClusterBlockGroup(unittest.TestCase):
 
         with self.assertRaises(cluster.BlockTypeNotSupportReplica):
             block_group.get_replica_block_index(block_id=xp['block_id'])
-
-    def test_parse_block_index(self):
-        self.assertEqual((0, 0,), cluster.BlockGroup.parse_block_index('0000'))
-        self.assertEqual((10, 10,), cluster.BlockGroup.parse_block_index('1010'))
-
-        with self.assertRaises(cluster.BlockIndexError):
-            cluster.BlockGroup.parse_block_index('01010')
-
-        with self.assertRaises(cluster.BlockIndexError):
-            cluster.BlockGroup.parse_block_index('010')
-
-        with self.assertRaises(ValueError):
-            cluster.BlockGroup.parse_block_index('0a0b')
-
-    def test_make_block_index(self):
-        self.assertEqual('0000', cluster.BlockGroup.make_block_index(0, 0))
-        self.assertEqual('1010', cluster.BlockGroup.make_block_index(10, 10))
-
-        cases = (
-            (100, 0),
-            (-100, 0),
-            (0, 100),
-            (0, -100),
-            (100, 100),
-            (-100, -100),
-        )
-
-        for idc_idx, pos in cases:
-            with self.assertRaises(cluster.BlockIndexError):
-                cluster.BlockGroup.make_block_index(idc_idx, pos)
 
     def test_block_group_init(self):
         block_group = cluster.BlockGroup(_empty_bkg)
