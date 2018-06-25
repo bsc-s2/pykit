@@ -369,7 +369,7 @@ The distance of them.
 ##  cluster.BlockID
 
 **syntax**:
-`BlockID(namedtuple('_BlockID', 'type block_group_id block_index drive_id pg_seq'))`
+`BlockID(namedtuple('_BlockID', 'type block_group_id block_index drive_id bg_seq'))`
 
 Parse or generate block id.
 
@@ -382,7 +382,7 @@ A block is a single file on disk that contains multiple user-file.
 Format: 48 chars
 
 ```
-(d0|d1|d2|dp|x0|xp)<block_group_id><block_index><drive_id><pg_seq>
+(d0|d1|d2|dp|x0|xp)<block_group_id><block_index><drive_id><bg_seq>
 2                  16              4            16        10
 ```
 
@@ -446,7 +446,7 @@ space)
 -   `drive_id`:
     specifies the disk drive where this block resides.
 
--   `pg_seq`:
+-   `bg_seq`:
     is a block group wise monotonic incremental id.
     To ensure that any two blocks have different `block_id`.
 
@@ -485,7 +485,7 @@ print bid.type            # d
 print bid.block_group_id  # g000630000000123
 print bid.block_index     # 0101
 print bid.drive_id        # c62d8736c7280002
-print bid.pg_seq          # 1
+print bid.bg_seq          # 1
 
 # test __str__()
 print bid                 # d0g0006300000001230101c62d8736c72800020000000001

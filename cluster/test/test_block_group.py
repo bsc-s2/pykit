@@ -19,7 +19,7 @@ _ec_config = {
 }
 
 _empty_bkg = {
-    'pg_seq': 0,
+    'bg_seq': 0,
     'config': {
         'ec': {
             'in_idc': [4, 2],

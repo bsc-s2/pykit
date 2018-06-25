@@ -18,9 +18,9 @@ class BlockIDError(BlockBaseError):
     pass
 
 
-class BlockID(namedtuple('_BlockID', 'type block_group_id block_index drive_id pg_seq'), IDBase):
+class BlockID(namedtuple('_BlockID', 'type block_group_id block_index drive_id bg_seq'), IDBase):
 
-    _tostr_fmt = '{type}{block_group_id}{block_index}{drive_id}{pg_seq:0>10}'
+    _tostr_fmt = '{type}{block_group_id}{block_index}{drive_id}{bg_seq:0>10}'
 
     @classmethod
     def parse(cls, block_id):
@@ -35,7 +35,7 @@ class BlockID(namedtuple('_BlockID', 'type block_group_id block_index drive_id p
                        block_id[22:38],
                        block_id[-10:])
 
-    def __new__(clz, type, block_group_id, block_index, drive_id, pg_seq):
+    def __new__(clz, type, block_group_id, block_index, drive_id, bg_seq):
 
         if isinstance(block_group_id, BlockGroupID):
             pass
@@ -47,6 +47,6 @@ class BlockID(namedtuple('_BlockID', 'type block_group_id block_index drive_id p
         else:
             drive_id = DriveID.parse(drive_id)
 
-        pg_seq = int(pg_seq)
+        bg_seq = int(bg_seq)
 
-        return super(BlockID, clz).__new__(clz, type, block_group_id, block_index, drive_id, pg_seq)
+        return super(BlockID, clz).__new__(clz, type, block_group_id, block_index, drive_id, bg_seq)

@@ -41,7 +41,7 @@ class BlockGroup(dict):
 
         bg = cls({
             'block_group_id': block_group_id,
-            'pg_seq': 0,
+            'bg_seq': 0,
             'config': copy.deepcopy(config),
             'idcs': idcs,
             'blocks': {}
