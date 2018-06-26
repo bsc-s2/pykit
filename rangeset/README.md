@@ -23,6 +23,7 @@
   - [rangeset.RangeDict](#rangesetrangedict)
     - [RangeDict.add](#rangedictadd)
     - [RangeDict.get](#rangedictget)
+    - [RangeDict.get_min](#rangedictget_min)
     - [RangeDict.normalize](#rangedictnormalize)
 - [Methods](#methods)
   - [rangeset.union](#rangesetunion)
@@ -377,6 +378,39 @@ Nothing
 the value of range that `pos` is in.
 
 If `pos` is not in any ranges, `KeyError` is raised.
+
+
+### RangeDict.get_min
+
+**syntax**:
+`RangeDict.get_min(is_lt=None)`
+
+Get range of the minimum value in the range dict. If minmum value has more than one range, then get
+the first one.
+
+**argument**:
+
+-   `is_lt`:
+    is a function that receives 2 arguments `a` and `b`, returns `True` if `a` is "smaller" than `b`,
+    otherwise return `False`.
+    Example:
+    ```
+    def is_lt(a, b):
+        return a < b
+    ```
+    If `is_lt` is `None`, use `a < b` to decide 'a' is smaller than 'b'.
+
+**return**:
+- `i`:
+    the index of the minimum value in the range dict.
+
+- `rng`:
+    a `ValueRange`, which is the range of the minimum value in the range dict.
+
+- `val`:
+    the minimum value in the range dict.
+
+If range dict is empty, `ValueError` is raised.
 
 
 ###  RangeDict.normalize

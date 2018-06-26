@@ -688,6 +688,59 @@ class TestRangeDict(unittest.TestCase):
         for absent in cases:
             self.assertRaises(KeyError, rd.get, absent)
 
+    def test_get_min(self):
+
+        cases = (
+            (((1, 2, '12'), ),                           (0, [1, 2, '12'], '12')),
+            (((1, 2, '34'), (3, 4, '12')),               (1, [3, 4, '12'], '12')),
+            (((1, 2, '34'), (3, 4, '12'), (5, 6, '56')), (1, [3, 4, '12'], '12')),
+            (((1, 2, '12'), (3, 4, '34'), (5, 6, '12')), (0, [1, 2, '12'], '12')),
+        )
+
+        for src_rngs, expected in cases:
+
+            dd("expected index: ", expected[0])
+            dd("expected range: ", rangeset.ValueRange(*expected[1]))
+            dd("expected value: ", expected[2])
+
+            rd = rangeset.RangeDict(src_rngs)
+            idx, rng, val = rd.get_min()
+
+            dd("got index: ", idx)
+            dd("got range: ", rng)
+            dd("got value: ", val)
+
+            self.assertEqual(idx, expected[0])
+            self.assertEqual(rng, rangeset.ValueRange(*expected[1]))
+            self.assertEqual(val, expected[2])
+
+        rd = rangeset.RangeDict()
+        self.assertRaises(ValueError, rd.get_min)
+
+    def test_get_min_is_lt(self):
+
+        cases = (
+            (((1, 2, '12'), (3, 4, '34'), (5, 6, '12')), lambda a, b: a < b, (0, [1, 2, '12'], '12')),
+            (((1, 2, '12'), (3, 4, '34'), (5, 6, '12')), lambda a, b: a > b, (1, [3, 4, '34'], '34')),
+        )
+
+        for src_rngs, is_lt, expected in cases:
+
+            dd("expected index: ", expected[0])
+            dd("expected range: ", rangeset.ValueRange(*expected[1]))
+            dd("expected value: ", expected[2])
+
+            rd = rangeset.RangeDict(src_rngs)
+            idx, rng, val = rd.get_min(is_lt)
+
+            dd("got index: ", idx)
+            dd("got range: ", rng)
+            dd("got value: ", val)
+
+            self.assertEqual(idx, expected[0])
+            self.assertEqual(rng, rangeset.ValueRange(*expected[1]))
+            self.assertEqual(val, expected[2])
+
     def test_add(self):
 
         cases = (

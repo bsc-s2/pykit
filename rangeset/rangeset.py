@@ -281,6 +281,23 @@ class RangeDict(list):
 
         return self[i][2]
 
+    def get_min(self, is_lt=None):
+
+        if len(self) == 0:
+            raise ValueError("range dict is empty")
+
+        if is_lt is None:
+            is_lt = lambda a, b: a < b
+
+        min_val_idx = 0
+        for i in range(1, len(self)):
+            if is_lt(self[i][2], self[min_val_idx][2]):
+                min_val_idx = i
+
+        min_val_rng = self[min_val_idx]
+
+        return min_val_idx, min_val_rng, min_val_rng[2]
+
     def has(self, pos):
         rng = [pos, None]
         i = bisect_left(self, rng)
