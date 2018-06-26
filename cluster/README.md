@@ -47,7 +47,6 @@
     - [cluster.BlockGroup.get_block_idc](#clusterblockgroupget_block_idc)
     - [cluster.BlockGroup.get_replica_block_index](#clusterblockgroupget_replica_block_index)
     - [cluster.BlockGroup.parse_block_index](#clusterblockgroupparse_block_index)
-    - [cluster.BlockGroup.make_block_index](#clusterblockgroupmake_block_index)
   - [cluster.Region](#clusterregion)
     - [cluster.Region.move_down](#clusterregionmove_down)
     - [cluster.Region.find_merge](#clusterregionfind_merge)
@@ -770,22 +769,6 @@ Return `[]` if block type support replica but do not have replica.
 
 **return**:
 `(idc_idx, pos)`
-
-### cluster.BlockGroup.make_block_index
-
-**syntax**:
-`cluster.BlockGroup.make_block_index(idc_idx, pos)`
-
--   `idc_idx`:
-    the idc index.
-    Should be int.
-
--   `pos`:
-    the position in a idc.
-    Should be int.
-
-**return**:
-Block index in string.
 
 
 ## cluster.Region

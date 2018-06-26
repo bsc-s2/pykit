@@ -223,13 +223,3 @@ class BlockGroup(dict):
                                   bi.j + nr_parity + j * nr_data))
 
         return rst
-
-    @staticmethod
-    def make_block_index(idc_idx, pos):
-        if idc_idx < 0 or idc_idx > 99:
-            raise BlockIndexError('idc_idx should in [0, 100)')
-        if pos < 0 or pos > 99:
-            raise BlockIndexError('pos should in [0, 100)')
-
-        blk_idx = '%02d%02d' % (idc_idx, pos)
-        return blk_idx
