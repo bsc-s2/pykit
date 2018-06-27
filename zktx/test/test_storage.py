@@ -8,6 +8,7 @@ from pykit import threadutil
 from pykit import ututil
 from pykit import zktx
 from pykit.zktx import COMMITTED
+from pykit.zktx import PURGED
 from pykit.zktx import STATUS
 
 dd = ututil.dd
@@ -51,6 +52,10 @@ class PseudoKVAccessor(dict):
                 else:
                     raise BadVersionError()
 
+    def safe_delete(self, key, version=None):
+        # for test of purge
+        pass
+
 
 class TxidsetAccessor(object):
     def __init__(self):
@@ -88,6 +93,8 @@ class PseudoStorage(zktx.StorageHelper):
         })
 
         self.txidset = TxidsetAccessor()
+
+        self.journal = PseudoKVAccessor({})
 
 
 class TestTXStorageHelper(unittest.TestCase):
@@ -231,3 +238,33 @@ class TestTXStorageHelper(unittest.TestCase):
         for txid in range(100):
             if txid not in expected:
                 self.assertFalse(rst[status].has(txid))
+
+    def test_purge(self):
+
+        self.sto.max_journal_history = 5
+
+        cases = (
+                (
+                    {PURGED: [],        COMMITTED: [[1, 100]]},
+                    {PURGED: [[1, 95]], COMMITTED: [[95, 100]]},
+                ),
+            # with unknown txid 10
+            (
+                    {PURGED: [[1, 10]],           COMMITTED: [[11, 20]]},
+                    {PURGED: [[1, 10], [11, 15]], COMMITTED: [[15, 20]]},
+                ),
+            # no need to purge
+            (
+                    {PURGED: [[1, 10]], COMMITTED: [[11, 15]]},
+                    {PURGED: [[1, 10]], COMMITTED: [[11, 15]]},
+                ),
+            (
+                    {PURGED: [[1, 10]], COMMITTED: [[11, 14], [15, 18]]},
+                    {PURGED: [[1, 10], [11, 12]], COMMITTED: [[12, 14], [15, 18]]},
+            ),
+        )
+
+        for inp, expected in cases:
+            inp = {k: rangeset.RangeSet(v) for k, v in inp.items()}
+            self.sto.purge(inp)
+            self.assertEqual(expected, inp)

@@ -85,6 +85,15 @@ class TestZKKVAccessor(base.ZKTestBase):
 
         kv.delete('bar')
 
+    def test_safe_delete(self):
+
+        kv = zktx.ZKKeyValue(self.zk, get_path=lambda x: 'foo-' + x)
+        kv.create('bar', '1')
+
+        kv.delete('bar')
+        self.assertRaises(NoNodeError, kv.get, 'bar')
+        kv.safe_delete('bar')
+
     def test_set_or_create(self):
 
         kv = zktx.ZKKeyValue(self.zk)
@@ -198,6 +207,15 @@ class TestZKValueAccessor(base.ZKTestBase):
         rst, ver = v.get()
         self.assertEqual('2', rst)
         self.assertEqual(2, ver)
+
+    def test_safe_delete(self):
+
+        kv = zktx.ZKValue(self.zk, get_path=lambda: 'foo')
+        kv.create('1')
+
+        kv.delete()
+        self.assertRaises(NoNodeError, kv.get)
+        kv.safe_delete()
 
     def test_set_or_create_acl(self):
         v = zktx.ZKValue(self.zkauthed, get_path=lambda: 'taclvalue')

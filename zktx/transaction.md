@@ -12,7 +12,7 @@
   - [For tx killed in phase 0, 1, 2, 3](#for-tx-killed-in-phase-0-1-2-3)
     - [Condition:](#condition)
     - [Solution: Abort](#solution-abort)
-  - [For tx killed in phase 4, 5, 6, 7, 8, 9](#for-tx-killed-in-phase-4-5-6-7-8-9)
+  - [For tx killed in phase 4, 5, 6](#for-tx-killed-in-phase-4-5-6)
     - [Condition:](#condition-1)
     - [Solution: re-apply journal and unlock](#solution-re-apply-journal-and-unlock)
 
@@ -53,14 +53,23 @@ Because the locks might be lost.
 -   Check if any record has a value with newer txid than this txid,
     to ensure no lower txid will be applied after a higher txid applied.
 
--   Write all modifications into `journal`:
+-   Commit:
+    -   Write all modifications into `journal`:
+    -   Apply all modifications.
+    -   Unlock all locked records.
 
--   Apply this journal.
+    These 3 steps are done atomically in a `kazoo.Transaction`.
 
--   Unlock all locked records.
+    > This changed 2018-06.
+    > Using a atomic update is much easier to implement.
+    > But it does not support cross-zk-cluster tx(E.g. records and journals are in two zk cluster).
 
 -   Update `<cluster>/tx/txidset`, mark this journal(tx) has
     been applied and can be removed from `journal` dir safely.
+
+    If there are too many txid in COMMITTED, old txid are moved to PURGED.
+
+    By default it keeps 1024 latest txid in COMMITTED.
 
 
 ## Journal format
@@ -145,17 +154,15 @@ Normally tx resources includes:
     Each record is identified by a key.
     Data of a record is stored in a zk-node.
 
--   committed-flag: stores tx-id status: COMMITTED, ABORTED or
-    PURGED.
+-   committed-flag: stores tx-id status: COMMITTED or PURGED.
 
     In our implementation all tx status are stored together in one zk-node:
     `txidset`.
 
-    `txidset` is a dict of 3 `rangeset` for COMMITTED, ABORTED and PURGED:
+    `txidset` is a dict of 2 `rangeset` for COMMITTED and PURGED:
 
     ```yaml
-    COMMITTED: [[1, 2], [4, 5]]
-    ABORTED:   [[2, 4]]
+    COMMITTED: [[3, 4], [5, 6]]
     PURGED:    [[1, 3]]
     ```
 
@@ -166,35 +173,36 @@ Normally tx resources includes:
             In this case, eventually the dead tx will be committed, and will be
             added into `txidset["COMMITTED"]`.
 
-    -   ABORTED:
+    -   PURGED:
         -   If a user explicitly aborts a tx(by calling `tx.abort()`), the txid
-            is added into `txidset["ABORTED"]`.
+            is added into `txidset["PURGED"]`.
         -   If a tx aborted(for any reason) **BEFORE** journal was written,
             another tx will find this dead tx by acquiring a key-lock that the
             dead tx had been held.
-            In this case, the other tx will add the dead txid into `txidset["ABORTED"]`.
-
-    -   PURGED:
+            In this case, the other tx will add the dead txid into `txidset["PURGED"]`.
         -   In order to recycle storage space in zk, there is a background
             process cleans up journal. If a journal is removed, its txid is
             added into `txidset["PURGED"]`.
 
-    **ABORTED txid set and COMMITTED txid set has no common element**:
-    A tx is either COMMITTED or ABORTED.
+    **PURGED txid set and COMMITTED txid set has no common element**:
+    A tx is either COMMITTED or PURGED.
 
-    > It is possible a dead txid not in either of COMMITTED or ABORTED, when no
+    > It is possible a dead txid not in either of COMMITTED or PURGED, when no
     > one has discovered this tx was dead(another tx will find a dead tx when
     > trying to acquire a key-lock which is held by dead tx, and there is a
     > background process periodically looks up for dead tx).
 
     A txid that is added into `txidset["PURGED"]` will be removed from
-    ABORTED or COMMITTED(to reduce rangeset size).
+    COMMITTED(to reduce rangeset size).
 
     Thus all journals those are current available in zk are:
     `txidset["COMMITTED"]`.
 
 
 # A typical transaction running phases
+
+> Changes: journal-write, record-apply and unlock now are done in a single zk
+> request atomically.
 
 ```
 |     |  action \ resource | tx-lock | 3 key-locks | journal | 3 keys | committed-flag |
@@ -203,13 +211,12 @@ Normally tx resources includes:
 | 1   | lock_get()         | √       | √           |         |        |                |
 | 2   | lock_get()         | √       | √√          |         |        |                |
 | 3   | lock_get()         | √       | √√√         |         |        |                |
-| 4   | write_journal()    | √       | √√√         | √       |        |                |
-| 5   | apply(             | √       | √√√         | √       | √      |                |
-| 6   | .....)             | √       | √√√         | √       | √√√    |                |
-| 7   | unlock_key(        | √       |  √√         | √       | √√√    |                |
-| 8   | ..........)        | √       |             | √       | √√√    |                |
-| 9   | add_txidset()      | √       |             | √       | √√√    | √              |
-| a   | unlock_tx()        |         |             | √       | √√√    | √              |
+| 4   | commit()           | √       |             | √       | √√√    |                |
+|     |    write_journal() |         |             |         |        |                |
+|     |    apply()         |         |             |         |        |                |
+|     |    unlock_key()    |         |             |         |        |                |
+| 5   | add_txidset()      | √       |             | √       | √√√    | √              |
+| 6   | unlock_tx()        |         |             | √       | √√√    | √              |
 ```
 
 A tx may be killed in any phase, by any reason.
@@ -249,10 +256,10 @@ nothing should be applied.
 > It is possible that a key-lock belonging to a dead tx stays locked for a very
 > long time until another tx tries to lock it.
 
-## For tx killed in phase 4, 5, 6, 7, 8, 9
+## For tx killed in phase 4, 5, 6
 
-Key locks are all held, and may be partially unlocked.
-And changes are partially or fully applied to key records.
+Key locks are all unlocked.
+And changes are fully applied to key records.
 
 
 ### Condition:
@@ -261,26 +268,5 @@ If we found a journal for this tx
 
 
 ### Solution: re-apply journal and unlock
-
--   We apply all changes stored in this journal.
-
-    **Here we must guarantee that re-applying a change has no effect
-    on a key record**.
-
-    This is done in the storage layer.
-
--   Try to release all key locks:
-
-    -   Try to lock it.
-
-    -   If a lock is acquired, just release it.
-        **Because a same tx is able to acquire a lock more than one times.**
-
-    -   If a lock is held by others, just skip.
-
-        This means this record has already been unlocked previous and has been locked by other tx.
-
-    This way we release all the key-locks held by a previous dead tx, and leave
-    locks held by others intact.
 
 -   Update the `txidset` for this tx, to mark it as COMMITTED.

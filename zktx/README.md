@@ -392,24 +392,21 @@ a class that implements `Storage` must provides 3 accessors(`KeyValue` and `Valu
     is a `Value`.
     It is a single value accessor to get or set transaction id set.
 
-    Value of `txidset` is a `dict` of 3 `RangeSet`(see module `rangeset`):
+    Value of `txidset` is a `dict` of 2 `RangeSet`(see module `rangeset`):
 
     ```python
     {
         "COMMITTED": RangeSet(),
-        "ABORTED": RangeSet(),
         "PURGED": RangeSet(),
     }
     ```
 
     -   `COMMITTED` contains committed txid.
 
-    -   `ABORTED` contains aborted txid.
+    -   `PURGED` contains aborted txid and txid whose journal has been removed.
         Abort means a tx is killed before writing a `journal`.
 
-    -   `PURGED` contains txid whose journal has been removed.
-
-    > `COMMITTED`, `ABORTED` and `PURGED` has no intersection.
+    > `COMMITTED` and `PURGED` has no intersection.
 
 
 ### Storage methods
@@ -501,7 +498,7 @@ Normal it is `False` if a higher txid has already been applied.
 **syntax**:
 `StorageHelper.add_to_txidset(status, txid)`
 
-It records a txid as one of the possible status: COMMITTED, ABORTED or PURGED.
+It records a txid as one of the possible status: COMMITTED or PURGED.
 
 It requires 2 accessor methods: `self.txidset.get()`
 and `self.txidset.set(value, version=None)`.
@@ -588,7 +585,7 @@ nothing
 **syntax**:
 `zktx.RedisStorage.add_to_txidset(status, txid)`:
 
-It records a txid as one of the possible status: COMMITTED, ABORTED or PURGED.
+It records a txid as one of the possible status: COMMITTED or PURGED.
 
 **arguments**:
 
@@ -607,7 +604,7 @@ nothing
 **syntax**:
 `zktx.RedisStorage.set_txidset(status, txidset)`:
 
-It records a txidset as one of the possible status: COMMITTED, ABORTED or PURGED.
+It records a txidset as one of the possible status: COMMITTED or PURGED.
 
 **arguments**:
 

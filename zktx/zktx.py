@@ -23,9 +23,9 @@ from .exceptions import RetriableError
 from .exceptions import TXTimeout
 from .exceptions import UnlockNotAllowed
 from .exceptions import UserAborted
-from .status import ABORTED
 from .status import COMMITTED
 from .status import PAUSED
+from .status import PURGED
 from .status import UNKNOWN
 from .zkstorage import ZKStorage
 
@@ -206,8 +206,8 @@ class ZKTransaction(object):
 
                 rst = self.redo_dead_tx(other_txid, timeout=self.expire_at-time.time())
 
-                # aborted tx did not release lock by itself
-                if rst == ABORTED:
+                # purged tx did not release lock by itself
+                if rst == PURGED:
                     self.zkstorage.try_release_key(other_txid, key)
 
                 continue
@@ -276,8 +276,8 @@ class ZKTransaction(object):
         # With `txidset = [[1, 2], [4, 5]]`, tx-2 and tx-3 is unfinished tx.
         # Check these tx
 
-        # A tx is committed or aborted that does not need to handle it again.
-        known = rangeset.union(sets[COMMITTED], sets[ABORTED])
+        # A tx is committed or purged that does not need to handle it again.
+        known = rangeset.union(sets[COMMITTED], sets[PURGED])
 
         for rng in known[:-1]:
 
@@ -306,8 +306,8 @@ class ZKTransaction(object):
 
         if txidset[COMMITTED].has(self.txid):
             return COMMITTED
-        elif txidset[ABORTED].has(self.txid):
-            return ABORTED
+        elif txidset[PURGED].has(self.txid):
+            return PURGED
 
         # self.txid is not in txidset
 
@@ -316,8 +316,8 @@ class ZKTransaction(object):
         except NoNodeError:
             # This tx has not yet written a journal.
             # Nothing to apply
-            self.zkstorage.add_to_txidset(ABORTED, self.txid)
-            return ABORTED
+            self.zkstorage.add_to_txidset(PURGED, self.txid)
+            return PURGED
 
         self.zkstorage.add_to_txidset(COMMITTED, self.txid)
         return COMMITTED
@@ -488,12 +488,12 @@ class ZKTransaction(object):
                         self.tx_status = PAUSED
 
                     else:
-                        self.tx_status = ABORTED
-                        self.zkstorage.add_to_txidset(ABORTED, self.txid)
+                        self.tx_status = PURGED
+                        self.zkstorage.add_to_txidset(PURGED, self.txid)
                 except (exceptions.ConnectionClosedError,
                         exceptions.ConnectionLoss) as e:
 
-                    logger.warn('{tx} {e} while adding to txidset.ABORTED'.format(
+                    logger.warn('{tx} {e} while adding to txidset.PURGED'.format(
                         tx=self, e=repr(e)))
 
                 if self.tx_status is None:

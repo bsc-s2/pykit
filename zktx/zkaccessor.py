@@ -33,6 +33,12 @@ class ZKKeyValue(object):
     def delete(self, key, version=-1):
         return self.zkclient.delete(self.get_path(key), version=version)
 
+    def safe_delete(self, key, version=-1):
+        try:
+            return self.zkclient.delete(self.get_path(key), version=version)
+        except NoNodeError:
+            pass
+
     def set(self, key, value, version=-1):
         value = self._dump(value)
         self.zkclient.set(self.get_path(key), value, version=version)
@@ -95,6 +101,9 @@ class ZKValue(ZKKeyValue):
 
     def delete(self, version=-1):
         return super(ZKValue, self).delete('', version=version)
+
+    def safe_delete(self, version=-1):
+        return super(ZKValue, self).safe_delete('', version=version)
 
     def set(self, value, version=-1):
         return super(ZKValue, self).set('', value, version=version)

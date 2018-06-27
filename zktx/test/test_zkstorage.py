@@ -6,7 +6,6 @@ from pykit import utfjson
 from pykit import ututil
 from pykit import zktx
 from pykit import zkutil
-from pykit.zktx import ABORTED
 from pykit.zktx import COMMITTED
 from pykit.zktx import PURGED
 from pykit.zktx.test import base
@@ -34,7 +33,6 @@ class TestZKStorage(base.ZKTestBase):
         rst, ver = self.zs.txidset.get()
 
         self.assertEqual({COMMITTED: [[1, 2]],
-                          ABORTED: [],
                           PURGED: [],
                           }, rst)
 

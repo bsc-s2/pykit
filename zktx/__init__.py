@@ -17,7 +17,6 @@ from .exceptions import (
 )
 
 from .status import (
-    ABORTED,
     COMMITTED,
     PURGED,
 
@@ -76,7 +75,6 @@ __all__ = [
     "UnlockNotAllowed",
 
 
-    "ABORTED",
     "COMMITTED",
     "PURGED",
 

@@ -8,6 +8,8 @@ from pykit import txutil
 
 from .accessor import KeyValue
 from .accessor import Value
+from .status import COMMITTED
+from .status import PURGED
 from .status import STATUS
 
 logger = logging.getLogger(__name__)
@@ -15,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 class StorageHelper(object):
 
-    # keeps the last n modifications in a record
-    max_value_history = 16
+    max_value_history = 16     # keeps the last n modifications in a record
+    max_journal_history = 1024  # keeps the last n committed journal
     conflicterror = None
 
     def apply_record(self, txid, key, value):
@@ -62,6 +64,34 @@ class StorageHelper(object):
                     curr.v[st] = rangeset.RangeSet([])
 
             curr.v[status].add([txid, txid + 1])
+
+            self.purge(curr.v)
+
+    def purge(self, sets):
+
+        topurge = rangeset.RangeSet()
+
+        committed = sets[COMMITTED]
+        l = committed.length()
+
+        while l > self.max_journal_history:
+
+            first = committed[0]
+
+            # a range contains a single txid
+            r = rangeset.RangeSet([[first[0], first[0] + 1]])
+
+            topurge.add(r[0])
+            committed = rangeset.substract(committed, r)
+            l -= 1
+
+        for rng in topurge:
+
+            for txid in range(rng[0], rng[1]):
+                self.journal.safe_delete(txid)
+
+        sets[PURGED] = rangeset.union(sets[PURGED], topurge)
+        sets[COMMITTED] = rangeset.substract(sets[COMMITTED], topurge)
 
 
 class Storage(StorageHelper):
