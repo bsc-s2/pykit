@@ -125,6 +125,9 @@ class ValueRange(list):
     def prev_right(self):
         return self[0]
 
+    def val(self):
+        return self[2]
+
 
 class Range(ValueRange):
 
@@ -279,7 +282,7 @@ class RangeDict(list):
         if i == len(self) or not self[i].has(pos):
             raise KeyError('not in range: ' + repr(pos))
 
-        return self[i][2]
+        return self[i].val()
 
     def get_min(self, is_lt=None):
 
@@ -291,12 +294,12 @@ class RangeDict(list):
 
         min_val_idx = 0
         for i in range(1, len(self)):
-            if is_lt(self[i][2], self[min_val_idx][2]):
+            if is_lt(self[i].val(), self[min_val_idx].val()):
                 min_val_idx = i
 
         min_val_rng = self[min_val_idx]
 
-        return min_val_idx, min_val_rng, min_val_rng[2]
+        return min_val_idx, min_val_rng, min_val_rng.val()
 
     def has(self, pos):
         rng = [pos, None]

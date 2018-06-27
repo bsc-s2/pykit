@@ -218,6 +218,20 @@ class TestRange(unittest.TestCase):
 
             self.assertAlmostEqual(expected, rst)
 
+    def test_val(self):
+        cases = (
+            ([None, None, None],        None),
+            ([None, None, 1],           1),
+            ([None, None, ''],          ''),
+            ([None, None, ['']],        ['']),
+            ([None, None, ('',)],       ('',)),
+            ([None, None, {'1': 1}],    {'1': 1}),
+        )
+
+        for rng, expected in cases:
+            rst = rangeset.ValueRange(*rng)
+            self.assertEqual(expected, rst.val())
+
 
 class TestRangeSet(unittest.TestCase):
 

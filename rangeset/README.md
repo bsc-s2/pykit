@@ -15,6 +15,7 @@
     - [Range.is_adjacent](#rangeis_adjacent)
     - [Range.intersect](#rangeintersect)
     - [Range.length](#rangelength)
+    - [Range.val](#rangeval)
   - [rangeset.ValueRange](#rangesetvaluerange)
   - [rangeset.RangeSet](#rangesetrangeset)
     - [RangeSet.add](#rangesetadd)
@@ -212,6 +213,14 @@ length in the same type of one of its boundary.
 
 If one of left and right boundary is `None`, in which case it is an infite
 range, `float('inf')` is returned.
+
+###  Range.val
+
+**syntax**:
+`Range.val()`
+
+**return**:
+The value of range associated.
 
 
 ##  rangeset.ValueRange
