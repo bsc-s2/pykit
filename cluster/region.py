@@ -130,14 +130,16 @@ class Region(dict):
 
     def add_block(self, active_range, block, level=None):
 
-        if level is not None:
-            if level < 0 or level >= len(self['levels']):
-                raise LevelOutOfBound
+        max_level = len(self['levels']) - 1
 
-            add_level = self['levels'][level]
-        else:
-            add_level = rangeset.RangeDict()
-            self['levels'].append(add_level)
+        if level is None:
+            level = max_level + 1
 
-        add_level.add(active_range, block)
+        elif level < 0 or level > max_level + 1:
+            raise LevelOutOfBound('level is invalid. except level >= 0 and level <= {0}, '
+                    'got: {1}'.format(max_level+1, level))
 
+        if level == max_level+1:
+            self['levels'].append(rangeset.RangeDict())
+
+        self['levels'][level].add(active_range, block)

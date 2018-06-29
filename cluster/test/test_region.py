@@ -177,6 +177,7 @@ class TestClusterRegion(unittest.TestCase):
                 {'idc': None, 'range': [None, None], 'levels': [
                     [['a', 'c', 1]],
                 ]},
+                None,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
@@ -187,6 +188,7 @@ class TestClusterRegion(unittest.TestCase):
                     [['a', 'b', 1], ['b', 'c', 3]],
                     [['c','d', 5]],
                 ]},
+                None,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
@@ -198,6 +200,7 @@ class TestClusterRegion(unittest.TestCase):
                     [['a', 'b', 1], ['c','d', 5]],
                     [['b', 'c', 3]],
                 ]},
+                None,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
@@ -209,13 +212,42 @@ class TestClusterRegion(unittest.TestCase):
                     [['a', 'b', 1]],
                     [['b', 'c', 3], ['c', 'd', 5]],
                 ]},
+                None,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', 1]],
+                    [['b', 'c', 3]],
+                ]},
+                (['c', 'd'], 5, 2),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', 1]],
+                    [['b', 'c', 3]],
+                    [['c', 'd', 5]],
+                ]},
+                None,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', 1]],
+                    [['b', 'c', 3]],
+                ]},
+                (['c', 'd'], 5, 3),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', 1]],
+                    [['b', 'c', 3]],
+                ]},
+                cluster.LevelOutOfBound,
             ),
         )
 
-        for case, args, excepted in region_cases:
+        for case, args, excepted, err in region_cases:
             region = cluster.Region(case)
+
+            if err is not None:
+                self.assertRaises(err, region.add_block, *args)
+                continue
 
             region.add_block(*args)
 
             self.assertEqual(excepted, region)
-
