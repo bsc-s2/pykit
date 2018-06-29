@@ -808,7 +808,8 @@ Add a block to a region level.
 **return**:
 Nothing.
 
-If `level` is specified but not in this region levels boundry, `LevelOutOfBound` is raised.
+If `level` is specified but not in this region levels boundry(`0<=level<=max(level)+1`),
+`LevelOutOfBound` is raised.
 
 
 ### cluster.Region.move_down
