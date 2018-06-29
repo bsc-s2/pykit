@@ -39,6 +39,7 @@ from .region import (
     Region,
 
     BlockNotInRegion,
+    LevelOutOfBound,
 )
 
 __all__ = [
@@ -68,4 +69,5 @@ __all__ = [
     "Region",
 
     "BlockNotInRegion",
+    "LevelOutOfBound",
 ]

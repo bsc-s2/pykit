@@ -167,3 +167,55 @@ class TestClusterRegion(unittest.TestCase):
 
         self.assertRaises(cluster.BlockNotInRegion,
                           region.replace_block_id, 7, 9)
+
+    def test_add_block(self):
+
+        region_cases = (
+            (
+                {},
+                (['a', 'c'], 1, None),
+                {'idc': None, 'range': [None, None], 'levels': [
+                    [['a', 'c', 1]],
+                ]},
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', 1], ['b', 'c', 3]],
+                ]},
+                (['c', 'd'], 5, None),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', 1], ['b', 'c', 3]],
+                    [['c','d', 5]],
+                ]},
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', 1]],
+                    [['b', 'c', 3]],
+                ]},
+                (['c', 'd'], 5, 0),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', 1], ['c','d', 5]],
+                    [['b', 'c', 3]],
+                ]},
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', 1]],
+                    [['b', 'c', 3]],
+                ]},
+                (['c', 'd'], 5, 1),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', 1]],
+                    [['b', 'c', 3], ['c', 'd', 5]],
+                ]},
+            ),
+        )
+
+        for case, args, excepted in region_cases:
+            region = cluster.Region(case)
+
+            region.add_block(*args)
+
+            self.assertEqual(excepted, region)
+

@@ -48,6 +48,7 @@
     - [cluster.BlockGroup.get_replica_block_index](#clusterblockgroupget_replica_block_index)
     - [cluster.BlockGroup.parse_block_index](#clusterblockgroupparse_block_index)
   - [cluster.Region](#clusterregion)
+    - [cluster.Region.add_block](#clusterregionadd_block)
     - [cluster.Region.move_down](#clusterregionmove_down)
     - [cluster.Region.find_merge](#clusterregionfind_merge)
     - [cluster.Region.list_block_ids](#clusterregionlist_block_ids)
@@ -777,6 +778,38 @@ Return `[]` if block type support replica but do not have replica.
 `cluster.Region(dict)`
 
 Region related operations.
+
+### cluster.Region.add_block
+
+**syntax**:
+`cluster.Region.add_block(active_range, block, level=None)`
+
+Add a block to a region level.
+
+**arguments**:
+
+-   `active_range`:
+    is the active boundary of the `block` in this region. A list: `[left, right]`.
+
+-   `block`:
+    is the information of the block to add to this region. A dict:
+    ```
+    {
+        "block_range": ["<block_left>", "<block_right>"],
+        "block_id": "<block_id>",
+        "size": 1234,
+    }
+    ```
+
+-   `level`:
+    is the region level to add `block`.
+    If `level` is not specified or `None`, add block to the `max(level)+1` level.
+
+**return**:
+Nothing.
+
+If `level` is specified but not in this region levels boundry, `LevelOutOfBound` is raised.
+
 
 ### cluster.Region.move_down
 

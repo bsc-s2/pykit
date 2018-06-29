@@ -10,6 +10,9 @@ from pykit import rangeset
 class BlockNotInRegion(Exception):
     pass
 
+class LevelOutOfBound(Exception):
+    pass
+
 
 class Region(dict):
 
@@ -124,3 +127,17 @@ class Region(dict):
                     return
 
         raise BlockNotInRegion('block_id: %s' % block_id)
+
+    def add_block(self, active_range, block, level=None):
+
+        if level is not None:
+            if level < 0 or level >= len(self['levels']):
+                raise LevelOutOfBound
+
+            add_level = self['levels'][level]
+        else:
+            add_level = rangeset.RangeDict()
+            self['levels'].append(add_level)
+
+        add_level.add(active_range, block)
+
