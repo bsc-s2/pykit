@@ -107,7 +107,7 @@ def make_serverrec(idc, idc_type, roles, allocated_drive_pre, **argkv):
     if hasattr(psutil, 'cpu_freq'):
         cpu_info['frequency'] = psutil.cpu_freq().max
 
-    serverrec['server_id'] = str(ServerID())
+    serverrec['server_id'] = str(ServerID.local_server_id())
     serverrec['pub_ips'] = pub_ips
     serverrec['inn_ips'] = inn_ips
     serverrec['hostname'] = socket.gethostname()
