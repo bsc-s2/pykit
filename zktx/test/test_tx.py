@@ -65,7 +65,7 @@ class TestTX(TXBase):
                           PURGED: [],
                           }, utfjson.load(rst))
 
-    def test_deref(self):
+    def test_deepcopy_value(self):
 
         with ZKTransaction(zkhost) as t1:
 
@@ -86,6 +86,35 @@ class TestTX(TXBase):
         rst, ver = self.zk.get('record/foo')
         self.assertEqual([[1, {'foo': 'foo'}], [2, {'foo': 'bar'}]],
                          utfjson.load(rst)[-2:])
+
+    def test_empty_commit(self):
+
+        with ZKTransaction(zkhost) as t1:
+
+            foo = t1.lock_get('foo')
+            foo.v = {'foo': 'foo'}
+            t1.commit()
+
+        rst, ver = self.zk.get('tx/txidset')
+        self.assertEqual({COMMITTED: [],
+                          PURGED: [[1, 2]],
+                          }, utfjson.load(rst))
+
+    def test_empty_commit_force(self):
+
+        with ZKTransaction(zkhost) as t1:
+
+            foo = t1.lock_get('foo')
+            foo.v = {'foo': 'foo'}
+            t1.commit(force=True)
+
+        rst, ver = self.zk.get('tx/txidset')
+        self.assertEqual({COMMITTED: [[1, 2]],
+                          PURGED: [],
+                          }, utfjson.load(rst))
+
+        rst, ver = self.zk.get('tx/journal/0000000001')
+        self.assertEqual({}, utfjson.load(rst))
 
     def test_with_statement(self):
 

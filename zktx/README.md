@@ -798,11 +798,21 @@ Nothing.
 ###  ZKTransaction.commit
 
 **syntax**:
-`ZKTransaction.commit()`
+`ZKTransaction.commit(force=False)`
 
 Write all update to zk.
 
 It might raise errors: `TXTimeout`, `ConnectionLoss`.
+
+**arguments**
+
+-   `force`:
+
+    If `force` is `False`, if there is no modifications, zktx does not write a
+    journal, and zktx stores this tx as `PURGED`.
+
+    If `force` is `True`, zktx always write a journal, and zktx stores this tx
+    as `COMMITTED`.
 
 **return**:
 nothing.

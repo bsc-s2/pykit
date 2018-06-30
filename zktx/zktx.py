@@ -362,7 +362,7 @@ class ZKTransaction(object):
         except zkutil.LockTimeout as e:
             raise TXTimeout(repr(e) + ' while waiting for tx alive lock')
 
-    def commit(self):
+    def commit(self, force=False):
 
         # Only when commit, it is necessary to ensure connection still active:
         # Thus tx_alive_lock is not lost, then no other process would take
@@ -396,9 +396,6 @@ class ZKTransaction(object):
                                  utfjson.dump(record_vals),
                                  version=curr.version)
 
-        kazootx.create(cnf.journal(self.txid),
-                       utfjson.dump(jour))
-
         state, ver = self._get_state(self.txid)
         if ver > -1:
             kazootx.delete(cnf.tx_state(self.txid), version=ver)
@@ -406,14 +403,21 @@ class ZKTransaction(object):
         for key in self.got_keys:
             kazootx.delete(cnf.lock(key), version=0)
 
-        kazootx.commit()
+        if len(jour) > 0 or force:
+            kazootx.create(cnf.journal(self.txid), utfjson.dump(jour))
+            kazootx.commit()
+            status = COMMITTED
+        else:
+            # Nothing to commit, make it an aborted tx.
+            kazootx.commit()
+            status = PURGED
 
-        self.zkstorage.add_to_txidset(COMMITTED, self.txid)
+        self.zkstorage.add_to_txidset(status, self.txid)
 
         logger.info('{tx} updated txidset: {status}'.format(
-            tx=self, status=COMMITTED))
+            tx=self, status=status))
 
-        self.tx_status = COMMITTED
+        self.tx_status = status
         self.modifications = {}
         self._close()
 
