@@ -76,6 +76,7 @@ class ZKTransaction(object):
         self.tx_status = None
 
         self.zkstorage = ZKStorage(self.zke)
+        self.zkstorage.max_value_history = 2
 
         self.zke.add_listener(self._on_conn_change)
 
@@ -383,12 +384,16 @@ class ZKTransaction(object):
                 continue
 
             jour[k] = rec.v
+
+            record_vals = curr.values + [[self.txid, rec.v]]
+            record_vals = record_vals[-self.zkstorage.max_value_history:]
+
             if curr.version == -1:
                 kazootx.create(cnf.record(rec.k),
-                               utfjson.dump(curr.values + [[self.txid, rec.v]]))
+                               utfjson.dump(record_vals))
             else:
                 kazootx.set_data(cnf.record(rec.k),
-                                 utfjson.dump(curr.values + [[self.txid, rec.v]]),
+                                 utfjson.dump(record_vals),
                                  version=curr.version)
 
         kazootx.create(cnf.journal(self.txid),

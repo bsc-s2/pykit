@@ -84,8 +84,8 @@ class TestTX(TXBase):
             t1.commit()
 
         rst, ver = self.zk.get('record/foo')
-        self.assertEqual([[-1, None], [1, {'foo': 'foo'}], [2, {'foo': 'bar'}]],
-                         utfjson.load(rst))
+        self.assertEqual([[1, {'foo': 'foo'}], [2, {'foo': 'bar'}]],
+                         utfjson.load(rst)[-2:])
 
     def test_with_statement(self):
 
