@@ -3,6 +3,10 @@ from .block_id import (
     BlockIDError,
 )
 
+from .block_desc import(
+    BlockDesc,
+)
+
 from .block_index import (
 
     BlockIndexError,
@@ -45,6 +49,8 @@ from .region import (
 __all__ = [
     "BlockID",
     "BlockIDError",
+
+    "BlockDesc",
 
     "BlockIndexError",
     "BlockIndex",

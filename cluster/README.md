@@ -499,6 +499,20 @@ print bid                 # d0g0006300000001230101c62d8736c72800020000000001
 Same as `str(cluster.BlockID(...))`
 
 
+##  cluster.BlockDesc
+
+**syntax**:
+`cluster.BlockDesc()`
+
+Initialize block use a dict.
+
+Block keys include:
+    `size`: int, in byte; on-disk block file size, default is 0.
+    `range`: rangeset.Range(); block range, not active range in region. Default is rangeset.Range(None, None).
+    `block_id`: BlockID(). Default is None.
+    `is_del`: 0 or 1. Default is 1.
+
+
 ##  cluster.BlockGroupID
 
 **syntax**:

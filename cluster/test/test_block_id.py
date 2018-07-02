@@ -12,7 +12,8 @@ class TestClusterBlock(unittest.TestCase):
 
         block_id = 'd1g0006300000001230101c62d8736c72800020000000001'
 
-        bid = cluster.BlockID('d1', 'g000630000000123', '0101', cluster.DriveID.parse('c62d8736c7280002'), 1)
+        bid = cluster.BlockID('d1', 'g000630000000123', '0101',
+                              cluster.DriveID.parse('c62d8736c7280002'), 1)
         self.assertEqual(block_id, str(bid))
 
         bid = cluster.BlockID.parse(block_id)
@@ -41,7 +42,8 @@ class TestClusterBlock(unittest.TestCase):
 
         # new with string drive id
 
-        bid = cluster.BlockID('d1', 'g000630000000123', '0101', 'c62d8736c7280002', 1)
+        bid = cluster.BlockID('d1', 'g000630000000123',
+                              '0101', 'c62d8736c7280002', 1)
         self.assertEqual(block_id, str(bid))
 
         self.assertIsInstance(bid.drive_id, cluster.DriveID)
