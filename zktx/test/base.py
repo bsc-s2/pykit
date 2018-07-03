@@ -27,14 +27,14 @@ class ZKTestBase(unittest.TestCase):
                 "ZOO_MY_ID": 1,
                 "ZOO_SERVERS": "server.1=0.0.0.0:2888:3888",
             },
-            port_bindings={2181: 2181}
+            port_bindings={2181: 21811}
         )
 
-        self.zk = KazooClient('127.0.0.1:2181')
+        self.zk = KazooClient('127.0.0.1:21811')
         self.zk.start()
 
         self.zkauthed, _ = zkutil.kazoo_client_ext(
-            {'hosts': '127.0.0.1:2181', 'auth': ('digest', 'xp', '123'),
+            {'hosts': '127.0.0.1:21811', 'auth': ('digest', 'xp', '123'),
              'acl': (('xp', '123', 'cdrwa'), ('foo', 'bar', 'rw'))})
 
         dd('start zk-test in docker')

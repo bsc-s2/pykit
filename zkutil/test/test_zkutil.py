@@ -294,7 +294,7 @@ class TestZKinit(unittest.TestCase):
         utdocker.start_container(
             zk_name,
             zk_tag,
-            port_bindings={2181: 2181}
+            port_bindings={2181: 21811}
         )
 
         dd('start zk-test in docker')
@@ -309,7 +309,7 @@ class TestZKinit(unittest.TestCase):
     def test_init_hierarchy(self):
 
         auth = ('digest', 'aa', 'pw_aa')
-        hosts = '127.0.0.1:2181'
+        hosts = '127.0.0.1:21811'
         users = {'aa': 'pw_aa', 'bb': 'pw_bb', 'cc': 'pw_cc'}
         hierarchy = {
             'node1':
@@ -405,10 +405,10 @@ class TestWait(unittest.TestCase):
                 "ZOO_MY_ID": 1,
                 "ZOO_SERVERS": "server.1=0.0.0.0:2888:3888",
             },
-            port_bindings={2181: 2181}
+            port_bindings={2181: 21811}
         )
 
-        self.zk = KazooClient('127.0.0.1:2181')
+        self.zk = KazooClient('127.0.0.1:21811')
         self.zk.start()
 
         dd('start zk-test in docker')

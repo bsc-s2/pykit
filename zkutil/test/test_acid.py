@@ -29,10 +29,10 @@ class TestAcid(unittest.TestCase):
                 "ZOO_MY_ID": 1,
                 "ZOO_SERVERS": "server.1=0.0.0.0:2888:3888",
             },
-            port_bindings={2181: 2181}
+            port_bindings={2181: 21811}
         )
 
-        self.zk = KazooClient('127.0.0.1:2181')
+        self.zk = KazooClient('127.0.0.1:21811')
         self.zk.start()
 
         dd('start zk-test in docker')
@@ -67,9 +67,9 @@ class TestAcid(unittest.TestCase):
     def test_cas_create_zk(self):
 
         for first_arg in (
-                '127.0.0.1:2181',
-                {'hosts': '127.0.0.1:2181'},
-                zkutil.ZKConf(hosts='127.0.0.1:2181'),
+                '127.0.0.1:21811',
+                {'hosts': '127.0.0.1:21811'},
+                zkutil.ZKConf(hosts='127.0.0.1:21811'),
         ):
             self.zk.set(self.path, '1')
 
@@ -94,7 +94,7 @@ class TestAcid(unittest.TestCase):
 
         def _update():
             for ii in range(10):
-                for curr in zkutil.cas_loop('127.0.0.1:2181', self.path):
+                for curr in zkutil.cas_loop('127.0.0.1:21811', self.path):
                     curr.v += 1
 
         ths = [threadutil.start_daemon(_update)

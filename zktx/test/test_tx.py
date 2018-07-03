@@ -23,7 +23,7 @@ from pykit.zktx.test import base
 
 dd = ututil.dd
 
-zkhost = '127.0.0.1:2181'
+zkhost = '127.0.0.1:21811'
 
 
 class TXBase(base.ZKTestBase):
@@ -214,7 +214,7 @@ class TestTX(TXBase):
             tx.lock_get('foo')
             time.sleep(4)
 
-        threadutil.start_daemon(_tx, args=(ZKTransaction(zkhost, txid=0),))
+        th = threadutil.start_daemon(_tx, args=(ZKTransaction(zkhost, txid=0),))
 
         with ZKTransaction(zkhost, lock_timeout=0.5) as t1:
 
@@ -232,6 +232,8 @@ class TestTX(TXBase):
                 self.fail('TXTimeout expected')
             except TXTimeout as e:
                 dd(repr(e))
+
+        th.join()
 
     def test_unlock(self):
 

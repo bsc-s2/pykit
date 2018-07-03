@@ -72,11 +72,11 @@ class TestZKLock(unittest.TestCase):
                 "ZOO_SERVERS": "server.1=0.0.0.0:2888:3888",
             },
             port_bindings={
-                2181: 2181,
+                2181: 21811,
             }
         )
 
-        self.zk = KazooClient(hosts='127.0.0.1:2181')
+        self.zk = KazooClient(hosts='127.0.0.1:21811')
         self.zk.start()
         scheme, name, passw = zk_test_auth
         self.zk.add_auth(scheme, name + ':' + passw)
@@ -111,7 +111,7 @@ class TestZKLock(unittest.TestCase):
 
     def _loop_acquire(self, n, ident):
 
-        zk = KazooClient(hosts='127.0.0.1:2181')
+        zk = KazooClient(hosts='127.0.0.1:21811')
         zk.start()
         scheme, name, passw = zk_test_auth
         zk.add_auth(scheme, name + ':' + passw)
@@ -441,25 +441,25 @@ class TestZKLock(unittest.TestCase):
 
         l = zkutil.ZKLock('foo_name',
                           zkconf=dict(
-                              hosts='127.0.0.1:2181',
+                              hosts='127.0.0.1:21811',
                           ),
                           on_lost=lambda: True)
 
         with l:
-            self.assertEqual('127.0.0.1:2181', l._hosts)
+            self.assertEqual('127.0.0.1:21811', l._hosts)
 
     def test_specify_identifier(self):
 
         a = zkutil.ZKLock('foo_name',
                           zkconf=dict(
-                              hosts='127.0.0.1:2181',
+                              hosts='127.0.0.1:21811',
                           ),
                           identifier='faked',
                           on_lost=lambda: True)
 
         b = zkutil.ZKLock('foo_name',
                           zkconf=dict(
-                              hosts='127.0.0.1:2181',
+                              hosts='127.0.0.1:21811',
                           ),
                           identifier='faked',
                           on_lost=lambda: True)
@@ -477,7 +477,7 @@ class TestZKLock(unittest.TestCase):
 
         l = zkutil.ZKLock('foo_name',
                           zkconf=dict(
-                              hosts='127.0.0.1:2181',
+                              hosts='127.0.0.1:21811',
                           ),
                           on_lost=lambda: True)
 
