@@ -1608,3 +1608,15 @@ class TestFixedKeysDict(unittest.TestCase):
         for ident_keys, ident in cases:
             d.ident_keys = ident_keys
             self.assertEqual(d.ident(), ident)
+
+    def test_ident_keyerror(self):
+        d = {
+            'key_1': '10.1',
+            'key_2': '32',
+        }
+        d = ForTestDict(d)
+
+        d.ident_keys = ('no_such_key',)
+        def _ident():
+            return d.ident()
+        self.assertRaises(KeyError, _ident)
