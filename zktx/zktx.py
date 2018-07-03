@@ -31,7 +31,7 @@ from .zkstorage import ZKStorage
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_TIMEOUT = 10
+DEFAULT_TIMEOUT = 1 * 365 * 24 * 3600
 
 
 class TXRecord(object):
@@ -50,16 +50,14 @@ class TXRecord(object):
 
 class ZKTransaction(object):
 
-    def __init__(self, zk, txid=None, timeout=None):
-
-        if timeout is None:
-            timeout = DEFAULT_TIMEOUT
+    def __init__(self, zk, txid=None, timeout=DEFAULT_TIMEOUT, lock_timeout=None):
 
         # Save the original arg for self.run()
         self._zk = zk
 
         self.zke, self.owning_zk = zkutil.kazoo_client_ext(zk)
         self.timeout = timeout
+        self.lock_timeout = lock_timeout
 
         self.txid = txid
         self.expire_at = None
@@ -88,7 +86,7 @@ class ZKTransaction(object):
             if state == KazooState.LOST or state == KazooState.SUSPENDED:
                 self.connected = False
 
-    def lock_get(self, key, blocking=True, latest=True):
+    def lock_get(self, key, blocking=True, latest=True, timeout=None):
 
         # We use persistent lock(ephemeral=False)
         # thus we do not need to care about connection loss during locking
@@ -102,7 +100,7 @@ class ZKTransaction(object):
             return copy.deepcopy(self.got_keys[key])
 
         if blocking:
-            self.lock_key(key)
+            self.lock_key(key, timeout)
         else:
             locked, other_txid, ver = self.try_lock_key(key)
             if not locked:
@@ -175,10 +173,10 @@ class ZKTransaction(object):
         except NoNodeError:
             pass
 
-    def lock_key(self, key):
+    def lock_key(self, key, timeout):
 
         try:
-            self._lock_key(key)
+            self._lock_key(key, timeout)
         except zkutil.LockTimeout:
             raise TXTimeout('{tx} timeout waiting for lock: {key}'.format(tx=self, key=key))
 
@@ -193,10 +191,21 @@ class ZKTransaction(object):
 
         return True, self.txid, -1
 
-    def _lock_key(self, key):
+    def _lock_key(self, key, timeout):
+
+        if timeout is None:
+            timeout = self.lock_timeout
+
+        if timeout is None:
+            timeout = self.time_left()
+
+        expire_at = time.time() + timeout
+
+        def _time_left():
+            return expire_at - time.time()
 
         for other_txid, ver in self.zkstorage.acquire_key_loop(
-                self.txid, key, timeout=self.time_left()):
+                self.txid, key, timeout=_time_left()):
 
             logger.info('{tx} wait[{key}]-> {other_txid} ver: {ver}'.format(
                 tx=self, key=key, other_txid=txidstr(other_txid), ver=ver))
@@ -205,7 +214,7 @@ class ZKTransaction(object):
             # tx.
             if not self.is_tx_alive(other_txid) and not self.has_state(other_txid):
 
-                rst = self.redo_dead_tx(other_txid, timeout=self.expire_at-time.time())
+                rst = self.redo_dead_tx(other_txid, timeout=_time_left())
 
                 # purged tx did not release lock by itself
                 if rst == PURGED:
@@ -225,7 +234,7 @@ class ZKTransaction(object):
                         tx=self, key=key, other_txid=txidstr(other_txid)))
 
                     for i in range(other_txid, self.txid):
-                        self.wait_tx_to_finish(i)
+                        self.wait_tx_to_finish(i, _time_left())
                     continue
 
                 else:
@@ -238,7 +247,7 @@ class ZKTransaction(object):
                     self.delete_state(self.txid)
 
                     for i in range(other_txid, self.txid):
-                        self.wait_tx_to_finish(i)
+                        self.wait_tx_to_finish(i, _time_left())
 
                     raise Deadlock('my txid: {mytxid} lockholder txid: {other_txid}'.format(
                         mytxid=self.txid, other_txid=other_txid))
@@ -254,14 +263,14 @@ class ZKTransaction(object):
             logger.info('{tx} wait[{key}]-> {other_txid}'.format(
                 tx=self, key=key, other_txid=txidstr(other_txid)))
 
-    def wait_tx_to_finish(self, txid):
+    def wait_tx_to_finish(self, txid, timeout):
 
         logger.info('{tx} wait-> {other_txid}'.format(tx=self, other_txid=txidstr(txid)))
 
         try:
             zkutil.wait_absent(self.zke,
                                self.zke._zkconf.tx_alive(txid),
-                               timeout=self.time_left())
+                               timeout=timeout)
         except zkutil.ZKWaitTimeout as e:
 
             logger.info(repr(e) + ' while waiting for other tx: {txid}'.format(

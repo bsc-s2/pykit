@@ -207,6 +207,32 @@ class TestTX(TXBase):
                 f4 = t2.lock_get('foo', blocking=False)
                 self.assertIsNone(f4)
 
+    def test_lock_get_timeout(self):
+
+        def _tx(tx):
+            tx.begin()
+            tx.lock_get('foo')
+            time.sleep(4)
+
+        threadutil.start_daemon(_tx, args=(ZKTransaction(zkhost, txid=0),))
+
+        with ZKTransaction(zkhost, lock_timeout=0.5) as t1:
+
+            try:
+                t1.lock_get('foo')
+                self.fail('TXTimeout expected')
+            except TXTimeout as e:
+                dd(repr(e))
+
+
+        with ZKTransaction(zkhost) as t2:
+
+            try:
+                t2.lock_get('foo', timeout=0.5)
+                self.fail('TXTimeout expected')
+            except TXTimeout as e:
+                dd(repr(e))
+
     def test_unlock(self):
 
         with ZKTransaction(zkhost) as t1:

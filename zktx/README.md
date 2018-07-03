@@ -657,11 +657,15 @@ It is a transaction engine.
 
     If `timeout` exceeded, a `TXTimeout` error will be raised.
 
+-   `lock_timeout`:
+    specifies the time for every lock get.
+    If `timeout` exceeded, a `TXTimeout` error will be raised.
+
 
 ###  ZKTransaction.lock_get
 
 **syntax**:
-`ZKTransaction.lock_get(key, blocking=True, latest=True)`
+`ZKTransaction.lock_get(key, blocking=True, latest=True, timeout=None)`
 
 Lock a record identified by `key` and retrieve the record and return.
 
@@ -686,6 +690,13 @@ But it always returns a copy of the first returned `TXRecord`.
     if `latest` is `True`, it retrieves the latest `key` record that set before
     in this transaction.
     Otherwise, it retrieves the `key` record from zookeeper node.
+
+-   `timeout`:
+    specifies the total time for this lock get.
+    If `timeout` exceeded, a `TXTimeout` error will be raised.
+    If it is not specified or `None`, `ZKTransaction.lock_timeout` will be used to be `timeout`,
+    and if `ZKTransaction.lock_timeout` is also `None`, then use `ZKTransaction.timeout` to get
+    left time for this transaction to use as the `timeout`.
 
 **return**:
 a `TXRecord` instance.
