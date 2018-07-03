@@ -1503,3 +1503,108 @@ class TestDictutil(unittest.TestCase):
             if 'deepcopy_default' not in kwargs:
                 for k in [x for x in flds if x not in source_dict]:
                     self.assertIs(expected[k], rst[k])
+
+class UserDefineType(object):
+
+    def __init__(self, value=None):
+        self.value = value
+
+
+class ForTestDict(dictutil.FixedKeysDict):
+
+    keys_default = {
+        'key_1': str,
+        'key_2': int,
+        'key_3': dict,
+        'key_4': UserDefineType,
+    }
+
+    ident_keys = ('key_2', 'key_1')
+
+
+class TestFixedKeysDict(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_fixed_keys_dict(self):
+
+        cases = (
+            (('10.1', 32, {'a': 1}, 'user_value'),  (32, '10.1')),
+            ((10.1, '32', {'a': 1}, 'user_value'),  (32, '10.1')),
+            ((10.1, '32', [('a',1)], 'user_value'), (32, '10.1')),
+
+            ((10.1, '32', [('a',1)]), (32, '10.1')),
+            ((10.1,), (0, '10.1')),
+            ((), (0, '')),
+        )
+
+        for case, ident in cases:
+
+            argkv = {}
+            for i in range(len(case)):
+                argkv['key_'+str(i+1)] = case[i]
+
+            d = ForTestDict(argkv)
+            self.assertEqual(d.ident(), ident)
+
+            d = ForTestDict(**argkv)
+            self.assertEqual(d.ident(), ident)
+
+            self.assertIsInstance(d['key_4'], UserDefineType)
+
+    def test_key_value_error(self):
+
+        case = {
+            'key_0': 0,
+            'key_1': 10.1,
+            'key_2': 32,
+        }
+
+        def _init():
+            return ForTestDict(**case)
+        self.assertRaises(KeyError, _init)
+
+        case = {
+            'key_1': 10.1,
+            'key_2': 32,
+        }
+        d = ForTestDict(case)
+        def _set():
+            d['key_2'] = 10
+            d['key_0'] = 10
+        self.assertRaises(KeyError, _set)
+        self.assertEqual(d['key_2'], 10)
+
+        case = {
+            'key_1': 10.1,
+            'key_2': 32,
+        }
+        d = ForTestDict(case)
+        def _set():
+            d['key_2'] = '32.0'
+        self.assertRaises(ValueError, _set)
+        def _set():
+            d['key_3'] = UserDefineType(10)
+        self.assertRaises(ValueError, _set)
+
+    def test_ident(self):
+        d = {
+            'key_1': '10.1',
+            'key_2': '32',
+            'key_3': {'a': 1},
+        }
+        d = ForTestDict(d)
+
+        cases = (
+            ((), ()),
+            (('key_1',), ('10.1',)),
+            (('key_1', 'key_2'), ('10.1', 32)),
+            (('key_1', 'key_2', 'key_3'), ('10.1', 32, {'a': 1})),
+
+            (('key_3', 'key_1', 'key_2'), ({'a': 1}, '10.1', 32)),
+        )
+
+        for ident_keys, ident in cases:
+            d.ident_keys = ident_keys
+            self.assertEqual(d.ident(), ident)

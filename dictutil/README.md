@@ -5,6 +5,8 @@
 - [Name](#name)
 - [Status](#status)
 - [Synopsis](#synopsis)
+- [Classes](#classes)
+  - [dictutil.FixedKeysDict](#dictutilfixedkeysdict)
 - [Methods](#methods)
   - [dictutil.add](#dictutiladd)
   - [dictutil.addto](#dictutiladdto)
@@ -113,6 +115,43 @@ for record in records:
 # NOTHING DONE   at 11:20
 # log out        at 11:20
 ```
+
+
+#   Classes
+
+## dictutil.FixedKeysDict
+
+**syntax**:
+```python
+class MyDict(dictutil.FixedKeysDict):
+
+    # {'key', value_type}
+    keys_default = {
+        'int_key': int,
+        'str_key': str,
+        'my_key':  MyDefinedType,
+    }
+
+    # ordered keys as ident
+    ident_keys = ('my_key', 'str_key')
+
+    def __init__(self, *args, **argkv):
+        super(MyDict, self).__init__(*args, **argkv)
+```
+
+It provides the base class for dict with explicit keys.
+
+**arguments**:
+
+-   `args`:
+    as builtin **dict**.
+
+-   `argkv`:
+    as builtin **dict**.
+
+**return**:
+An instance of dictutil.FixedKeysDict.
+
 
 #   Methods
 

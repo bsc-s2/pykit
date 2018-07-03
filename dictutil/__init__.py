@@ -18,6 +18,10 @@ from .dictutil import (
     AttrDictCopy,
 )
 
+from .fixed_keys_dict import (
+    FixedKeysDict,
+)
+
 __all__ = [
     "add",
     "addto",
@@ -36,4 +40,6 @@ __all__ = [
 
     "AttrDict",
     "AttrDictCopy",
+
+    "FixedKeysDict",
 ]
