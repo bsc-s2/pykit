@@ -1,4 +1,4 @@
-from .block import (
+from .block_id import (
     BlockID,
     BlockIDError,
 )

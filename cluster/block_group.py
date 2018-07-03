@@ -4,7 +4,7 @@
 import copy
 from collections import defaultdict
 
-from .block import BlockID
+from .block_id import BlockID
 from .block_index import BlockIndex
 from .block_index import BlockIndexError
 
