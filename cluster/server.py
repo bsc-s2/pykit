@@ -33,6 +33,9 @@ class ServerID(str):
     def local_server_id(self):
         return ServerID('%012x' % uuid.getnode())
 
+    def tostr(self):
+        return self
+
 
 class DriveID(namedtuple('_DriveID', 'server_id mountpoint_index'), IDBase):
 

@@ -59,6 +59,7 @@ class TestClusterServer(unittest.TestCase):
         self.assertIsInstance(sid, cluster.ServerID)
         self.assertEqual('%012x' % uuid.getnode(), str(sid))
         self.assertEqual('%012x' % uuid.getnode(), sid)
+        self.assertEqual('%012x' % uuid.getnode(), sid.tostr())
 
     def test_serverrec(self):
         cases = (
