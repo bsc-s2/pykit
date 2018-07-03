@@ -3,7 +3,7 @@
 
 class FixedKeysDict(dict):
 
-    # {'key', value_type}
+    # {'key', value_constructor}
     keys_default = {}
 
     # ordered keys as ident

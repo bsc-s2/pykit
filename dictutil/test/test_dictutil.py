@@ -1504,7 +1504,7 @@ class TestDictutil(unittest.TestCase):
                 for k in [x for x in flds if x not in source_dict]:
                     self.assertIs(expected[k], rst[k])
 
-class UserDefineType(object):
+class UserDefinedType(object):
 
     def __init__(self, value=None):
         self.value = value
@@ -1516,7 +1516,7 @@ class ForTestDict(dictutil.FixedKeysDict):
         'key_1': str,
         'key_2': int,
         'key_3': dict,
-        'key_4': UserDefineType,
+        'key_4': UserDefinedType,
     }
 
     ident_keys = ('key_2', 'key_1')
@@ -1551,7 +1551,7 @@ class TestFixedKeysDict(unittest.TestCase):
             d = ForTestDict(**argkv)
             self.assertEqual(d.ident(), ident)
 
-            self.assertIsInstance(d['key_4'], UserDefineType)
+            self.assertIsInstance(d['key_4'], UserDefinedType)
 
     def test_key_value_error(self):
 
@@ -1585,7 +1585,7 @@ class TestFixedKeysDict(unittest.TestCase):
             d['key_2'] = '32.0'
         self.assertRaises(ValueError, _set)
         def _set():
-            d['key_3'] = UserDefineType(10)
+            d['key_3'] = UserDefinedType(10)
         self.assertRaises(ValueError, _set)
 
     def test_ident(self):
