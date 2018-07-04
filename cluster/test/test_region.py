@@ -50,7 +50,8 @@ class TestClusterRegion(unittest.TestCase):
             ),
             (
                 [],
-                {'idc': '', 'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]]}
+                {'idc': '', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]]}
             ),
         ]
 
@@ -153,20 +154,20 @@ class TestClusterRegion(unittest.TestCase):
                 ['pp', 'zz', {'size': 8}],
                 ['zz', None, {'size': 4}]
             ],
-            [
+                [
                 ['aa', 'pz', {'size': 4}],
                 ['qq', 'zz', {'size': 8}]
             ]],
-            (1, ['qq', 'zz', BlockDesc(size=8)], [['pp', 'zz', BlockDesc(size=8)]])],
+                (1, ['qq', 'zz', BlockDesc(size=8)], [['pp', 'zz', BlockDesc(size=8)]])],
             [[[
                 ['aa', 'ee', {'size': 8}],
                 ['ee', 'ff', {'size': 8}],
                 ['hh', 'hz', {'size': 8}]
             ],
-            [
+                [
                 ['mm', 'yy', {'size': 8}]
             ]],
-            None]
+                None]
         ]
 
         for levels, excepted in region_levels_cases:
@@ -200,7 +201,7 @@ class TestClusterRegion(unittest.TestCase):
                 (bid3, [bid4, bid5]),
                 (bid5, [bid5]),
                 (bid6, []),
-            )
+        )
 
         region = cluster.Region(levels=region_levels)
 

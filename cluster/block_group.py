@@ -1,13 +1,15 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import copy
 from collections import defaultdict
 
+from pykit.dictutil import FixedKeysDict
+
+from .block_desc import BlockDesc
+from .block_group_id import BlockGroupID
 from .block_id import BlockID
 from .block_index import BlockIndex
-
-BlockIndexLen = 4
+from .replication_config import ReplicationConfig
 
 
 class BlockGroupBaseError(Exception):
@@ -26,49 +28,39 @@ class BlockTypeNotSupportReplica(BlockGroupBaseError):
     pass
 
 
-class BlockGroup(dict):
+def _idcs(lst):
+    return list(lst)
 
-    def __init__(self, block_group=None, **kwargs):
 
-        if block_group is not None:
-            self.update(copy.deepcopy(block_group))
+class BlockGroup(FixedKeysDict):
 
-        self.update(copy.deepcopy(kwargs))
+    keys_default = dict(
+        block_group_id=BlockGroupID.parse,
+        bg_seq=int,
+        config=ReplicationConfig,
+        idcs=_idcs,
+        blocks=dict,
+    )
 
-    @classmethod
-    def make(cls, block_group_id, idcs, config):
+    ident_keys = ('block_group_id',)
 
-        bg = cls({
-            'block_group_id': block_group_id,
-            'bg_seq': 0,
-            'config': copy.deepcopy(config),
-            'idcs': idcs,
-            'blocks': {}
-        })
-
-        nr_data, nr_parity = bg['config']['ec']['in_idc']
-
-        for idc_idx, idc in enumerate(idcs):
-            for pos in range(nr_data + nr_parity):
-                b_idx = BlockIndex(idc_idx, pos)
-                bg['blocks'][str(b_idx)] = bg.empty_block(b_idx)
-
-        return bg
+    def __init__(self, *args, **kwargs):
+        super(BlockGroup, self).__init__(*args, **kwargs)
+        self.type_map = self.make_type_map()
 
     def get_block_type(self, block_index):
 
-        mp = self.get_type_map()
-        bi = BlockIndex.parse(str(block_index))
+        mp = self.type_map
+        bi = BlockIndex.parse(block_index)
 
         try:
             return mp[bi.i][bi.j]
         except IndexError:
-            # TODO refine error
-            raise BlockTypeNotSupported('type x{1~n} is not supported')
+            raise BlockTypeNotSupported('invalid index at {bi}'.format(bi=bi))
 
-    def get_type_map(self):
+    def make_type_map(self):
 
-        cnf = self['config']['ec']
+        cnf = self['config']
 
         nr_data, nr_parity = cnf['in_idc']
         nr_in_idc, nr_xor_idc = cnf['cross_idc']
@@ -76,130 +68,92 @@ class BlockGroup(dict):
 
         rst = []
 
-        for i in range(nr_in_idc):
+        for i in range(nr_in_idc + nr_xor_idc):
 
-            o = ['d0'] * nr_data + ['dp'] * nr_parity
+            if i < nr_in_idc:
+                pref = 'd'
+            else:
+                pref = 'x'
 
-            for ii in range(data_replica - 1):
-                o += ['d%d' % (ii+1)] * nr_data
+            o = [pref + '0'] * nr_data
+            o += [pref + 'p'] * nr_parity
 
-            rst.append(o)
+            for j in range(1, data_replica):
+                o += ['%s%d' % (pref, j)] * nr_data
 
-        for i in range(nr_xor_idc):
-            o = ['x0'] * nr_data + ['xp'] * nr_parity
             rst.append(o)
 
         return rst
 
-    def empty_block(self, block_index):
-
-        blk_type = self.get_block_type(block_index)
-
-        block = {
-            'block_id': None,
-            'size': 0,
-            'type': blk_type,
-            'range': [None, None],
-            'is_del': 1
-        }
-
-        return block
-
-    def mark_delete_block(self, block_index=None, block_id=None):
-        block_index, block = self.get_block(block_index=block_index,
-                                            block_id=block_id,
-                                            raise_error=True)
+    def mark_delete_block(self, block_index):
+        block = self.get_block(block_index, raise_error=True)
         block['is_del'] = 1
 
-    def replace_block(self, new_block, block_index=None, block_id=None):
-        block_index, block = self.get_block(block_index=block_index,
-                                            block_id=block_id,
-                                            raise_error=False)
+    def delete_block(self, block_index):
+        block = self.get_block(block_index)
+        if block is not None:
+            del self['blocks'][str(block_index)]
 
-        self['blocks'][str(block_index)] = new_block
+    def replace_block(self, new_block):
+
+        desc = BlockDesc(new_block)
+        bi = BlockID.parse(desc['block_id'])
+
+        bidx = str(bi.block_index)
+
+        prev = self['blocks'].get(bidx)
+        self['blocks'][bidx] = desc
+
+        if prev is None:
+            return None
+        else:
+            return BlockDesc(prev)
 
     def get_free_block_indexes(self, block_type=None):
 
         free_block_index = defaultdict(list)
 
-        for b_idx, block in self['blocks'].items():
+        cnf = self['config']
+        n = sum(cnf['cross_idc'])
+        m = sum(cnf['in_idc'])
 
-            if block_type is not None:
-                if block['type'] != block_type:
+        for i in range(n):
+            for j in range(m):
+                bi = BlockIndex(i, j)
+                typ = self.get_block_type(bi)
+
+                if block_type is not None and typ != block_type:
                     continue
 
-            if block['block_id'] is None:
-                idc = self.get_block_idc(block_index=b_idx)
-                free_block_index[idc].append(b_idx)
-
-        for idc in free_block_index.keys():
-            free_block_index[idc].sort()
+                if self.get_block(bi) is None:
+                    idc = self.get_block_idc(bi)
+                    free_block_index[idc].append(str(bi))
 
         return free_block_index
 
-    def get_block(self, block_index=None, block_id=None, raise_error=False):
+    def get_block(self, block_index, raise_error=False):
 
-        block = None
+        bi = BlockIndex.parse(block_index)
+        b = self['blocks'].get(str(bi))
 
-        if block_index is not None:
-            msg = ('block_index:{i} '
-                   'not found in block_group:{block_group_id}').format(i=block_index,
-                                                                       **self)
-            block_index = BlockIndex.parse(str(block_index))
-            block = self['blocks'].get(str(block_index))
+        if raise_error and b is None:
+            raise BlockNotFoundError(
+                'block_index:{bi}'
+                ' not found in block_group:{block_group_id}'.format(bi=bi, **self))
 
-        elif block_id is not None:
-            msg = ('block_id:{i} '
-                   'not found in block_group:{block_group_id}').format(i=block_id,
-                                                                       **self)
+        return b
 
-            block_index = BlockID.parse(str(block_id)).block_index
-            block = self['blocks'].get(str(block_index))
+    def get_block_idc(self, block_index):
 
-            if block is not None and block['block_id'] != block_id:
-                block = None
+        bi = BlockIndex.parse(block_index)
 
-        if raise_error is True and block is None:
-            raise BlockNotFoundError(msg)
-
-        return block_index, block
-
-    def get_block_idc(self, block_index=None, block_id=None):
-
-        blk_idx, _ = self.get_block(block_index=block_index,
-                                    block_id=block_id,
-                                    raise_error=True)
-
-        return self['idcs'][blk_idx.i]
-
-    def get_replica_block_index(self, block_index=None, block_id=None):
-
-        if block_id is not None:
-            bi, _ = self.get_block(block_id=block_id, raise_error=True)
-        else:
-            bi = BlockIndex.parse(str(block_index))
-
-        blk_type = self.get_block_type(bi)
-
-        if blk_type.endswith('p') or blk_type.startswith('x'):
-            raise BlockTypeNotSupportReplica(('block type {0} '
-                                              'do not support replica').format(blk_type))
-
-        replica_block_index = []
-
-        for rbi in self.get_replica_indexes(bi):
-            if rbi.j == bi.j:
-                continue
-
-            replica_block_index.append(str(rbi))
-
-        return replica_block_index
+        return self['idcs'][bi.i]
 
     def get_primary_index(self, block_index):
 
-        nr_data, nr_parity = self['config']['ec']['in_idc']
+        nr_data, nr_parity = self['config']['in_idc']
 
-        bi = BlockIndex.parse(str(block_index))
+        bi = BlockIndex.parse(block_index)
 
         j = bi.j
         if j >= nr_data:
@@ -208,17 +162,30 @@ class BlockGroup(dict):
 
         return BlockIndex(bi.i, j)
 
-    def get_replica_indexes(self, block_index):
+    def get_replica_indexes(self, block_index, include_me=True):
 
-        nr_data, nr_parity = self['config']['ec']['in_idc']
-        data_replica = self['config']['ec']['data_replica']
+        nr_data, nr_parity = self['config']['in_idc']
+        data_replica = self['config']['data_replica']
 
-        bi = self.get_primary_index(block_index)
+        bi = BlockIndex.parse(block_index)
+        typ = self.get_block_type(bi)
 
-        rst = [bi]
+        if typ.endswith('p'):
+            raise BlockTypeNotSupportReplica(
+                'block type {typ}'
+                ' does not support replica'.format(typ=typ))
+
+        pbi = self.get_primary_index(block_index)
+
+        rst = [str(pbi)]
 
         for j in range(1, data_replica):
-            rst.append(BlockIndex(bi.i,
-                                  bi.j + nr_parity + j * nr_data))
+            rbi = BlockIndex(pbi.i,
+                             pbi.j + nr_parity + j * nr_data)
+            rst.append(str(rbi))
+
+        # if not include_me and str(block_index) in rst:
+        if not include_me:
+            rst.remove(str(block_index))
 
         return rst

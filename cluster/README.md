@@ -39,16 +39,14 @@
   - [cluster.BlockGroupID.tostr](#clusterblockgroupidtostr)
   - [cluster.BlockGroup](#clusterblockgroup)
     - [block index](#block-index)
-    - [cluster.BlockGroup.make](#clusterblockgroupmake)
     - [cluster.BlockGroup.get_block](#clusterblockgroupget_block)
-    - [cluster.BlockGroup.get_free_block_index](#clusterblockgroupget_free_block_index)
+    - [cluster.BlockGroup.get_free_block_indexes](#clusterblockgroupget_free_block_indexes)
     - [cluster.BlockGroup.mark_delete_block](#clusterblockgroupmark_delete_block)
+    - [cluster.BlockGroup.delete_block](#clusterblockgroupdelete_block)
     - [cluster.BlockGroup.replace_block](#clusterblockgroupreplace_block)
-    - [cluster.BlockGroup.calc_block_type](#clusterblockgroupcalc_block_type)
-    - [cluster.BlockGroup.empty_block](#clusterblockgroupempty_block)
+    - [cluster.BlockGroup.get_block_type](#clusterblockgroupget_block_type)
     - [cluster.BlockGroup.get_block_idc](#clusterblockgroupget_block_idc)
-    - [cluster.BlockGroup.get_replica_block_index](#clusterblockgroupget_replica_block_index)
-    - [cluster.BlockGroup.parse_block_index](#clusterblockgroupparse_block_index)
+    - [cluster.BlockGroup.get_replica_indexes](#clusterblockgroupget_replica_indexes)
   - [cluster.Region](#clusterregion)
     - [cluster.Region.add_block](#clusterregionadd_block)
     - [cluster.Region.move_down](#clusterregionmove_down)
@@ -629,11 +627,17 @@ Same as `str(cluster.BlockGroupID(...))`
 BlockGroup meta operations.
 
 **syntax**:
-`cluster.BlockGroup(dict)`
+`cluster.BlockGroup(FixedKeysDict)`
 
-Note: Although BlockGroup is subclass of dict,
-      `BlockGroup(block_group=None, **kwargs)` will deepcopy the arguments.
-      But `dict(seq=None, **kwargs)` just do a shadow copy.
+A `BlockGroup` is subclass of dict thus it shares the same construction API with
+`dict`.
+
+When initializing, the following 3 items must be specified:
+
+- `block_group_id` is a `BlockGroupID` instance or string.
+- `idcs` is a list of idc name in string.
+- `config` is a `ReplicationConfig` instance or plain `dict`
+
 
 ### block index
 
@@ -651,47 +655,16 @@ E.g.: `block_index` of the 1st block in the first IDC is: `0000`.
 `block_index` of the 2nd block in the 3rd IDC is: `0201`.
 
 
-### cluster.BlockGroup.make
-
-**syntax**:
-`cluster.BlockGroup.make(block_group_id, idcs, config)`
-
-**arguments**:
-
--   `block_group_id`:
-    block_group_id in string
-
--   `idcs`:
-    a idc list
-
--   `config`:
-    a config dict that looks like：
-     ```
-     {
-        'ec': {
-            'in_idc': [4, 2],
-            'cross_idc': [2, 1],
-            'ec_policy': 'lrc',
-            'data_replica': 2
-        }
-    }
-    ```
-
-**return**:
-A BlockGroup instance.
 
 ### cluster.BlockGroup.get_block
 
 **syntax**:
-`cluster.BlockGroup.get_block(block_index=None, block_id=None, raise_error=False)`
+`cluster.BlockGroup.get_block(block_index, raise_error=False)`
 
 **arguments**:
 
 -   `block_index`:
-    block_index in string.
-
--   `block_id`:
-    block_id in string.
+    a string or `BlockIndex`.
 
 -   `raise_error`:
     raise `BlockNotFoundError` if `raise_error` is `True` and block not found.
@@ -700,10 +673,10 @@ A BlockGroup instance.
 **return**:
 `(block_index, block)`
 
-### cluster.BlockGroup.get_free_block_index
+### cluster.BlockGroup.get_free_block_indexes
 
 **syntax**:
-`cluster.BlockGroup.get_free_block_index(block_type=None)`
+`cluster.BlockGroup.get_free_block_indexes(block_type=None)`
 
 **arguments**:
 
@@ -716,108 +689,84 @@ A dict that key is idc and value is a list of `block_index`.
 ### cluster.BlockGroup.mark_delete_block
 
 **syntax**:
-`cluster.BlockGroup.mark_delete_block(block_index=None, block_id=None)`
+`cluster.BlockGroup.mark_delete_block(block_index)`
+
+Mark a block to be `deleted` by setting its `is_del` field to `1`.
 
 -   `block_index`:
-    block_index in string.
-
--   `block_id`:
-    block_id in string.
+    a string or `BlockIndex`.
 
 **return**:
 Nothing.
 Will raise `BlockNotFoundError` if target block not found.
+
+
+### cluster.BlockGroup.delete_block
+
+**syntax**:
+`cluster.BlockGroup.delete_block(block_index)`
+
+Delete a block if it is in this group.
+Do nothing if the specified block index not found.
+
+-   `block_index`:
+    a string or `BlockIndex`.
+
+**return**:
+Nothing.
+Will raise `BlockNotFoundError` if target block not found.
+
 
 ### cluster.BlockGroup.replace_block
 
 **syntax**:
-`cluster.BlockGroup.replace_block(new_block, block_index=None, block_id=None)`
+`cluster.BlockGroup.replace_block(new_block)`
 
 -   `new_block`:
-    block used to replace.
-
--   `block_index`:
-    block_index in string.
-
--   `block_id`:
-    block_id in string.
+    is a `BlockDesc` or plain `dict` to replace.
 
 **return**:
-Nothing.
-Will raise `BlockNotFoundError` if target block not found.
+a `BlockDesc` instance of the replace block.
 
-### cluster.BlockGroup.calc_block_type
+### cluster.BlockGroup.get_block_type
 
 **syntax**:
-`cluster.BlockGroup.calc_block_type(block_index)`
+`cluster.BlockGroup.get_block_type(block_index)`
 
 -   `block_index`:
-    block_index in string.
+    a string or `BlockIndex`.
 
 **return**:
 block type.
 Will raise `BlockTypeNotSupported` if block index do not have corresponding type.
 
-### cluster.BlockGroup.empty_block
-
-**syntax**:
-`cluster.BlockGroup.empty_block(block_index)`
-
--   `block_index`:
-    block_index in string.
-
-**return**:
-a empty block dict look like:
-```
-{
-    'block_id': None,
-    'is_del': 1,
-    'range': [None, None],
-    'type': 'd0',
-    'size': 0
-}
-```
 
 ### cluster.BlockGroup.get_block_idc
 
 **syntax**:
-`cluster.BlockGroup.get_block_idc(block_index=None, block_id=None)`
+`cluster.BlockGroup.get_block_idc(block_index=None)`
 
 -   `block_index`:
-    block_index in string.
-
--   `block_id`:
-    block_id in string.
+    a string or `BlockIndex`.
 
 **return**:
-The idc of the block.
+The idc in string of the block.
 
-### cluster.BlockGroup.get_replica_block_index
+
+### cluster.BlockGroup.get_replica_indexes
 
 **syntax**:
-`cluster.BlockGroup.get_replica_block_index(block_index=None, block_id=None)`
+`cluster.BlockGroup.get_replica_indexes(block_index, include_me=True)`
 
 -   `block_index`:
-    block_index in string.
+    a string or `BlockIndex`.
 
--   `block_id`:
-    block_id in string.
+-   `include_me`:
+    whether including `block_index` itself in return value
 
 **return**:
-List of data replica block index except the input block.
+List of data replica block index.
 Will raise `BlockTypeNotSupportReplica` if block type do not support replica.
-Return `[]` if block type support replica but do not have replica.
-
-### cluster.BlockGroup.parse_block_index
-
-**syntax**:
-`cluster.BlockGroup.parse_block_index(block_index)`
-
--   `block_index`:
-    block_index in string.
-
-**return**:
-`(idc_idx, pos)`
 
 
 ## cluster.Region
