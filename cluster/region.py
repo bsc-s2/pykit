@@ -5,6 +5,8 @@ import bisect
 import copy
 
 from pykit import rangeset
+from .block_desc import BlockDesc
+from .block_id import BlockID
 
 
 class BlockNotInRegion(Exception):
@@ -33,6 +35,9 @@ class Region(dict):
         self['range'] = rangeset.Range(*self['range'])
 
         for level, blocks in enumerate(self['levels']):
+            for b in blocks:
+                b[2] = BlockDesc(b[2])
+
             self['levels'][level] = rangeset.RangeDict(blocks)
 
     def need_merge(self, source, targets):
@@ -113,12 +118,15 @@ class Region(dict):
         block_ids.sort()
 
         if start_block_id is not None:
+            start_block_id = BlockID.parse(start_block_id)
             idx = bisect.bisect_left(block_ids, start_block_id)
             block_ids = block_ids[idx:]
 
         return block_ids
 
     def replace_block_id(self, block_id, new_block_id):
+        block_id = BlockID.parse(block_id)
+        new_block_id = BlockID.parse(new_block_id)
 
         for blocks in self['levels']:
 
@@ -127,7 +135,7 @@ class Region(dict):
                     block[2]['block_id'] = new_block_id
                     return
 
-        raise BlockNotInRegion('block_id: %s' % block_id)
+        raise BlockNotInRegion('block_id: %s' % str(block_id))
 
     def add_block(self, active_range, block, level=None):
 
@@ -143,4 +151,5 @@ class Region(dict):
         if level == max_level+1:
             self['levels'].append(rangeset.RangeDict())
 
-        self['levels'][level].add(active_range, block)
+        desc = BlockDesc(block)
+        self['levels'][level].add(active_range, desc)

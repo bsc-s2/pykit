@@ -5,6 +5,8 @@ import unittest
 
 from pykit import cluster
 from pykit import ututil
+from pykit.cluster import BlockDesc
+from pykit.cluster import BlockID
 
 dd = ututil.dd
 
@@ -18,10 +20,10 @@ class TestClusterRegion(unittest.TestCase):
                 {'idc': None, 'range': [None, None], 'levels': []}],
             [{'range': ['a', 'b'], 'idc': '.bei'},
                 {'idc': '.bei', 'range': ['a', 'b'], 'levels': []}],
-            [{'levels': [[['a', 'b', 1]], [['c', 'd', 2]]]},
-                {'idc': None, 'range': [None, None], 'levels': [[['a', 'b', 1]], [['c', 'd', 2]]]}],
-            [{'range': ['a', 'z'], 'levels': [[['a', 'b', 1], ['b', 'c', 3]]]},
-                {'idc': None, 'range': ['a', 'z'], 'levels': [[['a', 'b', 1], ['b', 'c', 3]]]}],
+            [{'levels': [[['a', 'b', BlockDesc()]], [['c', 'd', BlockDesc(size=1)]]]},
+                {'idc': None, 'range': [None, None], 'levels': [[['a', 'b', BlockDesc()]], [['c', 'd', BlockDesc(size=1)]]]}],
+            [{'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc()], ['b', 'c', BlockDesc(size=2)]]]},
+                {'idc': None, 'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc()], ['b', 'c', BlockDesc(size=2)]]]}],
         ]
 
         for case, excepted in region_cases:
@@ -36,16 +38,16 @@ class TestClusterRegion(unittest.TestCase):
             self.assertEqual(excepted, region)
 
         region_cases_argkv = [
-            ([[['a', 'b', 1], ['c', 'd', 2]]],
-                {'idc': None, 'range': [None, None], 'levels': [[['a', 'b', 1], ['c', 'd', 2]]]}),
+            ([[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]],
+                {'idc': None, 'range': [None, None], 'levels': [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]]}),
             (['a', 'z'],
                 {'idc': None, 'range': ['a', 'z'], 'levels': []}),
             ([],
-                {'idc': None, 'range': ['a', 'z'], 'levels': [[['a', 'b', 1], ['c', 'd', 2]], [['f', 'g', 5]]]}),
+                {'idc': None, 'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]], [['f', 'g', BlockDesc(size=5)]]]}),
         ]
 
         region = cluster.Region(levels=region_cases_argkv[0][0])
-        region_cases_argkv[0][0].append([['f', 'g', 5]])
+        region_cases_argkv[0][0].append([['f', 'g', BlockDesc(size=5)]])
         self.assertEqual(region_cases_argkv[0][1], region)
 
         region = cluster.Region(range=region_cases_argkv[1][0])
@@ -58,30 +60,30 @@ class TestClusterRegion(unittest.TestCase):
     def test_move_down(self):
 
         region_levels = [
-            [['aa', 'ee', 1], ['hh', 'hz', 2], ['pp', 'zz', 3], ['zz', None, 4]],
-            [['cf', 'cz', 5], ['mm', 'oo', 6], ['oo', 'qq', 7]],
-            [['aa', 'bb', 8], ['cc', 'cd', 9], ['ee', 'ff', 10]],
-            [['aa', 'ab', 11], ['az', 'bb', 12], ['za', None, 13]],
-            [['d', 'fz', 14]],
+            [['aa', 'ee', BlockDesc(size=1)], ['hh', 'hz', BlockDesc(size=2)], ['pp', 'zz', BlockDesc(size=3)], ['zz', None, BlockDesc(size=4)]],
+            [['cf', 'cz', BlockDesc(size=5)], ['mm', 'oo', BlockDesc(size=6)], ['oo', 'qq', BlockDesc(size=7)]],
+            [['aa', 'bb', BlockDesc(size=8)], ['cc', 'cd', BlockDesc(size=9)], ['ee', 'ff', BlockDesc(size=10)]],
+            [['aa', 'ab', BlockDesc(size=11)], ['az', 'bb', BlockDesc(size=12)], ['za', None, BlockDesc(size=13)]],
+            [['d', 'fz', BlockDesc(size=14)]],
         ]
 
         excepted_region_levels = [
-            [['aa', 'ee', 1], ['ee', 'ff', 10], ['hh', 'hz', 2], [
-                'mm', 'oo', 6], ['pp', 'zz', 3], ['zz', None, 4]],
-            [['aa', 'bb', 8], ['cc', 'cd', 9], ['cf', 'cz', 5], [
-                'd', 'fz', 14], ['oo', 'qq', 7], ['za', None, 13]],
-            [['aa', 'ab', 11], ['az', 'bb', 12]],
+            [['aa', 'ee', BlockDesc(size=1)], ['ee', 'ff', BlockDesc(size=10)], ['hh', 'hz', BlockDesc(size=2)], [
+                'mm', 'oo', BlockDesc(size=6)], ['pp', 'zz', BlockDesc(size=3)], ['zz', None, BlockDesc(size=4)]],
+            [['aa', 'bb', BlockDesc(size=8)], ['cc', 'cd', BlockDesc(size=9)], ['cf', 'cz', BlockDesc(size=5)], [
+                'd', 'fz', BlockDesc(size=14)], ['oo', 'qq', BlockDesc(size=7)], ['za', None, BlockDesc(size=13)]],
+            [['aa', 'ab', BlockDesc(size=11)], ['az', 'bb', BlockDesc(size=12)]],
         ]
 
         excepted_moved_blocks = [
-            (1, 0, ['mm', 'oo', 6]),
-            (2, 1, ['aa', 'bb', 8]),
-            (2, 1, ['cc', 'cd', 9]),
-            (2, 0, ['ee', 'ff', 10]),
-            (3, 2, ['aa', 'ab', 11]),
-            (3, 2, ['az', 'bb', 12]),
-            (3, 1, ['za', None, 13]),
-            (4, 1, ['d', 'fz', 14]),
+            (1, 0, ['mm', 'oo', BlockDesc(size=6)]),
+            (2, 1, ['aa', 'bb', BlockDesc(size=8)]),
+            (2, 1, ['cc', 'cd', BlockDesc(size=9)]),
+            (2, 0, ['ee', 'ff', BlockDesc(size=10)]),
+            (3, 2, ['aa', 'ab', BlockDesc(size=11)]),
+            (3, 2, ['az', 'bb', BlockDesc(size=12)]),
+            (3, 1, ['za', None, BlockDesc(size=13)]),
+            (4, 1, ['d', 'fz', BlockDesc(size=14)]),
         ]
 
         region = cluster.Region(levels=region_levels)
@@ -91,8 +93,8 @@ class TestClusterRegion(unittest.TestCase):
         self.assertEqual(excepted_region_levels, region['levels'])
 
         region_levels = [
-            [['aa', 'ee', 1], ['ee', 'ff', 10], ['hh', 'hz', 2]],
-            [['aa', 'yy', 8]]
+            [['aa', 'ee', BlockDesc(size=1)], ['ee', 'ff', BlockDesc(size=10)], ['hh', 'hz', BlockDesc(size=2)]],
+            [['aa', 'yy', BlockDesc(size=8)]]
         ]
 
         region = cluster.Region(levels=region_levels)
@@ -110,7 +112,7 @@ class TestClusterRegion(unittest.TestCase):
                         'pp', 'zz', {'size': 8}], ['zz', None, {'size': 4}]],
                     [['aa', 'pz', {'size': 4}], ['qq', 'zz', {'size': 8}]]
                 ],
-                (1, ['qq', 'zz', {'size': 8}], [['pp', 'zz', {'size': 8}]])
+                (1, ['qq', 'zz', BlockDesc(size=8)], [['pp', 'zz', BlockDesc(size=8)]])
             ],
             [
                 [
@@ -129,16 +131,26 @@ class TestClusterRegion(unittest.TestCase):
             self.assertEqual(excepted, res)
 
     def test_list_block_ids(self):
+
+        bid1 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000001')
+        bid2 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000002')
+        bid3 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000003')
+        bid4 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000004')
+        bid5 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000005')
+        bid6 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000006')
+
         region_levels = [
-            [['aa', 'ee', {'block_id': 1}], ['hh', 'zz', {'block_id': 2}]],
-            [['ea', 'ff', {'block_id': 4}], ['mm', 'yy', {'block_id': 5}]],
+            [['aa', 'ee', {'block_id': bid1}],
+                ['hh', 'zz', {'block_id': bid2}]],
+            [['ea', 'ff', {'block_id': bid4}],
+                ['mm', 'yy', {'block_id': bid5}]],
         ]
 
         cases = (
-                (None, [1, 2, 4, 5]),
-                (3,    [4, 5]),
-                (5,     [5]),
-                (6,     []),
+                (None, [bid1, bid2, bid4, bid5]),
+                (bid3, [bid4, bid5]),
+                (bid5, [bid5]),
+                (bid6, []),
         )
 
         region = cluster.Region(levels=region_levels)
@@ -148,94 +160,100 @@ class TestClusterRegion(unittest.TestCase):
             self.assertEqual(excepted, block_ids)
 
     def test_replace_block_id(self):
+
+        bid1 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000001')
+        bid2 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000002')
+        bid3 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000003')
+        bid4 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000004')
+        bid5 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000005')
+        bid6 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000006')
+
         region_levels = [
-            [['aa', 'ee', {'block_id': 1}], ['hh', 'zz', {'block_id': 2}]],
-            [['ea', 'ff', {'block_id': 4}], [
-                'mm', 'yy', {'block_id': 5}]]
+            [['aa', 'ee', {'block_id': bid1}], ['hh', 'zz', {'block_id': bid2}]],
+            [['ea', 'ff', {'block_id': bid4}], ['mm', 'yy', {'block_id': bid5}]],
         ]
 
         excepted_region_levels = [
-            [['aa', 'ee', {'block_id': 1}], ['hh', 'zz', {'block_id': 2}]],
-            [['ea', 'ff', {'block_id': 3}], [
-                'mm', 'yy', {'block_id': 5}]]
+            [['aa', 'ee', BlockDesc({'block_id': bid1})], ['hh', 'zz', BlockDesc({'block_id': bid2})]],
+            [['ea', 'ff', BlockDesc({'block_id': bid3})], ['mm', 'yy', BlockDesc({'block_id': bid5})]],
         ]
 
         region = cluster.Region(levels=region_levels)
 
-        region.replace_block_id(4, 3)
+        region.replace_block_id(bid4, bid3)
         self.assertEqual(excepted_region_levels, region['levels'])
 
         self.assertRaises(cluster.BlockNotInRegion,
-                          region.replace_block_id, 7, 9)
+                          region.replace_block_id, bid6, bid1)
 
     def test_add_block(self):
 
         region_cases = (
             (
                 {},
-                (['a', 'c'], 1, None),
+                (['a', 'c'], BlockDesc(), None),
                 {'idc': None, 'range': [None, None], 'levels': [
-                    [['a', 'c', 1]],
+                    [['a', 'c', BlockDesc()]],
                 ]},
                 None,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', 1], ['b', 'c', 3]],
+                    [['a', 'b', BlockDesc(size=1)], ['b', 'c', BlockDesc(size=2)]],
                 ]},
-                (['c', 'd'], 5, None),
+                (['c', 'd'], BlockDesc(), None),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', 1], ['b', 'c', 3]],
-                    [['c', 'd', 5]],
-                ]},
-                None,
-            ),
-            (
-                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', 1]],
-                    [['b', 'c', 3]],
-                ]},
-                (['c', 'd'], 5, 0),
-                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', 1], ['c', 'd', 5]],
-                    [['b', 'c', 3]],
+                    [['a', 'b', BlockDesc(size=1)], ['b', 'c', BlockDesc(size=2)]],
+                    [['c','d', BlockDesc()]],
                 ]},
                 None,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', 1]],
-                    [['b', 'c', 3]],
+                    [['a', 'b', BlockDesc(size=1)]],
+                    [['b', 'c', BlockDesc(size=2)]],
                 ]},
-                (['c', 'd'], 5, 1),
+                (['c', 'd'], BlockDesc(), 0),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', 1]],
-                    [['b', 'c', 3], ['c', 'd', 5]],
-                ]},
-                None,
-            ),
-            (
-                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', 1]],
-                    [['b', 'c', 3]],
-                ]},
-                (['c', 'd'], 5, 2),
-                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', 1]],
-                    [['b', 'c', 3]],
-                    [['c', 'd', 5]],
+                    [['a', 'b', BlockDesc(size=1)], ['c','d', BlockDesc()]],
+                    [['b', 'c', BlockDesc(size=2)]],
                 ]},
                 None,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', 1]],
-                    [['b', 'c', 3]],
+                    [['a', 'b', BlockDesc(size=1)]],
+                    [['b', 'c', BlockDesc(size=2)]],
                 ]},
-                (['c', 'd'], 5, 3),
+                (['c', 'd'], BlockDesc(), 1),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', 1]],
-                    [['b', 'c', 3]],
+                    [['a', 'b', BlockDesc(size=1)]],
+                    [['b', 'c', BlockDesc(size=2)], ['c', 'd', BlockDesc()]],
+                ]},
+                None,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                ]},
+                (['c', 'd'], BlockDesc(), 2),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                    [['c', 'd', BlockDesc()]],
+                ]},
+                None,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                ]},
+                (['c', 'd'], BlockDesc(), 3),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)]],
+                    [['b', 'c', BlockDesc(size=2)]],
                 ]},
                 cluster.LevelOutOfBound,
             ),
