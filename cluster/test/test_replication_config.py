@@ -28,10 +28,12 @@ class TestReplicationConfig(unittest.TestCase):
 
         e = ReplicationConfig(in_idc=[2, 3],
                               cross_idc=[3, 4],
+                              ec_policy='xx',
                               data_replica=5)
 
         self.assertEqual({'in_idc': (2, 3),
                           'cross_idc': (3, 4),
+                          'ec_policy': 'xx',
                           "data_replica": 5}, e)
 
         self.assertRaises(ValueError, ReplicationConfig,
@@ -44,4 +46,5 @@ class TestReplicationConfig(unittest.TestCase):
 
         self.assertEqual({'in_idc': (2, 3),
                           'cross_idc': (3, 4),
+                          'ec_policy': 'lrc',
                           "data_replica": 1}, e)

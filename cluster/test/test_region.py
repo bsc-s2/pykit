@@ -60,7 +60,8 @@ class TestClusterRegion(unittest.TestCase):
     def test_move_down(self):
 
         region_levels = [
-            [['aa', 'ee', BlockDesc(size=1)], ['hh', 'hz', BlockDesc(size=2)], ['pp', 'zz', BlockDesc(size=3)], ['zz', None, BlockDesc(size=4)]],
+            [['aa', 'ee', BlockDesc(size=1)], ['hh', 'hz', BlockDesc(size=2)], [
+                'pp', 'zz', BlockDesc(size=3)], ['zz', None, BlockDesc(size=4)]],
             [['cf', 'cz', BlockDesc(size=5)], ['mm', 'oo', BlockDesc(size=6)], ['oo', 'qq', BlockDesc(size=7)]],
             [['aa', 'bb', BlockDesc(size=8)], ['cc', 'cd', BlockDesc(size=9)], ['ee', 'ff', BlockDesc(size=10)]],
             [['aa', 'ab', BlockDesc(size=11)], ['az', 'bb', BlockDesc(size=12)], ['za', None, BlockDesc(size=13)]],
@@ -204,7 +205,7 @@ class TestClusterRegion(unittest.TestCase):
                 (['c', 'd'], BlockDesc(), None),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
                     [['a', 'b', BlockDesc(size=1)], ['b', 'c', BlockDesc(size=2)]],
-                    [['c','d', BlockDesc()]],
+                    [['c', 'd', BlockDesc()]],
                 ]},
                 None,
             ),
@@ -215,7 +216,7 @@ class TestClusterRegion(unittest.TestCase):
                 ]},
                 (['c', 'd'], BlockDesc(), 0),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['c','d', BlockDesc()]],
+                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
                     [['b', 'c', BlockDesc(size=2)]],
                 ]},
                 None,

@@ -5,6 +5,7 @@ import bisect
 import copy
 
 from pykit import rangeset
+
 from .block_desc import BlockDesc
 from .block_id import BlockID
 

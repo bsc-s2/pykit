@@ -20,10 +20,17 @@ def _replica(n=None):
     return n
 
 
+def _ec_policy(p=None):
+    if p is None:
+        return 'lrc'
+    return str(p)
+
+
 class ReplicationConfig(FixedKeysDict):
 
     keys_default = {
         'in_idc': lambda dp: RSConfig(dp[0], dp[1]),
         'cross_idc': lambda dp: RSConfig(dp[0], dp[1]),
+        'ec_policy': _ec_policy,
         'data_replica': _replica,
     }
