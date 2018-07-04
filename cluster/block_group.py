@@ -114,7 +114,7 @@ class BlockGroup(dict):
     def replace_block(self, new_block, block_index=None, block_id=None):
         block_index, block = self.get_block(block_index=block_index,
                                             block_id=block_id,
-                                            raise_error=True)
+                                            raise_error=False)
 
         self['blocks'][str(block_index)] = new_block
 
@@ -153,7 +153,7 @@ class BlockGroup(dict):
                    'not found in block_group:{block_group_id}').format(i=block_id,
                                                                        **self)
 
-            block_index = BlockID.parse(block_id).block_index
+            block_index = BlockID.parse(str(block_id)).block_index
             block = self['blocks'].get(str(block_index))
 
             if block is not None and block['block_id'] != block_id:
