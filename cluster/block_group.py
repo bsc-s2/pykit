@@ -6,7 +6,6 @@ from collections import defaultdict
 
 from .block_id import BlockID
 from .block_index import BlockIndex
-from .block_index import BlockIndexError
 
 BlockIndexLen = 4
 

@@ -13,6 +13,7 @@
   - [cluster.BlockTypeNotSupportReplica](#clusterblocktypenotsupportreplica)
   - [cluster.BlockIndexError](#clusterblockindexerror)
 - [Classes](#classes)
+  - [cluster.ReplicationConfig](#clusterreplicationconfig)
   - [cluster.ServerID](#clusterserverid)
     - [cluster.ServerID.validate](#clusterserveridvalidate)
   - [cluster.DriveID](#clusterdriveid)
@@ -30,6 +31,7 @@
     - [cluster.BlockID.parse](#clusterblockidparse)
     - [cluster.BlockID.`__str__`](#clusterblockid__str__)
   - [cluster.BlockID.tostr](#clusterblockidtostr)
+  - [cluster.BlockDesc](#clusterblockdesc)
   - [cluster.BlockGroupID](#clusterblockgroupid)
     - [block group id](#block-group-id)
     - [cluster.BlockGroupID.parse](#clusterblockgroupidparse)
@@ -146,7 +148,39 @@ Raise if block type do not support replica.
 
 Raise if block index parse or make error.
 
+
 #   Classes
+
+
+##  cluster.ReplicationConfig
+
+**syntax**:
+`cluster.ReplicationConfig()`
+
+`ReplicationConfig` is a subclass of `FixedKeysDict` thus also a subclass of `dict`.
+It provides the same construction function prototype as `dict`.
+
+**keys**:
+
+-   `in_idc`:
+    An instance of namedtuple `RSConfig`, which has 2 element: N.O. of data
+    and N.O. of parity.
+
+-   `cross_idc`:
+    Similar to `in_idc`, it defines cross idc EC parameter.
+
+-   `data_replica`:
+    is a number of replicas of block, before encoded with Reed Solomon.
+    By default it is 1.
+    And it can not be smaller than 1.
+
+**Synopsis**:
+
+```python
+print ReplicationConfig(in_idc=[6, 2], cross_idc=[3, 1]) # {"in_idc":[6, 2], "cross_idc":[3, 1], data_replica:1}
+```
+
+
 
 ##  cluster.ServerID
 

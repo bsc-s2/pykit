@@ -186,7 +186,7 @@ class TestClusterRegion(unittest.TestCase):
                 (['c', 'd'], 5, None),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
                     [['a', 'b', 1], ['b', 'c', 3]],
-                    [['c','d', 5]],
+                    [['c', 'd', 5]],
                 ]},
                 None,
             ),
@@ -197,7 +197,7 @@ class TestClusterRegion(unittest.TestCase):
                 ]},
                 (['c', 'd'], 5, 0),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', 1], ['c','d', 5]],
+                    [['a', 'b', 1], ['c', 'd', 5]],
                     [['b', 'c', 3]],
                 ]},
                 None,

@@ -10,6 +10,7 @@ from pykit import rangeset
 class BlockNotInRegion(Exception):
     pass
 
+
 class LevelOutOfBound(Exception):
     pass
 
@@ -137,7 +138,7 @@ class Region(dict):
 
         elif level < 0 or level > max_level + 1:
             raise LevelOutOfBound('level is invalid. except level >= 0 and level <= {0}, '
-                    'got: {1}'.format(max_level+1, level))
+                                  'got: {1}'.format(max_level+1, level))
 
         if level == max_level+1:
             self['levels'].append(rangeset.RangeDict())

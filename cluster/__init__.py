@@ -27,6 +27,11 @@ from .block_group_id import (
     BlockGroupID,
 )
 
+from .replication_config import (
+    ReplicationConfig,
+    RSConfig,
+)
+
 from .server import (
     get_serverrec_str,
     idc_distance,
@@ -61,6 +66,9 @@ __all__ = [
     "BlockNotFoundError",
     "BlockTypeNotSupported",
     "BlockTypeNotSupportReplica",
+
+    "ReplicationConfig",
+    "RSConfig",
 
     "get_serverrec_str",
     "idc_distance",
