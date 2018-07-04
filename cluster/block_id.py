@@ -26,15 +26,17 @@ class BlockID(namedtuple('_BlockID', 'type block_group_id block_index drive_id b
     @classmethod
     def parse(cls, block_id):
 
-        if len(block_id) != BlockIDLen:
-            raise BlockIDError('Block id length should be {0}, but is {1}: {2}'.format(
-                BlockIDLen, len(block_id), block_id))
+        bid = str(block_id)
 
-        return BlockID(block_id[:2],
-                       block_id[2:18],
-                       block_id[18:22],
-                       block_id[22:38],
-                       block_id[-10:])
+        if len(bid) != BlockIDLen:
+            raise BlockIDError('Block id length should be {0}, but is {1}: {2}'.format(
+                BlockIDLen, len(bid), bid))
+
+        return BlockID(bid[:2],
+                       bid[2:18],
+                       bid[18:22],
+                       bid[22:38],
+                       bid[-10:])
 
     def __new__(clz, type, block_group_id, block_index, drive_id, bg_seq):
 

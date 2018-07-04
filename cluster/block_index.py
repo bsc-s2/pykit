@@ -16,11 +16,13 @@ class BlockIndex(namedtuple('_BlockIndex', 'i j'), IDBase):
 
     @classmethod
     def parse(clz, block_index):
-        if len(block_index) != 4:
-            raise BlockIndexError('block_index len must be 4, but: {bi}'.format(
-                bi=block_index))
+        bi = str(block_index)
 
-        ii, jj = block_index[:2], block_index[2:]
+        if len(bi) != 4:
+            raise BlockIndexError('block_index len must be 4, but: {bi}'.format(
+                bi=bi))
+
+        ii, jj = bi[:2], bi[2:]
 
         return BlockIndex(ii, jj)
 

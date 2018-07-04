@@ -4,17 +4,20 @@
 import unittest
 
 from pykit import cluster
+from pykit.cluster import BlockID
 
 
-class TestClusterBlock(unittest.TestCase):
+class TestBlockID(unittest.TestCase):
 
-    def test_parse_and_print(self):
-
+    def test_parse(self):
         block_id = 'd1g0006300000001230101c62d8736c72800020000000001'
 
-        bid = cluster.BlockID('d1', 'g000630000000123', '0101',
-                              cluster.DriveID.parse('c62d8736c7280002'), 1)
-        self.assertEqual(block_id, str(bid))
+        _bid = cluster.BlockID('d1', 'g000630000000123', '0101',
+                               cluster.DriveID.parse('c62d8736c7280002'), 1)
+        self.assertEqual(block_id, str(_bid))
+
+        self.assertEqual(_bid, BlockID.parse(block_id))
+        self.assertEqual(_bid, BlockID.parse(_bid))
 
         bid = cluster.BlockID.parse(block_id)
 
@@ -25,16 +28,22 @@ class TestClusterBlock(unittest.TestCase):
         self.assertEqual('c62d8736c7280002', bid.drive_id.tostr())
         self.assertEqual(1, bid.bg_seq)
 
+        # test invalid input
+        block_id_invalid = 'd1g0006300000001230101c62d8736c728000200000'
+        self.assertRaises(cluster.BlockIDError,
+                          cluster.BlockID.parse, block_id_invalid)
+
+    def test_print(self):
+
+        block_id = 'd1g0006300000001230101c62d8736c72800020000000001'
+
+        bid = cluster.BlockID.parse(block_id)
+
         self.assertEqual(block_id, str(bid))
         self.assertEqual(block_id, '{0}'.format(bid))
         self.assertEqual(
             "_BlockID(type='d1', block_group_id=_BlockGroupID(block_size=63, seq=123), block_index=_BlockIndex(i=1, j=1), drive_id=_DriveID(server_id='c62d8736c728', mountpoint_index=2), bg_seq=1)",
             repr(bid))
-
-        # test invalid input
-        block_id_invalid = 'd1g0006300000001230101c62d8736c728000200000'
-        self.assertRaises(cluster.BlockIDError,
-                          cluster.BlockID.parse, block_id_invalid)
 
     def test_new(self):
 

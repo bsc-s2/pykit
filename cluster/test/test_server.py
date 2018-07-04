@@ -11,6 +11,7 @@ import psutil
 from pykit import cluster
 from pykit import proc
 from pykit import ututil
+from pykit.cluster import DriveID
 
 dd = ututil.dd
 
@@ -129,17 +130,19 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for sid, mp_idx in cases:
-            drive_id = str(cluster.DriveID(sid, mp_idx))
+            drive_id = str(DriveID(sid, mp_idx))
             self.assertEqual('%s0%03d' % (sid[:12], mp_idx % 1000),
                              drive_id)
 
-            self.assertEqual(sid, cluster.DriveID.parse(drive_id).server_id)
-            self.assertEqual(mp_idx, cluster.DriveID.parse(drive_id).mountpoint_index)
+            drvid = DriveID.parse(drive_id)
+            self.assertEqual(sid, drvid.server_id)
+            self.assertEqual(mp_idx, drvid.mountpoint_index)
+            self.assertEqual(drvid, DriveID.parse(drvid))
 
     def test_drive_id_server_id(self):
 
-        for drive_id in (cluster.DriveID('112233445566', 1),
-                         cluster.DriveID.parse('1122334455660001')):
+        for drive_id in (DriveID('112233445566', 1),
+                         DriveID.parse('1122334455660001')):
 
             dd(drive_id)
 

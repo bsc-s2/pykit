@@ -59,11 +59,12 @@ class DriveID(namedtuple('_DriveID', 'server_id mountpoint_index'), IDBase):
 
     @classmethod
     def parse(cls, drive_id):
-        if not DriveID.validate(drive_id):
-            raise DriveIDError('invalid drive id: {d}'.format(d=drive_id))
+        drvid = str(drive_id)
+        if not DriveID.validate(drvid):
+            raise DriveIDError('invalid drive id: {d}'.format(d=drvid))
 
-        return DriveID(ServerID(drive_id[:12]),
-                       int(drive_id[13:]))
+        return DriveID(ServerID(drvid[:12]),
+                       int(drvid[13:]))
 
 
 def _make_mountpoints_info():

@@ -5,6 +5,7 @@ import unittest
 
 from pykit import cluster
 from pykit import ututil
+from pykit.cluster import BlockIndex
 
 dd = ututil.dd
 
@@ -32,6 +33,7 @@ class TestBlockIndex(unittest.TestCase):
                 ('0001', (0, 1)),
                 ('0101', (1, 1)),
                 ('1234', (12, 34)),
+                (BlockIndex(12, 34), (12, 34)),
         )
 
         for inp, expected in cases:

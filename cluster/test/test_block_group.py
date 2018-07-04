@@ -59,22 +59,21 @@ _empty_bkg = {
 }
 
 
-class TestClusterBlockGroup(unittest.TestCase):
-    def test_parse_and_print(self):
+class TestBlockGroupID(unittest.TestCase):
+
+    def test_parse(self):
         block_group_id = 'g000640000000123'
 
         bgid = cluster.BlockGroupID(64, 123)
         self.assertEqual(block_group_id, str(bgid))
 
         bgid = cluster.BlockGroupID.parse(block_group_id)
+        self.assertEqual((64, 123), bgid)
 
-        self.assertEqual(64, bgid.block_size)
-        self.assertEqual(123, bgid.seq)
+        bgid = cluster.BlockGroupID.parse(bgid)
+        self.assertEqual((64, 123), bgid)
 
-        self.assertEqual(block_group_id, str(bgid))
-        self.assertEqual(block_group_id, '{0}'.format(bgid))
-        self.assertEqual(
-            "_BlockGroupID(block_size=64, seq=123)", repr(bgid))
+    def test_invalid(self):
 
         # test invalid input
         block_group_id_invalid = 'g00064000000012345'
@@ -86,6 +85,12 @@ class TestClusterBlockGroup(unittest.TestCase):
         bgid = cluster.BlockGroupID.parse(block_group_id)
         self.assertEqual(block_group_id, str(bgid))
         self.assertEqual(block_group_id, bgid.tostr())
+        self.assertEqual(block_group_id, '{0}'.format(bgid))
+        self.assertEqual(
+            "_BlockGroupID(block_size=64, seq=123)", repr(bgid))
+
+
+class TestClusterBlockGroup(unittest.TestCase):
 
     def test_make_and_new(self):
         block_group = cluster.BlockGroup.make('g000640000000123', ['a', 'b', 'c'], _ec_config)
