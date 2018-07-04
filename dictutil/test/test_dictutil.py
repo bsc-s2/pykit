@@ -1522,10 +1522,24 @@ class ForTestDict(dictutil.FixedKeysDict):
     ident_keys = ('key_2', 'key_1')
 
 
+class StrictFixedKeysDictFoo(dictutil.FixedKeysDict):
+    keys_default = {
+        # Does not accept default value.
+        # Must specified when init it.
+        'foo': lambda a: a
+    }
+
+
 class TestFixedKeysDict(unittest.TestCase):
 
     def setUp(self):
         pass
+
+    def test_strict(self):
+        self.assertRaises(TypeError, StrictFixedKeysDictFoo, {})
+
+        # ok
+        foo = StrictFixedKeysDictFoo(foo=1)
 
     def test_fixed_keys_dict(self):
 

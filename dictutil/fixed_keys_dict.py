@@ -11,14 +11,16 @@ class FixedKeysDict(dict):
 
     def __init__(self, *args, **argkv):
 
-        for k in self.keys_default:
-            self[k] = self.keys_default[k]()
-
         super(FixedKeysDict, self).__init__(*args, **argkv)
 
-        # check self.keys() are valid or not
+        # Convert present keys
         for k in self:
-            self[k] = self[k]
+            self[k] = self.keys_default[k](self[k])
+
+        # Add default value to absent keys
+        for k in self.keys_default:
+            if k not in self:
+                self[k] = self.keys_default[k]()
 
     def __setitem__(self, key, value):
 
