@@ -45,17 +45,23 @@ There is a `README.md` for each module.
 | :--                            | :--                                                                                   |
 | [argchecker](argchecker)       | Validates arguments against the schema                                                |
 | [aws](aws)                     | AWS error codes and so on                                                             |
+| [awssign](awssign)             | Sign a request by using aws signature version 4                                       |
 | [cacheable](cacheable)         | Cache data which access frequently                                                    |
 | [cachepool](cachepool)         | Reusable object cache in process                                                      |
+| [cgrouparch](cgrouparch)       | Build cgroup directory tree, add set cgroup pid                                       |
 | [cluster](cluster)             | Some helper function for the server in a cluster                                      |
+| [csvutil](csvutil)             | Utility functions for CSV file loading and conversion                                 |
 | [daemonize](daemonize)         | Start, stop or restart a daemon process                                               |
 | [dictutil](dictutil)           | Dictionary helper utility                                                             |
+| [ectypes](ectypes)             | Utility functions for the server                                                      |
 | [etcd](etcd)                   | etcd client                                                                           |
 | [fsutil](fsutil)               | File-system Utilities                                                                 |
 | [heap](heap)                   | Min heap                                                                              |
 | [http](http)                   | HTTP/1.1 client                                                                       |
 | [humannum](humannum)           | Convert number to human readable number string                                        |
 | [jobq](jobq)                   | Process serial of input elements with several functions concurrently and sequentially |
+| [jobscheduler](jobscheduler)   | Run jobs at certain time                                                              |
+| [logcollector](logcollector)   | Collect logs of interest locally                                                      |
 | [logutil](logutil)             | Utility functions to create logger or make log message                                |
 | [mime](mime)                   | Utility functions to handle mime type                                                 |
 | [modutil](modutil)             | Submodule Utilities                                                                   |
@@ -75,6 +81,7 @@ There is a `README.md` for each module.
 | [utfjson](utfjson)             | Force `json.dump` and `json.load` in `utf-8` encoding                                 |
 | [utfyaml](utfyaml)             | Force `yaml.dump` and `yaml.load` in `utf-8` encoding                                 |
 | [wsjobd](wsjobd)               | Job daemon based on websocket protocol                                                |
+| [zktx](zktx)                   | Transaction implementation on Zookeeper                                               |
 | [zkutil](zkutil)               | Utility functions for zookeeper                                                       |
 
 
