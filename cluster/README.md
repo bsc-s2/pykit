@@ -25,6 +25,8 @@
   - [cluster.get_serverrec_str](#clusterget_serverrec_str)
   - [cluster.validate_idc](#clustervalidate_idc)
   - [cluster.idc_distance](#clusteridc_distance)
+  - [cluster.json_dump](#clusterjson_dump)
+  - [cluster.json_load](#clusterjson_load)
 - [Classes](#classes-1)
   - [cluster.BlockID](#clusterblockid)
     - [block id](#block-id)
@@ -395,6 +397,24 @@ Estimate distance between two idc.
 
 **return**:
 The distance of them.
+
+
+##  cluster.json_dump
+
+**syntax**:
+`cluster.json_dump(val, encoding='utf-8')`
+
+Implementation of `pykit.utfjson.dump`.
+Preferentially convert pykit.cluster.IDBase to string.
+
+
+##  cluster.json_load
+
+**syntax**:
+`cluster.json_load(json_string, encoding=None)`
+
+Implementation of `pykit.utfjson.load`.
+
 
 #   Classes
 

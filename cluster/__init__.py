@@ -1,3 +1,8 @@
+from .idbase import (
+    json_dump,
+    json_load,
+)
+
 from .block_id import (
     BlockID,
     BlockIDError,
@@ -52,6 +57,9 @@ from .region import (
 )
 
 __all__ = [
+    "json_dump",
+    "json_load",
+
     "BlockID",
     "BlockIDError",
 
