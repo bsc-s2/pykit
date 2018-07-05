@@ -21,7 +21,6 @@ _ec_config = {
 }
 
 _empty_group = BlockGroup({
-    'bg_seq': 0,
     'config': {
         'in_idc': [4, 2],
         'ec_policy': 'lrc',

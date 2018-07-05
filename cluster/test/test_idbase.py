@@ -3,13 +3,14 @@
 
 import unittest
 
-from pykit.cluster import json_dump
 from pykit.cluster import BlockGroupID
 from pykit.cluster import BlockID
 from pykit.cluster import BlockIndex
 from pykit.cluster import DriveID
+from pykit.cluster import json_dump
 
-id_str = lambda _id: '"{s}"'.format(s=str(_id))
+
+def id_str(_id): return '"{s}"'.format(s=str(_id))
 
 
 class TestIDBase(unittest.TestCase):
@@ -17,9 +18,9 @@ class TestIDBase(unittest.TestCase):
     def setUp(self):
 
         self.block_group_id = BlockGroupID.parse('g000640000000123')
-        self.block_id       = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000001')
-        self.block_index    = BlockIndex.parse('1234')
-        self.drive_id       = DriveID.parse('1122334455660001')
+        self.block_id = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000001')
+        self.block_index = BlockIndex.parse('1234')
+        self.drive_id = DriveID.parse('1122334455660001')
 
     def test_json_dump(self):
 
@@ -45,7 +46,7 @@ class TestIDBase(unittest.TestCase):
                 '{{{0}: {1}}}'.format(id_str(self.block_group_id), id_str(self.block_id))),
             ({self.block_group_id: (self.block_id, self.drive_id)},
                 '{{{0}: [{1}, {2}]}}'.format(id_str(self.block_group_id),
-                    id_str(self.block_id), id_str(self.drive_id))),
+                                             id_str(self.block_id), id_str(self.drive_id))),
         )
 
         for obj, excepted in cases:

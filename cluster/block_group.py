@@ -39,7 +39,6 @@ class BlockGroup(FixedKeysDict):
 
     keys_default = dict(
         block_group_id=BlockGroupID.parse,
-        bg_seq=int,
         config=ReplicationConfig,
         idcs=_idcs,
         blocks=dict,

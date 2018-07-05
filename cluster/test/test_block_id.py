@@ -26,7 +26,7 @@ class TestBlockID(unittest.TestCase):
         self.assertEqual((1, 1), bid.block_index)
         self.assertEqual('0101', str(bid.block_index))
         self.assertEqual('c62d8736c7280002', bid.drive_id.tostr())
-        self.assertEqual(1, bid.bg_seq)
+        self.assertEqual(1, bid.block_id_seq)
 
         # test invalid input
         block_id_invalid = 'd1g0006300000001230101c62d8736c728000200000'
@@ -42,7 +42,7 @@ class TestBlockID(unittest.TestCase):
         self.assertEqual(block_id, str(bid))
         self.assertEqual(block_id, '{0}'.format(bid))
         self.assertEqual(
-            "_BlockID(type='d1', block_group_id=_BlockGroupID(block_size=63, seq=123), block_index=_BlockIndex(i=1, j=1), drive_id=_DriveID(server_id='c62d8736c728', mountpoint_index=2), bg_seq=1)",
+            "_BlockID(type='d1', block_group_id=_BlockGroupID(block_size=63, seq=123), block_index=_BlockIndex(i=1, j=1), drive_id=_DriveID(server_id='c62d8736c728', mountpoint_index=2), block_id_seq=1)",
             repr(bid))
 
     def test_new(self):
