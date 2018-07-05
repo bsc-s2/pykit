@@ -6,8 +6,9 @@ import logging
 from kazoo.exceptions import BadVersionError
 
 from pykit import rangeset
-from pykit import utfjson
 from pykit import zkutil
+from pykit.cluster import json_dump
+from pykit.cluster import json_load
 
 from .status import STATUS
 from .storage import Storage
@@ -64,14 +65,14 @@ class ZKStorage(Storage):
         else:
             keylock.close()
 
-        return locked, utfjson.load(txid), ver
+        return locked, json_load(txid), ver
 
     def _make_key_lock(self, txid, key):
         keylock = zkutil.ZKLock(key,
                                 zkclient=self.zke,
                                 zkconf=self.zke._zkconf,
                                 ephemeral=False,
-                                identifier=utfjson.dump(txid))
+                                identifier=json_dump(txid))
 
         return keylock
 
