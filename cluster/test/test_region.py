@@ -16,38 +16,45 @@ class TestClusterRegion(unittest.TestCase):
     def test_init(self):
 
         region_cases = [
-            [{},
-                {'idc': None, 'range': [None, None], 'levels': []}],
-            [{'range': ['a', 'b'], 'idc': '.bei'},
-                {'idc': '.bei', 'range': ['a', 'b'], 'levels': []}],
-            [{'levels': [[['a', 'b', BlockDesc()]], [['c', 'd', BlockDesc(size=1)]]]},
-                {'idc': None, 'range': [None, None], 'levels': [[['a', 'b', BlockDesc()]], [['c', 'd', BlockDesc(size=1)]]]}],
-            [{'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc()], ['b', 'c', BlockDesc(size=2)]]]},
-                {'idc': None, 'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc()], ['b', 'c', BlockDesc(size=2)]]]}],
+            (
+                {},
+                {'idc': '', 'range': None, 'levels': []}
+            ),
+            (
+                {'range': ['a', 'b'], 'idc': '.bei'},
+                {'idc': '.bei', 'range': ['a', 'b'], 'levels': []}
+            ),
+            (
+                {'levels': [[['a', 'b', BlockDesc()]], [['c', 'd', BlockDesc(size=1)]]]},
+                {'idc': '', 'range': None, 'levels': [[['a', 'b', BlockDesc()]], [['c', 'd', BlockDesc(size=1)]]]}
+            ),
+            (
+                {'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc()], ['b', 'c', BlockDesc(size=2)]]]},
+                {'idc': '', 'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc()], ['b', 'c', BlockDesc(size=2)]]]}
+            ),
         ]
 
         for case, excepted in region_cases:
 
             region = cluster.Region(case)
-
-            case['idc'] = 'beijing'
-            case['test'] = {'a': 1}
-            if 'levels' in case:
-                case['levels'].append(['d', 'e', 5])
-
             self.assertEqual(excepted, region)
 
         region_cases_argkv = [
-            ([[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]],
-                {'idc': None, 'range': [None, None], 'levels': [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]]}),
-            (['a', 'z'],
-                {'idc': None, 'range': ['a', 'z'], 'levels': []}),
-            ([],
-                {'idc': None, 'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]], [['f', 'g', BlockDesc(size=5)]]]}),
+            (
+                [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]],
+                {'idc': '', 'range': None, 'levels': [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]]}
+            ),
+            (
+                ['a', 'z'],
+                {'idc': '', 'range': ['a', 'z'], 'levels': []}
+            ),
+            (
+                [],
+                {'idc': '', 'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]]}
+            ),
         ]
 
         region = cluster.Region(levels=region_cases_argkv[0][0])
-        region_cases_argkv[0][0].append([['f', 'g', BlockDesc(size=5)]])
         self.assertEqual(region_cases_argkv[0][1], region)
 
         region = cluster.Region(range=region_cases_argkv[1][0])
@@ -60,20 +67,53 @@ class TestClusterRegion(unittest.TestCase):
     def test_move_down(self):
 
         region_levels = [
-            [['aa', 'ee', BlockDesc(size=1)], ['hh', 'hz', BlockDesc(size=2)], [
-                'pp', 'zz', BlockDesc(size=3)], ['zz', None, BlockDesc(size=4)]],
-            [['cf', 'cz', BlockDesc(size=5)], ['mm', 'oo', BlockDesc(size=6)], ['oo', 'qq', BlockDesc(size=7)]],
-            [['aa', 'bb', BlockDesc(size=8)], ['cc', 'cd', BlockDesc(size=9)], ['ee', 'ff', BlockDesc(size=10)]],
-            [['aa', 'ab', BlockDesc(size=11)], ['az', 'bb', BlockDesc(size=12)], ['za', None, BlockDesc(size=13)]],
-            [['d', 'fz', BlockDesc(size=14)]],
+            [
+                ['aa', 'ee', BlockDesc(size=1)],
+                ['hh', 'hz', BlockDesc(size=2)],
+                ['pp', 'zz', BlockDesc(size=3)],
+                ['zz', None, BlockDesc(size=4)]
+            ],
+            [
+                ['cf', 'cz', BlockDesc(size=5)],
+                ['mm', 'oo', BlockDesc(size=6)],
+                ['oo', 'qq', BlockDesc(size=7)]
+            ],
+            [
+                ['aa', 'bb', BlockDesc(size=8)],
+                ['cc', 'cd', BlockDesc(size=9)],
+                ['ee', 'ff', BlockDesc(size=10)]
+            ],
+            [
+                ['aa', 'ab', BlockDesc(size=11)],
+                ['az', 'bb', BlockDesc(size=12)],
+                ['za', None, BlockDesc(size=13)]
+            ],
+            [
+                ['d', 'fz', BlockDesc(size=14)]
+            ],
         ]
 
         excepted_region_levels = [
-            [['aa', 'ee', BlockDesc(size=1)], ['ee', 'ff', BlockDesc(size=10)], ['hh', 'hz', BlockDesc(size=2)], [
-                'mm', 'oo', BlockDesc(size=6)], ['pp', 'zz', BlockDesc(size=3)], ['zz', None, BlockDesc(size=4)]],
-            [['aa', 'bb', BlockDesc(size=8)], ['cc', 'cd', BlockDesc(size=9)], ['cf', 'cz', BlockDesc(size=5)], [
-                'd', 'fz', BlockDesc(size=14)], ['oo', 'qq', BlockDesc(size=7)], ['za', None, BlockDesc(size=13)]],
-            [['aa', 'ab', BlockDesc(size=11)], ['az', 'bb', BlockDesc(size=12)]],
+            [
+                ['aa', 'ee', BlockDesc(size=1)],
+                ['ee', 'ff', BlockDesc(size=10)],
+                ['hh', 'hz', BlockDesc(size=2)],
+                ['mm', 'oo', BlockDesc(size=6)],
+                ['pp', 'zz', BlockDesc(size=3)],
+                ['zz', None, BlockDesc(size=4)]
+            ],
+            [
+                ['aa', 'bb', BlockDesc(size=8)],
+                ['cc', 'cd', BlockDesc(size=9)],
+                ['cf', 'cz', BlockDesc(size=5)],
+                ['d', 'fz', BlockDesc(size=14)],
+                ['oo', 'qq', BlockDesc(size=7)],
+                ['za', None, BlockDesc(size=13)]
+            ],
+            [
+                ['aa', 'ab', BlockDesc(size=11)],
+                ['az', 'bb', BlockDesc(size=12)]
+            ],
         ]
 
         excepted_moved_blocks = [
@@ -84,7 +124,7 @@ class TestClusterRegion(unittest.TestCase):
             (3, 2, ['aa', 'ab', BlockDesc(size=11)]),
             (3, 2, ['az', 'bb', BlockDesc(size=12)]),
             (3, 1, ['za', None, BlockDesc(size=13)]),
-            (4, 1, ['d', 'fz', BlockDesc(size=14)]),
+            (4, 1, ['d',  'fz', BlockDesc(size=14)]),
         ]
 
         region = cluster.Region(levels=region_levels)
@@ -107,22 +147,26 @@ class TestClusterRegion(unittest.TestCase):
     def test_find_merge(self):
 
         region_levels_cases = [
-            [
-                [
-                    [['aa', 'ee', {'size': 8}], ['ee', 'ff', {'size': 16}], [
-                        'pp', 'zz', {'size': 8}], ['zz', None, {'size': 4}]],
-                    [['aa', 'pz', {'size': 4}], ['qq', 'zz', {'size': 8}]]
-                ],
-                (1, ['qq', 'zz', BlockDesc(size=8)], [['pp', 'zz', BlockDesc(size=8)]])
+            [[[
+                ['aa', 'ee', {'size': 8}],
+                ['ee', 'ff', {'size': 16}],
+                ['pp', 'zz', {'size': 8}],
+                ['zz', None, {'size': 4}]
             ],
             [
-                [
-                    [['aa', 'ee', {'size': 8}], ['ee', 'ff', {
-                        'size': 8}], ['hh', 'hz', {'size': 8}]],
-                    [['mm', 'yy', {'size': 8}]]
-                ],
-                None
-            ]
+                ['aa', 'pz', {'size': 4}],
+                ['qq', 'zz', {'size': 8}]
+            ]],
+            (1, ['qq', 'zz', BlockDesc(size=8)], [['pp', 'zz', BlockDesc(size=8)]])],
+            [[[
+                ['aa', 'ee', {'size': 8}],
+                ['ee', 'ff', {'size': 8}],
+                ['hh', 'hz', {'size': 8}]
+            ],
+            [
+                ['mm', 'yy', {'size': 8}]
+            ]],
+            None]
         ]
 
         for levels, excepted in region_levels_cases:
@@ -141,10 +185,14 @@ class TestClusterRegion(unittest.TestCase):
         bid6 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000006')
 
         region_levels = [
-            [['aa', 'ee', {'block_id': bid1}],
-                ['hh', 'zz', {'block_id': bid2}]],
-            [['ea', 'ff', {'block_id': bid4}],
-                ['mm', 'yy', {'block_id': bid5}]],
+            [
+                ['aa', 'ee', {'block_id': bid1}],
+                ['hh', 'zz', {'block_id': bid2}]
+            ],
+            [
+                ['ea', 'ff', {'block_id': bid4}],
+                ['mm', 'yy', {'block_id': bid5}]
+            ],
         ]
 
         cases = (
@@ -152,7 +200,7 @@ class TestClusterRegion(unittest.TestCase):
                 (bid3, [bid4, bid5]),
                 (bid5, [bid5]),
                 (bid6, []),
-        )
+            )
 
         region = cluster.Region(levels=region_levels)
 
@@ -193,7 +241,7 @@ class TestClusterRegion(unittest.TestCase):
             (
                 {},
                 (['a', 'c'], BlockDesc(), None),
-                {'idc': None, 'range': [None, None], 'levels': [
+                {'idc': '', 'range': None, 'levels': [
                     [['a', 'c', BlockDesc()]],
                 ]},
                 None,
