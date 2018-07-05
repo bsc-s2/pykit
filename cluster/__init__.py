@@ -20,10 +20,12 @@ from .block_index import (
 )
 
 from .block_group import (
-    BlockGroup,
+    BlockExists,
     BlockNotFoundError,
-    BlockTypeNotSupported,
     BlockTypeNotSupportReplica,
+    BlockTypeNotSupported,
+
+    BlockGroup,
 )
 
 from .block_group_id import (
@@ -68,12 +70,13 @@ __all__ = [
     "BlockIndexError",
     "BlockIndex",
 
+    "BlockExists",
     "BlockGroup",
     "BlockGroupID",
     "BlockGroupIDError",
     "BlockNotFoundError",
-    "BlockTypeNotSupported",
     "BlockTypeNotSupportReplica",
+    "BlockTypeNotSupported",
 
     "ReplicationConfig",
     "RSConfig",

@@ -7,7 +7,6 @@ from pykit.dictutil import FixedKeysDict
 
 from .block_desc import BlockDesc
 from .block_group_id import BlockGroupID
-from .block_id import BlockID
 from .block_index import BlockIndex
 from .replication_config import ReplicationConfig
 
@@ -17,6 +16,10 @@ class BlockGroupBaseError(Exception):
 
 
 class BlockNotFoundError(BlockGroupBaseError):
+    pass
+
+
+class BlockExists(BlockGroupBaseError):
     pass
 
 
@@ -94,14 +97,17 @@ class BlockGroup(FixedKeysDict):
         if block is not None:
             del self['blocks'][str(block_index)]
 
-    def replace_block(self, new_block):
+    def add_block(self, new_block, replace=False):
 
         desc = BlockDesc(new_block)
-        bi = BlockID.parse(desc['block_id'])
+        bi = desc['block_id']
 
         bidx = str(bi.block_index)
 
         prev = self['blocks'].get(bidx)
+        if not replace and prev is not None:
+            raise BlockExists('there is already a block at {bi}'.format(bi=bi))
+
         self['blocks'][bidx] = desc
 
         if prev is None:

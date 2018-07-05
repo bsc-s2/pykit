@@ -7,6 +7,7 @@ import unittest
 from pykit import cluster
 from pykit import ututil
 from pykit.cluster import BlockDesc
+from pykit.cluster import BlockExists
 from pykit.cluster import BlockGroup
 from pykit.cluster import BlockNotFoundError
 
@@ -123,20 +124,9 @@ class TestClusterBlockGroup(unittest.TestCase):
         with self.assertRaises(cluster.BlockNotFoundError):
             g.get_block('9999', raise_error=True)
 
-        new_block = {
-            'block_id': cluster.BlockID('d0',
-                                        'g000640000000123',
-                                        '0000',
-                                        cluster.DriveID.parse('c62d8736c7280002'),
-                                        1),
-            'size': 1000,
-            'range': ['0a', '0b'],
-            'is_del': 0
-        }
-
-        g.replace_block(new_block)
-        block = g.get_block(new_block['block_id'].block_index)
-        self.assertDictEqual(new_block, block)
+        g.add_block(self.foo_block)
+        block = g.get_block(self.foo_block['block_id'].block_index)
+        self.assertDictEqual(self.foo_block, block)
 
         with self.assertRaises(cluster.BlockNotFoundError):
             g.get_block('0002', raise_error=True)
@@ -146,18 +136,8 @@ class TestClusterBlockGroup(unittest.TestCase):
 
     def test_mark_delete_block(self):
         g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
-        new_block = {
-            'block_id': cluster.BlockID('d0',
-                                        'g000640000000123',
-                                        '0000',
-                                        cluster.DriveID.parse('c62d8736c7280002'),
-                                        1).tostr(),
-            'size': 1000,
-            'range': ['0a', '0b'],
-            'is_del': 0
-        }
 
-        g.replace_block(new_block)
+        g.add_block(self.foo_block)
         g.mark_delete_block('0000')
         block = g.get_block('0000')
 
@@ -170,7 +150,7 @@ class TestClusterBlockGroup(unittest.TestCase):
         g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
         self.assertIsNone(g.get_block('0000'))
 
-        g.replace_block(self.foo_block)
+        g.add_block(self.foo_block)
         self.assertIsNotNone(g.get_block('0000'))
 
         g.delete_block('0000')
@@ -183,30 +163,22 @@ class TestClusterBlockGroup(unittest.TestCase):
 
         g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
 
-        prev = g.replace_block(self.foo_block)
+        prev = g.add_block(self.foo_block)
         self.assertIsNone(prev)
 
         block = g.get_block('0000')
         self.assertEqual(0, block['is_del'])
 
-        prev = g.replace_block(self.foo_block)
+        prev = g.add_block(self.foo_block, replace=True)
         self.assertEqual(self.foo_block, prev)
 
+        self.assertRaises(BlockExists, g.add_block, self.foo_block)
+        self.assertRaises(BlockExists, g.add_block, self.foo_block, replace=False)
+
     def test_get_free_block_index(self):
+
         g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
-
-        new_block = {
-            'block_id': cluster.BlockID('d0',
-                                        'g000640000000123',
-                                        '0000',
-                                        cluster.DriveID.parse('c62d8736c7280002'),
-                                        1),
-            'size': 1000,
-            'range': ['0a', '0b'],
-            'is_del': 0
-        }
-
-        g.replace_block(new_block)
+        g.add_block(self.foo_block)
 
         self.assertDictEqual({'a': ['0001', '0002', '0003'],
                               'b': ['0100', '0101', '0102', '0103']},
@@ -254,7 +226,7 @@ class TestClusterBlockGroup(unittest.TestCase):
             'range': ['0a', '0b'],
             'is_del': 0
         }
-        g.replace_block(d0)
+        g.add_block(d0)
         self.assertEqual('a', g.get_block_idc('0000'))
 
     def test_get_replica_index_not_include_me(self):

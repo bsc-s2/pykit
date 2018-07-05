@@ -45,7 +45,7 @@
     - [cluster.BlockGroup.get_free_block_indexes](#clusterblockgroupget_free_block_indexes)
     - [cluster.BlockGroup.mark_delete_block](#clusterblockgroupmark_delete_block)
     - [cluster.BlockGroup.delete_block](#clusterblockgroupdelete_block)
-    - [cluster.BlockGroup.replace_block](#clusterblockgroupreplace_block)
+    - [cluster.BlockGroup.add_block](#clusterblockgroupadd_block)
     - [cluster.BlockGroup.get_block_type](#clusterblockgroupget_block_type)
     - [cluster.BlockGroup.get_block_idc](#clusterblockgroupget_block_idc)
     - [cluster.BlockGroup.get_replica_indexes](#clusterblockgroupget_replica_indexes)
@@ -737,16 +737,22 @@ Nothing.
 Will raise `BlockNotFoundError` if target block not found.
 
 
-### cluster.BlockGroup.replace_block
+### cluster.BlockGroup.add_block
 
 **syntax**:
-`cluster.BlockGroup.replace_block(new_block)`
+`cluster.BlockGroup.add_block(new_block, replace=False)`
 
 -   `new_block`:
     is a `BlockDesc` or plain `dict` to replace.
 
+-   `replace`:
+    whether allowing to add a block at index where there is already a block.
+
+    If it is `False` and there is a block, it raises `BlockExists`.
+
 **return**:
 a `BlockDesc` instance of the replace block.
+It is `None` if there is no block at the index.
 
 ### cluster.BlockGroup.get_block_type
 
