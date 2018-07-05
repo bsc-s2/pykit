@@ -216,7 +216,7 @@ class TestClusterBlockGroup(unittest.TestCase):
         self.assertEqual('b', g.get_block_idc('0100'))
         self.assertEqual('c', g.get_block_idc('0200'))
 
-        d0 = {
+        d0 = BlockDesc({
             'block_id': cluster.BlockID('d0',
                                         'g000640000000123',
                                         '0000',
@@ -225,7 +225,7 @@ class TestClusterBlockGroup(unittest.TestCase):
             'size': 1000,
             'range': ['0a', '0b'],
             'is_del': 0
-        }
+        })
         g.add_block(d0)
         self.assertEqual('a', g.get_block_idc('0000'))
 
