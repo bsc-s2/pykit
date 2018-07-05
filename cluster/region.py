@@ -2,9 +2,9 @@
 # coding: utf-8
 
 import bisect
-import copy
 
 from pykit import rangeset
+from pykit.dictutil import FixedKeysDict
 
 from .block_desc import BlockDesc
 from .block_id import BlockID
@@ -18,28 +18,35 @@ class LevelOutOfBound(Exception):
     pass
 
 
-class Region(dict):
+def _range(region_range=None):
 
-    fields_default = {'idc': None,
-                      'range': [None, None],
-                      'levels': [], }
+    if region_range is not None:
+        region_range = rangeset.Range(*region_range)
 
-    def __init__(self, region=None, **argkv):
+    return region_range
 
-        self.update(copy.deepcopy(self.fields_default))
 
-        if region is not None:
-            self.update(copy.deepcopy(region))
+def _levels(levels=None):
 
-        self.update(copy.deepcopy(argkv))
+    if levels is None:
+        levels = []
 
-        self['range'] = rangeset.Range(*self['range'])
+    for level, blocks in enumerate(levels):
+        for b in blocks:
+            b[2] = BlockDesc(b[2])
 
-        for level, blocks in enumerate(self['levels']):
-            for b in blocks:
-                b[2] = BlockDesc(b[2])
+        levels[level] = rangeset.RangeDict(blocks)
 
-            self['levels'][level] = rangeset.RangeDict(blocks)
+    return levels
+
+
+class Region(FixedKeysDict):
+
+    keys_default = dict(
+        idc=str,
+        range=_range,
+        levels=_levels,
+    )
 
     def need_merge(self, source, targets):
 
@@ -147,9 +154,9 @@ class Region(dict):
 
         elif level < 0 or level > max_level + 1:
             raise LevelOutOfBound('level is invalid. except level >= 0 and level <= {0}, '
-                                  'got: {1}'.format(max_level+1, level))
+                                  'got: {1}'.format(max_level + 1, level))
 
-        if level == max_level+1:
+        if level == max_level + 1:
             self['levels'].append(rangeset.RangeDict())
 
         desc = BlockDesc(block)

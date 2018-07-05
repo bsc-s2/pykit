@@ -17,37 +17,30 @@ class TestClusterRegion(unittest.TestCase):
 
         region_cases = [
             [{},
-                {'idc': None, 'range': [None, None], 'levels': []}],
+                {'idc': '', 'range': None, 'levels': []}],
             [{'range': ['a', 'b'], 'idc': '.bei'},
                 {'idc': '.bei', 'range': ['a', 'b'], 'levels': []}],
             [{'levels': [[['a', 'b', BlockDesc()]], [['c', 'd', BlockDesc(size=1)]]]},
-                {'idc': None, 'range': [None, None], 'levels': [[['a', 'b', BlockDesc()]], [['c', 'd', BlockDesc(size=1)]]]}],
+                {'idc': '', 'range': None, 'levels': [[['a', 'b', BlockDesc()]], [['c', 'd', BlockDesc(size=1)]]]}],
             [{'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc()], ['b', 'c', BlockDesc(size=2)]]]},
-                {'idc': None, 'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc()], ['b', 'c', BlockDesc(size=2)]]]}],
+                {'idc': '', 'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc()], ['b', 'c', BlockDesc(size=2)]]]}],
         ]
 
         for case, excepted in region_cases:
 
             region = cluster.Region(case)
-
-            case['idc'] = 'beijing'
-            case['test'] = {'a': 1}
-            if 'levels' in case:
-                case['levels'].append(['d', 'e', 5])
-
             self.assertEqual(excepted, region)
 
         region_cases_argkv = [
             ([[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]],
-                {'idc': None, 'range': [None, None], 'levels': [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]]}),
+                {'idc': '', 'range': None, 'levels': [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]]}),
             (['a', 'z'],
-                {'idc': None, 'range': ['a', 'z'], 'levels': []}),
+                {'idc': '', 'range': ['a', 'z'], 'levels': []}),
             ([],
-                {'idc': None, 'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]], [['f', 'g', BlockDesc(size=5)]]]}),
+                {'idc': '', 'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]]}),
         ]
 
         region = cluster.Region(levels=region_cases_argkv[0][0])
-        region_cases_argkv[0][0].append([['f', 'g', BlockDesc(size=5)]])
         self.assertEqual(region_cases_argkv[0][1], region)
 
         region = cluster.Region(range=region_cases_argkv[1][0])
@@ -193,7 +186,7 @@ class TestClusterRegion(unittest.TestCase):
             (
                 {},
                 (['a', 'c'], BlockDesc(), None),
-                {'idc': None, 'range': [None, None], 'levels': [
+                {'idc': '', 'range': None, 'levels': [
                     [['a', 'c', BlockDesc()]],
                 ]},
                 None,
