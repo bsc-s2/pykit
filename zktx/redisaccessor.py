@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from pykit.cluster import json_dump
-from pykit.cluster import json_load
+from pykit.ectypes import json_dump
+from pykit.ectypes import json_load
 
 
 class RedisKeyValue(object):

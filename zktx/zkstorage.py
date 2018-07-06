@@ -7,8 +7,8 @@ from kazoo.exceptions import BadVersionError
 
 from pykit import rangeset
 from pykit import zkutil
-from pykit.cluster import json_dump
-from pykit.cluster import json_load
+from pykit.ectypes import json_dump
+from pykit.ectypes import json_load
 
 from .status import STATUS
 from .storage import Storage
