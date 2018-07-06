@@ -3,11 +3,11 @@
 
 import unittest
 
-from pykit.cluster import BlockGroupID
-from pykit.cluster import BlockID
-from pykit.cluster import BlockIndex
-from pykit.cluster import DriveID
-from pykit.cluster import json_dump
+from pykit.ectypes import BlockGroupID
+from pykit.ectypes import BlockID
+from pykit.ectypes import BlockIndex
+from pykit.ectypes import DriveID
+from pykit.ectypes import json_dump
 
 
 def id_str(_id): return '"{s}"'.format(s=str(_id))

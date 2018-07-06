@@ -3,10 +3,10 @@
 
 import unittest
 
-from pykit import cluster
+from pykit import ectypes
 from pykit import ututil
-from pykit.cluster import BlockDesc
-from pykit.cluster import BlockID
+from pykit.ectypes import BlockDesc
+from pykit.ectypes import BlockID
 
 dd = ututil.dd
 
@@ -36,7 +36,7 @@ class TestClusterRegion(unittest.TestCase):
 
         for case, excepted in region_cases:
 
-            region = cluster.Region(case)
+            region = ectypes.Region(case)
             self.assertEqual(excepted, region)
 
         region_cases_argkv = [
@@ -55,13 +55,13 @@ class TestClusterRegion(unittest.TestCase):
             ),
         ]
 
-        region = cluster.Region(levels=region_cases_argkv[0][0])
+        region = ectypes.Region(levels=region_cases_argkv[0][0])
         self.assertEqual(region_cases_argkv[0][1], region)
 
-        region = cluster.Region(range=region_cases_argkv[1][0])
+        region = ectypes.Region(range=region_cases_argkv[1][0])
         self.assertEqual(region_cases_argkv[1][1], region)
 
-        region = cluster.Region(
+        region = ectypes.Region(
             levels=region_cases_argkv[0][0], range=region_cases_argkv[1][0])
         self.assertEqual(region_cases_argkv[2][1], region)
 
@@ -128,7 +128,7 @@ class TestClusterRegion(unittest.TestCase):
             (4, 1, ['d',  'fz', BlockDesc(size=14)]),
         ]
 
-        region = cluster.Region(levels=region_levels)
+        region = ectypes.Region(levels=region_levels)
         moved_blocks = region.move_down()
 
         self.assertEqual(excepted_moved_blocks, moved_blocks)
@@ -139,7 +139,7 @@ class TestClusterRegion(unittest.TestCase):
             [['aa', 'yy', BlockDesc(size=8)]]
         ]
 
-        region = cluster.Region(levels=region_levels)
+        region = ectypes.Region(levels=region_levels)
         moved_blocks = region.move_down()
 
         self.assertEqual([], moved_blocks)
@@ -171,7 +171,7 @@ class TestClusterRegion(unittest.TestCase):
         ]
 
         for levels, excepted in region_levels_cases:
-            region = cluster.Region(levels=levels)
+            region = ectypes.Region(levels=levels)
             res = region.find_merge()
 
             self.assertEqual(excepted, res)
@@ -203,7 +203,7 @@ class TestClusterRegion(unittest.TestCase):
                 (bid6, []),
         )
 
-        region = cluster.Region(levels=region_levels)
+        region = ectypes.Region(levels=region_levels)
 
         for bid, excepted in cases:
             block_ids = region.list_block_ids(start_block_id=bid)
@@ -228,12 +228,12 @@ class TestClusterRegion(unittest.TestCase):
             [['ea', 'ff', BlockDesc({'block_id': bid3})], ['mm', 'yy', BlockDesc({'block_id': bid5})]],
         ]
 
-        region = cluster.Region(levels=region_levels)
+        region = ectypes.Region(levels=region_levels)
 
         region.replace_block_id(bid4, bid3)
         self.assertEqual(excepted_region_levels, region['levels'])
 
-        self.assertRaises(cluster.BlockNotInRegion,
+        self.assertRaises(ectypes.BlockNotInRegion,
                           region.replace_block_id, bid6, bid1)
 
     def test_add_block(self):
@@ -305,12 +305,12 @@ class TestClusterRegion(unittest.TestCase):
                     [['a', 'b', BlockDesc(size=1)]],
                     [['b', 'c', BlockDesc(size=2)]],
                 ]},
-                cluster.LevelOutOfBound,
+                ectypes.LevelOutOfBound,
             ),
         )
 
         for case, args, excepted, err in region_cases:
-            region = cluster.Region(case)
+            region = ectypes.Region(case)
 
             if err is not None:
                 self.assertRaises(err, region.add_block, *args)

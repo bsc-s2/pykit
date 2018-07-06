@@ -4,7 +4,7 @@
 import unittest
 
 from pykit import ututil
-from pykit.cluster import ReplicationConfig
+from pykit.ectypes import ReplicationConfig
 
 dd = ututil.dd
 

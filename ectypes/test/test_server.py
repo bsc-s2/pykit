@@ -8,10 +8,10 @@ import uuid
 
 import psutil
 
-from pykit import cluster
+from pykit import ectypes
 from pykit import proc
 from pykit import ututil
-from pykit.cluster import DriveID
+from pykit.ectypes import DriveID
 
 dd = ututil.dd
 
@@ -19,7 +19,7 @@ dd = ututil.dd
 class TestClusterServer(unittest.TestCase):
 
     def test_make_server_id(self):
-        server_id = str(cluster.ServerID.local_server_id())
+        server_id = str(ectypes.ServerID.local_server_id())
         self.assertEqual(12, len(server_id))
         self.assertRegexpMatches(server_id, "^[0-9a-f]{12}$")
         out = proc.shell_script('ifconfig')
@@ -43,7 +43,7 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in invalid_cases:
-            self.assertFalse(cluster.ServerID.validate(c))
+            self.assertFalse(ectypes.ServerID.validate(c))
 
         cases = (
             '112233aabbcc',
@@ -53,11 +53,11 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in cases:
-            self.assertTrue(cluster.ServerID.validate(c))
+            self.assertTrue(ectypes.ServerID.validate(c))
 
     def test_server_id_to_str(self):
-        sid = cluster.ServerID.local_server_id()
-        self.assertIsInstance(sid, cluster.ServerID)
+        sid = ectypes.ServerID.local_server_id()
+        self.assertIsInstance(sid, ectypes.ServerID)
         self.assertEqual('%012x' % uuid.getnode(), str(sid))
         self.assertEqual('%012x' % uuid.getnode(), sid)
         self.assertEqual('%012x' % uuid.getnode(), sid.tostr())
@@ -71,7 +71,7 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for idc, idc_type, roles, argkv in cases:
-            serverrec = cluster.make_serverrec(idc, idc_type, roles, '/s2', **argkv)
+            serverrec = ectypes.make_serverrec(idc, idc_type, roles, '/s2', **argkv)
 
             dd('serverrec:' + repr(serverrec))
 
@@ -100,7 +100,7 @@ class TestClusterServer(unittest.TestCase):
             for k, v in argkv.items():
                 self.assertEqual(v, serverrec[k])
 
-            serverrec_str = cluster.get_serverrec_str(serverrec)
+            serverrec_str = ectypes.get_serverrec_str(serverrec)
             dd('serverrec_str:' + repr(serverrec_str))
 
             exp_str = ('server_id: {sid}; idc: {idc}; idc_type: {idct}; roles: {r};'
@@ -166,7 +166,7 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in invalid_cases:
-            self.assertFalse(cluster.DriveID.validate(c))
+            self.assertFalse(ectypes.DriveID.validate(c))
 
         cases = (
             'aabbccddeeff0001',
@@ -177,7 +177,7 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in cases:
-            self.assertTrue(cluster.DriveID.validate(c))
+            self.assertTrue(ectypes.DriveID.validate(c))
 
     def test_validate_idc(self):
         invalid_cases = (
@@ -193,7 +193,7 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in invalid_cases:
-            self.assertFalse(cluster.validate_idc(c))
+            self.assertFalse(ectypes.validate_idc(c))
 
         cases = (
             '',
@@ -210,7 +210,7 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in cases:
-            self.assertTrue(cluster.validate_idc(c))
+            self.assertTrue(ectypes.validate_idc(c))
 
     def test_idc_distance(self):
         cases = (
@@ -227,4 +227,4 @@ class TestClusterServer(unittest.TestCase):
 
         for n1, n2, dis in cases:
             self.assertEqual(dis,
-                             cluster.idc_distance(n1, n2))
+                             ectypes.idc_distance(n1, n2))

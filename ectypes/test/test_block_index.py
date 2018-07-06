@@ -3,9 +3,9 @@
 
 import unittest
 
-from pykit import cluster
+from pykit import ectypes
 from pykit import ututil
-from pykit.cluster import BlockIndex
+from pykit.ectypes import BlockIndex
 
 dd = ututil.dd
 
@@ -24,7 +24,7 @@ class TestBlockIndex(unittest.TestCase):
         )
 
         for bad in cases:
-            self.assertRaises(cluster.BlockIndexError, cluster.BlockIndex.parse, bad)
+            self.assertRaises(ectypes.BlockIndexError, ectypes.BlockIndex.parse, bad)
 
     def test_parse(self):
 
@@ -40,7 +40,7 @@ class TestBlockIndex(unittest.TestCase):
             dd(inp)
             dd(expected)
 
-            rst = cluster.BlockIndex.parse(inp)
+            rst = ectypes.BlockIndex.parse(inp)
             self.assertEqual(expected, rst)
 
     def test_new_invalid(self):
@@ -54,4 +54,4 @@ class TestBlockIndex(unittest.TestCase):
 
         for i, j in cases:
             dd(i, j)
-            self.assertRaises(cluster.BlockIndexError, cluster.BlockIndex, i, j)
+            self.assertRaises(ectypes.BlockIndexError, ectypes.BlockIndex, i, j)

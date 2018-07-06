@@ -7,54 +7,54 @@
 - [Synopsis](#synopsis)
 - [Description](#description)
 - [Exceptions](#exceptions)
-  - [cluster.DriveIDError](#clusterdriveiderror)
-  - [cluster.BlockNotFoundError](#clusterblocknotfounderror)
-  - [cluster.BlockTypeNotSupported](#clusterblocktypenotsupported)
-  - [cluster.BlockTypeNotSupportReplica](#clusterblocktypenotsupportreplica)
-  - [cluster.BlockIndexError](#clusterblockindexerror)
+  - [ectypes.DriveIDError](#clusterdriveiderror)
+  - [ectypes.BlockNotFoundError](#clusterblocknotfounderror)
+  - [ectypes.BlockTypeNotSupported](#clusterblocktypenotsupported)
+  - [ectypes.BlockTypeNotSupportReplica](#clusterblocktypenotsupportreplica)
+  - [ectypes.BlockIndexError](#clusterblockindexerror)
 - [Classes](#classes)
-  - [cluster.ReplicationConfig](#clusterreplicationconfig)
-  - [cluster.ServerID](#clusterserverid)
-    - [cluster.ServerID.validate](#clusterserveridvalidate)
-  - [cluster.DriveID](#clusterdriveid)
-    - [cluster.DriveID.validate](#clusterdriveidvalidate)
-    - [cluster.DriveID.parse](#clusterdriveidparse)
-    - [cluster.DriveID.tostr](#clusterdriveidtostr)
+  - [ectypes.ReplicationConfig](#clusterreplicationconfig)
+  - [ectypes.ServerID](#clusterserverid)
+    - [ectypes.ServerID.validate](#clusterserveridvalidate)
+  - [ectypes.DriveID](#clusterdriveid)
+    - [ectypes.DriveID.validate](#clusterdriveidvalidate)
+    - [ectypes.DriveID.parse](#clusterdriveidparse)
+    - [ectypes.DriveID.tostr](#clusterdriveidtostr)
 - [Methods](#methods)
-  - [cluster.make_serverrec](#clustermake_serverrec)
-  - [cluster.get_serverrec_str](#clusterget_serverrec_str)
-  - [cluster.validate_idc](#clustervalidate_idc)
-  - [cluster.idc_distance](#clusteridc_distance)
-  - [cluster.json_dump](#clusterjson_dump)
-  - [cluster.json_load](#clusterjson_load)
+  - [ectypes.make_serverrec](#clustermake_serverrec)
+  - [ectypes.get_serverrec_str](#clusterget_serverrec_str)
+  - [ectypes.validate_idc](#clustervalidate_idc)
+  - [ectypes.idc_distance](#clusteridc_distance)
+  - [ectypes.json_dump](#clusterjson_dump)
+  - [ectypes.json_load](#clusterjson_load)
 - [Classes](#classes-1)
-  - [cluster.BlockID](#clusterblockid)
+  - [ectypes.BlockID](#clusterblockid)
     - [block id](#block-id)
-    - [cluster.BlockID.parse](#clusterblockidparse)
-    - [cluster.BlockID.`__str__`](#clusterblockid__str__)
-  - [cluster.BlockID.tostr](#clusterblockidtostr)
-  - [cluster.BlockDesc](#clusterblockdesc)
-  - [cluster.BlockGroupID](#clusterblockgroupid)
+    - [ectypes.BlockID.parse](#clusterblockidparse)
+    - [ectypes.BlockID.`__str__`](#clusterblockid__str__)
+  - [ectypes.BlockID.tostr](#clusterblockidtostr)
+  - [ectypes.BlockDesc](#clusterblockdesc)
+  - [ectypes.BlockGroupID](#clusterblockgroupid)
     - [block group id](#block-group-id)
-    - [cluster.BlockGroupID.parse](#clusterblockgroupidparse)
-    - [cluster.BlockGroupID.`__str__`](#clusterblockgroupid__str__)
-  - [cluster.BlockGroupID.tostr](#clusterblockgroupidtostr)
-  - [cluster.BlockGroup](#clusterblockgroup)
+    - [ectypes.BlockGroupID.parse](#clusterblockgroupidparse)
+    - [ectypes.BlockGroupID.`__str__`](#clusterblockgroupid__str__)
+  - [ectypes.BlockGroupID.tostr](#clusterblockgroupidtostr)
+  - [ectypes.BlockGroup](#clusterblockgroup)
     - [block index](#block-index)
-    - [cluster.BlockGroup.get_block](#clusterblockgroupget_block)
-    - [cluster.BlockGroup.get_free_block_indexes](#clusterblockgroupget_free_block_indexes)
-    - [cluster.BlockGroup.mark_delete_block](#clusterblockgroupmark_delete_block)
-    - [cluster.BlockGroup.delete_block](#clusterblockgroupdelete_block)
-    - [cluster.BlockGroup.add_block](#clusterblockgroupadd_block)
-    - [cluster.BlockGroup.get_block_type](#clusterblockgroupget_block_type)
-    - [cluster.BlockGroup.get_block_idc](#clusterblockgroupget_block_idc)
-    - [cluster.BlockGroup.get_replica_indexes](#clusterblockgroupget_replica_indexes)
-  - [cluster.Region](#clusterregion)
-    - [cluster.Region.add_block](#clusterregionadd_block)
-    - [cluster.Region.move_down](#clusterregionmove_down)
-    - [cluster.Region.find_merge](#clusterregionfind_merge)
-    - [cluster.Region.list_block_ids](#clusterregionlist_block_ids)
-    - [cluster.Region.replace_block_id](#clusterregionreplace_block_id)
+    - [ectypes.BlockGroup.get_block](#clusterblockgroupget_block)
+    - [ectypes.BlockGroup.get_free_block_indexes](#clusterblockgroupget_free_block_indexes)
+    - [ectypes.BlockGroup.mark_delete_block](#clusterblockgroupmark_delete_block)
+    - [ectypes.BlockGroup.delete_block](#clusterblockgroupdelete_block)
+    - [ectypes.BlockGroup.add_block](#clusterblockgroupadd_block)
+    - [ectypes.BlockGroup.get_block_type](#clusterblockgroupget_block_type)
+    - [ectypes.BlockGroup.get_block_idc](#clusterblockgroupget_block_idc)
+    - [ectypes.BlockGroup.get_replica_indexes](#clusterblockgroupget_replica_indexes)
+  - [ectypes.Region](#clusterregion)
+    - [ectypes.Region.add_block](#clusterregionadd_block)
+    - [ectypes.Region.move_down](#clusterregionmove_down)
+    - [ectypes.Region.find_merge](#clusterregionfind_merge)
+    - [ectypes.Region.list_block_ids](#clusterregionlist_block_ids)
+    - [ectypes.Region.replace_block_id](#clusterregionreplace_block_id)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -62,7 +62,7 @@
 
 #   Name
 
-cluster
+ectypes
 
 #   Status
 
@@ -71,15 +71,15 @@ The library is considered production ready.
 #   Synopsis
 
 ```python
-from pykit import cluster
+from pykit import ectypes
 
-server_id = cluster.ServerID.local_server_id()
+server_id = ectypes.ServerID.local_server_id()
 # 12 chars from primary MAC addr: "c62d8736c728"
 
-is_valid = cluster.ServerID.validate(server_id)
+is_valid = ectypes.ServerID.validate(server_id)
 # return True or False
 
-serverrec = cluster.make_serverrec('.l1', 'center', {'role1': 1}, "/s2")
+serverrec = ectypes.make_serverrec('.l1', 'center', {'role1': 1}, "/s2")
 # out:
 #{
 #   'cpu': {
@@ -109,42 +109,42 @@ serverrec = cluster.make_serverrec('.l1', 'center', {'role1': 1}, "/s2")
 
 #   Description
 
-Some helper function for the server in a cluster.
+Some helper function for the server in a ectypes.
 
 #   Exceptions
 
-##  cluster.DriveIDError
+##  ectypes.DriveIDError
 
 **syntax**:
-`cluster.DriveIDError`
+`ectypes.DriveIDError`
 
 Raise if the drive id is invalid while parse it.
 
-##  cluster.BlockNotFoundError
+##  ectypes.BlockNotFoundError
 
 **syntax**:
-`cluster.BlockNotFoundError`
+`ectypes.BlockNotFoundError`
 
 Raise if a block not found in a block group.
 
-##  cluster.BlockTypeNotSupported
+##  ectypes.BlockTypeNotSupported
 
 **syntax**:
-`cluster.BlockTypeNotSupported`
+`ectypes.BlockTypeNotSupported`
 
 Raise if block index do not have corresponding type.
 
-## cluster.BlockTypeNotSupportReplica
+## ectypes.BlockTypeNotSupportReplica
 
 **syntax**:
-`cluster.BlockTypeNotSupportReplica`
+`ectypes.BlockTypeNotSupportReplica`
 
 Raise if block type do not support replica.
 
-## cluster.BlockIndexError
+## ectypes.BlockIndexError
 
 **syntax**:
-`cluster.BlockIndexError`
+`ectypes.BlockIndexError`
 
 Raise if block index parse or make error.
 
@@ -152,10 +152,10 @@ Raise if block index parse or make error.
 #   Classes
 
 
-##  cluster.ReplicationConfig
+##  ectypes.ReplicationConfig
 
 **syntax**:
-`cluster.ReplicationConfig()`
+`ectypes.ReplicationConfig()`
 
 `ReplicationConfig` is a subclass of `FixedKeysDict` thus also a subclass of `dict`.
 It provides the same construction function prototype as `dict`.
@@ -182,25 +182,25 @@ print ReplicationConfig(in_idc=[6, 2], cross_idc=[3, 1]) # {"in_idc":[6, 2], "cr
 
 
 
-##  cluster.ServerID
+##  ectypes.ServerID
 
 **syntax**:
-`cluster.ServerID(str)`
+`ectypes.ServerID(str)`
 
 Make a server id, format: 12 chars from primary MAC addr(e.g.: "c62d8736c728").
 
 ```python
-from pykit import cluster
+from pykit import ectypes
 
-print cluster.ServerID.local_server_id()
+print ectypes.ServerID.local_server_id()
 
 # out: 00163e0630f7
 ```
 
-### cluster.ServerID.validate
+### ectypes.ServerID.validate
 
 **syntax**:
-`cluster.ServerID.validate(server_id)`
+`ectypes.ServerID.validate(server_id)`
 
 It is a classmethod for checking a server id.
 
@@ -212,10 +212,10 @@ It is a classmethod for checking a server id.
 **return**:
 `True` or `False`, means the `server_id` is valid or not.
 
-##  cluster.DriveID
+##  ectypes.DriveID
 
 **syntax**:
-`cluster.DriveID(server_id, mount_point_index)`
+`ectypes.DriveID(server_id, mount_point_index)`
 
 Make a drive id, format: 16 chars `<server_id>0<mount_point_index>`
 
@@ -228,16 +228,16 @@ Make a drive id, format: 16 chars `<server_id>0<mount_point_index>`
     It is a 3-digit mount path, `001` for `/drives/001`.
 
 ```python
-from pykit import cluster
+from pykit import ectypes
 
-print str(cluster.DriveID('aabbccddeeff', 10))
+print str(ectypes.DriveID('aabbccddeeff', 10))
 # out: aabbccddeeff0010
 ```
 
-### cluster.DriveID.validate
+### ectypes.DriveID.validate
 
 **syntax**:
-`cluster.DriveID.validate(drive_id)`
+`ectypes.DriveID.validate(drive_id)`
 
 It is a classmethod for checking a drive id.
 
@@ -249,10 +249,10 @@ It is a classmethod for checking a drive id.
 **return**:
 `True` or `False`, means the `drive_id` is valid or not.
 
-### cluster.DriveID.parse
+### ectypes.DriveID.parse
 
 **syntax**:
-`cluster.DriveID.parse(drive_id)`
+`ectypes.DriveID.parse(drive_id)`
 
 It is a classmethod, parse drive_id into a `namedtuple`
 that contains separated fields.
@@ -267,15 +267,15 @@ Raise a `DriveIDError` if the `drive_id` is invalid.
 **return**:
 A `namedtuple` contains `server_id` and `mount_point_index`.
 
-###  cluster.DriveID.tostr
+###  ectypes.DriveID.tostr
 
 **syntax**:
-`cluster.DriveID.tostr()`
+`ectypes.DriveID.tostr()`
 
 Convert this DriveID instance into a string:
 
 ```python
-print cluster.DriveID('aabbccddeeff', 10).tostr()
+print ectypes.DriveID('aabbccddeeff', 10).tostr()
 # out: aabbccddeeff0010
 ```
 
@@ -285,10 +285,10 @@ a string
 
 #   Methods
 
-##  cluster.make_serverrec
+##  ectypes.make_serverrec
 
 **syntax**:
-`cluster.make_serverrec(idc, idc_type, roles, allocated_drive_pre, **argkv)`
+`ectypes.make_serverrec(idc, idc_type, roles, allocated_drive_pre, **argkv)`
 
 Make a `dict` (a server record).
 
@@ -301,7 +301,7 @@ Make a `dict` (a server record).
 **arguments**:
 
 -   `idc`:
-    The name of a idc in the cluster. Format: `.l1-name.l2-name...`.
+    The name of a idc in the ectypes. Format: `.l1-name.l2-name...`.
 
 -   `idc_type`:
     Type of the idc.
@@ -345,10 +345,10 @@ A `dict`, like:
 }
 ```
 
-##  cluster.get_serverrec_str
+##  ectypes.get_serverrec_str
 
 **syntax**:
-`cluster.get_serverrec_str(serverrec)`
+`ectypes.get_serverrec_str(serverrec)`
 
 Collect some important info(`server_id`, `idc`, `idc_type`, `roles`,
 `mountpoints_count`, `allocated_drive_count`) of `serverrec` into a `str`.
@@ -356,7 +356,7 @@ Collect some important info(`server_id`, `idc`, `idc_type`, `roles`,
 **arguments**:
 
 -   `serverrec`:
-    The server record return from `cluster.make_serverrec`.
+    The server record return from `ectypes.make_serverrec`.
 
 **return**:
 A `str`, like:
@@ -365,25 +365,25 @@ A `str`, like:
 "server_id: 00aabbccddee; idc: .l1; idc_type: zz; roles: {'role1': 1}; mountpoints_count: 3; allocated_drive_count: 0"
 ```
 
-##  cluster.validate_idc
+##  ectypes.validate_idc
 
 **syntax**:
-`cluster.validate_idc(idc)`
+`ectypes.validate_idc(idc)`
 
 Check the name of a idc is valid or not.
 
 **arguments**:
 
 -   `idc`:
-    The name of a idc in the cluster. Format: `.l1-name.l2-name...`.
+    The name of a idc in the ectypes. Format: `.l1-name.l2-name...`.
 
 **return**:
 `True` or `False`, means the name is valid or not.
 
-##  cluster.idc_distance
+##  ectypes.idc_distance
 
 **syntax**:
-`cluster.idc_distance(idc_a, idc_b)`
+`ectypes.idc_distance(idc_a, idc_b)`
 
 Estimate distance between two idc.
 
@@ -399,26 +399,26 @@ Estimate distance between two idc.
 The distance of them.
 
 
-##  cluster.json_dump
+##  ectypes.json_dump
 
 **syntax**:
-`cluster.json_dump(val, encoding='utf-8')`
+`ectypes.json_dump(val, encoding='utf-8')`
 
 Implementation of `pykit.utfjson.dump`.
-Preferentially convert pykit.cluster.IDBase to string.
+Preferentially convert pykit.ectypes.IDBase to string.
 
 
-##  cluster.json_load
+##  ectypes.json_load
 
 **syntax**:
-`cluster.json_load(json_string, encoding=None)`
+`ectypes.json_load(json_string, encoding=None)`
 
 Implementation of `pykit.utfjson.load`.
 
 
 #   Classes
 
-##  cluster.BlockID
+##  ectypes.BlockID
 
 **syntax**:
 `BlockID(namedtuple('_BlockID', 'type block_group_id block_index drive_id block_id_seq'))`
@@ -502,10 +502,10 @@ space)
     is a block group wise monotonic incremental id.
     To ensure that any two blocks have different `block_id`.
 
-### cluster.BlockID.parse
+### ectypes.BlockID.parse
 
 **syntax**:
-`cluster.BlockID.parse(block_id)`
+`ectypes.BlockID.parse(block_id)`
 
 A class method. Parse `block_id` from string to `BlockID` instanse.
 If `block_id` length is wrong, `BlockIDError` raises.
@@ -516,12 +516,12 @@ If `block_id` length is wrong, `BlockIDError` raises.
     block_id in string
 
 **return**:
-A `cluster.BlockID` instance
+A `ectypes.BlockID` instance
 
-### cluster.BlockID.`__str__`
+### ectypes.BlockID.`__str__`
 
 **syntax**:
-`cluster.BlockID.__str__()`
+`ectypes.BlockID.__str__()`
 
 Rewrite `__str__`, convert `self` to `block_id` string.
 
@@ -532,7 +532,7 @@ A `block_id`.
 block_id = 'd0g0006300000001230101c62d8736c72800020000000001'
 
 # test parse()
-bid = cluster.BlockID.parse(block_id)
+bid = ectypes.BlockID.parse(block_id)
 print bid.type            # d
 print bid.block_group_id  # g000630000000123
 print bid.block_index     # 0101
@@ -543,18 +543,18 @@ print bid.block_id_seq    # 1
 print bid                 # d0g0006300000001230101c62d8736c72800020000000001
 ```
 
-##  cluster.BlockID.tostr
+##  ectypes.BlockID.tostr
 
 **syntax**:
-`cluster.BlockID.tostr()`
+`ectypes.BlockID.tostr()`
 
-Same as `str(cluster.BlockID(...))`
+Same as `str(ectypes.BlockID(...))`
 
 
-##  cluster.BlockDesc
+##  ectypes.BlockDesc
 
 **syntax**:
-`cluster.BlockDesc()`
+`ectypes.BlockDesc()`
 
 Initialize block use a dict.
 
@@ -565,7 +565,7 @@ Block keys include:
     `is_del`: 0 or 1. Default is 0.
 
 
-##  cluster.BlockGroupID
+##  ectypes.BlockGroupID
 
 **syntax**:
 `BlockGroupID(namedtuple('_BlockGroupID', 'block_size seq'))`
@@ -593,14 +593,14 @@ g<block_size_in_gb><seq>
 -   `seq`:
     zookeeper generates incremental sequence number. 10 digit, e.g.: `0000000001`.
 
-    A `seq` is unique in a cluster.
+    A `seq` is unique in a ectypes.
 
 Example: `g 00064 0000000123`(without space).
 
-### cluster.BlockGroupID.parse
+### ectypes.BlockGroupID.parse
 
 **syntax**:
-`cluster.BlockGroupID.parse(block_group_id)`
+`ectypes.BlockGroupID.parse(block_group_id)`
 
 A class method. Parse `block_group_id` from string to `BlockGroupID` instanse.
 If `block_group_id` length is wrong, `BlockGroupIDError` raises.
@@ -611,12 +611,12 @@ If `block_group_id` length is wrong, `BlockGroupIDError` raises.
     block_group_id in string
 
 **return**:
-A `cluster.BlockGroupID` instance
+A `ectypes.BlockGroupID` instance
 
-### cluster.BlockGroupID.`__str__`
+### ectypes.BlockGroupID.`__str__`
 
 **syntax**:
-`cluster.BlockGroupID.__str__()`
+`ectypes.BlockGroupID.__str__()`
 
 Rewrite `__str__`, convert `self` to `block_group_id` string.
 
@@ -627,7 +627,7 @@ A `block_group_id`.
 block_group_id = 'g000640000000123'
 
 # test parse()
-bgid = cluster.BlockGroupID.parse(block_group_id)
+bgid = ectypes.BlockGroupID.parse(block_group_id)
 print bgid.block_size  # 64
 print bgid.seq         # 123
 
@@ -635,19 +635,19 @@ print bgid.seq         # 123
 print bgid             # g000640000000123
 ```
 
-##  cluster.BlockGroupID.tostr
+##  ectypes.BlockGroupID.tostr
 
 **syntax**:
-`cluster.BlockGroupID.tostr()`
+`ectypes.BlockGroupID.tostr()`
 
-Same as `str(cluster.BlockGroupID(...))`
+Same as `str(ectypes.BlockGroupID(...))`
 
-## cluster.BlockGroup
+## ectypes.BlockGroup
 
 BlockGroup meta operations.
 
 **syntax**:
-`cluster.BlockGroup(FixedKeysDict)`
+`ectypes.BlockGroup(FixedKeysDict)`
 
 A `BlockGroup` is subclass of dict thus it shares the same construction API with
 `dict`.
@@ -676,10 +676,10 @@ E.g.: `block_index` of the 1st block in the first IDC is: `0000`.
 
 
 
-### cluster.BlockGroup.get_block
+### ectypes.BlockGroup.get_block
 
 **syntax**:
-`cluster.BlockGroup.get_block(block_index, raise_error=False)`
+`ectypes.BlockGroup.get_block(block_index, raise_error=False)`
 
 **arguments**:
 
@@ -693,10 +693,10 @@ E.g.: `block_index` of the 1st block in the first IDC is: `0000`.
 **return**:
 `(block_index, block)`
 
-### cluster.BlockGroup.get_free_block_indexes
+### ectypes.BlockGroup.get_free_block_indexes
 
 **syntax**:
-`cluster.BlockGroup.get_free_block_indexes(block_type=None)`
+`ectypes.BlockGroup.get_free_block_indexes(block_type=None)`
 
 **arguments**:
 
@@ -706,10 +706,10 @@ E.g.: `block_index` of the 1st block in the first IDC is: `0000`.
 **return**
 A dict that key is idc and value is a list of `block_index`.
 
-### cluster.BlockGroup.mark_delete_block
+### ectypes.BlockGroup.mark_delete_block
 
 **syntax**:
-`cluster.BlockGroup.mark_delete_block(block_index)`
+`ectypes.BlockGroup.mark_delete_block(block_index)`
 
 Mark a block to be `deleted` by setting its `is_del` field to `1`.
 
@@ -721,10 +721,10 @@ Nothing.
 Will raise `BlockNotFoundError` if target block not found.
 
 
-### cluster.BlockGroup.delete_block
+### ectypes.BlockGroup.delete_block
 
 **syntax**:
-`cluster.BlockGroup.delete_block(block_index)`
+`ectypes.BlockGroup.delete_block(block_index)`
 
 Delete a block if it is in this group.
 Do nothing if the specified block index not found.
@@ -737,10 +737,10 @@ Nothing.
 Will raise `BlockNotFoundError` if target block not found.
 
 
-### cluster.BlockGroup.add_block
+### ectypes.BlockGroup.add_block
 
 **syntax**:
-`cluster.BlockGroup.add_block(new_block, replace=False)`
+`ectypes.BlockGroup.add_block(new_block, replace=False)`
 
 -   `new_block`:
     is a `BlockDesc` or plain `dict` to replace.
@@ -754,10 +754,10 @@ Will raise `BlockNotFoundError` if target block not found.
 a `BlockDesc` instance of the replace block.
 It is `None` if there is no block at the index.
 
-### cluster.BlockGroup.get_block_type
+### ectypes.BlockGroup.get_block_type
 
 **syntax**:
-`cluster.BlockGroup.get_block_type(block_index)`
+`ectypes.BlockGroup.get_block_type(block_index)`
 
 -   `block_index`:
     a string or `BlockIndex`.
@@ -767,10 +767,10 @@ block type.
 Will raise `BlockTypeNotSupported` if block index do not have corresponding type.
 
 
-### cluster.BlockGroup.get_block_idc
+### ectypes.BlockGroup.get_block_idc
 
 **syntax**:
-`cluster.BlockGroup.get_block_idc(block_index=None)`
+`ectypes.BlockGroup.get_block_idc(block_index=None)`
 
 -   `block_index`:
     a string or `BlockIndex`.
@@ -779,10 +779,10 @@ Will raise `BlockTypeNotSupported` if block index do not have corresponding type
 The idc in string of the block.
 
 
-### cluster.BlockGroup.get_replica_indexes
+### ectypes.BlockGroup.get_replica_indexes
 
 **syntax**:
-`cluster.BlockGroup.get_replica_indexes(block_index, include_me=True)`
+`ectypes.BlockGroup.get_replica_indexes(block_index, include_me=True)`
 
 -   `block_index`:
     a string or `BlockIndex`.
@@ -795,17 +795,17 @@ List of data replica block index.
 Will raise `BlockTypeNotSupportReplica` if block type do not support replica.
 
 
-## cluster.Region
+## ectypes.Region
 
 **syntax**:
-`cluster.Region(dict)`
+`ectypes.Region(dict)`
 
 Region related operations.
 
-### cluster.Region.add_block
+### ectypes.Region.add_block
 
 **syntax**:
-`cluster.Region.add_block(active_range, block, level=None)`
+`ectypes.Region.add_block(active_range, block, level=None)`
 
 Add a block to a region level.
 
@@ -835,10 +835,10 @@ If `level` is specified but not in this region levels boundry(`0<=level<=max(lev
 `LevelOutOfBound` is raised.
 
 
-### cluster.Region.move_down
+### ectypes.Region.move_down
 
 **syntax**:
-`cluster.Region.move_down()`
+`ectypes.Region.move_down()`
 
 A move includes blocks from two different, adjacent levels.
 If block A overlaps with no lower level blocks, move it downward.
@@ -854,10 +854,10 @@ This list of 3-tuple records all movable blocks which should move from
 `source_level` to `target_level`.
 
 
-### cluster.Region.find_merge
+### ectypes.Region.find_merge
 
 **syntax**:
-`cluster.Region.find_merge()`
+`ectypes.Region.find_merge()`
 
 A merge includes blocks from two different, adjacent level.
 If block A overlaps lower level blocks set s = {X, Y...}. and size(A) >= size(s)/4, merge them.
@@ -880,10 +880,10 @@ Nothing
 If no blocks can merge, return None.
 
 
-### cluster.Region.list_block_ids
+### ectypes.Region.list_block_ids
 
 **syntax**:
-`cluster.Region.list_block_ids(start_block_id=None)`
+`ectypes.Region.list_block_ids(start_block_id=None)`
 
 list all block ids in this region alphabetical from `start_block_id`.
 
@@ -897,10 +897,10 @@ list all block ids in this region alphabetical from `start_block_id`.
 a block id list.
 
 
-### cluster.Region.replace_block_id
+### ectypes.Region.replace_block_id
 
 **syntax**:
-`cluster.Region.replace_block_id(block_id, new_block_id)`
+`ectypes.Region.replace_block_id(block_id, new_block_id)`
 
 replace block id from `block_id` to `new_block_id`.
 

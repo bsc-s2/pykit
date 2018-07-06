@@ -3,7 +3,7 @@
 
 import unittest
 
-from pykit import cluster
+from pykit import ectypes
 from pykit import rangeset
 
 
@@ -22,14 +22,14 @@ class TestClusterBlockDesc(unittest.TestCase):
                    'range': ['a', 'b'],
                    'size': 34,
                    'is_del': 0},
-                  {'block_id': cluster.BlockID.parse(block_id),
+                  {'block_id': ectypes.BlockID.parse(block_id),
                    'range': rangeset.Range('a', 'b'),
                    'size': 34,
                    'is_del': 0}),
 
-                 ({'block_id': cluster.BlockID.parse(block_id),
+                 ({'block_id': ectypes.BlockID.parse(block_id),
                    'range': rangeset.Range('b', 'bb')},
-                  {'block_id': cluster.BlockID.parse(block_id),
+                  {'block_id': ectypes.BlockID.parse(block_id),
                    'range': rangeset.Range('b', 'bb'),
                    'size': 0,
                    'is_del': 0, })
@@ -37,12 +37,12 @@ class TestClusterBlockDesc(unittest.TestCase):
 
         for b, expected in cases:
             if b is None:
-                blk = cluster.BlockDesc()
+                blk = ectypes.BlockDesc()
             else:
-                blk = cluster.BlockDesc(b)
+                blk = ectypes.BlockDesc(b)
 
             self.assertEqual(expected, blk)
 
-        self.assertRaises(ValueError, cluster.BlockDesc, is_del='a')
-        self.assertRaises(ValueError, cluster.BlockDesc, size='a')
-        self.assertRaises(KeyError, cluster.BlockDesc, a=3)
+        self.assertRaises(ValueError, ectypes.BlockDesc, is_del='a')
+        self.assertRaises(ValueError, ectypes.BlockDesc, size='a')
+        self.assertRaises(KeyError, ectypes.BlockDesc, a=3)
