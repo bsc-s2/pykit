@@ -860,7 +860,7 @@ a generotor yields tuple of (`txid`, `state`).
 ##  zktx.run_tx
 
 **syntax**:
-`zktx.run_tx(zk, func, timeout=None, args=(), kwargs=None)`
+`zktx.run_tx(zk, func, timeout=None, lock_timeout=None, args=(), kwargs=None)`
 
 Start a tx and run it.
 Tx operations are define by a callable: `func`.
@@ -873,6 +873,7 @@ and create a new tx and call `func` again,
 until tx commits or `timeout` exceeds.
 
 When using `run()`, `timeout` is the total time for all tx `run()` created.
+And `lock_timeout` is the time limit when get a lock in the transaction.
 
 **Synopsis**:
 
@@ -901,6 +902,11 @@ except (TXTimeout, ConnectionLoss) as e:
     specifies the total time for tx to run.
 
     If `timeout` exceeded, a `TXTimeout` error will be raised.
+
+-   `lock_timeout`:
+    specifies the time for every lock get.
+
+    If `lock_timeout` exceeded, a `TXTimeout` error will be raised.
 
 -   `args`:
     specifies additional positioned arguments.

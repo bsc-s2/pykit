@@ -301,6 +301,28 @@ class TestTX(TXBase):
         except TXTimeout as e:
             dd(repr(e))
 
+    def test_run_tx_lock_timeout(self):
+
+        def _tx0(tx):
+            tx.begin()
+            tx.lock_get('foo')
+            time.sleep(2)
+
+        def _tx1(tx):
+            tx.lock_get('foo')
+            time.sleep(0.2)
+            tx.commit()
+
+        th = threadutil.start_daemon(_tx0, args=(ZKTransaction(zkhost, txid=0),))
+
+        try:
+            zktx.run_tx(zkhost, _tx1, lock_timeout=0.4)
+            self.fail('TXTimeout expected')
+        except TXTimeout as e:
+            dd(repr(e))
+
+        th.join()
+
     def test_run_tx_conn_loss(self):
 
         def _tx(tx):

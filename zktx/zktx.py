@@ -535,10 +535,10 @@ class ZKTransaction(object):
                                        locked=','.join(sorted(self.got_keys.keys())))
 
 
-def run_tx(zk, func, timeout=None, args=(), kwargs=None):
+def run_tx(zk, func, timeout=None, lock_timeout=None, args=(), kwargs=None):
 
     if timeout is None:
-        timeout = 10
+        timeout = DEFAULT_TIMEOUT
 
     if kwargs is None:
         kwargs = {}
@@ -547,7 +547,7 @@ def run_tx(zk, func, timeout=None, args=(), kwargs=None):
 
     while True:
 
-        tx = ZKTransaction(zk, timeout=expire_at - time.time())
+        tx = ZKTransaction(zk, timeout=expire_at - time.time(), lock_timeout=lock_timeout)
 
         try:
             with tx:
