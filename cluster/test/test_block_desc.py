@@ -16,7 +16,7 @@ class TestClusterBlockDesc(unittest.TestCase):
                   {'block_id': None,
                    'size': 0,
                    'range': None,
-                   'is_del': 1}),
+                   'is_del': 0}),
 
                  ({'block_id': block_id,
                    'range': ['a', 'b'],
@@ -32,7 +32,7 @@ class TestClusterBlockDesc(unittest.TestCase):
                   {'block_id': cluster.BlockID.parse(block_id),
                    'range': rangeset.Range('b', 'bb'),
                    'size': 0,
-                   'is_del': 1, })
+                   'is_del': 0, })
                  )
 
         for b, expected in cases:

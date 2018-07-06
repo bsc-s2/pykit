@@ -23,7 +23,7 @@ def _range(block_range=None):
     return block_range
 
 
-def _is_del(is_del=1):
+def _is_del(is_del=0):
 
     if is_del not in (0, 1):
         raise ValueError(
