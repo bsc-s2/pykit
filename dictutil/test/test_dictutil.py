@@ -1322,25 +1322,99 @@ class TestCombine(unittest.TestCase):
              {'a': 3},
              operator.mul,
              None,
+             True,
              {'a': 6}),
 
             ({'a': 2},
              {'a': 3},
              operator.mul,
              {'a': True},
+             True,
              {'a': 2}),
+
+            ({'a': 2, 'b': {'c': 3}},
+             {'a': 4, 'b': {'d': 5}},
+             operator.add,
+             None,
+             True,
+             {'a': 6, 'b': {'c': 3, 'd': 5}}),
+
+            ({'a': 2},
+             {'a': 3, 'b': {'c': 4}},
+             operator.add,
+             None,
+             True,
+             {'a': 5, 'b': {'c': 4}}),
+
+            ({'a': 2},
+             {'a': 3, 'b': {'c': 4}},
+             operator.add,
+             None,
+             False,
+             {'a': 5}),
+
+            ({'a': 2},
+             {'b': {'c': {'d': 3}}},
+             operator.add,
+             None,
+             True,
+             {'a': 2, 'b': {'c': {'d': 3}}}),
         )
 
-        for a, b, op, exclude, expected in cases:
-            result = dictutil.combine(a, b, op, exclude=exclude)
+        for a, b, op, exclude, recursive, expected in cases:
+            result = dictutil.combine(a, b, op, exclude=exclude, recursive=recursive)
             self.assertIsNot(a, result)
             self.assertDictEqual(expected, result,
                                  repr([a, b, op, exclude, expected, result]))
 
-            result = dictutil.combineto(a, b, op, exclude=exclude)
+            result = dictutil.combineto(a, b, op, exclude=exclude, recursive=recursive)
             self.assertIs(a, result)
             self.assertDictEqual(expected, result,
                                  repr([a, b, op, exclude, expected, result]))
+
+    def test_deepcopy(self):
+
+        def add_value(dict_b):
+            for k, v in dict_b.items():
+                if isinstance(v, dict):
+                    add_value(v)
+                else:
+                    dict_b[k] = v + 1
+
+        cases = (
+
+            ({'a': 2},
+             {'a': 3, 'b': {'c': 0}},
+             operator.add,
+             {'a': 5, 'b': {'c': 0}}),
+
+            ({'a': 2},
+             {'a': 3, 'b': {'c': {'d': 0}}},
+             operator.add,
+             {'a': 5, 'b': {'c': {'d': 0}}}),
+
+            ({'a': 2, 'b': {'c': 0}},
+             {'a': 3, 'b': {'c': 0}},
+             operator.add,
+             {'a': 5, 'b': {'c': 0}},)
+
+
+        )
+
+        for a, b, op, expected in cases:
+            result = dictutil.combine(a, b, op)
+            self.assertDictEqual(result, expected)
+
+            add_value(a)
+            for k, v in a.items():
+                if isinstance(v, dict):
+                    self.assertNotEqual(a[k], result[k])
+            
+            add_value(b)
+            for k, v in b.items():
+                if isinstance(v, dict):
+                    self.assertNotEqual(b[k], result[k])
+
 
 
 class TestDictutil(unittest.TestCase):
