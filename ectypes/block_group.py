@@ -114,7 +114,7 @@ class BlockGroup(FixedKeysDict):
         else:
             return BlockDesc(prev)
 
-    def get_free_block_indexes(self, block_type=None):
+    def get_free_block_indexes(self, block_type=None, get_all=False):
 
         free_block_index = defaultdict(list)
 
@@ -127,11 +127,16 @@ class BlockGroup(FixedKeysDict):
                 bi = BlockIndex(i, j)
                 typ = self.get_block_type(bi)
 
+                idc = self.get_block_idc(bi)
+
+                if get_all:
+                    # set the key 'idc' with default if key not set
+                    free_block_index[idc]
+
                 if block_type is not None and typ != block_type:
                     continue
 
                 if self.get_block(bi) is None:
-                    idc = self.get_block_idc(bi)
                     free_block_index[idc].append(str(bi))
 
         return free_block_index

@@ -611,15 +611,20 @@ E.g.: `block_index` of the 1st block in the first IDC is: `0000`.
 ### ectypes.BlockGroup.get_free_block_indexes
 
 **syntax**:
-`ectypes.BlockGroup.get_free_block_indexes(block_type=None)`
+`ectypes.BlockGroup.get_free_block_indexes(block_type=None, get_all=False)`
 
 **arguments**:
 
 -   `block_type`:
     Type of the block.
 
+-   `get_all`:
+    specifies if to set no free block idc as a key in the result `dict`.
+    A `bool`, by default it is `False`.
+
 **return**
 A dict that key is idc and value is a list of `block_index`.
+If `get_all` is `True`, value of no free block idc is `[]`.
 
 ### ectypes.BlockGroup.mark_delete_block
 

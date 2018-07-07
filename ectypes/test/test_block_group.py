@@ -202,6 +202,38 @@ class TestClusterBlockGroup(unittest.TestCase):
         self.assertDictEqual({'c': ['0204', '0205'], },
                              g.get_free_block_indexes('xp'))
 
+        self.assertDictEqual(
+            {
+                'a': ['0001', '0002', '0003'],
+                'b': ['0100', '0101', '0102', '0103'],
+                'c': [],
+            },
+            g.get_free_block_indexes('d0', get_all=True))
+
+        self.assertDictEqual(
+            {
+                'a': ['0004', '0005'],
+                'b': ['0104', '0105'],
+                'c': [],
+            },
+            g.get_free_block_indexes('dp', get_all=True))
+
+        self.assertDictEqual(
+            {
+                'a': [],
+                'b': [],
+                'c': ['0200', '0201', '0202', '0203'],
+            },
+            g.get_free_block_indexes('x0', get_all=True))
+
+        self.assertDictEqual(
+            {
+                'a': [],
+                'b': [],
+                'c': ['0204', '0205'],
+            },
+            g.get_free_block_indexes('xp', get_all=True))
+
     def test_get_block_type(self):
         g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
 
