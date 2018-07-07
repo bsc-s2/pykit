@@ -24,7 +24,7 @@ class TestBlockIndex(unittest.TestCase):
         )
 
         for bad in cases:
-            self.assertRaises(ectypes.BlockIndexError, ectypes.BlockIndex.parse, bad)
+            self.assertRaises(ValueError, ectypes.BlockIndex.parse, bad)
 
     def test_parse(self):
 
@@ -41,7 +41,8 @@ class TestBlockIndex(unittest.TestCase):
             dd(expected)
 
             rst = ectypes.BlockIndex.parse(inp)
-            self.assertEqual(expected, rst)
+            self.assertEqual(expected, rst.as_tuple())
+            self.assertEqual(str(inp), str(rst))
 
     def test_new_invalid(self):
 
@@ -54,4 +55,4 @@ class TestBlockIndex(unittest.TestCase):
 
         for i, j in cases:
             dd(i, j)
-            self.assertRaises(ectypes.BlockIndexError, ectypes.BlockIndex, i, j)
+            self.assertRaises(ValueError, ectypes.BlockIndex, i, j)

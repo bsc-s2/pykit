@@ -5,7 +5,6 @@ import re
 import socket
 import uuid
 from collections import defaultdict
-from collections import namedtuple
 
 import psutil
 
@@ -22,49 +21,48 @@ class DriveIDError(Exception):
 
 class ServerID(str):
 
-    @classmethod
-    def validate(cls, server_id):
-        if not isinstance(server_id, basestring):
-            return False
+    def __new__(clz, s):
+        s = str(s)
+        if re.match("^[0-9a-f]{12}$", s) is None:
+            raise ValueError('ServerID must be 12 char hex, but: {s}'.format(s=s))
 
-        return re.match("^[0-9a-f]{12}$", server_id) is not None
+        return super(ServerID, clz).__new__(clz, s)
 
     @classmethod
     def local_server_id(self):
         return ServerID('%012x' % uuid.getnode())
 
-    def tostr(self):
-        return self
+
+class MountPointIndex(str):
+
+    def __new__(clz, s):
+
+        if isinstance(s, int):
+            s = '{s:0>3}'.format(s=s)
+
+        if len(s) != 3 or not (0 <= int(s) <= 999):
+            raise ValueError('invalid mount point index: {s}'.format(s=s))
+
+        return super(MountPointIndex, clz).__new__(clz, s)
 
 
-class DriveID(namedtuple('_DriveID', 'server_id mountpoint_index'), IDBase):
+def _padding_0(s):
+    if str(s) != '0':
+        raise ValueError('padding must be "0", but: {s}'.format(s=s))
+    return str(s)
+
+
+class DriveID(IDBase):
+
+    _attrs = (
+        ('server_id', 0, 12, ServerID),
+        ('_padding_0', 12, 13, _padding_0),
+        ('mountpoint_index', 13, 16, MountPointIndex),
+    )
+
+    _str_len = 16
 
     _tostr_fmt = '{server_id}0{mountpoint_index:0>3}'
-
-    @classmethod
-    def validate(cls, drive_id):
-        if not isinstance(drive_id, basestring):
-            return False
-
-        if len(drive_id) != 16:
-            return False
-
-        server_id = drive_id[:12]
-        padding = drive_id[12:13]
-        mp_idx = drive_id[13:]
-
-        return (ServerID.validate(server_id)
-                and padding == '0'
-                and re.match("^[0-9]{3}$", mp_idx) is not None)
-
-    @classmethod
-    def parse(cls, drive_id):
-        drvid = str(drive_id)
-        if not DriveID.validate(drvid):
-            raise DriveIDError('invalid drive id: {d}'.format(d=drvid))
-
-        return DriveID(ServerID(drvid[:12]),
-                       int(drvid[13:]))
 
 
 def _make_mountpoints_info():

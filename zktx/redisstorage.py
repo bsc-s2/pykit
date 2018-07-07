@@ -5,7 +5,7 @@ import logging
 
 from pykit import config
 from pykit import rangeset
-from pykit.cluster import json_load
+from pykit import utfjson
 
 from .redisaccessor import RedisKeyValue
 from .redisaccessor import RedisValue
@@ -67,7 +67,7 @@ class RedisStorage(Storage):
 
 
 def txidset_load(value):
-    val = json_load(value)
+    val = utfjson.load(value)
     if val is None:
         val = {}
 

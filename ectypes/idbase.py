@@ -1,47 +1,88 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from pykit import utfjson
+from collections import namedtuple
 
 
-class IDBase(object):
-
-    _tostr_fmt = '{item_1}-{item_2:0>3}'
-
-    def __str__(self):
-        return self._tostr_fmt.format(**{k: str(v) for k, v in self._asdict().items()})
-
-    def tostr(self):
-        return str(self)
+class IDBaseError(Exception):
+    pass
 
 
-def json_dump(obj, encoding='utf-8'):
-
-    obj = encode_idbase(obj)
-
-    return utfjson.dump(obj, encoding)
+class InvalidLength(IDBaseError):
+    pass
 
 
-def json_load(s, encoding=None):
-    return utfjson.load(s, encoding)
+class IDBase(str):
 
+    _attrs = (
+        # ('server_id', 0, 12, ServerID),
+        # ('_non_attr', 12, 13, validator),
+        # ('mountpoint_index', 13, 16, MountPointIndex),
+    )
 
-def encode_idbase(o):
+    _str_len = 0
 
-    if isinstance(o, IDBase):
-        return str(o)
+    _tostr_fmt = '{attr_1}-{attr_2:0>3}'
 
-    if isinstance(o, dict):
-        rst = {}
-        for k, v in o.items():
-            rst[encode_idbase(k)] = encode_idbase(v)
+    def __new__(clz, *args, **kwargs):
 
-    elif isinstance(o, (list, tuple)):
-        rst = []
-        for v in o:
-            rst.append(encode_idbase(v))
+        if len(args) + len(kwargs) == 1:
+            # New from a single serialized string
+            s = (list(args) + kwargs.values())[0]
+            s = str(s)
 
-    else:
-        rst = o
+            if len(s) != clz._str_len:
+                raise ValueError('Expected {clz} length'
+                                 ' to be {l} but {sl}: {s}'.format(
+                                     clz=clz.__name__,
+                                     l=clz._str_len,
+                                     sl=len(s),
+                                     s=s))
 
-    return rst
+            x = super(IDBase, clz).__new__(clz, s)
+
+            for k, start_idx, end_idx, attr_type in clz._attrs:
+
+                val = attr_type(s[start_idx:end_idx])
+
+                if k.startswith('_'):
+                    continue
+
+                super(IDBase, x).__setattr__(k, val)
+
+            return x
+        else:
+            # multi args: new by making an instance
+            return clz.make(*args, **kwargs)
+
+    @classmethod
+    def parse(clz, raw):
+        return clz(raw)
+
+    @classmethod
+    def make(clz, *args, **kwargs):
+
+        # Create a namedtuple to simplify arguments receiving
+
+        tuple_type = namedtuple('_' + clz.__name__,
+                                ' '.join([x[0]
+                                          for x in clz._attrs
+                                          if not x[0].startswith('_')
+                                          ]))
+
+        t = tuple_type(*args, **kwargs)
+        s = clz._tostr_fmt.format(**{k: str(v)
+                                     for k, v in t._asdict().items()})
+
+        return clz(s)
+
+    def __setattr__(self, n, v):
+        raise TypeError('{clz} does not allow to change attribute'.format(
+                clz=self.__class__.__name__))
+
+    def as_tuple(self):
+        lst = []
+        for k, _, _, _ in self._attrs:
+            lst.append(getattr(self, k))
+
+        return tuple(lst)

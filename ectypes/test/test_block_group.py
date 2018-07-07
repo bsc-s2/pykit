@@ -5,6 +5,7 @@ import copy
 import unittest
 
 from pykit import ectypes
+from pykit import utfjson
 from pykit import ututil
 from pykit.ectypes import BlockDesc
 from pykit.ectypes import BlockExists
@@ -42,26 +43,23 @@ class TestBlockGroupID(unittest.TestCase):
         self.assertEqual(block_group_id, str(bgid))
 
         bgid = ectypes.BlockGroupID.parse(block_group_id)
-        self.assertEqual((64, 123), bgid)
+        self.assertEqual((64, 123), bgid.as_tuple())
 
         bgid = ectypes.BlockGroupID.parse(bgid)
-        self.assertEqual((64, 123), bgid)
+        self.assertEqual((64, 123), bgid.as_tuple())
 
     def test_invalid(self):
 
         # test invalid input
         block_group_id_invalid = 'g00064000000012345'
-        self.assertRaises(ectypes.BlockGroupIDError,
-                          ectypes.BlockGroupID.parse, block_group_id_invalid)
+        self.assertRaises(ValueError, ectypes.BlockGroupID.parse, block_group_id_invalid)
 
     def test_tostr(self):
         block_group_id = 'g000640000000123'
         bgid = ectypes.BlockGroupID.parse(block_group_id)
         self.assertEqual(block_group_id, str(bgid))
-        self.assertEqual(block_group_id, bgid.tostr())
         self.assertEqual(block_group_id, '{0}'.format(bgid))
-        self.assertEqual(
-            "_BlockGroupID(block_size=64, seq=123)", repr(bgid))
+        self.assertEqual("'g000640000000123'", repr(bgid))
 
 
 class TestClusterBlockGroup(unittest.TestCase):
@@ -72,7 +70,7 @@ class TestClusterBlockGroup(unittest.TestCase):
                                         'g000640000000123',
                                         '0000',
                                         ectypes.DriveID.parse('c62d8736c7280002'),
-                                        1).tostr(),
+                                        1),
             'size': 1000,
             'range': ['0a', '0b'],
             'is_del': 0
@@ -87,6 +85,17 @@ class TestClusterBlockGroup(unittest.TestCase):
         self.assertRaises(TypeError, BlockGroup, block_group_id='g000640000000123', idcs=[])
         self.assertRaises(TypeError, BlockGroup, block_group_id='g000640000000123', config=_ec_config)
         self.assertRaises(TypeError, BlockGroup, idcs=[], config=_ec_config)
+
+    def test_json(self):
+
+        g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
+
+        rst = utfjson.dump(g)
+        expected = '{"config": {"in_idc": [4, 2], "ec_policy": "lrc", "cross_idc": [2, 1], "data_replica": 3}, "blocks": {}, "idcs": ["a", "b", "c"], "block_group_id": "g000640000000123"}'
+        self.assertEqual(expected, rst)
+
+        loaded = BlockGroup(utfjson.load(rst))
+        self.assertEqual(g, loaded)
 
     def test_new_deref_config(self):
 
@@ -130,7 +139,7 @@ class TestClusterBlockGroup(unittest.TestCase):
         with self.assertRaises(ectypes.BlockNotFoundError):
             g.get_block('0002', raise_error=True)
 
-        with self.assertRaises(ectypes.BlockIndexError):
+        with self.assertRaises(ValueError):
             g.get_block('d0g0006400000001230000c62d2')
 
     def test_mark_delete_block(self):

@@ -5,6 +5,7 @@ import unittest
 
 from pykit import ectypes
 from pykit import rangeset
+from pykit import utfjson
 
 
 class TestClusterBlockDesc(unittest.TestCase):
@@ -46,3 +47,22 @@ class TestClusterBlockDesc(unittest.TestCase):
         self.assertRaises(ValueError, ectypes.BlockDesc, is_del='a')
         self.assertRaises(ValueError, ectypes.BlockDesc, size='a')
         self.assertRaises(KeyError, ectypes.BlockDesc, a=3)
+
+    def test_json(self):
+        blk = ectypes.BlockDesc({
+            'block_id': ectypes.BlockID('d0',
+                                        'g000640000000123',
+                                        '0000',
+                                        ectypes.DriveID.parse('c62d8736c7280002'),
+                                        1),
+            'size': 1000,
+            'range': ['0a', '0b'],
+            'is_del': 0
+        })
+
+        rst = utfjson.dump(blk)
+        expected = '{"is_del": 0, "range": ["0a", "0b"], "block_id": "d0g0006400000001230000c62d8736c72800020000000001", "size": 1000}'
+
+        self.assertEqual(expected, rst)
+        loaded = ectypes.BlockDesc(utfjson.load(rst))
+        self.assertEqual(blk, loaded)

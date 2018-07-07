@@ -3,11 +3,11 @@
 
 import unittest
 
+from pykit import utfjson
 from pykit.ectypes import BlockGroupID
 from pykit.ectypes import BlockID
 from pykit.ectypes import BlockIndex
 from pykit.ectypes import DriveID
-from pykit.ectypes import json_dump
 
 
 def id_str(_id): return '"{s}"'.format(s=str(_id))
@@ -26,11 +26,11 @@ class TestIDBase(unittest.TestCase):
 
         cases = (
             (None, 'null'),
-            (self.block_group_id.tostr(), id_str(self.block_group_id)),
+            (self.block_group_id,   id_str(self.block_group_id)),
 
             (self.block_group_id,   id_str(self.block_group_id)),
             (self.block_id,         id_str(str(self.block_id))),
-            (self.block_index,      id_str(self.block_index.tostr())),
+            (self.block_index,      id_str(self.block_index)),
             (self.drive_id,         id_str(self.drive_id)),
 
             ([self.block_group_id, self.drive_id],
@@ -49,5 +49,19 @@ class TestIDBase(unittest.TestCase):
                                              id_str(self.block_id), id_str(self.drive_id))),
         )
 
-        for obj, excepted in cases:
-            self.assertEqual(json_dump(obj), excepted)
+        for obj, expected in cases:
+            self.assertEqual(expected, utfjson.dump(obj))
+
+    def test_disable_setattr(self):
+
+        with self.assertRaises(TypeError):
+            self.block_group_id.block_size = 0
+
+        with self.assertRaises(TypeError):
+            self.block_id.drive_id = 0
+
+        with self.assertRaises(TypeError):
+            self.block_index.i = 0
+
+        with self.assertRaises(TypeError):
+            self.drive_id.server_id = 0

@@ -15,30 +15,23 @@
 - [Classes](#classes)
   - [ectypes.ReplicationConfig](#ectypesreplicationconfig)
   - [ectypes.ServerID](#ectypesserverid)
-    - [ectypes.ServerID.validate](#ectypesserveridvalidate)
   - [ectypes.DriveID](#ectypesdriveid)
-    - [ectypes.DriveID.validate](#ectypesdriveidvalidate)
     - [ectypes.DriveID.parse](#ectypesdriveidparse)
-    - [ectypes.DriveID.tostr](#ectypesdriveidtostr)
 - [Methods](#methods)
   - [ectypes.make_serverrec](#ectypesmake_serverrec)
   - [ectypes.get_serverrec_str](#ectypesget_serverrec_str)
   - [ectypes.validate_idc](#ectypesvalidate_idc)
   - [ectypes.idc_distance](#ectypesidc_distance)
-  - [ectypes.json_dump](#ectypesjson_dump)
-  - [ectypes.json_load](#ectypesjson_load)
 - [Classes](#classes-1)
   - [ectypes.BlockID](#ectypesblockid)
     - [block id](#block-id)
     - [ectypes.BlockID.parse](#ectypesblockidparse)
     - [ectypes.BlockID.`__str__`](#ectypesblockid__str__)
-  - [ectypes.BlockID.tostr](#ectypesblockidtostr)
   - [ectypes.BlockDesc](#ectypesblockdesc)
   - [ectypes.BlockGroupID](#ectypesblockgroupid)
     - [block group id](#block-group-id)
     - [ectypes.BlockGroupID.parse](#ectypesblockgroupidparse)
     - [ectypes.BlockGroupID.`__str__`](#ectypesblockgroupid__str__)
-  - [ectypes.BlockGroupID.tostr](#ectypesblockgroupidtostr)
   - [ectypes.BlockGroup](#ectypesblockgroup)
     - [block index](#block-index)
     - [ectypes.BlockGroup.get_block](#ectypesblockgroupget_block)
@@ -75,9 +68,6 @@ from pykit import ectypes
 
 server_id = ectypes.ServerID.local_server_id()
 # 12 chars from primary MAC addr: "c62d8736c728"
-
-is_valid = ectypes.ServerID.validate(server_id)
-# return True or False
 
 serverrec = ectypes.make_serverrec('.l1', 'center', {'role1': 1}, "/s2")
 # out:
@@ -197,21 +187,6 @@ print ectypes.ServerID.local_server_id()
 # out: 00163e0630f7
 ```
 
-### ectypes.ServerID.validate
-
-**syntax**:
-`ectypes.ServerID.validate(server_id)`
-
-It is a classmethod for checking a server id.
-
-**arguments**:
-
--   `server_id`:
-    A `str` which will be checked.
-
-**return**:
-`True` or `False`, means the `server_id` is valid or not.
-
 ##  ectypes.DriveID
 
 **syntax**:
@@ -234,21 +209,6 @@ print str(ectypes.DriveID('aabbccddeeff', 10))
 # out: aabbccddeeff0010
 ```
 
-### ectypes.DriveID.validate
-
-**syntax**:
-`ectypes.DriveID.validate(drive_id)`
-
-It is a classmethod for checking a drive id.
-
-**arguments**:
-
--   `drive_id`:
-    A `str` which will be checked.
-
-**return**:
-`True` or `False`, means the `drive_id` is valid or not.
-
 ### ectypes.DriveID.parse
 
 **syntax**:
@@ -267,20 +227,6 @@ Raise a `DriveIDError` if the `drive_id` is invalid.
 **return**:
 A `namedtuple` contains `server_id` and `mount_point_index`.
 
-###  ectypes.DriveID.tostr
-
-**syntax**:
-`ectypes.DriveID.tostr()`
-
-Convert this DriveID instance into a string:
-
-```python
-print ectypes.DriveID('aabbccddeeff', 10).tostr()
-# out: aabbccddeeff0010
-```
-
-**return**:
-a string
 
 
 #   Methods
@@ -397,23 +343,6 @@ Estimate distance between two idc.
 
 **return**:
 The distance of them.
-
-
-##  ectypes.json_dump
-
-**syntax**:
-`ectypes.json_dump(val, encoding='utf-8')`
-
-Implementation of `pykit.utfjson.dump`.
-Preferentially convert pykit.ectypes.IDBase to string.
-
-
-##  ectypes.json_load
-
-**syntax**:
-`ectypes.json_load(json_string, encoding=None)`
-
-Implementation of `pykit.utfjson.load`.
 
 
 #   Classes
@@ -543,14 +472,6 @@ print bid.block_id_seq    # 1
 print bid                 # d0g0006300000001230101c62d8736c72800020000000001
 ```
 
-##  ectypes.BlockID.tostr
-
-**syntax**:
-`ectypes.BlockID.tostr()`
-
-Same as `str(ectypes.BlockID(...))`
-
-
 ##  ectypes.BlockDesc
 
 **syntax**:
@@ -635,12 +556,6 @@ print bgid.seq         # 123
 print bgid             # g000640000000123
 ```
 
-##  ectypes.BlockGroupID.tostr
-
-**syntax**:
-`ectypes.BlockGroupID.tostr()`
-
-Same as `str(ectypes.BlockGroupID(...))`
 
 ## ectypes.BlockGroup
 

@@ -4,6 +4,7 @@
 import unittest
 
 from pykit import ectypes
+from pykit import utfjson
 from pykit import ututil
 from pykit.ectypes import BlockDesc
 from pykit.ectypes import BlockID
@@ -64,6 +65,20 @@ class TestClusterRegion(unittest.TestCase):
         region = ectypes.Region(
             levels=region_cases_argkv[0][0], range=region_cases_argkv[1][0])
         self.assertEqual(region_cases_argkv[2][1], region)
+
+    def test_json(self):
+        region = ectypes.Region({'range': ['a', 'z'],
+                                 'levels': [
+            [['a', 'b', BlockDesc()],
+             ['b', 'c', BlockDesc(size=2,
+                                  block_id=BlockID.parse('d1g0006300000001230101c62d8736c72800020000000001'))]
+             ]]})
+        rst = utfjson.dump(region)
+        expected = '{"range": ["a", "z"], "levels": [[["a", "b", {"is_del": 0, "range": null, "block_id": null, "size": 0}], ["b", "c", {"is_del": 0, "range": null, "block_id": "d1g0006300000001230101c62d8736c72800020000000001", "size": 2}]]], "idc": ""}'
+        self.assertEqual(expected, rst)
+
+        loaded = ectypes.Region(utfjson.load(rst))
+        self.assertEqual(region, loaded)
 
     def test_move_down(self):
 

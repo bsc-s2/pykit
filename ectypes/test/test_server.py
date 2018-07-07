@@ -43,7 +43,7 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in invalid_cases:
-            self.assertFalse(ectypes.ServerID.validate(c))
+            self.assertRaises(ValueError, ectypes.ServerID, c)
 
         cases = (
             '112233aabbcc',
@@ -53,14 +53,13 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in cases:
-            self.assertTrue(ectypes.ServerID.validate(c))
+            ectypes.ServerID(c)
 
     def test_server_id_to_str(self):
         sid = ectypes.ServerID.local_server_id()
         self.assertIsInstance(sid, ectypes.ServerID)
         self.assertEqual('%012x' % uuid.getnode(), str(sid))
         self.assertEqual('%012x' % uuid.getnode(), sid)
-        self.assertEqual('%012x' % uuid.getnode(), sid.tostr())
 
     def test_serverrec(self):
         cases = (
@@ -130,13 +129,16 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for sid, mp_idx in cases:
-            drive_id = str(DriveID(sid, mp_idx))
+            drive_id = DriveID.make(sid, mp_idx)
+            self.assertEqual(sid, drive_id.server_id)
+            self.assertEqual('%03d' % mp_idx, drive_id.mountpoint_index)
+            self.assertEqual(mp_idx, int(drive_id.mountpoint_index))
+
             self.assertEqual('%s0%03d' % (sid[:12], mp_idx % 1000),
                              drive_id)
 
             drvid = DriveID.parse(drive_id)
             self.assertEqual(sid, drvid.server_id)
-            self.assertEqual(mp_idx, drvid.mountpoint_index)
             self.assertEqual(drvid, DriveID.parse(drvid))
 
     def test_drive_id_server_id(self):
@@ -148,7 +150,6 @@ class TestClusterServer(unittest.TestCase):
 
             self.assertIsInstance(drive_id.server_id, str)
             self.assertEqual('112233445566', drive_id.server_id)
-            self.assertEqual('1122334455660001', drive_id.tostr())
             self.assertEqual('1122334455660001', str(drive_id))
 
     def test_validate_drive_id(self):
@@ -166,7 +167,8 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in invalid_cases:
-            self.assertFalse(ectypes.DriveID.validate(c))
+            dd(c)
+            self.assertRaises(ValueError, ectypes.DriveID, c)
 
         cases = (
             'aabbccddeeff0001',
@@ -177,7 +179,7 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for c in cases:
-            self.assertTrue(ectypes.DriveID.validate(c))
+            ectypes.DriveID(c)
 
     def test_validate_idc(self):
         invalid_cases = (

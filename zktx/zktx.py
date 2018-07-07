@@ -13,7 +13,7 @@ from kazoo.exceptions import NoNodeError
 
 from pykit import rangeset
 from pykit import zkutil
-from pykit.cluster import json_dump
+from pykit import utfjson
 
 from .exceptions import ConnectionLoss
 from .exceptions import Deadlock
@@ -399,10 +399,10 @@ class ZKTransaction(object):
 
             if curr.version == -1:
                 kazootx.create(cnf.record(rec.k),
-                               json_dump(record_vals))
+                               utfjson.dump(record_vals))
             else:
                 kazootx.set_data(cnf.record(rec.k),
-                                 json_dump(record_vals),
+                                 utfjson.dump(record_vals),
                                  version=curr.version)
 
         state, ver = self._get_state(self.txid)
@@ -413,7 +413,7 @@ class ZKTransaction(object):
             kazootx.delete(cnf.lock(key), version=0)
 
         if len(jour) > 0 or force:
-            kazootx.create(cnf.journal(self.txid), json_dump(jour))
+            kazootx.create(cnf.journal(self.txid), utfjson.dump(jour))
             kazootx.commit()
             status = COMMITTED
         else:

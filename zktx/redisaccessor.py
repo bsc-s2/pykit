@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from pykit.ectypes import json_dump
-from pykit.ectypes import json_load
+from pykit import utfjson
 
 
 class RedisKeyValue(object):
@@ -20,7 +19,7 @@ class RedisKeyValue(object):
 
     def set(self, key, value):
         key = self._get_path(key)
-        value = json_dump(value)
+        value = utfjson.dump(value)
         self.cli.set(key, value)
 
     def get(self, key):
@@ -30,7 +29,7 @@ class RedisKeyValue(object):
         if self.load is not None:
             return self.load(val)
 
-        return json_load(val)
+        return utfjson.load(val)
 
     def hget(self, hashname, hashkey):
         hashkey = self._get_path(hashkey)
@@ -39,11 +38,11 @@ class RedisKeyValue(object):
         if self.load is not None:
             return self.load(val)
 
-        return json_load(val)
+        return utfjson.load(val)
 
     def hset(self, hashname, hashkey, value):
         hashkey = self._get_path(hashkey)
-        value = json_dump(value)
+        value = utfjson.dump(value)
         self.cli.hset(hashname, hashkey, value)
 
 
