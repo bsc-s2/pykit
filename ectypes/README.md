@@ -657,6 +657,50 @@ The idc in string of the block.
 List of data replica block index.
 Will raise `BlockTypeNotSupportReplica` if block type do not support replica.
 
+### ectypes.BlockGroup.classify_blocks
+
+**syntax**:
+`ectypes.BlockGroup.classify_blocks(idc_index, only_primary=True)`
+
+-   `idc_index`:
+    type is number, the index of idc in block_group idcs list.
+
+-   `only_primary`:
+    whether including type d1, d2 replicas in returned replica list.
+
+**return**:
+dict of blocks include ec, replica, mark_del.
+
+### ectypes.BlockGroup.indexes_to_blocks
+
+**syntax**:
+`ectypes.BlockGroup.indexes_to_blocks(indexes)`
+
+-   `indexes`:
+    list of block indexes.
+
+**return**:
+List of block instances, if index has no block, it will be None in list.
+
+### ectypes.BlockGroup.get_parity_indexes
+
+**syntax**:
+`ectypes.BlockGroup.get_parity_indexes(idc_index)`
+
+-   `idc_index`:
+    type is number, the index of idc in block_group idcs list.
+
+**return**:
+List of parity block index.
+
+**syntax**:
+`ectypes.BlockGroup.get_parities(idc_index)`
+
+-   `idc_index`:
+    type is number, the index of idc in block_group idcs list.
+
+**return**:
+List of parity block instance, only existed parity in the return list.
 
 ## ectypes.Region
 
