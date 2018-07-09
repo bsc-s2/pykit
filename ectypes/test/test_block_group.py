@@ -278,3 +278,94 @@ class TestBlockGroup(unittest.TestCase):
 
         with self.assertRaises(BlockTypeNotSupportReplica):
             g.get_replica_indexes('0204', include_me=False)
+
+    def test_classify_blocks(self):
+
+        gid = 'g000640000000123'
+
+        g = BlockGroup(block_group_id=gid, idcs=['a', 'b', 'c'], config=_ec_config)
+
+        ec, replica, mark_del = g.classify_blocks(0, only_primary_replica = True)
+        self.assertEqual([], ec + replica + mark_del)
+
+        base_blk = BlockDesc({
+            'size': 1000,
+            'range': ['0a', '0b'],
+            'is_del': 0
+        })
+
+        ec_blk_idxes = ['0000', '0001']
+        replica_blk_idxes = ['0002', '0008', '0012']
+        mark_del_idxes = ['0003', '0004']
+
+        for i, idx in enumerate(ec_blk_idxes + replica_blk_idxes + mark_del_idxes):
+
+            typ = g.get_block_type(idx)
+
+            blkid = BlockID(typ, gid, idx, DriveID('c62d8736c7280002'), i)
+
+            blk = copy.deepcopy(base_blk)
+
+            blk['block_id'] = blkid
+
+            if idx in mark_del_idxes:
+                blk['is_del'] = 1
+
+            g.add_block(blk)
+
+        for only_primary_replica in (True, False):
+
+            ec, replica, mark_del = g.classify_blocks(0, only_primary_replica)
+
+            blk_idxes = []
+
+            for blk in ec + replica + mark_del:
+                idx = BlockID(blk['block_id']).block_index
+                blk_idxes.append(idx)
+
+            expect_ids = copy.deepcopy(ec_blk_idxes)
+
+            #'0004' in ec_blk_idxes is parity, so should not in mark_del
+            if only_primary_replica is True:
+                expect_ids += replica_blk_idxes[:1] + mark_del_idxes[:1]
+            else:
+                expect_ids += replica_blk_idxes + mark_del_idxes[:1]
+
+            self.assertEqual(expect_ids, blk_idxes)
+
+    def test_get_parities(self):
+
+        gid = 'g000640000000123'
+
+        g = BlockGroup(block_group_id=gid, idcs=['a', 'b', 'c'], config=_ec_config)
+
+        parities = g.get_parities(idc_index=-1)
+        self.assertEqual([], parities)
+
+        base_parity = BlockDesc({
+            'size': 1000,
+            'range': ['0a', '0b'],
+            'is_del': 0
+        })
+
+        parity_idxes = ['0004', '0005']
+
+        for i, idx in enumerate(parity_idxes):
+
+            blkid = BlockID('dp', gid, idx, DriveID('c62d8736c7280002'), i)
+
+            parity = copy.deepcopy(base_parity)
+
+            parity['block_id'] = blkid
+
+            g.add_block(parity)
+
+        parities = g.get_parities(idc_index=0)
+
+        idxes = []
+
+        for p in parities:
+            idx = BlockID(p['block_id']).block_index
+            idxes.append(idx)
+
+        self.assertEqual(parity_idxes, idxes)

@@ -199,3 +199,55 @@ class BlockGroup(FixedKeysDict):
             rst.remove(str(block_index))
 
         return rst
+
+    def classify_blocks(self, idc_index, only_primary_replica = True):
+
+        nr_data, nr_parity = self['config']['in_idc']
+
+        ec = []
+        replica = []
+        mark_del = []
+
+        for i in range(0, nr_data):
+
+            bi = BlockIndex(idc_index, i)
+
+            blk = self.get_block(bi)
+            if blk is None:
+                continue
+
+            if blk['is_del'] == 1:
+                mark_del.append(blk)
+                continue
+
+            replica_idxes = self.get_replica_indexes(bi, include_me=False)
+            rblk = self.get_block(replica_idxes[0])
+
+            if rblk is None:
+                ec.append(blk)
+            else:
+                replica.append(blk)
+
+                if only_primary_replica is False:
+
+                    for idx in replica_idxes:
+                        rblk = self.get_block(idx)
+                        replica.append(rblk)
+
+        return ec, replica, mark_del
+
+    def get_parities(self, idc_index):
+
+        parities = []
+        nr_data, nr_parity = self['config']['in_idc']
+
+        for i in range(nr_data, nr_data + nr_parity):
+
+            bi = BlockIndex(idc_index, i)
+
+            blk = self.get_block(bi)
+
+            if blk is not None:
+                parities.append(blk)
+
+        return parities
