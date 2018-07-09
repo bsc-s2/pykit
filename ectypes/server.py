@@ -15,10 +15,6 @@ from pykit import strutil
 from .idbase import IDBase
 
 
-class DriveIDError(Exception):
-    pass
-
-
 class ServerID(str):
 
     def __new__(clz, s):

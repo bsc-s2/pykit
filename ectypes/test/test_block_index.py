@@ -12,21 +12,7 @@ dd = ututil.dd
 
 class TestBlockIndex(unittest.TestCase):
 
-    def test_parse_invalid(self):
-        cases = (
-            '',
-            'a',
-            '0',
-            '00',
-            '000',
-            '000a',
-            'a000',
-        )
-
-        for bad in cases:
-            self.assertRaises(ValueError, ectypes.BlockIndex.parse, bad)
-
-    def test_parse(self):
+    def test_new(self):
 
         cases = (
                 ('0000', (0, 0)),
@@ -40,7 +26,7 @@ class TestBlockIndex(unittest.TestCase):
             dd(inp)
             dd(expected)
 
-            rst = ectypes.BlockIndex.parse(inp)
+            rst = ectypes.BlockIndex(inp)
             self.assertEqual(expected, rst.as_tuple())
             self.assertEqual(str(inp), str(rst))
 
@@ -56,3 +42,16 @@ class TestBlockIndex(unittest.TestCase):
         for i, j in cases:
             dd(i, j)
             self.assertRaises(ValueError, ectypes.BlockIndex, i, j)
+
+        cases = (
+            '',
+            'a',
+            '0',
+            '00',
+            '000',
+            '000a',
+            'a000',
+        )
+
+        for bad in cases:
+            self.assertRaises(ValueError, ectypes.BlockIndex, bad)

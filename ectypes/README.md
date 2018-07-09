@@ -7,31 +7,26 @@
 - [Synopsis](#synopsis)
 - [Description](#description)
 - [Exceptions](#exceptions)
-  - [ectypes.DriveIDError](#ectypesdriveiderror)
   - [ectypes.BlockNotFoundError](#ectypesblocknotfounderror)
   - [ectypes.BlockTypeNotSupported](#ectypesblocktypenotsupported)
   - [ectypes.BlockTypeNotSupportReplica](#ectypesblocktypenotsupportreplica)
   - [ectypes.BlockIndexError](#ectypesblockindexerror)
-- [Classes](#classes)
-  - [ectypes.ReplicationConfig](#ectypesreplicationconfig)
-  - [ectypes.ServerID](#ectypesserverid)
-  - [ectypes.DriveID](#ectypesdriveid)
-    - [ectypes.DriveID.parse](#ectypesdriveidparse)
 - [Methods](#methods)
   - [ectypes.make_serverrec](#ectypesmake_serverrec)
   - [ectypes.get_serverrec_str](#ectypesget_serverrec_str)
   - [ectypes.validate_idc](#ectypesvalidate_idc)
   - [ectypes.idc_distance](#ectypesidc_distance)
-- [Classes](#classes-1)
+- [Classes](#classes)
+  - [ectypes.ReplicationConfig](#ectypesreplicationconfig)
+  - [ectypes.IDBase](#ectypesidbase)
+  - [ectypes.ServerID](#ectypesserverid)
+  - [ectypes.DriveID](#ectypesdriveid)
   - [ectypes.BlockID](#ectypesblockid)
     - [block id](#block-id)
-    - [ectypes.BlockID.parse](#ectypesblockidparse)
-    - [ectypes.BlockID.`__str__`](#ectypesblockid__str__)
+  - [ectypes.BlockIndex](#ectypesblockindex)
   - [ectypes.BlockDesc](#ectypesblockdesc)
   - [ectypes.BlockGroupID](#ectypesblockgroupid)
     - [block group id](#block-group-id)
-    - [ectypes.BlockGroupID.parse](#ectypesblockgroupidparse)
-    - [ectypes.BlockGroupID.`__str__`](#ectypesblockgroupid__str__)
   - [ectypes.BlockGroup](#ectypesblockgroup)
     - [block index](#block-index)
     - [ectypes.BlockGroup.get_block](#ectypesblockgroupget_block)
@@ -103,13 +98,6 @@ Some helper function for the server in a ectypes.
 
 #   Exceptions
 
-##  ectypes.DriveIDError
-
-**syntax**:
-`ectypes.DriveIDError`
-
-Raise if the drive id is invalid while parse it.
-
 ##  ectypes.BlockNotFoundError
 
 **syntax**:
@@ -137,96 +125,6 @@ Raise if block type do not support replica.
 `ectypes.BlockIndexError`
 
 Raise if block index parse or make error.
-
-
-#   Classes
-
-
-##  ectypes.ReplicationConfig
-
-**syntax**:
-`ectypes.ReplicationConfig()`
-
-`ReplicationConfig` is a subclass of `FixedKeysDict` thus also a subclass of `dict`.
-It provides the same construction function prototype as `dict`.
-
-**keys**:
-
--   `in_idc`:
-    An instance of namedtuple `RSConfig`, which has 2 element: N.O. of data
-    and N.O. of parity.
-
--   `cross_idc`:
-    Similar to `in_idc`, it defines cross idc EC parameter.
-
--   `data_replica`:
-    is a number of replicas of block, before encoded with Reed Solomon.
-    By default it is 1.
-    And it can not be smaller than 1.
-
-**Synopsis**:
-
-```python
-print ReplicationConfig(in_idc=[6, 2], cross_idc=[3, 1]) # {"in_idc":[6, 2], "cross_idc":[3, 1], data_replica:1}
-```
-
-
-
-##  ectypes.ServerID
-
-**syntax**:
-`ectypes.ServerID(str)`
-
-Make a server id, format: 12 chars from primary MAC addr(e.g.: "c62d8736c728").
-
-```python
-from pykit import ectypes
-
-print ectypes.ServerID.local_server_id()
-
-# out: 00163e0630f7
-```
-
-##  ectypes.DriveID
-
-**syntax**:
-`ectypes.DriveID(server_id, mount_point_index)`
-
-Make a drive id, format: 16 chars `<server_id>0<mount_point_index>`
-
-**arguments**:
-
-    `server_id`:
-    A string, Format: 12 chars from primary MAC addr.
-
-    `mount_point_index`:
-    It is a 3-digit mount path, `001` for `/drives/001`.
-
-```python
-from pykit import ectypes
-
-print str(ectypes.DriveID('aabbccddeeff', 10))
-# out: aabbccddeeff0010
-```
-
-### ectypes.DriveID.parse
-
-**syntax**:
-`ectypes.DriveID.parse(drive_id)`
-
-It is a classmethod, parse drive_id into a `namedtuple`
-that contains separated fields.
-
-Raise a `DriveIDError` if the `drive_id` is invalid.
-
-**arguments**:
-
--   `drive_id`:
-    A string, Format: 16 chars `<server_id>0<mount_point_index>`.
-
-**return**:
-A `namedtuple` contains `server_id` and `mount_point_index`.
-
 
 
 #   Methods
@@ -347,12 +245,112 @@ The distance of them.
 
 #   Classes
 
+
+##  ectypes.ReplicationConfig
+
+**syntax**:
+`ectypes.ReplicationConfig(FixedKeysDict)`
+
+`ReplicationConfig` is a subclass of `FixedKeysDict` thus also a subclass of `dict`.
+It provides the same construction function prototype as `dict`.
+
+**keys**:
+
+-   `in_idc`:
+    An instance of namedtuple `RSConfig`, which has 2 element: N.O. of data
+    and N.O. of parity.
+
+-   `cross_idc`:
+    Similar to `in_idc`, it defines cross idc EC parameter.
+
+-   `data_replica`:
+    is a number of replicas of block, before encoded with Reed Solomon.
+    By default it is 1.
+    And it can not be smaller than 1.
+
+**Synopsis**:
+
+```python
+print ReplicationConfig(in_idc=[6, 2], cross_idc=[3, 1])
+# {"in_idc":[6, 2], "cross_idc":[3, 1], data_replica:1}
+```
+
+
+##  ectypes.IDBase
+
+**syntax**:
+`ectypes.IDBase(str)`
+
+A subclass of `str`, it is an *inner* format class for all IDs.
+
+```python
+# new
+IDBase(xxxID)
+IDBase(attr_1_value, attr_2_value, ...)
+IDBase(attr_1=value, attr_2=value, ...)
+```
+
+
+##  ectypes.ServerID
+
+**syntax**:
+`ectypes.ServerID(str)`
+
+Make a server id, format: 12 chars from primary MAC
+addr(e.g.: "c62d8736c728").
+
+```python
+from pykit import ectypes
+
+print ectypes.ServerID.local_server_id()
+# out: 00163e0630f7
+```
+
+
+##  ectypes.DriveID
+
+**syntax**:
+`ectypes.DriveID(server_id, mount_point_index)`
+
+A subclass of `IDBase`. Make a drive id, format: 16 chars
+`<server_id>0<mount_point_index>`
+
+**arguments**:
+
+    `server_id`:
+    A string, Format: 12 chars from primary MAC addr.
+
+    `mount_point_index`:
+    It is a 3-digit mount path, `001` for `/drives/001`.
+
+```python
+from pykit import ectypes
+
+print ectypes.DriveID('aabbccddeeff', 10)
+# out: aabbccddeeff0010
+```
+
+
 ##  ectypes.BlockID
 
 **syntax**:
-`BlockID(namedtuple('_BlockID', 'type block_group_id block_index drive_id block_id_seq'))`
+`BlockID(type, block_group_id, block_index, drive_id, block_id_seq)`
 
-Parse or generate block id.
+A subclass of `IDBase`. Generate block id.
+
+```python
+block_id = 'd0g0006300000001230101c62d8736c72800020000000001'
+
+bid = ectypes.BlockID(block_id)
+print bid.type            # d
+print bid.block_group_id  # g000630000000123
+print bid.block_index     # 0101
+print bid.drive_id        # c62d8736c7280002
+print bid.block_id_seq    # 1
+
+# test __str__()
+print bid                 # d0g0006300000001230101c62d8736c72800020000000001
+```
 
 ### block id
 
@@ -431,67 +429,57 @@ space)
     is a block group wise monotonic incremental id.
     To ensure that any two blocks have different `block_id`.
 
-### ectypes.BlockID.parse
+
+##  ectypes.BlockIndex
 
 **syntax**:
-`ectypes.BlockID.parse(block_id)`
+`BlockIndex(i, j)`
 
-A class method. Parse `block_id` from string to `BlockID` instanse.
-If `block_id` length is wrong, `BlockIDError` raises.
-
-**arguments**:
-
--   `block_id`
-    block_id in string
-
-**return**:
-A `ectypes.BlockID` instance
-
-### ectypes.BlockID.`__str__`
-
-**syntax**:
-`ectypes.BlockID.__str__()`
-
-Rewrite `__str__`, convert `self` to `block_id` string.
-
-**return**:
-A `block_id`.
+A subclass of `IDBase`. Make block index.
 
 ```python
-block_id = 'd0g0006300000001230101c62d8736c72800020000000001'
+block_index = '1234'
 
-# test parse()
-bid = ectypes.BlockID.parse(block_id)
-print bid.type            # d
-print bid.block_group_id  # g000630000000123
-print bid.block_index     # 0101
-print bid.drive_id        # c62d8736c7280002
-print bid.block_id_seq    # 1
+bi = ectypes.BlockIndex(block_index)
+print bi.i      # 12
+print bi.j      # 34
 
-# test __str__()
-print bid                 # d0g0006300000001230101c62d8736c72800020000000001
+print bi        # 1234
 ```
+
 
 ##  ectypes.BlockDesc
 
 **syntax**:
-`ectypes.BlockDesc()`
+`ectypes.BlockDesc(FixedKeysDict)`
 
 Initialize block use a dict.
 
 Block keys include:
-    `size`: int, in byte; on-disk block file size, default is 0.
-    `range`: rangeset.Range(); block range, not active range in region. Default is rangeset.Range(None, None).
-    `block_id`: BlockID(). Default is None.
-    `is_del`: 0 or 1. Default is 0.
+
+-   `size`: int, in byte; on-disk block file size, default is 0.
+-   `range`: rangeset.Range(); block range, not active range in region. Default is rangeset.Range(None, None).
+-   `block_id`: BlockID(). Default is None.
+-   `is_del`: 0 or 1. Default is 0.
 
 
 ##  ectypes.BlockGroupID
 
 **syntax**:
-`BlockGroupID(namedtuple('_BlockGroupID', 'block_size seq'))`
+`BlockGroupID(block_size, seq)`
 
-Parse or generate block group id.
+A subclass of `IDBase`. Generate block group id.
+
+```python
+block_group_id = 'g000640000000123'
+
+bgid = ectypes.BlockGroupID(block_group_id)
+print bgid.block_size  # 64
+print bgid.seq         # 123
+
+# test __str__()
+print bgid             # g000640000000123
+```
 
 ### block group id
 
@@ -518,44 +506,6 @@ g<block_size_in_gb><seq>
 
 Example: `g 00064 0000000123`(without space).
 
-### ectypes.BlockGroupID.parse
-
-**syntax**:
-`ectypes.BlockGroupID.parse(block_group_id)`
-
-A class method. Parse `block_group_id` from string to `BlockGroupID` instanse.
-If `block_group_id` length is wrong, `BlockGroupIDError` raises.
-
-**arguments**:
-
--   `block_group_id`
-    block_group_id in string
-
-**return**:
-A `ectypes.BlockGroupID` instance
-
-### ectypes.BlockGroupID.`__str__`
-
-**syntax**:
-`ectypes.BlockGroupID.__str__()`
-
-Rewrite `__str__`, convert `self` to `block_group_id` string.
-
-**return**:
-A `block_group_id`.
-
-```python
-block_group_id = 'g000640000000123'
-
-# test parse()
-bgid = ectypes.BlockGroupID.parse(block_group_id)
-print bgid.block_size  # 64
-print bgid.seq         # 123
-
-# test __str__()
-print bgid             # g000640000000123
-```
-
 
 ## ectypes.BlockGroup
 
@@ -573,7 +523,6 @@ When initializing, the following 3 items must be specified:
 - `idcs` is a list of idc name in string.
 - `config` is a `ReplicationConfig` instance or plain `dict`
 
-
 ### block index
 
 `block_index`: specifies the block position in a `block_group`.
@@ -588,8 +537,6 @@ Both these 2 parts starts from 00.
 
 E.g.: `block_index` of the 1st block in the first IDC is: `0000`.
 `block_index` of the 2nd block in the 3rd IDC is: `0201`.
-
-
 
 ### ectypes.BlockGroup.get_block
 
@@ -640,7 +587,6 @@ Mark a block to be `deleted` by setting its `is_del` field to `1`.
 Nothing.
 Will raise `BlockNotFoundError` if target block not found.
 
-
 ### ectypes.BlockGroup.delete_block
 
 **syntax**:
@@ -655,7 +601,6 @@ Do nothing if the specified block index not found.
 **return**:
 Nothing.
 Will raise `BlockNotFoundError` if target block not found.
-
 
 ### ectypes.BlockGroup.add_block
 
@@ -686,7 +631,6 @@ It is `None` if there is no block at the index.
 block type.
 Will raise `BlockTypeNotSupported` if block index do not have corresponding type.
 
-
 ### ectypes.BlockGroup.get_block_idc
 
 **syntax**:
@@ -697,7 +641,6 @@ Will raise `BlockTypeNotSupported` if block index do not have corresponding type
 
 **return**:
 The idc in string of the block.
-
 
 ### ectypes.BlockGroup.get_replica_indexes
 
@@ -718,7 +661,7 @@ Will raise `BlockTypeNotSupportReplica` if block type do not support replica.
 ## ectypes.Region
 
 **syntax**:
-`ectypes.Region(dict)`
+`ectypes.Region(FixedKeysDict)`
 
 Region related operations.
 
@@ -754,7 +697,6 @@ Nothing.
 If `level` is specified but not in this region levels boundry(`0<=level<=max(level)+1`),
 `LevelOutOfBound` is raised.
 
-
 ### ectypes.Region.move_down
 
 **syntax**:
@@ -772,7 +714,6 @@ Nothing
 A list of `(source_level, target_level, block)`.
 This list of 3-tuple records all movable blocks which should move from
 `source_level` to `target_level`.
-
 
 ### ectypes.Region.find_merge
 
@@ -799,7 +740,6 @@ Nothing
 
 If no blocks can merge, return None.
 
-
 ### ectypes.Region.list_block_ids
 
 **syntax**:
@@ -815,7 +755,6 @@ list all block ids in this region alphabetical from `start_block_id`.
 
 **return**:
 a block id list.
-
 
 ### ectypes.Region.replace_block_id
 

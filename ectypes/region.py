@@ -126,15 +126,15 @@ class Region(FixedKeysDict):
         block_ids.sort()
 
         if start_block_id is not None:
-            start_block_id = BlockID.parse(start_block_id)
+            start_block_id = BlockID(start_block_id)
             idx = bisect.bisect_left(block_ids, start_block_id)
             block_ids = block_ids[idx:]
 
         return block_ids
 
     def replace_block_id(self, block_id, new_block_id):
-        block_id = BlockID.parse(block_id)
-        new_block_id = BlockID.parse(new_block_id)
+        block_id = BlockID(block_id)
+        new_block_id = BlockID(new_block_id)
 
         for blocks in self['levels']:
 

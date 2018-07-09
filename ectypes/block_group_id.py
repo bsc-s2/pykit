@@ -4,8 +4,6 @@
 
 from .idbase import IDBase
 
-BlockGroupIDLen = 16
-
 
 class BlockGroupID(IDBase):
 

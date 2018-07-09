@@ -36,8 +36,6 @@ from .server import (
 
     ServerID,
     DriveID,
-
-    DriveIDError,
 )
 
 from .region import (
@@ -74,8 +72,6 @@ __all__ = [
 
     "ServerID",
     "DriveID",
-
-    "DriveIDError",
 
     "Region",
 

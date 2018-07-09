@@ -4,13 +4,19 @@
 import copy
 import unittest
 
-from pykit import ectypes
 from pykit import utfjson
 from pykit import ututil
-from pykit.ectypes import BlockDesc
-from pykit.ectypes import BlockExists
-from pykit.ectypes import BlockGroup
-from pykit.ectypes import BlockNotFoundError
+from pykit.ectypes import (
+    BlockDesc,
+    BlockExists,
+    BlockGroup,
+    BlockGroupID,
+    BlockID,
+    BlockNotFoundError,
+    BlockTypeNotSupportReplica,
+    BlockTypeNotSupported,
+    DriveID,
+)
 
 dd = ututil.dd
 
@@ -36,41 +42,37 @@ _empty_group = BlockGroup({
 
 class TestBlockGroupID(unittest.TestCase):
 
-    def test_parse(self):
+    def test_new(self):
         block_group_id = 'g000640000000123'
 
-        bgid = ectypes.BlockGroupID(64, 123)
+        bgid = BlockGroupID(64, 123)
         self.assertEqual(block_group_id, str(bgid))
 
-        bgid = ectypes.BlockGroupID.parse(block_group_id)
+        bgid = BlockGroupID(block_group_id)
         self.assertEqual((64, 123), bgid.as_tuple())
 
-        bgid = ectypes.BlockGroupID.parse(bgid)
+        bgid = BlockGroupID(bgid)
         self.assertEqual((64, 123), bgid.as_tuple())
 
-    def test_invalid(self):
+    def test_new_invalid(self):
 
-        # test invalid input
         block_group_id_invalid = 'g00064000000012345'
-        self.assertRaises(ValueError, ectypes.BlockGroupID.parse, block_group_id_invalid)
+        self.assertRaises(ValueError, BlockGroupID, block_group_id_invalid)
 
     def test_tostr(self):
         block_group_id = 'g000640000000123'
-        bgid = ectypes.BlockGroupID.parse(block_group_id)
+        bgid = BlockGroupID(block_group_id)
         self.assertEqual(block_group_id, str(bgid))
         self.assertEqual(block_group_id, '{0}'.format(bgid))
         self.assertEqual("'g000640000000123'", repr(bgid))
 
 
-class TestClusterBlockGroup(unittest.TestCase):
+class TestBlockGroup(unittest.TestCase):
 
     def setUp(self):
         self.foo_block = BlockDesc({
-            'block_id': ectypes.BlockID('d0',
-                                        'g000640000000123',
-                                        '0000',
-                                        ectypes.DriveID.parse('c62d8736c7280002'),
-                                        1),
+            'block_id': BlockID('d0', 'g000640000000123', '0000',
+                                    DriveID('c62d8736c7280002'), 1),
             'size': 1000,
             'range': ['0a', '0b'],
             'is_del': 0
@@ -91,7 +93,9 @@ class TestClusterBlockGroup(unittest.TestCase):
         g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
 
         rst = utfjson.dump(g)
-        expected = '{"config": {"in_idc": [4, 2], "ec_policy": "lrc", "cross_idc": [2, 1], "data_replica": 3}, "blocks": {}, "idcs": ["a", "b", "c"], "block_group_id": "g000640000000123"}'
+        expected = ('{"config": {"in_idc": [4, 2], "ec_policy": "lrc", "cross_idc": [2, 1], '
+                    '"data_replica": 3}, "blocks": {}, "idcs": ["a", "b", "c"], '
+                    '"block_group_id": "g000640000000123"}')
         self.assertEqual(expected, rst)
 
         loaded = BlockGroup(utfjson.load(rst))
@@ -100,9 +104,7 @@ class TestClusterBlockGroup(unittest.TestCase):
     def test_new_deref_config(self):
 
         cnf = copy.deepcopy(_ec_config)
-        b = BlockGroup(block_group_id='g000640000000123',
-                       config=cnf,
-                       idcs=['a', 'b', 'c'])
+        b = BlockGroup(block_group_id='g000640000000123', config=cnf, idcs=['a', 'b', 'c'])
 
         a = copy.deepcopy(b['config'])
         b['config']['in_idc'] = [10, 11]
@@ -129,14 +131,14 @@ class TestClusterBlockGroup(unittest.TestCase):
         block = g.get_block('9999')
         self.assertIsNone(block)
 
-        with self.assertRaises(ectypes.BlockNotFoundError):
+        with self.assertRaises(BlockNotFoundError):
             g.get_block('9999', raise_error=True)
 
         g.add_block(self.foo_block)
         block = g.get_block(self.foo_block['block_id'].block_index)
         self.assertDictEqual(self.foo_block, block)
 
-        with self.assertRaises(ectypes.BlockNotFoundError):
+        with self.assertRaises(BlockNotFoundError):
             g.get_block('0002', raise_error=True)
 
         with self.assertRaises(ValueError):
@@ -150,7 +152,6 @@ class TestClusterBlockGroup(unittest.TestCase):
         block = g.get_block('0000')
 
         self.assertEqual(1, block['is_del'])
-
         self.assertRaises(BlockNotFoundError, g.mark_delete_block, '9999')
 
     def test_delete_block(self):
@@ -246,8 +247,8 @@ class TestClusterBlockGroup(unittest.TestCase):
         self.assertEqual('x0', g.get_block_type('0200'))
         self.assertEqual('xp', g.get_block_type('0204'))
 
-        self.assertRaises(ectypes.BlockTypeNotSupported, g.get_block_type, '0299')
-        self.assertRaises(ectypes.BlockTypeNotSupported, g.get_block_type, '0900')
+        self.assertRaises(BlockTypeNotSupported, g.get_block_type, '0299')
+        self.assertRaises(BlockTypeNotSupported, g.get_block_type, '0900')
 
     def test_get_block_idc(self):
         g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
@@ -257,11 +258,8 @@ class TestClusterBlockGroup(unittest.TestCase):
         self.assertEqual('c', g.get_block_idc('0200'))
 
         d0 = BlockDesc({
-            'block_id': ectypes.BlockID('d0',
-                                        'g000640000000123',
-                                        '0000',
-                                        ectypes.DriveID.parse('c62d8736c7280002'),
-                                        1),
+            'block_id': BlockID('d0', 'g000640000000123', '0000',
+                                    DriveID('c62d8736c7280002'), 1),
             'size': 1000,
             'range': ['0a', '0b'],
             'is_del': 0
@@ -275,8 +273,8 @@ class TestClusterBlockGroup(unittest.TestCase):
         self.assertEqual(['0000', '0010'], g.get_replica_indexes('0006', include_me=False))
         self.assertEqual(['0000', '0006'], g.get_replica_indexes('0010', include_me=False))
 
-        with self.assertRaises(ectypes.BlockTypeNotSupportReplica):
+        with self.assertRaises(BlockTypeNotSupportReplica):
             g.get_replica_indexes('0004', include_me=False)
 
-        with self.assertRaises(ectypes.BlockTypeNotSupportReplica):
+        with self.assertRaises(BlockTypeNotSupportReplica):
             g.get_replica_indexes('0204', include_me=False)

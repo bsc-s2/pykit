@@ -16,7 +16,7 @@ from pykit.ectypes import DriveID
 dd = ututil.dd
 
 
-class TestClusterServer(unittest.TestCase):
+class TestEctypesServer(unittest.TestCase):
 
     def test_make_server_id(self):
         server_id = str(ectypes.ServerID.local_server_id())
@@ -129,22 +129,20 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for sid, mp_idx in cases:
-            drive_id = DriveID.make(sid, mp_idx)
+            drive_id = DriveID(sid, mp_idx)
             self.assertEqual(sid, drive_id.server_id)
             self.assertEqual('%03d' % mp_idx, drive_id.mountpoint_index)
             self.assertEqual(mp_idx, int(drive_id.mountpoint_index))
+            self.assertEqual('%s0%03d' % (sid[:12], mp_idx % 1000), drive_id)
 
-            self.assertEqual('%s0%03d' % (sid[:12], mp_idx % 1000),
-                             drive_id)
-
-            drvid = DriveID.parse(drive_id)
+            drvid = DriveID(drive_id)
             self.assertEqual(sid, drvid.server_id)
-            self.assertEqual(drvid, DriveID.parse(drvid))
+            self.assertEqual(drvid, DriveID(drvid))
 
     def test_drive_id_server_id(self):
 
         for drive_id in (DriveID('112233445566', 1),
-                         DriveID.parse('1122334455660001')):
+                         DriveID('1122334455660001')):
 
             dd(drive_id)
 
@@ -228,5 +226,4 @@ class TestClusterServer(unittest.TestCase):
         )
 
         for n1, n2, dis in cases:
-            self.assertEqual(dis,
-                             ectypes.idc_distance(n1, n2))
+            self.assertEqual(dis, ectypes.idc_distance(n1, n2))

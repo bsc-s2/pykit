@@ -3,16 +3,18 @@
 
 import unittest
 
-from pykit import ectypes
 from pykit import utfjson
 from pykit import ututil
 from pykit.ectypes import BlockDesc
 from pykit.ectypes import BlockID
+from pykit.ectypes import BlockNotInRegion
+from pykit.ectypes import LevelOutOfBound
+from pykit.ectypes import Region
 
 dd = ututil.dd
 
 
-class TestClusterRegion(unittest.TestCase):
+class TestRegion(unittest.TestCase):
 
     def test_init(self):
 
@@ -37,7 +39,7 @@ class TestClusterRegion(unittest.TestCase):
 
         for case, excepted in region_cases:
 
-            region = ectypes.Region(case)
+            region = Region(case)
             self.assertEqual(excepted, region)
 
         region_cases_argkv = [
@@ -56,28 +58,30 @@ class TestClusterRegion(unittest.TestCase):
             ),
         ]
 
-        region = ectypes.Region(levels=region_cases_argkv[0][0])
+        region = Region(levels=region_cases_argkv[0][0])
         self.assertEqual(region_cases_argkv[0][1], region)
 
-        region = ectypes.Region(range=region_cases_argkv[1][0])
+        region = Region(range=region_cases_argkv[1][0])
         self.assertEqual(region_cases_argkv[1][1], region)
 
-        region = ectypes.Region(
-            levels=region_cases_argkv[0][0], range=region_cases_argkv[1][0])
+        region = Region(levels=region_cases_argkv[0][0], range=region_cases_argkv[1][0])
         self.assertEqual(region_cases_argkv[2][1], region)
 
     def test_json(self):
-        region = ectypes.Region({'range': ['a', 'z'],
+        region = Region({'range': ['a', 'z'],
                                  'levels': [
             [['a', 'b', BlockDesc()],
              ['b', 'c', BlockDesc(size=2,
-                                  block_id=BlockID.parse('d1g0006300000001230101c62d8736c72800020000000001'))]
+                                  block_id=BlockID('d1g0006300000001230101c62d8736c72800020000000001'))]
              ]]})
         rst = utfjson.dump(region)
-        expected = '{"range": ["a", "z"], "levels": [[["a", "b", {"is_del": 0, "range": null, "block_id": null, "size": 0}], ["b", "c", {"is_del": 0, "range": null, "block_id": "d1g0006300000001230101c62d8736c72800020000000001", "size": 2}]]], "idc": ""}'
+        expected = ('{"range": ["a", "z"], "levels": [[["a", "b", '
+                    '{"is_del": 0, "range": null, "block_id": null, "size": 0}], '
+                    '["b", "c", {"is_del": 0, "range": null, '
+                    '"block_id": "d1g0006300000001230101c62d8736c72800020000000001", "size": 2}]]], "idc": ""}')
         self.assertEqual(expected, rst)
 
-        loaded = ectypes.Region(utfjson.load(rst))
+        loaded = Region(utfjson.load(rst))
         self.assertEqual(region, loaded)
 
     def test_move_down(self):
@@ -143,7 +147,7 @@ class TestClusterRegion(unittest.TestCase):
             (4, 1, ['d',  'fz', BlockDesc(size=14)]),
         ]
 
-        region = ectypes.Region(levels=region_levels)
+        region = Region(levels=region_levels)
         moved_blocks = region.move_down()
 
         self.assertEqual(excepted_moved_blocks, moved_blocks)
@@ -154,7 +158,7 @@ class TestClusterRegion(unittest.TestCase):
             [['aa', 'yy', BlockDesc(size=8)]]
         ]
 
-        region = ectypes.Region(levels=region_levels)
+        region = Region(levels=region_levels)
         moved_blocks = region.move_down()
 
         self.assertEqual([], moved_blocks)
@@ -186,19 +190,19 @@ class TestClusterRegion(unittest.TestCase):
         ]
 
         for levels, excepted in region_levels_cases:
-            region = ectypes.Region(levels=levels)
+            region = Region(levels=levels)
             res = region.find_merge()
 
             self.assertEqual(excepted, res)
 
     def test_list_block_ids(self):
 
-        bid1 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000001')
-        bid2 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000002')
-        bid3 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000003')
-        bid4 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000004')
-        bid5 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000005')
-        bid6 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000006')
+        bid1 = BlockID('d1g0006300000001230101c62d8736c72800020000000001')
+        bid2 = BlockID('d1g0006300000001230101c62d8736c72800020000000002')
+        bid3 = BlockID('d1g0006300000001230101c62d8736c72800020000000003')
+        bid4 = BlockID('d1g0006300000001230101c62d8736c72800020000000004')
+        bid5 = BlockID('d1g0006300000001230101c62d8736c72800020000000005')
+        bid6 = BlockID('d1g0006300000001230101c62d8736c72800020000000006')
 
         region_levels = [
             [
@@ -218,7 +222,7 @@ class TestClusterRegion(unittest.TestCase):
                 (bid6, []),
         )
 
-        region = ectypes.Region(levels=region_levels)
+        region = Region(levels=region_levels)
 
         for bid, excepted in cases:
             block_ids = region.list_block_ids(start_block_id=bid)
@@ -226,12 +230,12 @@ class TestClusterRegion(unittest.TestCase):
 
     def test_replace_block_id(self):
 
-        bid1 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000001')
-        bid2 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000002')
-        bid3 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000003')
-        bid4 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000004')
-        bid5 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000005')
-        bid6 = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000006')
+        bid1 = BlockID('d1g0006300000001230101c62d8736c72800020000000001')
+        bid2 = BlockID('d1g0006300000001230101c62d8736c72800020000000002')
+        bid3 = BlockID('d1g0006300000001230101c62d8736c72800020000000003')
+        bid4 = BlockID('d1g0006300000001230101c62d8736c72800020000000004')
+        bid5 = BlockID('d1g0006300000001230101c62d8736c72800020000000005')
+        bid6 = BlockID('d1g0006300000001230101c62d8736c72800020000000006')
 
         region_levels = [
             [['aa', 'ee', {'block_id': bid1}], ['hh', 'zz', {'block_id': bid2}]],
@@ -243,13 +247,12 @@ class TestClusterRegion(unittest.TestCase):
             [['ea', 'ff', BlockDesc({'block_id': bid3})], ['mm', 'yy', BlockDesc({'block_id': bid5})]],
         ]
 
-        region = ectypes.Region(levels=region_levels)
+        region = Region(levels=region_levels)
 
         region.replace_block_id(bid4, bid3)
         self.assertEqual(excepted_region_levels, region['levels'])
 
-        self.assertRaises(ectypes.BlockNotInRegion,
-                          region.replace_block_id, bid6, bid1)
+        self.assertRaises(BlockNotInRegion, region.replace_block_id, bid6, bid1)
 
     def test_add_block(self):
 
@@ -320,12 +323,12 @@ class TestClusterRegion(unittest.TestCase):
                     [['a', 'b', BlockDesc(size=1)]],
                     [['b', 'c', BlockDesc(size=2)]],
                 ]},
-                ectypes.LevelOutOfBound,
+                LevelOutOfBound,
             ),
         )
 
         for case, args, excepted, err in region_cases:
-            region = ectypes.Region(case)
+            region = Region(case)
 
             if err is not None:
                 self.assertRaises(err, region.add_block, *args)

@@ -17,10 +17,10 @@ class TestIDBase(unittest.TestCase):
 
     def setUp(self):
 
-        self.block_group_id = BlockGroupID.parse('g000640000000123')
-        self.block_id = BlockID.parse('d1g0006300000001230101c62d8736c72800020000000001')
-        self.block_index = BlockIndex.parse('1234')
-        self.drive_id = DriveID.parse('1122334455660001')
+        self.block_group_id = BlockGroupID('g000640000000123')
+        self.block_id = BlockID('d1g0006300000001230101c62d8736c72800020000000001')
+        self.block_index = BlockIndex('1234')
+        self.drive_id = DriveID('1122334455660001')
 
     def test_json_dump(self):
 
@@ -34,14 +34,17 @@ class TestIDBase(unittest.TestCase):
             (self.drive_id,         id_str(self.drive_id)),
 
             ([self.block_group_id, self.drive_id],
-             "[{0}, {1}]".format(id_str(self.block_group_id), id_str(self.drive_id))),
+                "[{0}, {1}]".format(id_str(self.block_group_id), id_str(self.drive_id))),
             ((self.block_group_id, self.drive_id),
                 "[{0}, {1}]".format(id_str(self.block_group_id), id_str(self.drive_id))),
 
-            ({'xxx': self.block_id}, '{{"xxx": {0}}}'.format(id_str(self.block_id))),
-            ({10: self.block_id}, '{{"10": {0}}}'.format(id_str(self.block_id))),
+            ({'xxx': self.block_id},
+                '{{"xxx": {0}}}'.format(id_str(self.block_id))),
+            ({10: self.block_id},
+                '{{"10": {0}}}'.format(id_str(self.block_id))),
 
-            ({self.block_id: 'abc'}, '{{{0}: "abc"}}'.format(id_str(self.block_id))),
+            ({self.block_id: 'abc'},
+                '{{{0}: "abc"}}'.format(id_str(self.block_id))),
             ({self.block_group_id: self.block_id},
                 '{{{0}: {1}}}'.format(id_str(self.block_group_id), id_str(self.block_id))),
             ({self.block_group_id: (self.block_id, self.drive_id)},
@@ -65,3 +68,25 @@ class TestIDBase(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             self.drive_id.server_id = 0
+
+    def test_new(self):
+
+        block_index = BlockIndex('1234')
+        self.assertEqual(self.block_index, block_index)
+
+        block_index = BlockIndex('12', '34')
+        self.assertEqual(self.block_index, block_index)
+
+        block_index = BlockIndex(i='12', j='34')
+        self.assertEqual(self.block_index, block_index)
+
+    def test_new_invalid(self):
+
+        with self.assertRaises(ValueError):
+            block_index = BlockIndex('01234')
+
+        with self.assertRaises(ValueError):
+            block_index = BlockIndex('012')
+
+        with self.assertRaises(ValueError):
+            block_index = BlockIndex(i='01', j='345')

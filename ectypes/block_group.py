@@ -38,7 +38,7 @@ def _idcs(lst):
 class BlockGroup(FixedKeysDict):
 
     keys_default = dict(
-        block_group_id=BlockGroupID.parse,
+        block_group_id=BlockGroupID,
         config=ReplicationConfig,
         idcs=_idcs,
         blocks=dict,
@@ -53,7 +53,7 @@ class BlockGroup(FixedKeysDict):
     def get_block_type(self, block_index):
 
         mp = self.type_map
-        bi = BlockIndex.parse(block_index)
+        bi = BlockIndex(block_index)
 
         try:
             return mp[bi.i][bi.j]
@@ -143,7 +143,7 @@ class BlockGroup(FixedKeysDict):
 
     def get_block(self, block_index, raise_error=False):
 
-        bi = BlockIndex.parse(block_index)
+        bi = BlockIndex(block_index)
         b = self['blocks'].get(str(bi))
 
         if raise_error and b is None:
@@ -155,7 +155,7 @@ class BlockGroup(FixedKeysDict):
 
     def get_block_idc(self, block_index):
 
-        bi = BlockIndex.parse(block_index)
+        bi = BlockIndex(block_index)
 
         return self['idcs'][bi.i]
 
@@ -163,7 +163,7 @@ class BlockGroup(FixedKeysDict):
 
         nr_data, nr_parity = self['config']['in_idc']
 
-        bi = BlockIndex.parse(block_index)
+        bi = BlockIndex(block_index)
 
         j = bi.j
         if j >= nr_data:
@@ -177,7 +177,7 @@ class BlockGroup(FixedKeysDict):
         nr_data, nr_parity = self['config']['in_idc']
         data_replica = self['config']['data_replica']
 
-        bi = BlockIndex.parse(block_index)
+        bi = BlockIndex(block_index)
         typ = self.get_block_type(bi)
 
         if typ.endswith('p'):

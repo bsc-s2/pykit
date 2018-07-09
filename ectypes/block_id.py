@@ -7,8 +7,6 @@ from .block_index import BlockIndex
 from .idbase import IDBase
 from .server import DriveID
 
-BlockIDLen = 48
-
 
 class BlockID(IDBase):
     _attrs = (

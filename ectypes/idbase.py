@@ -4,14 +4,6 @@
 from collections import namedtuple
 
 
-class IDBaseError(Exception):
-    pass
-
-
-class InvalidLength(IDBaseError):
-    pass
-
-
 class IDBase(str):
 
     _attrs = (
@@ -22,7 +14,7 @@ class IDBase(str):
 
     _str_len = 0
 
-    _tostr_fmt = '{attr_1}-{attr_2:0>3}'
+    _tostr_fmt = '' # '{attr_1}-{attr_2:0>3}'
 
     def __new__(clz, *args, **kwargs):
 
@@ -53,14 +45,10 @@ class IDBase(str):
             return x
         else:
             # multi args: new by making an instance
-            return clz.make(*args, **kwargs)
+            return clz._make(*args, **kwargs)
 
     @classmethod
-    def parse(clz, raw):
-        return clz(raw)
-
-    @classmethod
-    def make(clz, *args, **kwargs):
+    def _make(clz, *args, **kwargs):
 
         # Create a namedtuple to simplify arguments receiving
 
@@ -71,6 +59,8 @@ class IDBase(str):
                                           ]))
 
         t = tuple_type(*args, **kwargs)
+        # warn: if the value is float and _tostr_fmt is with float format,
+        #       raise ValueError. Not convert to string?
         s = clz._tostr_fmt.format(**{k: str(v)
                                      for k, v in t._asdict().items()})
 
@@ -83,6 +73,7 @@ class IDBase(str):
     def as_tuple(self):
         lst = []
         for k, _, _, _ in self._attrs:
-            lst.append(getattr(self, k))
+            if not k.startswith('_'):
+                lst.append(getattr(self, k))
 
         return tuple(lst)
