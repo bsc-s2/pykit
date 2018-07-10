@@ -255,11 +255,7 @@ class BlockGroup(FixedKeysDict):
         for i in range(nr_data, nr_data + nr_parity):
 
             bi = BlockIndex(idc_index, i)
-
-            blk = self.get_block(bi)
-
-            if blk is not None:
-                indexes.append(bi)
+            indexes.append(bi)
 
         return indexes
 
@@ -267,4 +263,6 @@ class BlockGroup(FixedKeysDict):
 
         idxes = self.get_parity_indexes(idc_index)
 
-        return self.indexes_to_blocks(idxes)
+        blks = self.indexes_to_blocks(idxes)
+
+        return [blk for blk in blks if blk is not None]
