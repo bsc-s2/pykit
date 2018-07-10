@@ -70,12 +70,10 @@ class BlockGroup(FixedKeysDict):
 
         rst = []
 
-        for i in range(nr_in_idc + nr_xor_idc):
+        prefixes = ('d' * nr_in_idc
+                    + 'x' * nr_xor_idc)
 
-            if i < nr_in_idc:
-                pref = 'd'
-            else:
-                pref = 'x'
+        for pref in prefixes:
 
             o = [pref + '0'] * nr_data
             o += [pref + 'p'] * nr_parity
