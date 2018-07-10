@@ -200,7 +200,7 @@ class BlockGroup(FixedKeysDict):
 
         return rst
 
-    def classify_blocks(self, idc_index, only_primary_replica = True):
+    def classify_blocks(self, idc_index, only_primary=True):
 
         nr_data, nr_parity = self['config']['in_idc']
 
@@ -221,24 +221,35 @@ class BlockGroup(FixedKeysDict):
                 continue
 
             replica_idxes = self.get_replica_indexes(bi, include_me=False)
-            rblk = self.get_block(replica_idxes[0])
+            rblks = self.indexes_to_blocks(replica_idxes)
 
-            if rblk is None:
+            if None in rblks:
                 ec.append(blk)
-            else:
-                replica.append(blk)
+                continue
 
-                if only_primary_replica is False:
+            replica.append(blk)
+            if only_primary:
+                continue
 
-                    for idx in replica_idxes:
-                        rblk = self.get_block(idx)
-                        replica.append(rblk)
+            replica.extend(rblks)
 
-        return ec, replica, mark_del
+        return {'ec': ec, 'replica': replica, 'mark_del': mark_del}
 
-    def get_parities(self, idc_index):
+    def indexes_to_blocks(self, indexes):
 
-        parities = []
+        blks = []
+
+        for idx in indexes:
+            bi = BlockIndex(idx)
+
+            blk = self.get_block(bi)
+            blks.append(blk)
+
+        return blks
+
+    def get_parity_indexes(self, idc_index):
+
+        indexes = []
         nr_data, nr_parity = self['config']['in_idc']
 
         for i in range(nr_data, nr_data + nr_parity):
@@ -248,6 +259,12 @@ class BlockGroup(FixedKeysDict):
             blk = self.get_block(bi)
 
             if blk is not None:
-                parities.append(blk)
+                indexes.append(bi)
 
-        return parities
+        return indexes
+
+    def get_parities(self, idc_index):
+
+        idxes = self.get_parity_indexes(idc_index)
+
+        return self.indexes_to_blocks(idxes)
