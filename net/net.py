@@ -95,6 +95,17 @@ def is_inn(ip):
     return ip_class(ip) == INN
 
 
+def choose_ips(ips, ip_type=None):
+    if ip_type is None:
+        return ips
+    elif ip_type == INN:
+        return choose_inn(ips)
+    elif ip_type == PUB:
+        return choose_pub(ips)
+    else:
+        raise ValueError('invalid ip_type: {ip_type}'.format(ip_type=ip_type))
+
+
 def choose_pub(ips):
     return [x for x in ips if ip_class(x) == PUB]
 

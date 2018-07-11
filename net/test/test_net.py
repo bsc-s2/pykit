@@ -115,6 +115,9 @@ class TestNet(unittest.TestCase):
             self.assertEqual(True, net.is_ip4_loopback(ip), ip)
 
     def test_ip_class_and_is_xxx(self):
+
+        self.assertRaises(ValueError, net.choose_ips, ['192.168.0.0'], 'xx')
+
         cases_pub = (
             '1.2.3.4',
             '255.255.0.0',
@@ -141,6 +144,11 @@ class TestNet(unittest.TestCase):
             self.assertEqual([inp], net.choose_pub([inp, '192.168.0.0']))
             self.assertEqual([inp], net.choose_pub(['192.168.0.0', inp]))
 
+            self.assertEqual([inp], net.choose_ips([inp, '192.168.0.0'], net.PUB))
+            self.assertEqual([inp], net.choose_ips(['192.168.0.0', inp], net.PUB))
+            self.assertEqual([inp, '192.168.0.0'], net.choose_ips([inp, '192.168.0.0']))
+            self.assertEqual(['192.168.0.0', inp], net.choose_ips(['192.168.0.0', inp]))
+
         cases_inn = (
             '127.0.0.1',
             '127.0.0.255',
@@ -164,6 +172,11 @@ class TestNet(unittest.TestCase):
             # test choose_xxx
             self.assertEqual([inp], net.choose_inn([inp, '1.1.1.1']))
             self.assertEqual([inp], net.choose_inn(['1.1.1.1', inp]))
+
+            self.assertEqual([inp], net.choose_ips([inp, '1.1.1.1'], net.INN))
+            self.assertEqual([inp], net.choose_ips(['1.1.1.1', inp], net.INN))
+            self.assertEqual([inp, '1.1.1.1'], net.choose_ips([inp, '1.1.1.1']))
+            self.assertEqual(['1.1.1.1', inp], net.choose_ips(['1.1.1.1', inp]))
 
     def test_ips_prefer(self):
 

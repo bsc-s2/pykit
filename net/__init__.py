@@ -11,6 +11,7 @@ from .net import (
     InvalidIP4Number,
 
     choose_by_idc,
+    choose_ips,
     choose_inn,
     choose_pub,
     choose_by_regex,

@@ -88,6 +88,27 @@ Exception for an unreachable ip.
 #   Methods
 
 
+##  net.choose_ips
+
+**syntax**:
+`net.choose_ips(ips, ip_type=None)`
+
+**arguments**:
+
+-   `ips`:
+    is a list of ips to choose from.
+
+-   `ip_type`:
+
+    - `net.PUB`: returns a list of public ip from `ips`.
+    - `net.INN`: returns a list of internal ip from `ips`.
+    - `None`: returns the original list.
+    - Other value: raise `ValueError`.
+
+**return**:
+list of chosen ips.
+
+
 ##  net.choose_by_idc
 
 **syntax**:
