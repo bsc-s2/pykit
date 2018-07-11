@@ -3,30 +3,15 @@
 
 import re
 import socket
-import uuid
 from collections import defaultdict
+
+from .server_id import ServerID
 
 import psutil
 
 from pykit import fsutil
 from pykit import net
 from pykit import strutil
-
-from .idbase import IDBase
-
-
-class ServerID(str):
-
-    def __new__(clz, s):
-        s = str(s)
-        if re.match("^[0-9a-f]{12}$", s) is None:
-            raise ValueError('ServerID must be 12 char hex, but: {s}'.format(s=s))
-
-        return super(ServerID, clz).__new__(clz, s)
-
-    @classmethod
-    def local_server_id(self):
-        return ServerID('%012x' % uuid.getnode())
 
 
 class MountPointIndex(str):
@@ -46,19 +31,6 @@ def _padding_0(s):
     if str(s) != '0':
         raise ValueError('padding must be "0", but: {s}'.format(s=s))
     return str(s)
-
-
-class DriveID(IDBase):
-
-    _attrs = (
-        ('server_id', 0, 12, ServerID),
-        ('_padding_0', 12, 13, _padding_0),
-        ('mountpoint_index', 13, 16, MountPointIndex),
-    )
-
-    _str_len = 16
-
-    _tostr_fmt = '{server_id}0{mountpoint_index:0>3}'
 
 
 def _make_mountpoints_info():

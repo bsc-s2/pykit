@@ -1409,7 +1409,7 @@ class TestCombine(unittest.TestCase):
             for k, v in a.items():
                 if isinstance(v, dict):
                     self.assertNotEqual(a[k], result[k])
-            
+
             add_value(b)
             for k, v in b.items():
                 if isinstance(v, dict):

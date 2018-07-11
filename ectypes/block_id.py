@@ -5,7 +5,7 @@
 from .block_group_id import BlockGroupID
 from .block_index import BlockIndex
 from .idbase import IDBase
-from .server import DriveID
+from .drive_id import DriveID
 
 
 class BlockID(IDBase):
