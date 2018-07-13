@@ -14,25 +14,6 @@ from pykit import net
 from pykit import strutil
 
 
-class MountPointIndex(str):
-
-    def __new__(clz, s):
-
-        if isinstance(s, int):
-            s = '{s:0>3}'.format(s=s)
-
-        if len(s) != 3 or not (0 <= int(s) <= 999):
-            raise ValueError('invalid mount point index: {s}'.format(s=s))
-
-        return super(MountPointIndex, clz).__new__(clz, s)
-
-
-def _padding_0(s):
-    if str(s) != '0':
-        raise ValueError('padding must be "0", but: {s}'.format(s=s))
-    return str(s)
-
-
 def _make_mountpoints_info():
     mps = fsutil.get_all_mountpoint()
     prt_by_mp = fsutil.get_disk_partitions()

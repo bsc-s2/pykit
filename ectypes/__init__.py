@@ -44,6 +44,10 @@ from .drive_id import (
     DriveID,
 )
 
+from .mount_point_index import (
+    MountPointIndex,
+)
+
 from .region import (
     Region,
 
@@ -79,6 +83,8 @@ __all__ = [
     "ServerID",
 
     "DriveID",
+
+    "MountPointIndex",
 
     "Region",
 

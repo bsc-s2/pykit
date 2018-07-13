@@ -2,10 +2,15 @@
 # coding: utf-8
 
 from .server_id import ServerID
-from .server import MountPointIndex
-from .server import _padding_0
+from .mount_point_index import MountPointIndex
 
 from .idbase import IDBase
+
+
+def _padding_0(s):
+    if str(s) != '0':
+        raise ValueError('padding must be "0", but: {s}'.format(s=s))
+    return str(s)
 
 
 class DriveID(IDBase):
