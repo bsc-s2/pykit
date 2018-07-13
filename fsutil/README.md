@@ -25,8 +25,9 @@
   - [fsutil.get_disk_partitions](#fsutilget_disk_partitions)
   - [fsutil.get_mountpoint](#fsutilget_mountpoint)
   - [fsutil.get_path_fs](#fsutilget_path_fs)
-  - [fsutil.makedirs](#fsutilmakedirs)
   - [fsutil.get_sub_dirs](#fsutilget_sub_dirs)
+  - [fsutil.list_fns](#fsutillist_fns)
+  - [fsutil.makedirs](#fsutilmakedirs)
   - [fsutil.read_file](#fsutilread_file)
   - [fsutil.remove](#fsutilremove)
   - [fsutil.write_file](#fsutilwrite_file)
@@ -436,6 +437,41 @@ Return the name of device where the `path` is mounted.
 the file-system name, such as `ext4` or `hfs`.
 
 
+##  fsutil.get_sub_dirs
+
+**syntax**:
+`fsutil.get_sub_dirs(path)`
+
+Get all sorted sub directories of `path`.
+
+**arguments**:
+
+-   `path`:
+    is the directory path.
+
+**return**:
+a list contain all sub directory names.
+
+
+##  fsutil.list_fns
+
+**syntax**:
+`fsutil.list_fns(path, pattern='*')`
+
+List all files with `pattern` in `path`.
+
+**arguments**:
+
+-   `path`:
+    is a directory path.
+
+-   `pattern`:
+    is the file name pattern wanted. A regular expression.
+
+**return**:
+a alphabetical sorted list contain all file name in `path` with `pattern`.
+
+
 ##  fsutil.makedirs
 
 **syntax**:
@@ -467,22 +503,6 @@ Nothing
 **raise**:
 `OSError` if trying to create dir with the same path of a non-dir file, or
 having other issue like permission denied.
-
-
-##  fsutil.get_sub_dirs
-
-**syntax**:
-`fsutil.get_sub_dirs(path)`
-
-Get all sorted sub directories of `path`.
-
-**arguments**:
-
--   `path`:
-    is the directory path.
-
-**return**:
-a list contain all sub directory names.
 
 
 ##  fsutil.read_file

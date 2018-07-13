@@ -5,6 +5,7 @@ import binascii
 import errno
 import hashlib
 import os
+import re
 import sys
 import time
 
@@ -169,6 +170,22 @@ def get_sub_dirs(path):
     sub_dirs.sort()
 
     return sub_dirs
+
+
+def list_fns(path, pattern=''):
+
+    fns = os.listdir(path)
+
+    pt = re.compile(pattern)
+
+    fns = [ x for x in fns
+            if re.search(pt, x) is not None
+            and os.path.isfile(os.path.join(path, x))
+    ]
+
+    fns.sort()
+
+    return fns
 
 
 def read_file(path):
