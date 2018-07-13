@@ -13,8 +13,19 @@ from .logutil import (
     stack_str,
 )
 
+from .archive import(
+    Archiver,
+
+    archive,
+    clean,
+)
+
 __all__ = [
+    'Archiver'
+
     'add_std_handler',  # used
+    'archive',
+    'clean',
     'deprecate',
     'get_datefmt',
     'get_fmt',  # used

@@ -456,7 +456,7 @@ a list contain all sub directory names.
 ##  fsutil.list_fns
 
 **syntax**:
-`fsutil.list_fns(path, pattern='*')`
+`fsutil.list_fns(path, pattern='.*')`
 
 List all files with `pattern` in `path`.
 

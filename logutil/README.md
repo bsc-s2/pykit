@@ -7,9 +7,14 @@
 - [Synopsis](#synopsis)
 - [Description](#description)
 - [Class](#class)
+  - [logutil.Archiver](#logutilarchiver)
+    - [Archiver.archive](#archiverarchive)
+    - [Archiver.clean](#archiverclean)
   - [logutil.FixedWatchedFileHandler](#logutilfixedwatchedfilehandler)
 - [Methods](#methods)
   - [logutil.add_std_handler](#logutiladd_std_handler)
+  - [logutil.archive](#logutilarchive)
+  - [logutil.clean](#logutilclean)
   - [logutil.deprecate](#logutildeprecate)
   - [logutil.get_datefmt](#logutilget_datefmt)
   - [logutil.get_fmt](#logutilget_fmt)
@@ -58,6 +63,87 @@ logger.stack_str(fmt="{fn}:{ln} in {func}\n  {statement}", sep="\n")
 A collection of log utilities for logging.
 
 #   Class
+
+##  logutil.Archiver
+
+**syntax**:
+`logutil.Archiver(src_base, arc_base, **kwargs)`
+
+An archive tool.
+
+examples:
+```
+archiver = logutil.Archiver('log/errlogs/', 'log/arch_logs/')
+
+archiver.archive()
+# archive all files in 'log/errlogs/' to '.gz' file in 'log/arch_logs/'
+
+archiver.archive(['hello.log', 'hi.log'])
+# archive file 'log/errlogs/hello.log' and 'log/errlogs/hi.log' to '.gz' file in 'log/arch_logs/'
+
+archiver.clean()
+# clean space in 'log/arch_logs/' as the rule set in `kwargs`
+```
+
+**arguments**:
+
+-   `src_base`:
+    is the directoty of source file to archive. A string.
+
+-   `arc_base`:
+    is the directory of archived file. A string.
+
+-   `time_toleration`:
+    is the toleration of file's archived time in `seconds`.
+    By default, it is 600.
+
+-   `free_gb`:
+    is the minimum free space `arc_base` need in `GB`.
+
+-   `free_percentage`:
+    is the minimum free space `arc_base` need in percentage.
+
+-   `free_interp`:
+    is linear interpolation input used to calculate minimum free space for `arc_base`. A list or
+    tuple contains:
+    - `xp`:
+        a list of number corresponding to total capacity of one path.
+
+    - `yp`:
+        a list of number corresponding to free space needed of one path.
+
+    By default, it is `None`.
+
+-   `days_to_keep`:
+    specifies how many days files in the `arc_base` could keep.
+    By default, it is 30.
+
+-   `at_most_clean`:
+    specifies at most how many days files could be clean if free space is not enough.
+    By default, it is 8.
+
+
+### Archiver.archive
+
+**syntax**:
+`Archiver.archive(src_fns=None)`
+
+Archive the files in the `Archiver.src_base`. If `src_fns` is specified and not `None`, only files
+in `src_fns` will be archived, otherwise archive all files in the `Archiver.src_base`.
+
+**arguments**:
+
+-   `src_fns`:
+    is a list of the source file names need to be archived, if it is `None`, all files in the
+    `Archiver.src_base` will be archived. By default, it is `None`.
+
+### Archiver.clean
+
+**syntax**:
+`Archiver.clean()`
+
+Remove some files to clean `Archiver.arc_base` as the free space setting in `Archiver`.
+
 
 ##  logutil.FixedWatchedFileHandler
 
@@ -113,6 +199,66 @@ It adds a `stdout` or `stderr` steam handler to the `logger`.
 
 **return**:
 the `logger` argument.
+
+##  logutil.archive
+
+**syntax**:
+`logutil.archive(src_path, arc_base)`
+
+Archive a file `src_path` to directory `arc_base`.
+See alse in `Archiver.archive`.
+
+**arguments**:
+
+-   `src_path`:
+    is the path of a source file need to archive.
+
+-   `arc_base`:
+    is the directory of the archived file.
+
+**return**:
+Nothing
+
+##  logutil.clean
+
+**syntax**:
+`logutil.clean(arc_base, **kwargs)`
+
+Clean directory `arc_base` as the setting in `kwargs`.
+See alse in `Archiver.clean`.
+
+**arguments**:
+
+-   `arc_base`:
+    is the directory of archived file. A string.
+
+-   `free_gb`:
+    is the minimum free space `arc_base` need in `GB`.
+
+-   `free_percentage`:
+    is the minimum free space `arc_base` need in percentage.
+
+-   `free_interp`:
+    is linear interpolation input used to calculate minimum free space for `arc_base`. A list or
+    tuple contains:
+    - `xp`:
+        a list of number corresponding to total capacity of one path.
+
+    - `yp`:
+        a list of number corresponding to free space needed of one path.
+
+    By default, it is `None`.
+
+-   `days_to_keep`:
+    specifies how many days files in the `arc_base` could keep.
+    By default, it is 30.
+
+-   `at_most_clean`:
+    specifies at most how many days files could be clean if free space is not enough.
+    By default, it is 8.
+
+**return**:
+Nothing.
 
 ##  logutil.deprecate
 

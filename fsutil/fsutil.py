@@ -172,7 +172,7 @@ def get_sub_dirs(path):
     return sub_dirs
 
 
-def list_fns(path, pattern=''):
+def list_fns(path, pattern='.*'):
 
     fns = os.listdir(path)
 
