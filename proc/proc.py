@@ -33,6 +33,7 @@ def command(cmd, *arguments, **options):
 
     close_fds = options.get('close_fds', True)
     cwd = options.get('cwd', None)
+    shell = options.get('shell', False)
     env = options.get('env', None)
     if env is not None:
         env = dict(os.environ, **env)
@@ -40,6 +41,7 @@ def command(cmd, *arguments, **options):
 
     subproc = subprocess32.Popen([cmd] + list(arguments),
                                  close_fds=close_fds,
+                                 shell=shell,
                                  cwd=cwd,
                                  env=env,
                                  stdin=subprocess32.PIPE,
