@@ -228,6 +228,8 @@ class TestFSUtil(unittest.TestCase):
         self.assertEqual(['bar', 'foo'], fsutil.list_fns('test_dir/foo_dir'))
         self.assertEqual(['bar'], fsutil.list_fns('test_dir/foo_dir', pattern='^b'))
 
+        fsutil.remove('test_dir')
+
     def test_makedirs_with_config(self):
 
         fn = '/tmp/pykit-ut-fsutil-foo'
