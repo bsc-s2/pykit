@@ -70,7 +70,7 @@ class TestMysqlutil(unittest.TestCase):
 
              'test index_name',
             ),
-            ([['service', 'ip', '_id'], ['common0', '127.0.0.1', '8']],
+            ([['service', 'ip', '_id'], ['common0', '127.0.0.1', 8]],
              {'left_open': True, 'limit': 3, 'index_name': 'idx_time__id'},
              ('12', '18', '20', ),
 
@@ -135,7 +135,7 @@ class TestMysqlutil(unittest.TestCase):
         table = 'errlog'
 
         cases = (
-            ([['_id'], ['service', 'ip', '_id'], ['common0', '127.0.0.1', '8']],
+            ([['_id'], ['service', 'ip', '_id'], ['common0', '127.0.0.1', 8]],
              {},
              'SELECT `_id` FROM `errlog` FORCE INDEX (`idx_service_ip__id`) '
              'WHERE `service` = "common0" AND `ip` = "127.0.0.1" AND `_id` >= "8" LIMIT 1024;',
@@ -205,7 +205,7 @@ class TestMysqlutil(unittest.TestCase):
 
             (
                 mysql_test_table,
-                ['common0', '127.0.0.4', '2'],
+                ['common0', '127.0.0.4', 2],
                 ['service', 'ip', '_id'],
 
                 'INSERT INTO `errlog` (`service`, `ip`, `_id`) '
@@ -244,7 +244,7 @@ class TestMysqlutil(unittest.TestCase):
                 mysql_test_table,
                 ['_id'],
                 ['service', 'ip', '_id'],
-                ['common0', '127.0.0.1', '8'],
+                ['common0', '127.0.0.1', 8],
                 {},
                 'SELECT `_id` FROM `errlog` WHERE `service` = "common0" AND `ip` = "127.0.0.1" '
                 'AND `_id` = "8";',
@@ -338,7 +338,7 @@ class TestMysqlutil(unittest.TestCase):
                     'time': '042718',
                 },
                 ['service', 'ip', '_id'],
-                ['common0', '127.0.0.1', '8'],
+                ['common0', '127.0.0.1', 8],
                 {},
                 'UPDATE `errlog` SET `_id` = "0", `time` = "042718" '
                 'WHERE `service` = "common0" AND `ip` = "127.0.0.1" AND `_id` = "8";',
@@ -404,7 +404,7 @@ class TestMysqlutil(unittest.TestCase):
             (
                 mysql_test_table,
                 ['service', 'ip', '_id'],
-                ['common0', '127.0.0.1', '8'],
+                ['common0', '127.0.0.1', 8],
                 {},
                 'DELETE FROM `errlog` WHERE `service` = "common0" AND `ip` = "127.0.0.1" '
                 'AND `_id` = "8";',
@@ -473,7 +473,7 @@ class TestMysqlutil(unittest.TestCase):
                  ],
                 '2 shard fields, no end shard'),
 
-            ((['id', 'service'], ['10', 'a'], ['10', 'd']),
+            ((['id', 'service'], [10, 'a'], [10, 'd']),
                 ['`id` = "10" AND `service` >= "a" AND `service` < "d"'],
                 '2 shard field, 1 same fields'),
 
@@ -560,7 +560,7 @@ class TestMysqlutil(unittest.TestCase):
 
         cases = (
             ((['id', 'service'], conn, db, table, ['/tmp', 'key.sql'], ['/usr', 'bin', 'mysqldump'],
-                ['10', 'a'], ['15', 'd']),
+                [10, 'a'], [15, 'd']),
                 ("'/usr/bin/mysqldump' --host='127.0.0.1' --port='3306' --user='root' --password='password' " +
                  "'mysql' 'key' -w '" +
                  "(`id` = \"10\" AND `service` >= \"a\") OR " +

@@ -196,7 +196,7 @@ mysqlutil.make_delete_sql('errlog', ('service', 'ip'), ('common0', '127.0.0.1'),
 
 -   `index_values`:
     specifies condition values to find those rows to delete.
-    A list or tuple of strings has the same length with `index`.
+    A list or tuple has the same length with `index`.
 
 -   `limit`:
     specifies a limited number of rows to delete.
@@ -247,7 +247,7 @@ make_index_scan_sql(("mydb","foo"), ['_id', 'key'], ['key', 'val'], ["a", "b"], 
 
 -   `index_values`:
     specifies condition values to find rows.
-    A list or tuple of strings has the same length with `index`.
+    A list or tuple has the same length with `index`.
 
 -   `left_open`:
     if specified and is `True`, the last column in `index` and the corresponding value joined with `>`.
@@ -289,8 +289,7 @@ mysqlutil.make_insert_sql(('test', 'errlog'), ['common1', '127.0.0.3', '3'], ['s
     A string or a list or tuple like `(dbname, tablename)`.
 
 -   `values`:
-    is values to insert into `table`.
-    A list or tuple of strings.
+    is values to insert into `table`. A list or tuple.
 
 -   `fields`:
     is a subset of fields in `table`, specifies which fields is to insert to.
@@ -361,10 +360,10 @@ make_range_mysqldump_cmd(
     `['/usr', 'bin', 'mysqldump']`. Or a string, like `'/usr/bin/mysqldump'`.
 
 -   `start`:
-    is the beginning boundary of the condition value, a list or tuple of string.
+    is the beginning boundary of the condition value, a list or tuple.
 
 -   `end`:
-    is the ending boundary of the condition value, a list or tuple of string. If `end` is `None`,
+    is the ending boundary of the condition value, a list or tuple. If `end` is `None`,
     then condtion in result has no ending boundary.
 
 **return**:
@@ -405,7 +404,7 @@ make_select_sql('errlog', ['_id', 'key'], ('key', 'val'), ('a', 'b'),
 
 -   `index_values`:
     specifies condition values to find rows.
-    A list or tuple of strings has the same length with `index`.
+    A list or tuple has the same length with `index`.
 
 -   `limit`:
     specifies a limited number of rows in the result.
@@ -489,7 +488,7 @@ mysqlutil.make_update_sql('errlog', {'_id': '0', 'time': '042718'}, None, None, 
 
 -   `index_values`:
     specifies condition values to find those rows to update.
-    A list or tuple of strings has the same length with `index`.
+    A list or tuple has the same length with `index`.
 
 -   `limit`:
     specifies a limited number of rows in the result.
@@ -587,7 +586,7 @@ for rr in rst:
 
 -   `index_values`:
     values of the column names in `index_fields`.
-    A list or tuple of strings, has the same length with `index_fields`.
+    A list or tuple, has the same length with `index_fields`.
 
 -   `left_open`:
     if it is specified and is `True`, the last column in `index_fields` and the corresponding value joined with `>`.

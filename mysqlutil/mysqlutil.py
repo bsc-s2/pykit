@@ -345,7 +345,7 @@ def quote(s, quote):
 
 
 def _safe(s):
-    return '"' + MySQLdb.escape_string(s) + '"'
+    return '"' + MySQLdb.escape_string(str(s)) + '"'
 
 
 def make_table_name(table_name):
