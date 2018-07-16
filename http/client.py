@@ -177,7 +177,7 @@ class Client(object):
 
         with self.stopwatch.timer('send_body'):
             if self.request_chunked_encoded:
-                body = '{0:x}\r\n{1}\r\n\r\n'.format(len(body), body)
+                body = '{0:x}\r\n{1}\r\n'.format(len(body), body)
 
             self.sock.sendall(body)
 
