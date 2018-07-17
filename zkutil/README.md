@@ -493,6 +493,21 @@ It initialize a zookeeper cluster, including initializing the tree structure, se
 None.
 
 
+## zkutil.export_hierarchy
+
+**syntax**:
+`def export_hierarchy(zkcli, zkpath)`
+
+Exporting a zookeeper node in a tree structure, and you can import the data into zookeeper using `zkutil.init_hierarchy`
+
+**arguments**:
+
+-   `zkclient`:
+    is a `KazooClient` instance connected to zk.
+
+- `zkpath`:
+    is zookeeper root path that you want export
+
 #  Exceptions
 
 ## zkutil.LockTimeout

@@ -17,6 +17,7 @@ from .zkutil import (
     PermTypeError,
 
     init_hierarchy,
+    export_hierarchy,
     is_backward_locking,
     lock_id,
     make_acl_entry,
@@ -51,6 +52,7 @@ __all__ = [
     "kazoo_client_ext",
 
     "init_hierarchy",
+    "export_hierarchy",
     "is_backward_locking",
     "lock_id",
     "make_acl_entry",
