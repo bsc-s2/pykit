@@ -161,3 +161,27 @@ class Region(FixedKeysDict):
 
         desc = BlockDesc(block)
         self['levels'][level].add(active_range, desc)
+
+    def get_block_ids_by_needle_id(self, needle_id):
+
+        region_range = self['range']
+        levels = self['levels']
+
+        if region_range is None:
+            return []
+
+        if not region_range.has(needle_id):
+            return []
+
+        rst = []
+
+        for level in reversed(levels):
+
+            try:
+                block_desc = level.get(needle_id)
+            except KeyError:
+                continue
+
+            rst.append(block_desc['block_id'])
+
+        return rst

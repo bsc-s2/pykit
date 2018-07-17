@@ -43,6 +43,7 @@
     - [ectypes.Region.find_merge](#ectypesregionfind_merge)
     - [ectypes.Region.list_block_ids](#ectypesregionlist_block_ids)
     - [ectypes.Region.replace_block_id](#ectypesregionreplace_block_id)
+    - [ectypes.Region.get_block_ids_by_needle_id](#ectypesregionget_block_ids_by_needle_id)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -818,6 +819,22 @@ replace block id from `block_id` to `new_block_id`.
 **return**:
 Nothing.
 If `block_id` is not found in region levels, raise `BlockNotInRegion`.
+
+### ectypes.Region.get_block_ids_by_needle_id
+
+**syntax**:
+`ectypes.Region.get_block_ids_by_needle_id(needle_id)`
+
+Returns the block_id of all blocks that may have 'needle_id'
+
+**arguments**:
+
+-   `needle_id`
+    the needle id to be searched 
+
+**return**:
+Return a list of `block_id`, the higher level blocks are in front.
+If `needle_id` is not in this region, return an empty list.
 
 #   Author
 

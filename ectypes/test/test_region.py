@@ -337,3 +337,84 @@ class TestRegion(unittest.TestCase):
             region.add_block(*args)
 
             self.assertEqual(excepted, region)
+
+    def test_get_block_ids_by_needle_id(self):
+
+        bid1 = BlockID('d1g0006300000001230101c62d8736c72800020000000001')
+        bid2 = BlockID('d1g0006300000001230101c62d8736c72800020000000002')
+
+        # each tuple in region_cases consists of
+        # region
+        # needle_id
+        # result
+
+        region_cases = [
+            (
+                {},
+                'a',
+                [],
+            ),
+            (
+                {'range': ['a', 'e'], 'levels': [
+                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                ]},
+                'a',
+                [bid1],
+            ),
+            (
+                {'range': ['a', 'e'], 'levels': [
+                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                ]},
+                'b',
+                [],
+            ),
+            (
+                {'range': ['a', None], 'levels': [
+                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                ]},
+                'c',
+                [bid2],
+            ),
+            (
+                {'range': [None, 'e'], 'levels': [
+                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                ]},
+                'c',
+                [bid2],
+            ),
+            (
+                {'range': [None, None], 'levels': [
+                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                ]},
+                'a',
+                [bid1],
+            ),
+            (
+                {'range': ['a', 'e'], 'levels': [
+                    [['a', 'b', {'block_id': bid1}], ['b', 'e', {'block_id': bid2}]]
+                ]},
+                'x',
+                [],
+            ),
+            (
+                {'range': ['a', 'e'], 'levels': [
+                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                ]},
+                'x',
+                [],
+            ),
+            (
+                {'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', {'block_id': bid1}]],
+                    [['a', 'z', {'block_id': bid2}]]
+                ]},
+                'a',
+                [bid2, bid1]
+            ),
+        ]
+
+        for region_meta, needle_id, block_ids in region_cases:
+
+            region = Region(region_meta)
+            result = region.get_block_ids_by_needle_id(needle_id)
+            self.assertEqual(block_ids, result)
