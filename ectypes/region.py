@@ -9,6 +9,8 @@ from pykit.dictutil import FixedKeysDict
 from .block_desc import BlockDesc
 from .block_id import BlockID
 
+MERGE_COEF = 4
+
 
 class BlockNotInRegion(Exception):
     pass
@@ -56,7 +58,7 @@ class Region(FixedKeysDict):
         for target in targets:
             target_blk_size += target[2]['size']
 
-        return 4 * src_blk_size >= target_blk_size
+        return MERGE_COEF * src_blk_size >= target_blk_size
 
     def find_moved_to_level(self, src_block, src_level, region_levels):
 

@@ -49,6 +49,7 @@ from .mount_point_index import (
 )
 
 from .region import (
+    MERGE_COEF,
     Region,
 
     BlockNotInRegion,
@@ -86,6 +87,7 @@ __all__ = [
 
     "MountPointIndex",
 
+    "MERGE_COEF",
     "Region",
 
     "BlockNotInRegion",
