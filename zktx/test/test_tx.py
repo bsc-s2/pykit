@@ -864,3 +864,52 @@ class TestTXState(TXBase):
         t = ZKTransaction(zkhost)
         val, ver = t.zkstorage.state.get(txid)
         self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
+
+    def test_exception_with_state(self):
+
+        t = ZKTransaction(zkhost)
+        txid = None
+
+        try:
+            with ZKTransaction(zkhost) as t1:
+                t1.lock_get('foo')
+                raise ValueError('foo')
+        except ValueError:
+            pass
+
+        nodes = t.zke.get_children('/lock')
+        self.assertEqual([], nodes)
+
+        try:
+            with ZKTransaction(zkhost) as t2:
+                txid = t2.txid
+                t2.lock_get('foo')
+                t2.set_state('bar')
+                raise ValueError('foo')
+        except ValueError:
+            pass
+
+        val, ver = t.zkstorage.state.get(txid)
+        self.assertEqual({'got_keys': ['foo'], 'data': 'bar'}, val)
+
+        nodes = t.zke.get_children('/lock')
+        self.assertEqual(['foo'], nodes)
+
+    def test_txid_in_run_tx(self):
+
+        txids = []
+        count = iter([1, 2, 3])
+
+        def _tx_func(tx):
+            for i in count:
+                txids.append(tx.txid)
+                if i != 3:
+                    raise Deadlock()
+
+        zktx.run_tx(zkhost, _tx_func, txid=5)
+        dd(txids)
+
+        self.assertEqual(5, txids[0])
+
+        for i in txids[1:]:
+            self.assertNotEqual(5, i)

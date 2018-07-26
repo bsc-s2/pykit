@@ -114,6 +114,7 @@ class ZKTransaction(object):
         self.got_keys[key] = curr
 
         if ltxid > self.txid:
+            self.delete_state(self.txid)
             raise HigherTXApplied('{tx} seen a higher txid applied: {txid}'.format(
                 tx=self, txid=ltxid))
 
@@ -504,6 +505,7 @@ class ZKTransaction(object):
                     has = self.has_state(self.txid)
                     if has:
                         self.tx_status = PAUSED
+                        self.got_keys = {}
 
                     else:
                         self.tx_status = PURGED
@@ -535,7 +537,7 @@ class ZKTransaction(object):
                                        locked=','.join(sorted(self.got_keys.keys())))
 
 
-def run_tx(zk, func, timeout=None, lock_timeout=None, args=(), kwargs=None):
+def run_tx(zk, func, txid=None, timeout=None, lock_timeout=None, args=(), kwargs=None):
 
     if timeout is None:
         timeout = DEFAULT_TIMEOUT
@@ -547,7 +549,8 @@ def run_tx(zk, func, timeout=None, lock_timeout=None, args=(), kwargs=None):
 
     while True:
 
-        tx = ZKTransaction(zk, timeout=expire_at - time.time(), lock_timeout=lock_timeout)
+        tx = ZKTransaction(zk, timeout=expire_at - time.time(), lock_timeout=lock_timeout, txid=txid)
+        txid = None
 
         try:
             with tx:

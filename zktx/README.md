@@ -860,13 +860,15 @@ a generotor yields tuple of (`txid`, `state`).
 ##  zktx.run_tx
 
 **syntax**:
-`zktx.run_tx(zk, func, timeout=None, lock_timeout=None, args=(), kwargs=None)`
+`zktx.run_tx(zk, func, txid=None, timeout=None, lock_timeout=None, args=(), kwargs=None)`
 
 Start a tx and run it.
 Tx operations are define by a callable: `func`.
 
 `func` accepts at least one argument `tx`.
 More arguments specified by `args` and `kwargs` are also passed to `func`.
+
+Use a specified `txid` when recovering a tx from tx state.
 
 If a `RetriableError` is raised during tx running, `run()` will catch it
 and create a new tx and call `func` again,
