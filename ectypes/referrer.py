@@ -32,6 +32,5 @@ class Referrer(FixedKeysDict):
 
     def is_pair(self, b):
         a = self
-
         return (a.ident()[:3] == b.ident()[:3]
                 and set([a['IsDel'], b['IsDel']]) == set([0, 1]))
