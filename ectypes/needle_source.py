@@ -7,6 +7,8 @@ from referrer import Referrer
 
 class NeedleSource(FixedKeysDict):
 
+    # referrers must be added in non-descending order
+
     keys_default = dict((('NeedleID', str),
                          ('Referrers', list),
                          ('Size', int),
@@ -24,12 +26,18 @@ class NeedleSource(FixedKeysDict):
 
     def add_referrer(self, referrer):
 
+        # before the new referrers is added into the Referrers,the Referrers
+        # are sorted fot they are imported from phy
+
         if not isinstance(referrer, Referrer):
             raise ValueError('referrer is not type Referrer')
 
         if len(self['Referrers']) > 1:
 
             last_ref = self['Referrers'][-1]
+
+            if referrer < last_ref:
+                raise ValueError('referrer is not added in non-descending order')
 
             if last_ref.is_pair(referrer):
                 if self.reserve_del:

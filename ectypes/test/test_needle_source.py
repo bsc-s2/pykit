@@ -109,6 +109,7 @@ class TestNeedleSource(unittest.TestCase):
         n1.add_referrer(ref7)
         self.assertTrue(n1['Referrers'][-1] == ref7)
         self.assertRaises(ValueError, n1.add_referrer, list_test)
+        self.assertRaises(ValueError, n1.add_referrer, ref8)
 
         n4.add_referrer(ref4)
         self.assertIs(len(n4['Referrers']), 2)
