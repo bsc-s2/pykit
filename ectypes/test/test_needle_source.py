@@ -17,7 +17,7 @@ n0 = needle_source.NeedleSource({
         'Referrers': [
             _make_referrer('3copy', 'key1', 123, 0),
             _make_referrer('3copy', 'key2', 123, 1),
-            _make_referrer('3copy', 'key3', 123, 1),
+            _make_referrer('3copy', 'key3', 123, 0),
         ],
         'Size': 10,
         'Url': '/'
@@ -25,7 +25,7 @@ n0 = needle_source.NeedleSource({
 n1 = needle_source.NeedleSource({
         'NeedleID': '123',
         'Referrers': [
-            _make_referrer('2copy', 'key1', 123, 1),
+            _make_referrer('3copy', 'key1', 123, 1),
             _make_referrer('3copy', 'key2', 123, 1),
             _make_referrer('3copy', 'key3', 123, 0),
         ],
@@ -56,23 +56,25 @@ n4 = needle_source.NeedleSource({
         'NeedleID': '1',
         'Referrers': [
             _make_referrer('3copy', 'key1', 123, 1),
-            _make_referrer('3copy', 'key3', 123, 1),
-            _make_referrer('3copy', 'key6', 123, 1),
+            _make_referrer('3copy', 'key3', 123, 0),
+            _make_referrer('3copy', 'key6', 123, 0),
         ],
         'Size': 10,
         'Url': '/'
     })
 n4.reserve_del = False
 
-ref0 = referrer.Referrer(Scope="3copy", RefKey="key3", Ver=123, IsDel=0)
+ref0 = referrer.Referrer(Scope="3copy", RefKey="key3", Ver=123, IsDel=1)
 ref1 = referrer.Referrer(Scope="3copy", RefKey="key3", Ver=1234, IsDel=0)
 ref2 = referrer.Referrer(Scope="3copy", RefKey="key4", Ver=1243, IsDel=1)
 ref3 = referrer.Referrer(Scope="3copy", RefKey="key5", Ver=123, IsDel=0)
-ref4 = referrer.Referrer(Scope="3copy", RefKey="key6", Ver=123, IsDel=0)
-ref5 = referrer.Referrer(Scope="3copy", RefKey="key3", Ver=123, IsDel=0)
-ref6 = referrer.Referrer(Scope="3copy", RefKey="key3", Ver=123, IsDel=0)
+ref4 = referrer.Referrer(Scope="3copy", RefKey="key6", Ver=123, IsDel=1)
+ref5 = referrer.Referrer(Scope="3copy", RefKey="key3", Ver=123, IsDel=1)
+ref6 = referrer.Referrer(Scope="3copy", RefKey="key3", Ver=1234, IsDel=1)
 ref7 = referrer.Referrer(Scope="3copy", RefKey="key3", Ver=12345, IsDel=1)
 ref8 = referrer.Referrer(Scope="3copy", RefKey="key1", Ver=12345, IsDel=1)
+ref9 = referrer.Referrer(Scope="3copy", RefKey="key1", Ver=123456, IsDel=1)
+ref10 = referrer.Referrer(Scope="3copy", RefKey="key1", Ver=1234567, IsDel=0)
 list_test = [1, 2, 3, 4, ]
 
 
@@ -111,6 +113,10 @@ class TestNeedleSource(unittest.TestCase):
         n4.add_referrer(ref4)
         self.assertIs(len(n4['Referrers']), 2)
         n4.add_referrer(ref6)
+        self.assertIs(len(n4['Referrers']), 2)
+        n4.add_referrer(ref5)
         self.assertIs(len(n4['Referrers']), 1)
-        n4.add_referrer(ref8)
+        n4.add_referrer(ref9)
         self.assertIs(len(n4['Referrers']), 1)
+        n4.add_referrer(ref10)
+        self.assertIs(len(n4['Referrers']), 2)
