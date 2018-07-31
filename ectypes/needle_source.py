@@ -1,0 +1,146 @@
+#!/usr/bin/env python2
+# coding: utf-8
+
+import copy
+import heapq
+
+from pykit.dictutil import FixedKeysDict
+
+
+class NeedleIdNotEqual(Exception):
+    pass
+
+
+class Referrer(FixedKeysDict):
+
+    keys_default = dict((('Scope',  str),
+                         ('RefKey', str),
+                         ('Ver',    int),
+                         ('IsDel', int)))
+    ident_keys = ('Scope', 'RefKey', 'Ver', 'IsDel')
+
+    def __eq__(self, b):
+        return self.ident() == b.ident()
+
+    def __ne__(self, b):
+        return self.ident() != b.ident()
+
+    def __ge__(self, b):
+        return self.ident() >= b.ident()
+
+    def __gt__(self, b):
+        return self.ident() > b.ident()
+
+    def __le__(self, b):
+        return self.ident() <= b.ident()
+
+    def __lt__(self, b):
+        return self.ident() < b.ident()
+
+    def is_pair(self, b):
+        a = self
+
+        return (a.ident()[:3] == b.ident()[:3]
+                and set([a['IsDel'], b['IsDel']]) == set([0, 1]))
+
+
+class NeedleSource(FixedKeysDict):
+
+    keys_default = dict((('NeedleID', str),
+                         ('Referrers', list),
+                         ('Size',     int),
+                         ('Url',      str)))
+    ident_keys = ('NeedleID',)
+
+    def __init__(self, *args, **argkv):
+
+        self.reserve_del = True
+
+        super(NeedleSource, self).__init__(*args, **argkv)
+
+    def __lt__(self, another):
+        # implement `<` for heapq.merge
+        return self.ident() < another.ident()
+
+    def add_referrer(self, referrer):
+
+        if not isinstance(referrer, Referrer):
+            raise ValueError('referrer is not type Referrer')
+
+        # self.referrer is sorted
+        if len(self['Referrers']) > 0:
+            last_ref = self['Referrers'][-1]
+
+            if last_ref.is_pair(referrer):
+                if self.reserve_del:
+                    ref = Referrer(self['Referrers'][-1])
+                    ref['IsDel'] = 1
+                    self['Referrers'][-1] = ref
+                else:
+                    del self['Referrers'][-1]
+                return
+
+        if not self.reserve_del and referrer['IsDel'] == 1:
+            return
+
+        self['Referrers'].append(referrer)
+
+    def needle_id_equal(self, another):
+        return self.ident() == another.ident()
+
+
+def merge_referrer(needle_sources):
+
+    merged_num = len(needle_sources)
+    if merged_num == 0:
+        return None
+
+    needle_ids = [n['NeedleID'] for n in needle_sources]
+    ndl_src = copy.deepcopy(needle_sources[0])
+
+    if set(needle_ids) != set([ndl_src['NeedleID']]):
+        raise NeedleIdNotEqual(needle_ids)
+
+    refs = [n['Referrers'] for n in needle_sources]
+    refs = heapq.merge(*refs)
+
+    ndl_src['Referrers'] = []
+    for ref in refs:
+        ndl_src.add_referrer(ref)
+
+    if len(ndl_src['Referrers']) > 0:
+        return ndl_src
+    else:
+        return None
+
+
+def merge_needle_source_iters(*needle_source_iters):
+
+    ndl_src_iter = heapq.merge(*needle_source_iters)
+
+    ndl_src_curr = ndl_src_iter.next()
+    ndl_src_next = ndl_src_curr
+    reserve_del = ndl_src_curr.reserve_del
+
+    while True:
+
+        merged_ndls = [ndl_src_curr]
+        for ndl_src_next in ndl_src_iter:
+            if ndl_src_curr.needle_id_equal(ndl_src_next):
+                merged_ndls.append(ndl_src_next)
+            else:
+                break
+
+        if reserve_del and len(merged_ndls) == 1:
+            yield ndl_src_curr
+
+        else:
+            ndl_src = merge_referrer(merged_ndls)
+
+            if ndl_src is not None:
+                yield ndl_src
+
+        if ndl_src_next == merged_ndls[-1]:
+            break
+
+        ndl_src_curr = ndl_src_next
