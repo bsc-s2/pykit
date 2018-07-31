@@ -9,6 +9,7 @@ from pykit import utfjson
 from pykit import ututil
 from pykit import zktx
 from pykit.zktx.status import COMMITTED
+from pykit.zktx.status import PURGED
 
 dd = ututil.dd
 
@@ -31,8 +32,8 @@ class TestRedis(unittest.TestCase):
         redisutil.wait_serve(('192.168.52.40', redis_port))
 
         self.redis_cli = redisutil.get_client(('192.168.52.40', redis_port))
-        self.txid_path = "tx/txidset"
-        self.storage = zktx.RedisStorage(self.redis_cli, self.txid_path)
+        self.journal_id_set_path = "tx/journal_id_set"
+        self.storage = zktx.RedisStorage(self.redis_cli, self.journal_id_set_path)
 
     def tearDown(self):
         utdocker.remove_container('redis-0')
@@ -120,22 +121,23 @@ class TestRedis(unittest.TestCase):
 
         self.assertEqual('foo', val)
 
-    def test_get_txidset(self):
+    def test_get_set_journal_id_set(self):
         cases = (
-            [[1, 2]],
-            [[7, 20]],
-            [[1, 3], [7, 8]],
-            [[1, 2], [10, 15]],
+            {COMMITTED: [[1, 3]], PURGED: []},
+            {COMMITTED: [[1, 3]], PURGED: [[4, 7]]},
+            {COMMITTED: [[1, 3], [7, 10]], PURGED: []},
+            {COMMITTED: [[1, 3], [7, 10]], PURGED: [[20, 30]]},
+            {COMMITTED: [[1, 3], [7, 10]], PURGED: [[20, 30], [40, 50]]},
         )
 
+        self.redis_cli.delete(self.journal_id_set_path)
+        self.assertEqual([], self.storage.journal_id_set.get()[COMMITTED])
+        self.assertEqual([], self.storage.journal_id_set.get()[PURGED])
+
         for c in cases:
-            val = {
-                COMMITTED: c,
-            }
-            self.redis_cli.delete(self.txid_path)
-            self.redis_cli.set(self.txid_path, utfjson.dump(val))
-            txidset = self.storage.txidset.get()
-            self.assertEqual(c, txidset[COMMITTED])
+            self.storage.set_journal_id_set(c)
+            journal_id_set = self.storage.journal_id_set.get()
+            self.assertEqual(c, journal_id_set)
 
     def test_apply_jour(self):
         cases = (
@@ -162,16 +164,28 @@ class TestRedis(unittest.TestCase):
 
                 self.assertEqual(v, utfjson.load(actual))
 
-    def test_set_txidset(self):
+        jour = {
+            'meta/h/k': 'foo',
+        }
+        self.storage.apply_jour(jour)
+        self.assertEqual('foo', self.storage.record.hget('h', 'k'))
+        jour = {
+            'meta/h/k': None,
+        }
+
+        self.storage.apply_jour(jour)
+        self.assertIsNone(self.storage.record.hget('h', 'k'))
+
+    def test_add_journal_id(self):
+        self.redis_cli.delete(self.journal_id_set_path)
+
         cases = (
-            [[1, 2]],
-            [[7, 20]],
-            [[1, 3], [7, 8]],
-            [[1, 2], [10, 15]],
+            (COMMITTED, 1, {COMMITTED: [[1, 2]], PURGED: []}),
+            (PURGED, 2, {COMMITTED: [[1, 2]], PURGED: [[2, 3]]}),
+            (COMMITTED, 2, {COMMITTED: [[1, 3]], PURGED: [[2, 3]]}),
+            (PURGED, 10, {COMMITTED: [[1, 3]], PURGED: [[2, 3], [10, 11]]}),
         )
 
-        for c in cases:
-            self.storage.set_txidset(COMMITTED, c)
-
-            txidset = self.storage.txidset.get()
-            self.assertEqual(c, txidset[COMMITTED])
+        for st, jid, expected in cases:
+            self.storage.add_to_journal_id_set(st, jid)
+            self.assertEqual(expected, self.storage.journal_id_set.get())

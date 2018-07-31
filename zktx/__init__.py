@@ -7,13 +7,13 @@ from .exceptions import (
     Aborted,
     ConnectionLoss,
     Deadlock,
-    HigherTXApplied,
     RetriableError,
     TXError,
     TXTimeout,
     NotLocked,
     UnlockNotAllowed,
     UserAborted,
+    CommitError,
 )
 
 from .status import (
@@ -66,11 +66,11 @@ __all__ = [
     "Aborted",
     "ConnectionLoss",
     "Deadlock",
-    "HigherTXApplied",
     "RetriableError",
     "TXError",
     "TXTimeout",
     "UserAborted",
+    "CommitError",
     "NotLocked",
     "UnlockNotAllowed",
 

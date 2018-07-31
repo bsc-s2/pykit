@@ -46,8 +46,8 @@ class TestZKConf(unittest.TestCase):
         self.assertEqual('tx_dir/state/0000000001',   c.tx_state(1))
         self.assertEqual('tx_dir/journal/',           c.journal())
         self.assertEqual('tx_dir/journal/a',          c.journal('a'))
-        self.assertEqual('tx_dir/journal/0000000001', c.journal(1))
-        self.assertEqual('tx_dir/txidset',            c.txidset())
+        self.assertEqual('tx_dir/journal/journal_id0000000001', c.journal(1))
+        self.assertEqual('tx_dir/journal_id_set',          c.journal_id_set())
         self.assertEqual('tx_dir/txid_maker',         c.txid_maker())
         self.assertEqual('seq_dir/',                  c.seq())
         self.assertEqual('seq_dir/a',                 c.seq('a'))
@@ -104,8 +104,8 @@ class TestZKConf(unittest.TestCase):
         self.assertEqual('TX_DIR/state/0000000001',   c.tx_state(1))
         self.assertEqual('TX_DIR/journal/',           c.journal())
         self.assertEqual('TX_DIR/journal/a',          c.journal('a'))
-        self.assertEqual('TX_DIR/journal/0000000001', c.journal(1))
-        self.assertEqual('TX_DIR/txidset',            c.txidset())
+        self.assertEqual('TX_DIR/journal/journal_id0000000001', c.journal(1))
+        self.assertEqual('TX_DIR/journal_id_set',          c.journal_id_set())
         self.assertEqual('TX_DIR/txid_maker',         c.txid_maker())
 
         self.assertEqual(zkutil.make_kazoo_digest_acl((('FOO', 'BAR', 'CD'), ('XP', '123', 'CDRWA'))),

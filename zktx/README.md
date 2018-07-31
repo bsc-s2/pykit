@@ -14,11 +14,11 @@
   - [NotLocked](#notlocked)
   - [UnlockNotAllowed](#unlocknotallowed)
   - [RetriableError](#retriableerror)
-    - [`HigherTXApplied(Aborted, RetriableError)`](#highertxappliedaborted-retriableerror)
     - [`Deadlock(Aborted, RetriableError)`](#deadlockaborted-retriableerror)
   - [UserAborted](#useraborted)
   - [TXTimeout](#txtimeout)
   - [ConnectionLoss](#connectionloss)
+  - [CommitError](#commiterror)
 - [Accessor classes](#accessor-classes)
   - [zktx.KeyValue](#zktxkeyvalue)
   - [zktx.Value](#zktxvalue)
@@ -34,14 +34,13 @@
       - [Storage.try_release_key](#storagetry_release_key)
     - [Storage helper methods](#storage-helper-methods)
   - [zktx.StorageHelper](#zktxstoragehelper)
-    - [StorageHelper.apply_record](#storagehelperapply_record)
-    - [StorageHelper.add_to_txidset](#storagehelperadd_to_txidset)
+    - [StorageHelper.add_to_journal_id_set](#storagehelperadd_to_journal_id_set)
   - [zktx.ZKStorage](#zktxzkstorage)
   - [zktx.RedisStorage](#zktxredisstorage)
     - [zktx.RedisStorage.apply_jour](#zktxredisstorageapply_jour)
     - [zktx.RedisStorage.apply_record](#zktxredisstorageapply_record)
-    - [zktx.RedisStorage.add_to_txidset](#zktxredisstorageadd_to_txidset)
-    - [zktx.RedisStorage.set_txidset](#zktxredisstorageset_txidset)
+    - [zktx.RedisStorage.add_to_journal_id_set](#zktxredisstorageadd_to_journal_id_set)
+    - [zktx.RedisStorage.set_journal_id_set](#zktxredisstorageset_journal_id_set)
 - [Transaction classes](#transaction-classes)
   - [zktx.TXRecord](#zktxtxrecord)
   - [zktx.ZKTransaction](#zktxzktransaction)
@@ -168,28 +167,6 @@ It is a super class of all retrieable errors.
 
 Sub classes are:
 
-### `HigherTXApplied(Aborted, RetriableError)`
-
-It is raised if a higher txid than current tx has been seen when reading a `record`.
-
-Because tx must be applied in order, if a higher txid is seen user should
-abort current tx and retry(with a new higher txid).
-
-E.g.:
-
-```
-| tx-1                       | tx-2                        |
-| :---                       | :---                        |
-| created                    | created                     |
-|                            | lock('foo') OK              |
-| lock('foo') blocked        |                             |
-|                            | get('foo') latest-txid = -1 |
-|                            | set('foo', 10)              |
-|                            | commit()                    |
-| lock('foo') OK             |                             |
-| get('foo') latest-txid = 2 |                             |
-| raise HigherTXApplied()    |                             |
-```
 
 ### `Deadlock(Aborted, RetriableError)`
 
@@ -215,6 +192,12 @@ It is raised if tx fails to commit before specified running time(`timeout`).
 ##  ConnectionLoss
 
 It is raised if tx loses connection to zk.
+
+**A program should always catch this error**.
+
+##  CommitError
+
+It is raised if failed to call `tx.commit()`.
 
 **A program should always catch this error**.
 
@@ -374,12 +357,10 @@ a class that implements `Storage` must provides 3 accessors(`KeyValue` and `Valu
 -   `record`:
     is a `KeyValue` to get or set a user-data record.
 
-    A record value is a `list` of `[txid, value]`:
+    A record value is a `list` of `value`:
 
     ```python
-    [[1, "foo"],
-     [2, "bar"],
-    ]
+    ["foo", "bar"]
     ```
 
 -   `journal`:
@@ -388,11 +369,9 @@ a class that implements `Storage` must provides 3 accessors(`KeyValue` and `Valu
     Journal value is not define on storage layer.
     A TX engine defines the value format itself.
 
--   `txidset`:
-    is a `Value`.
-    It is a single value accessor to get or set transaction id set.
-
-    Value of `txidset` is a `dict` of 2 `RangeSet`(see module `rangeset`):
+-   `journal_id_set`:
+    It is a single value accessor to get or set journal id set.
+    It is a `dict` of 2 `RangeSet`, (see module `rangeset`).
 
     ```python
     {
@@ -400,13 +379,8 @@ a class that implements `Storage` must provides 3 accessors(`KeyValue` and `Valu
         "PURGED": RangeSet(),
     }
     ```
-
-    -   `COMMITTED` contains committed txid.
-
-    -   `PURGED` contains aborted txid and txid whose journal has been removed.
-        Abort means a tx is killed before writing a `journal`.
-
-    > `COMMITTED` and `PURGED` has no intersection.
+    -   `COMMITTED` contains committed journal id.
+    -   `PURGED` contains journal id whose journal has been deleted.
 
 
 ### Storage methods
@@ -467,49 +441,23 @@ Since underlying accessors has already been provided, these 3 methods are
 implementation unrelated.
 
 
-###  StorageHelper.apply_record
+###  StorageHelper.add_to_journal_id_set
 
 **syntax**:
-`StorageHelper.apply_record(txid, key, value)`
+`StorageHelper.add_to_journal_id_set(status, journal_id)`
 
-This method applies an update to underlying storage.
+It records a journal id as one of the possible status: `COMMITTED` or `PURGED`.
 
-It requires 2 accessor methods: `self.record.get(key)`
-and `self.record.set(key, value, version=None)`.
-
-**arguments**:
-
--   `txid`:
-    transaction id.
-
--   `key`:
-    record key.
-
--   `value`:
-    record value.
-
-**return**:
-a `bool` indicates if change has been made to underlying storage.
-Normal it is `False` if a higher txid has already been applied.
-
-
-###  StorageHelper.add_to_txidset
-
-**syntax**:
-`StorageHelper.add_to_txidset(status, txid)`
-
-It records a txid as one of the possible status: COMMITTED or PURGED.
-
-It requires 2 accessor methods: `self.txidset.get()`
-and `self.txidset.set(value, version=None)`.
+It requires 2 accessor methods: `self.journal_id_set.get()`
+and `self.journal_id_set.set(value, version=None)`.
 
 **arguments**:
 
 -   `status`:
-    specifies tx status
+    specifies journal status
 
--   `txid`:
-    transaction id.
+-   `journal_id`:
+    journal id.
 
 **return**:
 Nothing
@@ -532,7 +480,7 @@ stored in zk.
 ##  zktx.RedisStorage
 
 **syntax**:
-`zktx.RedisStorage(redis_cli, txidset_path)`
+`zktx.RedisStorage(redis_cli, journal_id_set_path)`
 
 It provide some functions to save data with redis.
 
@@ -541,8 +489,8 @@ It provide some functions to save data with redis.
 -   `redis_cli`:
     is a `redis.StrictRedis` instance.
 
--   `txidset_path`:
-    the path of txidset in redis.
+-   `journal_id_set_path`:
+    the path of journal id set in redis.
 
 
 ### zktx.RedisStorage.apply_jour
@@ -580,39 +528,36 @@ Set `val` to redis with `key`.
 nothing
 
 
-### zktx.RedisStorage.add_to_txidset
+### zktx.RedisStorage.add_to_journal_id_set
 
 **syntax**:
-`zktx.RedisStorage.add_to_txidset(status, txid)`:
+`zktx.RedisStorage.add_to_journal_id_set(status, journal_id)`:
 
-It records a txid as one of the possible status: COMMITTED or PURGED.
+It records a journal id as one of the possible status: `COMMITTED` or `PURGED`.
 
 **arguments**:
 
 -   `status`:
-    specifies tx status.
+    specifies journal status.
 
--   `txid`:
-    transaction id.
+-   `journal_id`:
+    journal id.
 
 **return**:
 nothing
 
 
-### zktx.RedisStorage.set_txidset
+### zktx.RedisStorage.set_journal_id_set
 
 **syntax**:
-`zktx.RedisStorage.set_txidset(status, txidset)`:
+`zktx.RedisStorage.set_journal_id_set(journal_id_set)`:
 
-It records a txidset as one of the possible status: COMMITTED or PURGED.
+It records a journal id set.
 
 **arguments**:
 
--   `status`:
-    specifies tx status.
-
--   `txid`:
-    transaction id set.
+-   `journal_id_set`:
+    journal id set.
 
 **return**:
 nothing
@@ -624,12 +569,25 @@ nothing
 ##  zktx.TXRecord
 
 **syntax**:
-`zktx.TXRecord(k, v, txid)`
+`zktx.TXRecord(k, v, version, values)`
 
-It is a simple wrapper class of key, value and the `txid` in which the value is
-updated.
+It is a simple wrapper class of a `record`.
 
 `ZKTransaction.lock_get()` returns a `TXRecord` instance.
+
+**arguments**:
+
+-   `k`:
+    the key of the record.
+
+-   `v`:
+    the latest value of the record.
+
+-   `version`:
+    the version of the zk node.
+
+-   `values`:
+    a `list`, it contains the history value of the record.
 
 
 ##  zktx.ZKTransaction
@@ -939,7 +897,7 @@ Sync data from Zookeeper to the `storage`.
 
 -   `storage`:
     the instance that user specifies.
-    It must provide 4 methods(`apply_jour`, `apply_record`, `add_to_txidset`, `set_txidset`)
+    It must provide 4 methods(`apply_jour`, `apply_record`, `add_to_journal_id_set`, `set_journal_id_set`)
     like `zktx.RedisStorage`.
 
 
@@ -958,7 +916,7 @@ nothing.
 from pykit import zktx
 from pykit import zkutil
 
-storage = zktx.RedisStorage(redis_cli, 'txidset')
+storage = zktx.RedisStorage(redis_cli, 'journal_id_set')
 zke, _ = zkutil.kazoo_client_ext('127.0.0.1:2181')
 
 slave = zktx.Slave(zke, storage)

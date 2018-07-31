@@ -4,12 +4,10 @@ import unittest
 from kazoo.exceptions import BadVersionError
 
 from pykit import rangeset
-from pykit import threadutil
 from pykit import ututil
 from pykit import zktx
 from pykit.zktx import COMMITTED
 from pykit.zktx import PURGED
-from pykit.zktx import STATUS
 
 dd = ututil.dd
 
@@ -57,7 +55,7 @@ class PseudoKVAccessor(dict):
         pass
 
 
-class TxidsetAccessor(object):
+class JournalidsetAccessor(object):
     def __init__(self):
         self.lock = threading.RLock()
         self.ver = 0
@@ -92,7 +90,7 @@ class PseudoStorage(zktx.StorageHelper):
             'bar': ([[-1, None]], 1),
         })
 
-        self.txidset = TxidsetAccessor()
+        self.journal_id_set = JournalidsetAccessor()
 
         self.journal = PseudoKVAccessor({})
 
@@ -102,142 +100,35 @@ class TestTXStorageHelper(unittest.TestCase):
     def setUp(self):
         self.sto = PseudoStorage()
 
-    def test_get_latest(self):
-
-        rst = self.sto.record.get('foo')
-        self.assertEqual(([[1, 1], [17, 17]], 0), rst)
-
-        rst = self.sto.record.get('bar')
-        self.assertEqual(([[-1,  None]], 1), rst)
-
-    def test_apply_record(self):
-
-        cases = (
-                (0,  'foo', 'fooval', (None,     0), '<=max txid'),
-                (1,  'foo', 'fooval', (1,        0), '<=max txid'),
-                (16, 'foo', 'fooval', (None,     0), '<=max txid'),
-                (17, 'foo', 'fooval', (17,       0), '<=max txid'),
-                (18, 'foo', 'fooval', ('fooval', 1), '>max txid'),
-                (1,  'bar', 'barval', ('barval', 2), '>max txid'),
-                (1,  'bar', 'barval', ('barval', 2), '<=max txid'),
-        )
-
-        for txid, key, value, expected, mes in cases:
-
-            dd(txid, key, value, expected, mes)
-
-            self.sto.apply_record(txid, key, value)
-
-            rec, ver = self.sto.record.get(key)
-            val_of_txid = dict(rec).get(txid)
-            self.assertEqual(expected, (val_of_txid, ver))
-
-    def test_apply_record_max_history(self):
-
-        s, e = 100, 150
-        for txid in range(s, e):
-            self.sto.apply_record(txid, 'foo', txid)
-
-        rec, ver = self.sto.record.get('foo')
-        self.assertEqual(e-s, ver)
-        self.assertEqual(self.sto.max_value_history, len(rec))
-
-    def test_apply_record_concurrently(self):
-
-        n_thread = 10
-        n_repeat = 100
-
-        self.sto.max_value_history = n_thread * n_repeat + 1
-
-        l = threading.RLock()
-        sess = {'txid': 0}
-        success_tx = {-1: True}
-
-        def _apply(ithread):
-            for ii in range(n_repeat):
-
-                with l:
-                    sess['txid'] += 1
-                    txid = sess['txid']
-
-                if self.sto.apply_record(txid, 'bar', txid):
-                    with l:
-                        success_tx[txid] = True
-
-        ths = [threadutil.start_daemon(_apply, args=(ii, ))
-               for ii in range(n_thread)]
-
-        for th in ths:
-            th.join()
-
-        rec, ver = self.sto.record.get('bar')
-        dd(len(rec))
-        dd(ver)
-
-        self.assertEqual(set(success_tx.keys()),
-                         set([x[0] for x in rec]))
-
-        rec, ver = self.sto.record.get('bar')
-        dd(rec, ver)
-
-        self.assertLessEqual(ver, 1+n_thread*n_repeat)
-        self.assertEqual(n_thread*n_repeat, rec[-1][0])
-        self.assertEqual(n_thread*n_repeat, rec[-1][1])
-
-    def _rand_txids(self):
+    def _rand_journal_ids(self):
         for ii in range(100):
-            txid = int(ii % 53 * 1.3)
-            yield txid
+            journal_id = int(ii % 53 * 1.3)
+            yield journal_id
 
-    def test_add_to_txidset(self):
+    def test_add_to_journal_id_set(self):
+        self.assertRaises(KeyError, self.sto.add_to_journal_id_set, 'foo', 1)
 
-        self.assertRaises(KeyError, self.sto.add_to_txidset, 'foo', 1)
+        cases = (1, 30, 100, 1000)
+        for jid in cases:
+            self.sto.add_to_journal_id_set(COMMITTED, jid)
+            rst, ver = self.sto.journal_id_set.get()
+            for i in range(jid):
+                self.assertTrue(rst[COMMITTED].has(i))
 
-        expected = {txid: True
-                    for txid in self._rand_txids()}
+        expected = {jid: True
+                    for jid in self._rand_journal_ids()}
 
-        for status in STATUS:
-            for txid in self._rand_txids():
-                self.sto.add_to_txidset(status, txid)
+        for jid in self._rand_journal_ids():
+            self.sto.add_to_journal_id_set(PURGED, jid)
 
-            dd(sorted(expected.keys()))
+        rst, ver = self.sto.journal_id_set.get()
 
-            rst, ver = self.sto.txidset.get()
-            dd(rst[status])
+        for journal_id in expected:
+            self.assertTrue(rst[PURGED].has(journal_id))
 
-            for txid in expected:
-                self.assertTrue(rst[status].has(txid))
-
-            for txid in range(100):
-                if txid not in expected:
-                    self.assertFalse(rst[status].has(txid))
-
-    def test_add_to_txidset_concurrent(self):
-
-        expected = {txid: True
-                    for txid in self._rand_txids()}
-
-        n_thread = 2
-        status = COMMITTED
-
-        def _add():
-            for txid in self._rand_txids():
-                self.sto.add_to_txidset(status, txid)
-
-        for th in [threadutil.start_daemon(_add)
-                   for _ in range(n_thread)]:
-
-            th.join()
-
-        rst, ver = self.sto.txidset.get()
-        dd(rst[status])
-
-        for txid in expected:
-            self.assertTrue(rst[status].has(txid))
-
-        for txid in range(100):
-            if txid not in expected:
-                self.assertFalse(rst[status].has(txid))
+        for journal_id in range(100):
+            if journal_id not in expected:
+                self.assertFalse(rst[PURGED].has(journal_id))
 
     def test_purge(self):
 
@@ -245,23 +136,18 @@ class TestTXStorageHelper(unittest.TestCase):
 
         cases = (
                 (
-                    {PURGED: [],        COMMITTED: [[1, 100]]},
-                    {PURGED: [[1, 95]], COMMITTED: [[95, 100]]},
+                    {PURGED: [],        COMMITTED: [[0, 100]]},
+                    {PURGED: [[0, 95]], COMMITTED: [[0, 100]]},
                 ),
-            # with unknown txid 10
-            (
-                    {PURGED: [[1, 10]],           COMMITTED: [[11, 20]]},
-                    {PURGED: [[1, 10], [11, 15]], COMMITTED: [[15, 20]]},
+                (
+                    {PURGED: [[1, 10]],  COMMITTED: [[0, 200]]},
+                    {PURGED: [[0, 195]], COMMITTED: [[0, 200]]},
                 ),
-            # no need to purge
-            (
-                    {PURGED: [[1, 10]], COMMITTED: [[11, 15]]},
-                    {PURGED: [[1, 10]], COMMITTED: [[11, 15]]},
+                # no need to purge
+                (
+                    {PURGED: [[0, 95]], COMMITTED: [[0, 100]]},
+                    {PURGED: [[0, 95]], COMMITTED: [[0, 100]]},
                 ),
-            (
-                    {PURGED: [[1, 10]], COMMITTED: [[11, 14], [15, 18]]},
-                    {PURGED: [[1, 10], [11, 12]], COMMITTED: [[12, 14], [15, 18]]},
-            ),
         )
 
         for inp, expected in cases:

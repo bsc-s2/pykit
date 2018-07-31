@@ -27,9 +27,9 @@ class ZKStorage(Storage):
 
         self.zke = zke
 
-        self.txidset = ZKValue(self.zke,
-                               self.zke._zkconf.txidset,
-                               load=txidset_load)
+        self.journal_id_set = ZKValue(self.zke,
+                                      self.zke._zkconf.journal_id_set,
+                                      load=journal_id_set_load)
 
         self.journal = ZKKeyValue(self.zke,
                                   self.zke._zkconf.journal)
@@ -40,8 +40,7 @@ class ZKStorage(Storage):
 
         self.state = ZKKeyValue(self.zke,
                                 self.zke._zkconf.tx_state,
-                                nonode_callback=state_nonode_cb,
-                                )
+                                nonode_callback=state_nonode_cb)
 
     def acquire_key_loop(self, txid, key, timeout):
 
@@ -76,7 +75,7 @@ class ZKStorage(Storage):
         return keylock
 
 
-def txidset_load(value):
+def journal_id_set_load(value):
     rst = {}
     for k in STATUS:
         if k not in value:
@@ -90,7 +89,7 @@ def record_nonode_cb():
     If NoNodeError received, make a default value for a record
     """
 
-    return [(-1, None)], -1
+    return [None], -1
 
 
 def state_nonode_cb():

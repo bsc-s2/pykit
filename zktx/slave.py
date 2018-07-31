@@ -9,10 +9,11 @@ from pykit import rangeset
 from pykit import zkutil
 
 from .status import COMMITTED
+from .status import PURGED
 from .zkaccessor import ZKKeyValue
 from .zkaccessor import ZKValue
 from .zkstorage import record_nonode_cb
-from .zkstorage import txidset_load
+from .zkstorage import journal_id_set_load
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +25,11 @@ class Slave(object):
 
         self.zke = zke
         self.storage = storage
-        self.zk_cmt_txidset = None
+        self.zk_journal_id_set = None
 
-        self.txidset = ZKValue(self.zke,
-                               self.zke._zkconf.txidset,
-                               load=txidset_load)
+        self.journal_id_set = ZKValue(self.zke,
+                                      self.zke._zkconf.journal_id_set,
+                                      load=journal_id_set_load)
 
         self.journal = ZKKeyValue(self.zke,
                                   self.zke._zkconf.journal)
@@ -37,24 +38,26 @@ class Slave(object):
                                  self.zke._zkconf.record,
                                  nonode_callback=record_nonode_cb)
 
-    def _get_uncommitted_txids(self):
-        storage_txidset = self.storage.txidset.get()
+    def _get_uncommitted_journal_ids(self):
+        storage_journal_id_set = self.storage.journal_id_set.get()
 
-        subset = rangeset.substract(self.zk_cmt_txidset, storage_txidset[COMMITTED])
+        subset = rangeset.substract(self.zk_journal_id_set[COMMITTED],
+                                    storage_journal_id_set[COMMITTED])
 
         for begin, end in subset:
-            for i in range(begin, end):
-                yield i
+            for jid in range(begin, end):
+                yield jid
 
-    def _get_all_records(self):
+    def _set_all_records(self):
         record_dir = self.zke._zkconf.record_dir()
         meta_path = ''.join([record_dir, 'meta'])
         names = self.zke.get_children(meta_path)
 
-        rst = {}
+        existed = {}
         for n in names:
             keys_path = '/'.join([meta_path, n])
             keys = self.zke.get_children(keys_path)
+            existed[n] = {}
 
             for k in keys:
                 path = '/'.join([keys_path, k])
@@ -63,46 +66,27 @@ class Slave(object):
                 # k='record_dir/meta/server/<server_id>
                 # remove record_dir
                 path = path[len(record_dir):]
-                rst[path] = val
+                self.storage.apply_record(path, val[-1])
+                existed[n][k] = 1
 
-        return rst
-
-    def _set_all_records(self):
-        records = self._get_all_records()
-        for k, v in records.items():
-
-            while len(v) > 0:
-                txid = v[-1][0]
-                if not self.zk_cmt_txidset.has(txid):
-                    v.pop()
-                    logger.warn('txid {txid} not in {cmt_txids}'.format(
-                        txid=txid, cmt_txids=self.zk_cmt_txidset))
-
-                else:
-                    break
-
-            else:
-                logger.error('record {k} txids {txids} not in {cmt_txids}'.format(
-                    k=k, txids=v, cmt_txids=self.zk_cmt_txidset))
-                continue
-
-            self.storage.apply_record(k, v[-1][1])
-
-        self.storage.set_txidset(COMMITTED, self.zk_cmt_txidset)
+        self.storage.delete_absent_record(existed)
+        self.storage.set_journal_id_set(self.zk_journal_id_set)
 
     def apply(self):
-        sets, _ = self.txidset.get()
-        self.zk_cmt_txidset = sets[COMMITTED]
+        self.zk_journal_id_set, _ = self.journal_id_set.get()
 
-        for txid in self._get_uncommitted_txids():
+        for journal_id in self._get_uncommitted_journal_ids():
 
             try:
-                jour, _ = self.journal.get(txid)
+                if self.zk_journal_id_set[PURGED].has(journal_id):
+                    raise NoNodeError('journal {jid:0>10} has been deleted'.format(jid=journal_id))
+
+                jour, _ = self.journal.get(journal_id)
 
             except NoNodeError:
-                logger.warn('jour not found txid: {txid}'.format(txid=txid))
+                logger.warn('journal not found journal id: {jid:0>10}'.format(jid=journal_id))
                 self._set_all_records()
                 return
 
             self.storage.apply_jour(jour)
-            self.storage.add_to_txidset(COMMITTED, txid)
+            self.storage.add_to_journal_id_set(COMMITTED, journal_id)

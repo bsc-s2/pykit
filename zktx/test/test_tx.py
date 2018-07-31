@@ -3,7 +3,8 @@
 
 import time
 
-from pykit import rangeset
+from kazoo.exceptions import NoNodeError
+
 from pykit import threadutil
 from pykit import utfjson
 from pykit import ututil
@@ -12,12 +13,12 @@ from pykit.zktx import COMMITTED
 from pykit.zktx import PURGED
 from pykit.zktx import ConnectionLoss
 from pykit.zktx import Deadlock
-from pykit.zktx import HigherTXApplied
 from pykit.zktx import NotLocked
 from pykit.zktx import TXError
 from pykit.zktx import TXTimeout
 from pykit.zktx import UnlockNotAllowed
 from pykit.zktx import UserAborted
+from pykit.zktx import CommitError
 from pykit.zktx import ZKTransaction
 from pykit.zktx.test import base
 
@@ -33,7 +34,7 @@ class TXBase(base.ZKTestBase):
 
         self.zk.create('tx', 'tx')
         self.zk.create('lock', '{}')
-        self.zk.create('tx/txidset', '{}')
+        self.zk.create('tx/journal_id_set', '{}')
         self.zk.create('tx/alive', '{}')
         self.zk.create('tx/txid_maker', '{}')
         self.zk.create('tx/journal', '{}')
@@ -58,10 +59,10 @@ class TestTX(TXBase):
         tx.commit()
 
         rst, ver = self.zk.get('record/foo')
-        self.assertEqual([[-1, None], [1, 1]], utfjson.load(rst))
+        self.assertEqual([None, 1], utfjson.load(rst))
 
-        rst, ver = self.zk.get('tx/txidset')
-        self.assertEqual({COMMITTED: [[1, 2]],
+        rst, ver = self.zk.get('tx/journal_id_set')
+        self.assertEqual({COMMITTED: [[0, 1]],
                           PURGED: [],
                           }, utfjson.load(rst))
 
@@ -84,7 +85,7 @@ class TestTX(TXBase):
             t1.commit()
 
         rst, ver = self.zk.get('record/foo')
-        self.assertEqual([[1, {'foo': 'foo'}], [2, {'foo': 'bar'}]],
+        self.assertEqual([{'foo': 'foo'}, {'foo': 'bar'}],
                          utfjson.load(rst)[-2:])
 
     def test_empty_commit(self):
@@ -95,10 +96,8 @@ class TestTX(TXBase):
             foo.v = {'foo': 'foo'}
             t1.commit()
 
-        rst, ver = self.zk.get('tx/txidset')
-        self.assertEqual({COMMITTED: [],
-                          PURGED: [[1, 2]],
-                          }, utfjson.load(rst))
+        rst, ver = self.zk.get('tx/journal_id_set')
+        self.assertEqual({}, utfjson.load(rst))
 
     def test_empty_commit_force(self):
 
@@ -108,12 +107,12 @@ class TestTX(TXBase):
             foo.v = {'foo': 'foo'}
             t1.commit(force=True)
 
-        rst, ver = self.zk.get('tx/txidset')
-        self.assertEqual({COMMITTED: [[1, 2]],
+        rst, ver = self.zk.get('tx/journal_id_set')
+        self.assertEqual({COMMITTED: [[0, 1]],
                           PURGED: [],
                           }, utfjson.load(rst))
 
-        rst, ver = self.zk.get('tx/journal/0000000001')
+        rst, ver = self.zk.get('tx/journal/journal_id0000000000')
         self.assertEqual({}, utfjson.load(rst))
 
     def test_with_statement(self):
@@ -128,10 +127,10 @@ class TestTX(TXBase):
             t1.commit()
 
         rst, ver = self.zk.get('record/foo')
-        self.assertEqual([[-1, None], [1, 1]], utfjson.load(rst))
+        self.assertEqual([None, 1], utfjson.load(rst))
 
-        rst, ver = self.zk.get('tx/txidset')
-        self.assertEqual({COMMITTED: [[1, 2]],
+        rst, ver = self.zk.get('tx/journal_id_set')
+        self.assertEqual({COMMITTED: [[0, 1]],
                           PURGED: [],
                           }, utfjson.load(rst))
 
@@ -151,7 +150,7 @@ class TestTX(TXBase):
             t1.commit()
 
         rst, ver = self.zk.get('record/foo')
-        self.assertEqual([[-1, None], [1, 2]], utfjson.load(rst))
+        self.assertEqual([None, 2], utfjson.load(rst))
 
     def test_lock_get_latest(self):
 
@@ -175,7 +174,7 @@ class TestTX(TXBase):
             t1.commit()
 
         rst, ver = self.zk.get('record/foo')
-        self.assertEqual([[-1, None], [1, 1]], utfjson.load(rst))
+        self.assertEqual([None, 1], utfjson.load(rst))
 
     def test_lock_get_not_latest(self):
 
@@ -192,7 +191,7 @@ class TestTX(TXBase):
             t1.commit()
 
         rst, ver = self.zk.get('record/foo')
-        self.assertEqual([[-1, None], [1, 1]], utfjson.load(rst))
+        self.assertEqual([None, 1], utfjson.load(rst))
 
     def test_noblocking_lock_get(self):
 
@@ -223,7 +222,6 @@ class TestTX(TXBase):
                 self.fail('TXTimeout expected')
             except TXTimeout as e:
                 dd(repr(e))
-
 
         with ZKTransaction(zkhost) as t2:
 
@@ -281,10 +279,10 @@ class TestTX(TXBase):
 
         t = ZKTransaction(zkhost)
         rst, ver = t.zkstorage.record.get('foo')
-        self.assertEqual(100, rst[-1][1])
+        self.assertEqual(100, rst[-1])
 
-        rst, ver = self.zk.get('tx/txidset')
-        self.assertEqual({COMMITTED: [[1, 2]],
+        rst, ver = self.zk.get('tx/journal_id_set')
+        self.assertEqual({COMMITTED: [[0, 1]],
                           PURGED: [],
                           }, utfjson.load(rst))
 
@@ -338,7 +336,7 @@ class TestTX(TXBase):
 
     def test_run_tx_retriable_error(self):
 
-        errs = [HigherTXApplied, Deadlock, None]
+        errs = [Deadlock, None]
 
         def _tx(tx):
 
@@ -353,12 +351,12 @@ class TestTX(TXBase):
                 tx.commit()
 
         status, txid = zktx.run_tx(zkhost, _tx)
-        # 2 error tried and one commit
-        self.assertEqual((COMMITTED, 3), (status, txid))
+        # 1 error tried and one commit
+        self.assertEqual((COMMITTED, 2), (status, txid))
 
         t = ZKTransaction(zkhost)
         rst, ver = t.zkstorage.record.get('foo')
-        self.assertEqual(100, rst[-1][1])
+        self.assertEqual(100, rst[-1])
 
     def test_run_tx_unretriable_error(self):
 
@@ -388,7 +386,7 @@ class TestTX(TXBase):
 
         tx = ZKTransaction(zkhost)
         rst, ver = tx.zkstorage.record.get('foo')
-        self.assertEqual(100, rst[-1][1])
+        self.assertEqual(100, rst[-1])
 
     def test_sequential(self):
 
@@ -411,9 +409,9 @@ class TestTX(TXBase):
 
         rst, ver = t.zkstorage.record.get(k)
         dd(rst)
-        self.assertEqual(n_tx, rst[-1][1])
+        self.assertEqual(n_tx, rst[-1])
 
-        rst, ver = t.zkstorage.txidset.get()
+        rst, ver = t.zkstorage.journal_id_set.get()
         dd(rst)
         self.assertEqual(n_tx, rst[COMMITTED].length())
 
@@ -422,32 +420,22 @@ class TestTX(TXBase):
         n_tx = 10
         k = 'foo'
 
-        # ACACACACACACACACACAC
-        # 01234567890123456789
-
         for ii in range(n_tx):
 
             with ZKTransaction(zkhost) as t1:
                 t1.zkstorage.max_journal_history = 5
                 foo = t1.lock_get(k)
-                foo.v = 1
-                t1.set(foo)
-                t1.abort()
-
-            t = ZKTransaction(zkhost)
-            txidset, ver = t.zkstorage.txidset.get()
-            self.assertLessEqual(txidset[COMMITTED].length(), 5)
-
-            with ZKTransaction(zkhost) as t1:
-                t1.zkstorage.max_journal_history = 5
-                foo = t1.lock_get(k)
-                foo.v = 1
+                foo.v = foo.v or 0
+                foo.v += 1
                 t1.set(foo)
                 t1.commit()
 
-            t = ZKTransaction(zkhost)
-            txidset, ver = t.zkstorage.txidset.get()
-            self.assertLessEqual(txidset[COMMITTED].length(), 5)
+        t = ZKTransaction(zkhost)
+        journal_id_set, ver = t.zkstorage.journal_id_set.get()
+        self.assertEqual({PURGED: [[0, 5]], COMMITTED: [[0, 10]]}, journal_id_set)
+
+        for i in range(5):
+            self.assertRaises(NoNodeError, t.zkstorage.journal.get, '%010d' % i)
 
     def test_concurrent_single_record(self):
 
@@ -466,8 +454,7 @@ class TestTX(TXBase):
                         t1.commit()
                         return
 
-                except (Deadlock,
-                        HigherTXApplied) as e:
+                except Deadlock as e:
                     dd(repr(e))
                     continue
 
@@ -480,9 +467,9 @@ class TestTX(TXBase):
 
         rst, ver = t.zkstorage.record.get('foo')
         dd(rst)
-        self.assertEqual(n_tx, rst[-1][1])
+        self.assertEqual(n_tx, rst[-1])
 
-        rst, ver = t.zkstorage.txidset.get()
+        rst, ver = t.zkstorage.journal_id_set.get()
         dd(rst)
         self.assertEqual(n_tx, rst[COMMITTED].length())
 
@@ -509,8 +496,7 @@ class TestTX(TXBase):
                         dd(str(t1) + ' committed')
                         return
 
-                except (Deadlock,
-                        HigherTXApplied) as e:
+                except Deadlock as e:
                     dd(str(t1) + ': ' + repr(e))
                     continue
                 except TXTimeout as e:
@@ -531,15 +517,11 @@ class TestTX(TXBase):
         for k in ks:
             rst, ver = t.zkstorage.record.get(k)
             dd(rst)
-            self.assertEqual(n_tx, rst[-1][1])
+            self.assertEqual(n_tx, rst[-1])
 
-        rst, ver = t.zkstorage.txidset.get()
+        rst, ver = t.zkstorage.journal_id_set.get()
         dd(rst)
         self.assertEqual(n_tx, rst[COMMITTED].length())
-
-        # check aborted txidset
-        sm = rangeset.union(rst[COMMITTED], rst[PURGED])
-        self.assertEqual(rst[COMMITTED][-1][-1] - 1, sm.length())
 
     def test_redo_dead_tx_without_journal(self):
 
@@ -562,30 +544,68 @@ class TestTX(TXBase):
 
         rst, ver = t.zkstorage.record.get('foo')
         dd(rst)
-        self.assertEqual(1, rst[-1][1])
+        self.assertEqual(1, rst[-1])
 
-        rst, ver = t.zkstorage.txidset.get()
-        dd(rst)
-        self.assertEqual([1, 2], rst[PURGED][0])
-        self.assertEqual([2, 3], rst[COMMITTED][0])
+        journal_id_set, ver = t.zkstorage.journal_id_set.get()
+        self.assertEqual({COMMITTED: [[0, 1]], PURGED: []}, journal_id_set)
 
     def test_abort(self):
 
-        with ZKTransaction(zkhost) as t1:
-            foo = t1.lock_get('foo')
-            foo.v = 100
-            t1.set(foo)
-            t1.abort()
+        try:
+            with ZKTransaction(zkhost) as t1:
+                foo = t1.lock_get('foo')
+                foo.v = 100
+                t1.set(foo)
+                t1.abort()
+        except UserAborted:
+            pass
 
         t = ZKTransaction(zkhost)
 
         rst, ver = t.zkstorage.record.get('foo')
         dd(rst)
-        self.assertEqual(None, rst[-1][1])
+        self.assertEqual(None, rst[-1])
 
-        rst, ver = t.zkstorage.txidset.get()
-        dd(rst)
-        self.assertEqual([1, 2], rst[PURGED][0])
+    def test_delete_node(self):
+        k = 'foo'
+        with ZKTransaction(zkhost) as t1:
+            foo = t1.lock_get(k)
+            foo.v = 'foo'
+            t1.set(foo)
+            t1.commit()
+
+        t = ZKTransaction(zkhost)
+        self.assertEqual(([None, 'foo'], 0), t.zkstorage.record.get('foo'))
+
+        with ZKTransaction(zkhost) as t1:
+            foo = t1.lock_get(k)
+            foo.v = None
+            t1.set(foo)
+            t1.commit()
+
+        self.assertEqual(([None], -1), t.zkstorage.record.get('foo'))
+        self.assertRaises(NoNodeError, t.zkstorage.zke.get, 'foo')
+
+    def test_commit_error(self):
+        k = 'foo'
+        with ZKTransaction(zkhost) as t1:
+            foo = t1.lock_get(k)
+            foo.v = 'foo'
+            t1.set(foo)
+            t1.commit()
+
+        try:
+            with ZKTransaction(zkhost) as t1:
+                foo = t1.lock_get(k)
+                foo.v = 'ex'
+                t1.got_keys[k].version = 100
+                t1.set(foo)
+                t1.commit()
+
+            self.fail('not raise commit error')
+
+        except CommitError:
+            pass
 
 
 class TestTXState(TXBase):
@@ -619,15 +639,18 @@ class TestTXState(TXBase):
         t = ZKTransaction(zkhost)
         txid = None
 
-        with ZKTransaction(zkhost) as t1:
+        try:
+            with ZKTransaction(zkhost) as t1:
 
-            txid = t1.txid
-            t1.set_state('bar')
+                txid = t1.txid
+                t1.set_state('bar')
 
-            val, ver = t.zkstorage.state.get(txid)
-            self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
+                val, ver = t.zkstorage.state.get(txid)
+                self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
 
-            t1.abort()
+                t1.abort()
+        except UserAborted:
+            pass
 
         self.assertIsNone(t.zkstorage.state.get(txid)[0])
 
@@ -764,62 +787,6 @@ class TestTXState(TXBase):
                 self.fail("expected TXTimeout")
             except TXTimeout:
                 pass
-
-    def test_redo_all(self):
-
-        # txid=1 committed
-        # txid=2 nothing
-        # txid=3 has journal
-        # txid=4 no tx but has state
-        # txid=5 committed
-
-        # txid=1
-        with ZKTransaction(zkhost) as t1:
-            foo = t1.lock_get('foo')
-            foo.v = 1
-            t1.set(foo)
-            t1.commit()
-
-        t = ZKTransaction(zkhost)
-
-        # make txid=2, leave it a hole
-        t.zke.set(t.zke._zkconf.txid_maker(), 'x')
-
-        # make txid=3
-        t.zke.set(t.zke._zkconf.txid_maker(), 'x')
-        txid = 3
-        # fake a journal
-        t.zkstorage.journal.create(txid, {'bar': 3})
-
-        # txid=4, has state
-        t.zke.set(t.zke._zkconf.txid_maker(), 'x')
-        t.zkstorage.state.create(4, {'xx': 'yy'})
-
-        # txid=5, committed
-        with ZKTransaction(zkhost) as t5:
-            foo = t5.lock_get('foo')
-            foo.v = 5
-            t5.set(foo)
-            t5.commit()
-
-        sets, ver = t.zkstorage.txidset.get()
-        dd('init txidset:', sets)
-        self.assertEqual({'PURGED': [], 'COMMITTED': [[1, 2], [5, 6]]}, sets)
-
-        t.redo_all_dead_tx()  # redo txid=2, abort
-        sets, ver = t.zkstorage.txidset.get()
-        dd('after redo 2:', sets)
-        self.assertEqual({'PURGED': [[2, 3]], 'COMMITTED': [[1, 2], [5, 6]]}, sets)
-
-        t.redo_all_dead_tx()  # redo txid=3, committed
-        sets, ver = t.zkstorage.txidset.get()
-        dd('after redo 3:', sets)
-        self.assertEqual({'PURGED': [[2, 3]], 'COMMITTED': [[1, 2], [3, 4], [5, 6]]}, sets)
-
-        t.redo_all_dead_tx()  # redo txid=4, can not redo a tx with state
-        sets, ver = t.zkstorage.txidset.get()
-        dd('after redo 4, ignored 4:', sets)
-        self.assertEqual({'PURGED': [[2, 3]], 'COMMITTED': [[1, 2], [3, 4], [5, 6]]}, sets)
 
     def test_unlock_with_state(self):
 

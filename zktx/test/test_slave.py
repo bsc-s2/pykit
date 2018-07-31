@@ -36,11 +36,11 @@ class TestSlave(base.ZKTestBase):
         redisutil.wait_serve(('192.168.52.40', redis_port))
         self.redis_cli = redisutil.get_client(('192.168.52.40', redis_port))
 
-        self.txid_path = "tx/txidset"
-        self.storage = zktx.RedisStorage(self.redis_cli, self.txid_path)
+        self.journal_id_path = "tx/journal_id_set"
+        self.storage = zktx.RedisStorage(self.redis_cli, self.journal_id_path)
 
         self.zk.create('tx', 'tx')
-        self.zk.create('tx/txidset', '{}')
+        self.zk.create('tx/journal_id_set', '{}')
         self.zk.create('tx/alive', '{}')
         self.zk.create('tx/txid_maker', '{}')
         self.zk.create('tx/journal', '{}')
@@ -82,13 +82,13 @@ class TestSlave(base.ZKTestBase):
             {'meta/server/k11': [1, 2], 'meta/region/k12': [4, 5]},
         )
 
-        max_txid = 1
+        max_journal_id = 0
         for c in cases:
             self._dump_to_zk(c)
-            cmt_txidset = self.storage.txidset.get()[COMMITTED]
+            cmt_journal_id_set = self.storage.journal_id_set.get()[COMMITTED]
 
-            if max_txid == 1:
-                self.assertEqual([], cmt_txidset)
+            if max_journal_id == 0:
+                self.assertEqual([], cmt_journal_id_set)
 
             self.slave.apply()
 
@@ -97,17 +97,17 @@ class TestSlave(base.ZKTestBase):
                 actual_val = self.storage.record.hget(k_parts[1], k_parts[2])
                 self.assertEqual(v, actual_val)
 
-            ex = rangeset.RangeSet([[1, max_txid + 1]])
-            cmt_txidset = self.storage.txidset.get()[COMMITTED]
-            self.assertEqual(ex, cmt_txidset)
+            ex = rangeset.RangeSet([[0, max_journal_id + 1]])
+            cmt_journal_id_set = self.storage.journal_id_set.get()[COMMITTED]
+            self.assertEqual(ex, cmt_journal_id_set)
 
-            max_txid += 1
+            max_journal_id += 1
 
         # no update
         self.slave.apply()
-        ex = rangeset.RangeSet([[1, max_txid]])
-        cmt_txidset = self.storage.txidset.get()[COMMITTED]
-        self.assertEqual(ex, cmt_txidset)
+        ex = rangeset.RangeSet([[0, max_journal_id]])
+        cmt_journal_id_set = self.storage.journal_id_set.get()[COMMITTED]
+        self.assertEqual(ex, cmt_journal_id_set)
 
     def test_jour_not_found(self):
         c = {
@@ -128,7 +128,7 @@ class TestSlave(base.ZKTestBase):
 
         self._dump_to_zk(c)
 
-        self.zk.delete('tx/journal/0000000001')
+        self.zk.delete('tx/journal/journal_id0000000000')
 
         self.slave.apply()
 
@@ -137,9 +137,9 @@ class TestSlave(base.ZKTestBase):
             actual_val = self.storage.record.hget(k_parts[1], k_parts[2])
             self.assertEqual(v, actual_val)
 
-        ex = rangeset.RangeSet([[1, 2]])
-        cmt_txidset = self.storage.txidset.get()[COMMITTED]
-        self.assertEqual(ex, cmt_txidset)
+        ex = rangeset.RangeSet([[0, 1]])
+        cmt_journal_id_set = self.storage.journal_id_set.get()[COMMITTED]
+        self.assertEqual(ex, cmt_journal_id_set)
 
         # apply
         c = {
@@ -148,9 +148,44 @@ class TestSlave(base.ZKTestBase):
         self._dump_to_zk(c)
         self.slave.apply()
 
-        ex = rangeset.RangeSet([[1, 3]])
-        cmt_txidset = self.storage.txidset.get()[COMMITTED]
-        self.assertEqual(ex, cmt_txidset)
+        ex = rangeset.RangeSet([[0, 2]])
+        cmt_journal_id_set = self.storage.journal_id_set.get()[COMMITTED]
+        self.assertEqual(ex, cmt_journal_id_set)
 
         actual_val = self.storage.record.hget('server', 'k1')
         self.assertEqual(100, actual_val)
+
+    def test_delete_use_journal(self):
+        c = {
+            'meta/region/001': 1,
+        }
+        self._dump_to_zk(c)
+
+        self.slave.apply()
+        self.assertEqual(1, self.storage.record.hget('region', '001'))
+
+        c = {
+            'meta/region/001': None,
+        }
+        self._dump_to_zk(c)
+
+        self.slave.apply()
+        self.assertEqual(None, self.storage.record.hget('region', '001'))
+
+    def test_delete_not_use_journal(self):
+        c = {
+            'meta/region/001': 1,
+        }
+        self._dump_to_zk(c)
+
+        self.slave.apply()
+        self.assertEqual(1, self.storage.record.hget('region', '001'))
+        self.zk.delete('tx/journal/journal_id0000000000')
+
+        c = {
+            'meta/region/001': None,
+        }
+        self._dump_to_zk(c)
+        self.zk.delete('tx/journal/journal_id0000000001')
+        self.slave.apply()
+        self.assertEqual(None, self.storage.record.hget('region', '001'))

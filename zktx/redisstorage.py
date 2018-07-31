@@ -4,31 +4,31 @@
 import logging
 
 from pykit import config
-from pykit import rangeset
 from pykit import utfjson
 
 from .redisaccessor import RedisKeyValue
 from .redisaccessor import RedisValue
-from .status import COMMITTED
 from .status import STATUS
 from .storage import Storage
+from . import zkstorage
 
 logger = logging.getLogger(__name__)
 
 
 class RedisStorage(Storage):
 
-    def __init__(self, redis_cli, txidset_path):
+    def __init__(self, redis_cli, journal_id_set_path):
         self.redis_cli = redis_cli
-        self.txidset_path = txidset_path
+        self.journal_id_set_path = journal_id_set_path
 
-        self.txidset = RedisValue(self.redis_cli,
-                                  get_path=self._txidset_path,
-                                  load=txidset_load)
+        self.journal_id_set = RedisValue(self.redis_cli,
+                                         get_path=self._journal_id_set_path,
+                                         load=_journal_id_set_load)
+
         self.record = RedisKeyValue(self.redis_cli)
 
-    def _txidset_path(self):
-        return self.txidset_path or getattr(config, 'redis_txidset_path')
+    def _journal_id_set_path(self):
+        return self.journal_id_set_path or getattr(config, 'redis_journal_id_set_path')
 
     def apply_jour(self, jour):
         for k, v in jour.items():
@@ -47,33 +47,35 @@ class RedisStorage(Storage):
 
         hashname = k_parts[1]
         hashkey = k_parts[2]
+        if val is None:
+            self.record.hdel(hashname, hashkey)
+            return
 
         self.record.hset(hashname, hashkey, val)
 
-    def add_to_txidset(self, status, txid):
+    def delete_absent_record(self, existed):
+        for hname in existed:
+            to_purged = []
+            hkeys = self.record.hkeys(hname)
+            for k in hkeys:
+                if k not in existed[hname]:
+                    to_purged.append(k)
+
+            if len(to_purged) > 0:
+                self.record.hdel(hname, *to_purged)
+
+    def add_to_journal_id_set(self, status, journal_id):
         if status not in STATUS:
             raise KeyError('invalid status: ' + repr(status))
 
-        txidset = self.txidset.get()
-        txidset[status].add([txid, txid + 1])
+        journal_id_set = self.journal_id_set.get()
+        journal_id_set[status].add([journal_id, journal_id + 1])
 
-        self.txidset.set(txidset)
+        self.journal_id_set.set(journal_id_set)
 
-    def set_txidset(self, status, txidset):
-        val = {
-            status: txidset,
-        }
-        self.txidset.set(val)
+    def set_journal_id_set(self, journal_id_set):
+        self.journal_id_set.set(journal_id_set)
 
 
-def txidset_load(value):
-    val = utfjson.load(value)
-    if val is None:
-        val = {}
-
-    committed = val.get(COMMITTED) or []
-
-    rst = {}
-    rst[COMMITTED] = rangeset.RangeSet(committed)
-
-    return rst
+def _journal_id_set_load(value):
+    return zkstorage.journal_id_set_load(utfjson.load(value) or {})

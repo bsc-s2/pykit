@@ -32,7 +32,7 @@ class RedisKeyValue(object):
         return utfjson.load(val)
 
     def hget(self, hashname, hashkey):
-        hashkey = self._get_path(hashkey)
+        hashname = self._get_path(hashname)
         val = self.cli.hget(hashname, hashkey)
 
         if self.load is not None:
@@ -41,9 +41,17 @@ class RedisKeyValue(object):
         return utfjson.load(val)
 
     def hset(self, hashname, hashkey, value):
-        hashkey = self._get_path(hashkey)
+        hashname = self._get_path(hashname)
         value = utfjson.dump(value)
         self.cli.hset(hashname, hashkey, value)
+
+    def hdel(self, hashname, *keys):
+        hashname = self._get_path(hashname)
+        self.cli.hdel(hashname, *keys)
+
+    def hkeys(self, hashname):
+        hashname = self._get_path(hashname)
+        return self.cli.hkeys(hashname)
 
 
 class RedisValue(RedisKeyValue):

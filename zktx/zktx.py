@@ -11,18 +11,17 @@ from kazoo.client import KazooState
 from kazoo.exceptions import KazooException
 from kazoo.exceptions import NoNodeError
 
-from pykit import rangeset
 from pykit import zkutil
 from pykit import utfjson
 
 from .exceptions import ConnectionLoss
 from .exceptions import Deadlock
-from .exceptions import HigherTXApplied
 from .exceptions import NotLocked
 from .exceptions import RetriableError
 from .exceptions import TXTimeout
 from .exceptions import UnlockNotAllowed
 from .exceptions import UserAborted
+from .exceptions import CommitError
 from .status import COMMITTED
 from .status import PAUSED
 from .status import PURGED
@@ -36,16 +35,14 @@ DEFAULT_TIMEOUT = 1 * 365 * 24 * 3600
 
 class TXRecord(object):
 
-    def __init__(self, k, v, txid, version, values):
+    def __init__(self, k, v, version, values):
         self.k = k
         self.v = v             # the latest updated value
-        self.txid = txid       # the txid in which the `v` is written in `k`
         self.version = version  # stat.version of zk node `k`
         self.values = values
 
     def __str__(self):
-        return '{k}={v}@{txid}'.format(
-            k=self.k, v=self.v, txid=txidstr(self.txid))
+        return '{k}={v}; ver={ver}'.format(k=self.k, v=self.v, ver=self.version)
 
 
 class ZKTransaction(object):
@@ -107,19 +104,12 @@ class ZKTransaction(object):
                 return None
 
         val, version = self.zkstorage.record.get(key)
-        ltxid, lvalue = val[-1]
+        lvalue = val[-1]
 
-        curr = TXRecord(k=key, v=copy.deepcopy(lvalue), txid=ltxid,
-                        version=version, values=val)
+        curr = TXRecord(k=key, v=copy.deepcopy(lvalue), version=version, values=val)
         self.got_keys[key] = curr
 
-        if ltxid > self.txid:
-            self.delete_state(self.txid)
-            raise HigherTXApplied('{tx} seen a higher txid applied: {txid}'.format(
-                tx=self, txid=ltxid))
-
-        rec = TXRecord(k=key, v=copy.deepcopy(lvalue), txid=ltxid,
-                       version=version, values=val)
+        rec = TXRecord(k=key, v=copy.deepcopy(lvalue), version=version, values=val)
         return rec
 
     def unlock(self, rec):
@@ -211,16 +201,12 @@ class ZKTransaction(object):
             logger.info('{tx} wait[{key}]-> {other_txid} ver: {ver}'.format(
                 tx=self, key=key, other_txid=txidstr(other_txid), ver=ver))
 
-            # A tx that has state saved is recoverable, is treated as alive
-            # tx.
+            # A tx that has state saved is recoverable, is treated as alive tx.
             if not self.is_tx_alive(other_txid) and not self.has_state(other_txid):
-
-                rst = self.redo_dead_tx(other_txid, timeout=_time_left())
-
-                # purged tx did not release lock by itself
-                if rst == PURGED:
-                    self.zkstorage.try_release_key(other_txid, key)
-
+                # dead tx dont't save the journal because of unlock the key and save journal
+                # are in a kazoo transaction. we can no nothing without the journal,
+                # so wo just unlock the key.
+                self.zkstorage.try_release_key(other_txid, key)
                 continue
 
             logger.info('{tx}: other tx {other_txid} is alive'.format(
@@ -278,60 +264,6 @@ class ZKTransaction(object):
                 txid=txid))
 
             raise TXTimeout('{tx} timeout waiting for tx:{txid}'.format(tx=self, txid=txid))
-
-    def redo_all_dead_tx(self):
-
-        sets, ver = self.zkstorage.txidset.get()
-
-        # Only check for holes in the txid range set.
-        # With `txidset = [[1, 2], [4, 5]]`, tx-2 and tx-3 is unfinished tx.
-        # Check these tx
-
-        # A tx is committed or purged that does not need to handle it again.
-        known = rangeset.union(sets[COMMITTED], sets[PURGED])
-
-        for rng in known[:-1]:
-
-            txid = rng[1]
-
-            if not self.is_tx_alive(txid) and not self.has_state(txid):
-                self.redo_dead_tx(txid)
-
-    def redo_dead_tx(self, txid, timeout=10):
-
-        expire_at = time.time() + timeout
-        dead_tx = ZKTransaction(self.zke,
-                                timeout=expire_at - time.time())
-
-        dead_tx.begin(txid=txid)
-        rst = dead_tx.redo()
-        dead_tx._close()
-        return rst
-
-    def redo(self):
-
-        logger.info('REDO: {tx}'.format(tx=self))
-
-        txidset, ver = self.zkstorage.txidset.get()
-        logger.info('{tx} got txidset: {txidset}'.format(tx=self, txidset=txidset))
-
-        if txidset[COMMITTED].has(self.txid):
-            return COMMITTED
-        elif txidset[PURGED].has(self.txid):
-            return PURGED
-
-        # self.txid is not in txidset
-
-        try:
-            jour, version = self.zkstorage.journal.get(self.txid)
-        except NoNodeError:
-            # This tx has not yet written a journal.
-            # Nothing to apply
-            self.zkstorage.add_to_txidset(PURGED, self.txid)
-            return PURGED
-
-        self.zkstorage.add_to_txidset(COMMITTED, self.txid)
-        return COMMITTED
 
     def is_tx_alive(self, txid):
         try:
@@ -394,8 +326,12 @@ class ZKTransaction(object):
                 continue
 
             jour[k] = rec.v
+            if rec.v is None:
+                if curr.version != -1:
+                    kazootx.delete(cnf.record(rec.k), version=curr.version)
+                continue
 
-            record_vals = curr.values + [[self.txid, rec.v]]
+            record_vals = curr.values + [rec.v]
             record_vals = record_vals[-self.zkstorage.max_value_history:]
 
             if curr.version == -1:
@@ -414,18 +350,22 @@ class ZKTransaction(object):
             kazootx.delete(cnf.lock(key), version=0)
 
         if len(jour) > 0 or force:
-            kazootx.create(cnf.journal(self.txid), utfjson.dump(jour))
-            kazootx.commit()
+            # provide a str "journal_id", because
+            # kazootx.create('xx/', '', sequence=True) => xx0000000000
+            # kazootx.create('xx/a', '', sequence=True) => xx/a0000000000
+            kazootx.create(cnf.journal("journal_id"), utfjson.dump(jour), sequence=True)
+            rst = kazootx.commit()
+            for r in rst:
+                if isinstance(r, KazooException):
+                    raise CommitError(rst)
+
             status = COMMITTED
+            journal_id = rst[-1].split('/')[-1][-10:]
+            self.zkstorage.add_to_journal_id_set(status, journal_id)
         else:
             # Nothing to commit, make it an aborted tx.
             kazootx.commit()
             status = PURGED
-
-        self.zkstorage.add_to_txidset(status, self.txid)
-
-        logger.info('{tx} updated txidset: {status}'.format(
-            tx=self, status=status))
 
         self.tx_status = status
         self.modifications = {}
@@ -509,12 +449,11 @@ class ZKTransaction(object):
 
                     else:
                         self.tx_status = PURGED
-                        self.zkstorage.add_to_txidset(PURGED, self.txid)
                 except (exceptions.ConnectionClosedError,
                         exceptions.ConnectionLoss) as e:
 
-                    logger.warn('{tx} {e} while adding to txidset.PURGED'.format(
-                        tx=self, e=repr(e)))
+                    logger.warn('{tx} {e} while get tx state'.format(
+                                tx=self, e=repr(e)))
 
                 if self.tx_status is None:
                     self.tx_status = UNKNOWN
@@ -525,7 +464,6 @@ class ZKTransaction(object):
             if isinstance(errval, UserAborted):
                 if self.txid is not None:
                     self.delete_state(self.txid)
-                return True
 
             return False
 
