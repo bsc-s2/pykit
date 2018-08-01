@@ -93,7 +93,7 @@ class Region(FixedKeysDict):
                 region_levels[level].remove(src)
                 region_levels[target_level].add(src[:2], src[2])
 
-        while region_levels[-1] == []:
+        while len(region_levels) > 0 and region_levels[-1] == []:
             region_levels.pop(-1)
 
         return moved_blocks
