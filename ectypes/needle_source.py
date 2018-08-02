@@ -13,11 +13,11 @@ class NeedleIdNotEqual(Exception):
 
 class Referrer(FixedKeysDict):
 
-    keys_default = dict((('Scope',  str),
+    keys_default = dict((('Scope', str),
                          ('RefKey', str),
-                         ('Ver',    int),
-                         ('IsDel', int)))
-    ident_keys = ('Scope', 'RefKey', 'Ver', 'IsDel')
+                         ('Ver', int),
+                         ('IsDel', int),))
+    ident_keys = ('Scope', 'RefKey', 'Ver', 'IsDel',)
 
     def __eq__(self, b):
         return self.ident() == b.ident()
@@ -39,17 +39,26 @@ class Referrer(FixedKeysDict):
 
     def is_pair(self, b):
         a = self
-
         return (a.ident()[:3] == b.ident()[:3]
                 and set([a['IsDel'], b['IsDel']]) == set([0, 1]))
 
 
+def _referrer(refs=None):
+    if refs is None:
+        refs = []
+
+    refs = [Referrer(r) for r in refs]
+    return refs
+
+
 class NeedleSource(FixedKeysDict):
 
+    # referrers must be added in non-descending order
+
     keys_default = dict((('NeedleID', str),
-                         ('Referrers', list),
-                         ('Size',     int),
-                         ('Url',      str)))
+                         ('Referrers', _referrer),
+                         ('Size', int),
+                         ('Url', str),))
     ident_keys = ('NeedleID',)
 
     def __init__(self, *args, **argkv):
@@ -59,17 +68,21 @@ class NeedleSource(FixedKeysDict):
         super(NeedleSource, self).__init__(*args, **argkv)
 
     def __lt__(self, another):
-        # implement `<` for heapq.merge
         return self.ident() < another.ident()
 
     def add_referrer(self, referrer):
 
+        # before the new referrers are added into the Referrers,the Referrers
+        # are sorted for they are corresponding to the phy
+
         if not isinstance(referrer, Referrer):
             raise ValueError('referrer is not type Referrer')
 
-        # self.referrer is sorted
         if len(self['Referrers']) > 0:
             last_ref = self['Referrers'][-1]
+
+            if referrer < last_ref:
+                raise ValueError('referrer is not added in non-descending order')
 
             if last_ref.is_pair(referrer):
                 if self.reserve_del:
