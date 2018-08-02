@@ -105,3 +105,8 @@ class TestUTFJson(unittest.TestCase):
 
         # encoded chars and unicode chars in one string
         self.assertEqual('/aaa\xe7\x89\x88\xe6\x9c\xac/jfkdsl\x01', utfjson.load('"\/aaa\xe7\x89\x88\xe6\x9c\xac\/jfkdsl\u0001"'))
+
+        self.assertEqual(
+            '{\n  "\xe6\x88\x91": "\xe6\x88\x91"\n}', utfjson.dump({"我":  "我"}, indent=2))
+        self.assertEqual(
+            '{\n    "\xe6\x88\x91": "\xe6\x88\x91"\n}', utfjson.dump({"我":  "我"}, indent=4))

@@ -30,7 +30,7 @@ from pykit import p3json
 # str       '\xe6\x88\x91'     '"\\u00e6\\u0088\\u0091"' '"\xe6\x88\x91"'
 
 
-def dump(obj, encoding='utf-8'):
+def dump(obj, encoding='utf-8', indent=None):
 
     # - Using non-unicode with ensure_ascii=True results in unexpected output:
     #       p3fjson.dump('我',  ensure_ascii=True)  --> '"\\u00e6\\u0088\\u0091"'
@@ -56,7 +56,7 @@ def dump(obj, encoding='utf-8'):
         # We do not need to convert non-ascii chars in a encoded string.
         ensure_ascii = False
 
-    return p3json.dumps(obj, ensure_ascii=ensure_ascii)
+    return p3json.dumps(obj, ensure_ascii=ensure_ascii, indent=indent)
 
 
 def load(s, encoding=None):

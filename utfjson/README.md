@@ -75,7 +75,7 @@ the value parsed from `json_string`, it could be a `number`, `string`, `list`,
 ##  utfjson.dump
 
 **syntax**:
-`utfjson.dump(val, encoding='utf-8')`
+`utfjson.dump(val, encoding='utf-8', indent=None)`
 
 It dumps `val` to a json string the same way `json.dumps` does, except it
 force string in `val` to be encoded in `utf-8`.
@@ -104,6 +104,10 @@ force string in `val` to be encoded in `utf-8`.
     # unicode  u'\u6211'           '"\\u6211"'    '"\xe6\x88\x91"'
     # str       '\xe6\x88\x91'     TypeError      '"\xe6\x88\x91"'
     ```
+-   `indent`:
+    a `number`, representing an indent in the returned json string
+
+    If `indent` is `None`, it means no indentation is used
 
 **return**:
 json string
