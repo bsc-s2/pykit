@@ -56,3 +56,4 @@ redis==2.10.6
 PyYAML==3.11
 MySQL-python==1.2.5
 objgraph==3.1.0
+geventwebsocket=0.1.1
