@@ -28,6 +28,7 @@
   - [strutil.sharding](#strutilsharding)
   - [strutil.struct_repr](#strutilstruct_repr)
   - [strutil.format_table](#strutilformat_table)
+  - [strutil.filter_invisible_chars](#strutilfilter_invisible_chars)
   - [strutil.tokenize](#strutiltokenize)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
@@ -824,6 +825,44 @@ for l in strutil.format_table(inp, keys=[['bucket', 'Bkt'],
 **return**:
 a list of string.
 
+
+##  strutil.filter_invisible_chars
+
+**syntax**:
+`strutil.filter_invisible_chars(data)`
+
+Filters invisible characters in a string or a unicode object
+
+```python
+from pykit.strutil import filter_invisible_chars
+
+cases = [
+            "1273883926293937729\000\001\031",
+            "\x00\x01\x02\x03\x04\005",
+            u"1122299299299299292",
+            u"\x00\x01\x02\x03\x04\005",
+]
+
+rst = []
+for case in cases:
+    rst.append(strutil.filter_invisible_chars(case))
+
+for r in rst:
+    print r
+
+#'1273883926293937729'
+#''
+#u'1122299299299299292'
+#u''
+```
+
+**arguments**:
+
+-   `data`:
+    a string or unicode object to filter invisible characters
+
+**return**:
+a filtered string or unicode object
 
 ## strutil.tokenize
 

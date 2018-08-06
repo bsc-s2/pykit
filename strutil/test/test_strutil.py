@@ -384,7 +384,7 @@ class TestStrutil(unittest.TestCase):
         inp = [
             {'acl': {},
              'bucket': 'game1.read',
-             'bucket_id': '1400000000000689036',
+             'bucket_id': '1400000000000689036\000',
              'num_used': '0',
              'owner': 'game1',
              'space_used': '0',
@@ -457,6 +457,21 @@ class TestStrutil(unittest.TestCase):
             'imgx-test  # 1910000000000689048',
         ]
         self.assertEqual(expected, rst)
+
+    def test_filter_invisible_chars(self):
+        cases = (
+                    ("1273883926293937729\000\001\031", "1273883926293937729"),
+                    ("\x00\x01\x02\x03\x04\005", ""),
+                    (u"1122299299299299292", u"1122299299299299292"),
+                    (u"\x00\x01\x02\x03\x04\005", u""),
+                    (None, None),
+                    ("", "")
+        )
+
+
+        for case, expected in cases:
+            self.assertEqual(
+                expected, strutil.filter_invisible_chars(case))
 
     def test_utf8str(self):
         cases = (

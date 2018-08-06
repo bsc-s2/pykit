@@ -9,6 +9,7 @@ from .strutil import (
     colorize,
     struct_repr,
     format_table,
+    filter_invisible_chars,
     utf8str,
 )
 
@@ -64,6 +65,7 @@ __all__ = [
 
     'struct_repr',
     'format_table',
+    'filter_invisible_chars',
     'utf8str',
 
     'TrieNode',

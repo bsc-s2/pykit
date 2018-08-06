@@ -10,6 +10,9 @@ import types
 
 listtype = (types.TupleType, types.ListType)
 
+invisible_chars = ''.join(map(unichr, range(0,32)))
+invisible_chars_re = re.compile('[%s]' % re.escape(invisible_chars))
+
 
 def _findquote(line, quote):
     if len(quote) == 0:
@@ -296,6 +299,8 @@ def struct_repr(data, key=None):
         return lines
 
     else:
+
+        data = filter_invisible_chars(data)
         return [utf8str(data)]
 
 
@@ -398,6 +403,7 @@ def format_table(rows,
 
         lns.append(ln)
 
+
     get_max_width = lambda cols: max([len(utf8str(c[0]))
                                       for c in cols] + [0])
 
@@ -420,6 +426,11 @@ def format_table(rows,
 
     return rows
 
+def filter_invisible_chars(data):
+    if type(data) not in (types.StringType, types.UnicodeType):
+        return data
+
+    return invisible_chars_re.sub('', data)
 
 def _to_str(y):
     if isinstance(y, ColoredString):
