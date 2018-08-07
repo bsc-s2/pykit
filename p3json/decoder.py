@@ -128,17 +128,18 @@ def py_scanstring(s, end, strict=True,
         else:
             uni = _decode_uXXXX(s, end)
             end += 5
-            # XXX for python2 json compatibility: must check if sys.maxunicode > 65535 in pyt2
+            # XXX 2018 Aug 07: totally disable long unicode: sys.maxunicode = 0x10ffff
+            # # XXX 2018 Jun 16: for python2 json compatibility: must check if sys.maxunicode > 65535 in pyt2
             # if 0xd800 <= uni <= 0xdbff and s[end:end + 2] == '\\u':
-            if sys.maxunicode > 65535 and \
-               0xd800 <= uni <= 0xdbff and s[end:end + 2] == '\\u':
-                uni2 = _decode_uXXXX(s, end + 1)
-                if 0xdc00 <= uni2 <= 0xdfff:
-                    uni = 0x10000 + (((uni - 0xd800) << 10) | (uni2 - 0xdc00))
-                    end += 6
+            #     uni2 = _decode_uXXXX(s, end + 1)
+            #     if 0xdc00 <= uni2 <= 0xdfff:
+            #         uni = 0x10000 + (((uni - 0xd800) << 10) | (uni2 - 0xdc00))
+            #         end += 6
+
             # XXX for python2 json compatibility: output all string as utf-8,
             # in order to ensure that result string is not unicode
             char = unichr(uni).encode('utf-8')
+
         _append(char)
     return ''.join(chunks), end
 
