@@ -271,7 +271,7 @@ class ZKLock(object):
                 self.maybe_available.clear()
 
         except NoNodeError as e:
-            # create failed but when getting  it, it has been deleted
+            # create failed but when getting it, it has been deleted
             logger.info(repr(e) + ' while get lock: {s}'.format(s=str(self)))
             with self.mutex:
                 self.lock_holder = None

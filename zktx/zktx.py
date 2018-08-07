@@ -175,12 +175,21 @@ class ZKTransaction(object):
 
     def try_lock_key(self, key):
 
-        for other_txid, ver in self.zkstorage.acquire_key_loop(
-                self.txid, key, timeout=-1):
+        while True:
+            other_txid, ver = None, None
+            for other_txid, ver in self.zkstorage.acquire_key_loop(
+                    self.txid, key, timeout=-1):
+                # Run only once if not locked.
+                # Does no reach here if locked.
+                break
 
-            return False, other_txid, ver
+            if other_txid is None:
+                return True, self.txid, -1
 
-        return True, self.txid, -1
+            if self.is_tx_alive(other_txid) or self.has_state(other_txid):
+                return False, other_txid, ver
+
+            self.zkstorage.try_release_key(other_txid, key)
 
     def _lock_key(self, key, timeout):
 
@@ -205,7 +214,7 @@ class ZKTransaction(object):
             if not self.is_tx_alive(other_txid) and not self.has_state(other_txid):
                 # dead tx dont't save the journal because of unlock the key and save journal
                 # are in a kazoo transaction. we can no nothing without the journal,
-                # so wo just unlock the key.
+                # so we just unlock the key.
                 self.zkstorage.try_release_key(other_txid, key)
                 continue
 

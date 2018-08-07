@@ -206,6 +206,27 @@ class TestTX(TXBase):
                 f4 = t2.lock_get('foo', blocking=False)
                 self.assertIsNone(f4)
 
+        t = ZKTransaction(zkhost)
+        t.begin()
+        t.lock_get('foo')
+        t.zke.stop()
+
+        dd(self.zk.get('lock/foo'))
+        # can lock the key which is hold by a dead tx without state
+        with ZKTransaction(zkhost) as t1:
+            self.assertIsNotNone(t1.lock_get('foo', blocking=False))
+
+        t = ZKTransaction(zkhost)
+        t.begin()
+        t.lock_get('foo')
+        t.set_state('s')
+        t.zke.stop()
+
+        dd(self.zk.get('lock/foo'))
+        # can not lock the key which is hold by a dead tx with state
+        with ZKTransaction(zkhost) as t1:
+            self.assertIsNone(t1.lock_get('foo', blocking=False))
+
     def test_lock_get_timeout(self):
 
         def _tx(tx):
