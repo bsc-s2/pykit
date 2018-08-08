@@ -270,6 +270,10 @@ class TestException(unittest.TestCase):
 
 class TestClient(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        utdocker.pull_image(etcd_test_tag)
+
     def setUp(self):
         _start_etcd_server(HOSTS, ETCD_NAMES, ETCD_NODES)
         self._clear_all()
