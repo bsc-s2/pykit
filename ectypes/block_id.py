@@ -13,10 +13,10 @@ class BlockID(IDBase):
         ('type',           0,  2,  str),
         ('block_group_id', 2,  18, BlockGroupID),
         ('block_index',    18, 22, BlockIndex),
-        ('drive_id',       22, 38, DriveID),
-        ('block_id_seq',   38, 48, int),
+        ('drive_id',       22, 44, DriveID),
+        ('block_id_seq',   44, 54, int),
     )
 
-    _str_len = 48
+    _str_len = 54
 
     _tostr_fmt = '{type}{block_group_id}{block_index}{drive_id}{block_id_seq:0>10}'

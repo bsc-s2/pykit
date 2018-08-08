@@ -72,13 +72,13 @@ class TestRegion(unittest.TestCase):
                                  'levels': [
             [['a', 'b', BlockDesc()],
              ['b', 'c', BlockDesc(size=2,
-                                  block_id=BlockID('d1g0006300000001230101c62d8736c72800020000000001'))]
+                                  block_id=BlockID('d1g0006300000001230101idc000c62d8736c72800020000000001'))]
              ]]})
         rst = utfjson.dump(region)
         expected = ('{"range": ["a", "z"], "levels": [[["a", "b", '
                     '{"is_del": 0, "range": null, "block_id": null, "size": 0}], '
                     '["b", "c", {"is_del": 0, "range": null, '
-                    '"block_id": "d1g0006300000001230101c62d8736c72800020000000001", "size": 2}]]], "idc": ""}')
+                    '"block_id": "d1g0006300000001230101idc000c62d8736c72800020000000001", "size": 2}]]], "idc": ""}')
         self.assertEqual(expected, rst)
 
         loaded = Region(utfjson.load(rst))
@@ -197,12 +197,12 @@ class TestRegion(unittest.TestCase):
 
     def test_list_block_ids(self):
 
-        bid1 = BlockID('d1g0006300000001230101c62d8736c72800020000000001')
-        bid2 = BlockID('d1g0006300000001230101c62d8736c72800020000000002')
-        bid3 = BlockID('d1g0006300000001230101c62d8736c72800020000000003')
-        bid4 = BlockID('d1g0006300000001230101c62d8736c72800020000000004')
-        bid5 = BlockID('d1g0006300000001230101c62d8736c72800020000000005')
-        bid6 = BlockID('d1g0006300000001230101c62d8736c72800020000000006')
+        bid1 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000001')
+        bid2 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000002')
+        bid3 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000003')
+        bid4 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000004')
+        bid5 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000005')
+        bid6 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000006')
 
         region_levels = [
             [
@@ -230,12 +230,12 @@ class TestRegion(unittest.TestCase):
 
     def test_replace_block_id(self):
 
-        bid1 = BlockID('d1g0006300000001230101c62d8736c72800020000000001')
-        bid2 = BlockID('d1g0006300000001230101c62d8736c72800020000000002')
-        bid3 = BlockID('d1g0006300000001230101c62d8736c72800020000000003')
-        bid4 = BlockID('d1g0006300000001230101c62d8736c72800020000000004')
-        bid5 = BlockID('d1g0006300000001230101c62d8736c72800020000000005')
-        bid6 = BlockID('d1g0006300000001230101c62d8736c72800020000000006')
+        bid1 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000001')
+        bid2 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000002')
+        bid3 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000003')
+        bid4 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000004')
+        bid5 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000005')
+        bid6 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000006')
 
         region_levels = [
             [['aa', 'ee', {'block_id': bid1}], ['hh', 'zz', {'block_id': bid2}]],
@@ -340,8 +340,8 @@ class TestRegion(unittest.TestCase):
 
     def test_get_block_ids_by_needle_id(self):
 
-        bid1 = BlockID('d1g0006300000001230101c62d8736c72800020000000001')
-        bid2 = BlockID('d1g0006300000001230101c62d8736c72800020000000002')
+        bid1 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000001')
+        bid2 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000002')
 
         # each tuple in region_cases consists of
         # region

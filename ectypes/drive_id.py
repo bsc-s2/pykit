@@ -16,11 +16,11 @@ def _padding_0(s):
 class DriveID(IDBase):
 
     _attrs = (
-        ('server_id', 0, 12, ServerID),
-        ('_padding_0', 12, 13, _padding_0),
-        ('mountpoint_index', 13, 16, MountPointIndex),
+        ('server_id', 0, 18, ServerID),
+        ('_padding_0', 18, 19, _padding_0),
+        ('mountpoint_index', 19, 22, MountPointIndex),
     )
 
-    _str_len = 16
+    _str_len = 22
 
     _tostr_fmt = '{server_id}0{mountpoint_index:0>3}'

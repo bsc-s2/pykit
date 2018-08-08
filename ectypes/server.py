@@ -58,7 +58,7 @@ def make_serverrec(idc, idc_type, roles, allocated_drive_pre, **argkv):
     if hasattr(psutil, 'cpu_freq'):
         cpu_info['frequency'] = psutil.cpu_freq().max
 
-    serverrec['server_id'] = str(ServerID.local_server_id())
+    serverrec['server_id'] = ServerID.local_server_id(idc)
     serverrec['pub_ips'] = pub_ips
     serverrec['inn_ips'] = inn_ips
     serverrec['hostname'] = socket.gethostname()
@@ -93,6 +93,9 @@ def get_serverrec_str(serverrec):
 
 
 def validate_idc(idc):
+
+    # deprecated, use IDCID(idc)
+
     if not isinstance(idc, basestring):
         return False
 
