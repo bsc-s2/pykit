@@ -124,7 +124,7 @@ class TestCpu(unittest.TestCase):
         level1_rate = float(result_dict[2] + result_dict[3]) / result_dict[1]
         dd(level1_rate)
 
-        self.assertAlmostEqual(2.0, level1_rate, delta=0.2)
+        self.assertAlmostEqual(2.0, level1_rate, delta=0.5)
 
         level2_rate = float(result_dict[3]) / result_dict[2]
         dd(level2_rate)
