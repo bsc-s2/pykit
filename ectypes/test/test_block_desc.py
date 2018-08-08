@@ -14,7 +14,7 @@ class TestBlockDesc(unittest.TestCase):
 
     def test_blockdesc(self):
 
-        block_id = 'd1g0006300000001230101c62d8736c72800020000000001'
+        block_id = 'd1g0006300000001230101idc000c62d8736c72800020000000001'
         cases = ((None,
                   {'block_id': None,
                    'size': 0,
@@ -53,7 +53,7 @@ class TestBlockDesc(unittest.TestCase):
     def test_json(self):
         blk = BlockDesc({
             'block_id': BlockID('d0', 'g000640000000123', '0000',
-                                    DriveID('c62d8736c7280002'), 1),
+                                    DriveID('idc000' 'c62d8736c7280002'), 1),
             'size': 1000,
             'range': ['0a', '0b'],
             'is_del': 0
@@ -61,7 +61,7 @@ class TestBlockDesc(unittest.TestCase):
 
         rst = utfjson.dump(blk)
         expected = ('{"is_del": 0, "range": ["0a", "0b"], "block_id": '
-                    '"d0g0006400000001230000c62d8736c72800020000000001", "size": 1000}')
+                    '"d0g0006400000001230000idc000c62d8736c72800020000000001", "size": 1000}')
 
         self.assertEqual(expected, rst)
         loaded = BlockDesc(utfjson.load(rst))

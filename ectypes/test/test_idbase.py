@@ -18,9 +18,9 @@ class TestIDBase(unittest.TestCase):
     def setUp(self):
 
         self.block_group_id = BlockGroupID('g000640000000123')
-        self.block_id = BlockID('d1g0006300000001230101c62d8736c72800020000000001')
+        self.block_id = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000001')
         self.block_index = BlockIndex('1234')
-        self.drive_id = DriveID('1122334455660001')
+        self.drive_id = DriveID('idc000' '1122334455660001')
 
     def test_json_dump(self):
 

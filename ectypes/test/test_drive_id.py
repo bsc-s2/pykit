@@ -9,25 +9,26 @@ from pykit.ectypes import DriveID
 
 dd = ututil.dd
 
+_idcid = 'idc123'
 
 class TestDriveID(unittest.TestCase):
 
-    def test__drive_id(self):
+    def test_drive_id(self):
         cases = (
-            ('112233445566', 1),
-            ('112233445566', 10),
-            ('112233445566', 100),
-            ('112233445566', 999),
+            (_idcid + '112233445566', 1),
+            (_idcid + '112233445566', 10),
+            (_idcid + '112233445566', 100),
+            (_idcid + '112233445566', 999),
 
-            ('aabbccddeeff', 1),
-            ('aabbccddeeff', 10),
-            ('aabbccddeeff', 100),
-            ('aabbccddeeff', 999),
+            (_idcid + 'aabbccddeeff', 1),
+            (_idcid + 'aabbccddeeff', 10),
+            (_idcid + 'aabbccddeeff', 100),
+            (_idcid + 'aabbccddeeff', 999),
 
-            ('1122ccddeeff', 1),
-            ('1122ccddeeff', 10),
-            ('1122ccddeeff', 100),
-            ('1122ccddeeff', 999),
+            (_idcid + '1122ccddeeff', 1),
+            (_idcid + '1122ccddeeff', 10),
+            (_idcid + '1122ccddeeff', 100),
+            (_idcid + '1122ccddeeff', 999),
         )
 
         for sid, mp_idx in cases:
@@ -35,7 +36,7 @@ class TestDriveID(unittest.TestCase):
             self.assertEqual(sid, drive_id.server_id)
             self.assertEqual('%03d' % mp_idx, drive_id.mountpoint_index)
             self.assertEqual(mp_idx, int(drive_id.mountpoint_index))
-            self.assertEqual('%s0%03d' % (sid[:12], mp_idx % 1000), drive_id)
+            self.assertEqual('%s0%03d' % (sid[:18], mp_idx % 1000), drive_id)
 
             drvid = DriveID(drive_id)
             self.assertEqual(sid, drvid.server_id)
@@ -43,14 +44,14 @@ class TestDriveID(unittest.TestCase):
 
     def test_drive_id_server_id(self):
 
-        for drive_id in (DriveID('112233445566', 1),
-                         DriveID('1122334455660001')):
+        for drive_id in (DriveID('idc000112233445566', 1),
+                         DriveID('idc0001122334455660001')):
 
             dd(drive_id)
 
             self.assertIsInstance(drive_id.server_id, str)
-            self.assertEqual('112233445566', drive_id.server_id)
-            self.assertEqual('1122334455660001', str(drive_id))
+            self.assertEqual('idc000112233445566', drive_id.server_id)
+            self.assertEqual('idc0001122334455660001', str(drive_id))
 
     def test_validate_drive_id(self):
         invalid_cases = (
@@ -59,11 +60,11 @@ class TestDriveID(unittest.TestCase):
             {},
             'foo',
             123,
-            'aabbccddeeff*001',
-            'aabbccddeeff000a',
-            '*&bbccddeeff0001',
-            'AAbbccddeeff0001',
-            'AAbbccddeeff0xxx',
+            'idc000' 'aabbccddeeff*001',
+            'idc000' 'aabbccddeeff000a',
+            'idc000' '*&bbccddeeff0001',
+            'idc000' 'AAbbccddeeff0001',
+            'idc000' 'AAbbccddeeff0xxx',
         )
 
         for c in invalid_cases:
@@ -71,11 +72,11 @@ class TestDriveID(unittest.TestCase):
             self.assertRaises(ValueError, ectypes.DriveID, c)
 
         cases = (
-            'aabbccddeeff0001',
-            'aabbccddeeff0100',
-            'aabbccddeeff0999',
-            '11bbccddeeff0999',
-            '11bb33ddeeff0999',
+            'idc000' 'aabbccddeeff0001',
+            'idc000' 'aabbccddeeff0100',
+            'idc000' 'aabbccddeeff0999',
+            'idc000' '11bbccddeeff0999',
+            'idc000' '11bb33ddeeff0999',
         )
 
         for c in cases:

@@ -19,7 +19,9 @@
 - [Classes](#classes)
   - [ectypes.ReplicationConfig](#ectypesreplicationconfig)
   - [ectypes.IDBase](#ectypesidbase)
+  - [ectypes.IDCID](#ectypesidcid)
   - [ectypes.ServerID](#ectypesserverid)
+  - [ectypes.local_server_id](#ectypeslocal_server_id)
   - [ectypes.DriveID](#ectypesdriveid)
   - [ectypes.BlockID](#ectypesblockid)
     - [block id](#block-id)
@@ -37,6 +39,9 @@
     - [ectypes.BlockGroup.get_block_type](#ectypesblockgroupget_block_type)
     - [ectypes.BlockGroup.get_block_idc](#ectypesblockgroupget_block_idc)
     - [ectypes.BlockGroup.get_replica_indexes](#ectypesblockgroupget_replica_indexes)
+    - [ectypes.BlockGroup.classify_blocks](#ectypesblockgroupclassify_blocks)
+    - [ectypes.BlockGroup.indexes_to_blocks](#ectypesblockgroupindexes_to_blocks)
+    - [ectypes.BlockGroup.get_parity_indexes](#ectypesblockgroupget_parity_indexes)
   - [ectypes.Region](#ectypesregion)
     - [ectypes.Region.add_block](#ectypesregionadd_block)
     - [ectypes.Region.move_down](#ectypesregionmove_down)
@@ -62,10 +67,10 @@ The library is considered production ready.
 ```python
 from pykit import ectypes
 
-server_id = ectypes.ServerID.local_server_id()
-# 12 chars from primary MAC addr: "c62d8736c728"
+server_id = ectypes.ServerID.local_server_id('idc000')
+# idc and 12 chars from primary MAC addr: "idc000c62d8736c728"
 
-serverrec = ectypes.make_serverrec('.l1', 'center', {'role1': 1}, "/s2")
+serverrec = ectypes.make_serverrec('idc000', 'center', {'role1': 1}, "/s2")
 # out:
 #{
 #   'cpu': {
@@ -207,7 +212,7 @@ Collect some important info(`server_id`, `idc`, `idc_type`, `roles`,
 A `str`, like:
 
 ```
-"server_id: 00aabbccddee; idc: .l1; idc_type: zz; roles: {'role1': 1}; mountpoints_count: 3; allocated_drive_count: 0"
+"server_id: idc12300aabbccddee; idc: .l1; idc_type: zz; roles: {'role1': 1}; mountpoints_count: 3; allocated_drive_count: 0"
 ```
 
 ##  ectypes.validate_idc
@@ -292,19 +297,53 @@ IDBase(attr_1=value, attr_2=value, ...)
 ```
 
 
+##  ectypes.IDCID
+
+**syntax**:
+`ectypes.IDCID(idc_id)`
+
+`IDCID` is a subclass of `str` representing an idc.
+
+**arguments**:
+
+-   `idc_id`: a 6-char string.
+
+
 ##  ectypes.ServerID
 
 **syntax**:
 `ectypes.ServerID(str)`
 
-Make a server id, format: 12 chars from primary MAC
-addr(e.g.: "c62d8736c728").
+**syntax**:
+`ectypes.ServerID(idc_id, mac_addr)`
+
+**arguments**:
+
+-   `idc_id`:
+    an `IDCID` instance
+
+-   `mac_addr`:
+    a 12-hex-char string.
+
+
+##  ectypes.local_server_id
+
+**syntax**:
+`ectypes.local_server_id(idc_id)`
+
+**arguments**:
+
+-   `idc_id`: a string or an `IDCID` instance.
+
+**return**:
+a server id, format: 6 char idc and 12 chars from primary MAC
+addr(e.g.: "idc123" "c62d8736c728").
 
 ```python
 from pykit import ectypes
 
-print ectypes.ServerID.local_server_id()
-# out: 00163e0630f7
+print ectypes.ServerID.local_server_id('idc123')
+# out: idc12300163e0630f7
 ```
 
 
@@ -319,7 +358,7 @@ A subclass of `IDBase`. Make a drive id, format: 16 chars
 **arguments**:
 
     `server_id`:
-    A string, Format: 12 chars from primary MAC addr.
+    A string, Format: 18 chars of idc and primary MAC addr.
 
     `mount_point_index`:
     It is a 3-digit mount path, `001` for `/drives/001`.
@@ -327,7 +366,7 @@ A subclass of `IDBase`. Make a drive id, format: 16 chars
 ```python
 from pykit import ectypes
 
-print ectypes.DriveID('aabbccddeeff', 10)
+print ectypes.DriveID('idc000' 'aabbccddeeff', 10)
 # out: aabbccddeeff0010
 ```
 
@@ -340,17 +379,17 @@ print ectypes.DriveID('aabbccddeeff', 10)
 A subclass of `IDBase`. Generate block id.
 
 ```python
-block_id = 'd0g0006300000001230101c62d8736c72800020000000001'
+block_id = 'd0g0006300000001230101idc000c62d8736c72800020000000001'
 
 bid = ectypes.BlockID(block_id)
 print bid.type            # d
 print bid.block_group_id  # g000630000000123
 print bid.block_index     # 0101
-print bid.drive_id        # c62d8736c7280002
+print bid.drive_id        # idc000c62d8736c7280002
 print bid.block_id_seq    # 1
 
 # test __str__()
-print bid                 # d0g0006300000001230101c62d8736c72800020000000001
+print bid                 # d0g0006300000001230101idc000c62d8736c72800020000000001
 ```
 
 ### block id
@@ -359,14 +398,14 @@ print bid                 # d0g0006300000001230101c62d8736c72800020000000001
 
 A block is a single file on disk that contains multiple user-file.
 
-Format: 48 chars
+Format: 54 chars
 
 ```
 (d0|d1|d2|dp|x0|xp)<block_group_id><block_index><drive_id><block_id_seq>
-2                  16              4            16        10
+2                  16              4            22        10
 ```
 
-Example: `d g000630000000123 0101 c62d8736c7280002 0000000001`(without
+Example: `d g000630000000123 0101 idc000 c62d8736c7280002 0000000001`(without
 space)
 
 

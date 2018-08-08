@@ -15,10 +15,10 @@ class TestServer(unittest.TestCase):
 
     def test_serverrec(self):
         cases = (
-            ('.l1', 'center', {'role1': 1}, {'foo': 1}),
-            ('.l1.l2', 'xx', {'role1': 1, 'role2': 1}, {'foo': 1, 'bar': 2}),
-            ('.l1.l2.l3', 'yy', {'role1': 1, 'role2': 1, 'role3': 1}, {'foo': 1}),
-            ('.l1.l2.l3.l4', 'zz', {'role1': 1, 'role4': 4}, {'foo': 1, 'bar': 2, 'foobar': 3}),
+            ('idc000', 'center', {'role1': 1}, {'foo': 1}),
+            ('idc001', 'xx', {'role1': 1, 'role2': 1}, {'foo': 1, 'bar': 2}),
+            ('idc002', 'yy', {'role1': 1, 'role2': 1, 'role3': 1}, {'foo': 1}),
+            ('idc003', 'zz', {'role1': 1, 'role4': 4}, {'foo': 1, 'bar': 2, 'foobar': 3}),
         )
 
         for idc, idc_type, roles, argkv in cases:

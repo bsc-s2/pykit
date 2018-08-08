@@ -72,7 +72,7 @@ class TestBlockGroup(unittest.TestCase):
     def setUp(self):
         self.foo_block = BlockDesc({
             'block_id': BlockID('d0', 'g000640000000123', '0000',
-                                    DriveID('c62d8736c7280002'), 1),
+                                    DriveID('idc000' 'c62d8736c7280002'), 1),
             'size': 1000,
             'range': ['0a', '0b'],
             'is_del': 0
@@ -259,7 +259,7 @@ class TestBlockGroup(unittest.TestCase):
 
         d0 = BlockDesc({
             'block_id': BlockID('d0', 'g000640000000123', '0000',
-                                    DriveID('c62d8736c7280002'), 1),
+                                    DriveID('idc000' 'c62d8736c7280002'), 1),
             'size': 1000,
             'range': ['0a', '0b'],
             'is_del': 0
@@ -302,7 +302,7 @@ class TestBlockGroup(unittest.TestCase):
 
             typ = g.get_block_type(idx)
 
-            blkid = BlockID(typ, gid, idx, DriveID('c62d8736c7280002'), i)
+            blkid = BlockID(typ, gid, idx, DriveID('idc000' 'c62d8736c7280002'), i)
 
             blk = copy.deepcopy(base_blk)
 
@@ -352,7 +352,7 @@ class TestBlockGroup(unittest.TestCase):
 
         for i, idx in enumerate(parity_idxes):
 
-            blkid = BlockID('dp', gid, idx, DriveID('c62d8736c7280002'), i)
+            blkid = BlockID('dp', gid, idx, DriveID('idc000' 'c62d8736c7280002'), i)
 
             parity = copy.deepcopy(base_parity)
 

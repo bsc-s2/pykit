@@ -35,12 +35,16 @@ from .server import (
     validate_idc,
 )
 
+from .idc_id import (
+    IDCID,
+    IDC_ID_LEN,
+)
+
 from .server_id import (
     ServerID,
 )
 
 from .drive_id import (
-
     DriveID,
 )
 
@@ -80,6 +84,9 @@ __all__ = [
     "idc_distance",
     "make_serverrec",
     "validate_idc",
+
+    "IDCID",
+    "IDC_ID_LEN",
 
     "ServerID",
 
