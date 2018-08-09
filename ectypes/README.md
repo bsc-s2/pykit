@@ -70,7 +70,7 @@ from pykit import ectypes
 server_id = ectypes.ServerID.local_server_id('idc000')
 # idc and 12 chars from primary MAC addr: "idc000c62d8736c728"
 
-serverrec = ectypes.make_serverrec('idc000', 'center', {'role1': 1}, "/s2")
+serverrec = ectypes.make_serverrec('idc000aabbccddeeff', 'idc000', 'center', {'role1': 1}, "/s2")
 # out:
 #{
 #   'cpu': {
@@ -89,7 +89,7 @@ serverrec = ectypes.make_serverrec('idc000', 'center', {'role1': 1}, "/s2")
 #   },
 #   'pub_ips': ['118.1.1.1'],
 #   'roles': {'role1': 1},
-#   'server_id': '00163e0630f7',
+#   'server_id': 'idc000aabbccddeeff',
 #   'next_mount_index': 1,
 #   "allocated_drive": {
 #       "/s2/dirve/001": {"status": "normal",},
@@ -138,7 +138,7 @@ Raise if block index parse or make error.
 ##  ectypes.make_serverrec
 
 **syntax**:
-`ectypes.make_serverrec(idc, idc_type, roles, allocated_drive_pre, **argkv)`
+`ectypes.make_serverrec(server_id, idc, idc_type, roles, allocated_drive_pre, **argkv)`
 
 Make a `dict` (a server record).
 
@@ -149,6 +149,9 @@ Make a `dict` (a server record).
 -   Mounted path(mount path, capacity, fs type).
 
 **arguments**:
+
+-   `server_id`:
+    specifies the server id.
 
 -   `idc`:
     The name of a idc in the ectypes. Format: `.l1-name.l2-name...`.
