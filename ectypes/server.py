@@ -5,8 +5,6 @@ import re
 import socket
 from collections import defaultdict
 
-from .server_id import ServerID
-
 import psutil
 
 from pykit import fsutil
@@ -43,7 +41,7 @@ def _get_allocated_drive(allocated_drive_pre, mountpoints):
     return rst
 
 
-def make_serverrec(idc, idc_type, roles, allocated_drive_pre, **argkv):
+def make_serverrec(server_id, idc, idc_type, roles, allocated_drive_pre, **argkv):
     serverrec = {}
 
     ips = net.get_host_ip4(exclude_prefix="docker")
@@ -58,7 +56,7 @@ def make_serverrec(idc, idc_type, roles, allocated_drive_pre, **argkv):
     if hasattr(psutil, 'cpu_freq'):
         cpu_info['frequency'] = psutil.cpu_freq().max
 
-    serverrec['server_id'] = ServerID.local_server_id(idc)
+    serverrec['server_id'] = server_id
     serverrec['pub_ips'] = pub_ips
     serverrec['inn_ips'] = inn_ips
     serverrec['hostname'] = socket.gethostname()

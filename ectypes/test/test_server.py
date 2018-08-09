@@ -22,7 +22,7 @@ class TestServer(unittest.TestCase):
         )
 
         for idc, idc_type, roles, argkv in cases:
-            serverrec = ectypes.make_serverrec(idc, idc_type, roles, '/s2', **argkv)
+            serverrec = ectypes.make_serverrec('idc000aabbccddeeff', idc, idc_type, roles, '/s2', **argkv)
 
             dd('serverrec:' + repr(serverrec))
 
@@ -30,6 +30,8 @@ class TestServer(unittest.TestCase):
             self.assertIn('pub_ips', serverrec)
             self.assertIn('inn_ips', serverrec)
             self.assertIn('memory', serverrec)
+
+            self.assertEqual('idc000aabbccddeeff', serverrec['server_id'])
 
             self.assertIn('count', serverrec['cpu'])
             if hasattr(psutil, 'cpu_freq'):
