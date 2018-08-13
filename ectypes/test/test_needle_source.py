@@ -18,7 +18,11 @@ n0 = {
             _make_referrer('3copy', 'key3', 123, 1),
         ],
         'Size': 10,
-        'Url': '/'
+        'Url': '/',
+        'IsDel': 1,
+        'Meta': {'meta': 123},
+        'SysMeta': {'sysmeta': 123},
+        'Level': 0
     }
 n1 = {
         'NeedleID': '1',
@@ -28,7 +32,11 @@ n1 = {
             _make_referrer('3copy', 'key4', 123, 0),
         ],
         'Size': 10,
-        'Url': '/'
+        'Url': '/',
+        'IsDel': 0,
+        'Meta': {'meta': 1234},
+        'SysMeta': {'sysmeta': 1234},
+        'Level': 1
     }
 n2 = {
         'NeedleID': '1',
@@ -38,7 +46,11 @@ n2 = {
             _make_referrer('3copy', 'key6', 123, 1),
         ],
         'Size': 10,
-        'Url': '/'
+        'Url': '/',
+        'IsDel': 0,
+        'Meta': {'meta': 12345},
+        'SysMeta': {'sysmeta': 12345},
+        'Level': 2
     }
 n3 = {
         'NeedleID': '2',
@@ -47,7 +59,11 @@ n3 = {
             _make_referrer('3copy', 'key6', 123, 1),
         ],
         'Size': 10,
-        'Url': '/'
+        'Url': '/',
+        'IsDel': 1,
+        'Meta': {'meta': 123456},
+        'SysMeta': {'sysmeta': 123456},
+        'Level': 3
     }
 n4 = {
         'NeedleID': '2',
@@ -56,9 +72,40 @@ n4 = {
             _make_referrer('3copy', 'key6', 123, 0),
         ],
         'Size': 10,
-        'Url': '/'
-    }
+        'Url': '/',
+        'IsDel': 0,
+        'Meta': {'meta': 1234567},
 
+        'SysMeta': {'sysmeta': 1234567},
+        'Level': 4
+    }
+n5 = {
+        'NeedleID': '1',
+        'Referrers': [
+            _make_referrer('3copy', 'key1', 123, 1),
+            _make_referrer('3copy', 'key2', 123, 1),
+        ],
+        'Size': 10,
+        'Url': '',
+        'IsDel': 1,
+        'Meta': {'meta': 123},
+        'SysMeta': {},
+        'Level': 0
+    }
+n6 = {
+        'NeedleID': '1',
+        'Referrers': [
+            _make_referrer('3copy', 'key1', 123, 1),
+            _make_referrer('3copy', 'key2', 123, 1),
+            _make_referrer('3copy', 'key4', 1243, 0)
+        ],
+        'Size': 10,
+        'Url': '',
+        'IsDel': 0,
+        'Meta': {'meta': 123},
+        'SysMeta': {},
+        'Level': 0
+}
 ref1 = needle_source.Referrer(Scope="3copy", RefKey="key1", Ver=123, IsDel=0)
 ref2 = needle_source.Referrer(Scope="2copy", RefKey="key1", Ver=123, IsDel=0)
 ref3 = needle_source.Referrer(Scope="3copy", RefKey="key2", Ver=123, IsDel=0)
@@ -140,6 +187,7 @@ class TestNeedleSource(unittest.TestCase):
         self.assertFalse(n0t < n2t)
         self.assertFalse(n1t < n2t)
         self.assertTrue(n0t < n3t)
+        self.assertTrue(n0t < None)
 
     def test_needle_id_equal(self):
         n0eq = needle_source.NeedleSource(n0)
@@ -187,18 +235,26 @@ class TestNeedleSource(unittest.TestCase):
                     _make_referrer('3copy', 'key6', 123, 1),
                 ],
                 'Size': 10,
-                'Url': '/'
+                'Url': '/',
+                'IsDel': 0,
+                'Meta': {'meta': 12345},
+                'SysMeta': {'sysmeta': 12345},
+                'Level': 0
             }
 
         n012_del = {
-                'NeedleID': '1',
-                'Referrers': [
-                    _make_referrer('3copy', 'key4', 123, 0),
-                    _make_referrer('3copy', 'key5', 123, 0),
-                ],
-                'Size': 10,
-                'Url': '/'
-            }
+                    'NeedleID': '1',
+                    'Referrers': [
+                        _make_referrer('3copy', 'key4', 123, 0),
+                        _make_referrer('3copy', 'key5', 123, 0),
+                    ],
+                    'Size': 10,
+                    'Url': '/',
+                    'IsDel': 0,
+                    'Meta': {'meta': 12345},
+                    'SysMeta': {'sysmeta': 12345},
+                    'Level': 0
+                }
 
         ndl_src0 = needle_source.NeedleSource(n0)
         ndl_src1 = needle_source.NeedleSource(n1)
@@ -250,7 +306,12 @@ class TestNeedleSource(unittest.TestCase):
                         _make_referrer('3copy', 'key6', 123, 1),
                     ],
                     'Size': 10,
-                    'Url': '/'
+                    'Url': '/',
+                    'IsDel': 0,
+                    'Meta': {'meta': 12345},
+                    'SysMeta': {'sysmeta': 12345},
+                    'Level': 0
+
                 },
                 {
                     'NeedleID': '2',
@@ -259,7 +320,11 @@ class TestNeedleSource(unittest.TestCase):
                         _make_referrer('3copy', 'key6', 123, 1),
                     ],
                     'Size': 10,
-                    'Url': '/'
+                    'Url': '/',
+                    'IsDel': 1,
+                    'Meta': {'meta': 1234567},
+                    'SysMeta': {'sysmeta': 1234567},
+                    'Level': 3
                 },
              ]
         expected_del = [
@@ -270,7 +335,11 @@ class TestNeedleSource(unittest.TestCase):
                         _make_referrer('3copy', 'key5', 123, 0),
                     ],
                     'Size': 10,
-                    'Url': '/'
+                    'Url': '/',
+                    'IsDel': 0,
+                    'Meta': {'meta': 12345},
+                    'SysMeta': {'sysmeta': 12345},
+                    'Level': 0
                 },
             ]
 
@@ -279,8 +348,6 @@ class TestNeedleSource(unittest.TestCase):
             ndls.append(needle_source.NeedleSource(n))
 
         res_ndls = []
-        for ndl in needle_source.merge_needle_source_iters():
-            res_ndls.append(ndl)
         self.assertEqual([], res_ndls)
 
         res_ndls = []
@@ -290,11 +357,6 @@ class TestNeedleSource(unittest.TestCase):
 
         res_ndls = []
         for ndl in needle_source.merge_needle_source_iters(ndls[:2], ndls[2:4], ndls[4:]):
-            res_ndls.append(ndl)
-        self.assertEqual(expected, res_ndls)
-
-        res_ndls = []
-        for ndl in needle_source.merge_needle_source_iters(ndls[:2], ndls[2:4]):
             res_ndls.append(ndl)
         self.assertEqual(expected, res_ndls)
 
@@ -315,3 +377,33 @@ class TestNeedleSource(unittest.TestCase):
         for ndl in needle_source.merge_needle_source_iters(ndls[:2], ndls[2:4]):
             res_ndls.append(ndl)
         self.assertEqual(expected_del, res_ndls)
+
+    def test_update_is_del(self):
+
+        n5_is_del = needle_source.NeedleSource(n5)
+        n5_is_del.add_referrer(ref16)
+        self.assertIs(n5_is_del['IsDel'], 0)
+
+        n6_is_del = needle_source.NeedleSource(n6)
+        n6_is_del.add_referrer(ref18)
+        self.assertIs(n6_is_del['IsDel'], 1)
+
+        n6_is_del = needle_source.NeedleSource(n6)
+        n6_is_del.reserve_del = False
+        n6_is_del.add_referrer(ref18)
+        self.assertIs(n6_is_del['IsDel'], 1)
+
+    def test_update_meta_sysmeta_level(self):
+        ndl_src1 = needle_source.NeedleSource(n1)
+        ndl_src2 = needle_source.NeedleSource(n2)
+        res = needle_source.merge_referrer([ndl_src1, ndl_src2])
+        self.assertEqual(res['Level'], 1)
+        self.assertEqual(res['Meta'], {'meta': 12345})
+        self.assertEqual(res['SysMeta'], {'sysmeta': 12345})
+
+        ndl_src3 = needle_source.NeedleSource(n3)
+        ndl_src4 = needle_source.NeedleSource(n4)
+        res = needle_source.merge_referrer([ndl_src3, ndl_src4])
+        self.assertEqual(res['Level'], 3)
+        self.assertEqual(res['Meta'], {'meta': 1234567})
+        self.assertEqual(res['SysMeta'], {'sysmeta': 1234567})

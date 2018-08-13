@@ -51,28 +51,33 @@ def _referrer(refs=None):
     return refs
 
 
-class NeedleSource(FixedKeysDict):
+class NeedleIdElt(FixedKeysDict):
 
     # referrers must be added in non-descending order
 
     keys_default = dict((('NeedleID', str),
                          ('Referrers', _referrer),
                          ('Size', int),
-                         ('Url', str),))
+                         ('IsDel', int),
+                         ('Meta', dict),
+                         ('SysMeta', dict),))
     ident_keys = ('NeedleID',)
 
     def __init__(self, *args, **argkv):
 
         self.reserve_del = True
+        super(NeedleIdElt, self).__init__(*args, **argkv)
+        self.non_del_cnt = 0
+        for referrer in self['Referrers']:
+            if referrer['IsDel'] == 0:
+                self.non_del_cnt += 1
 
-        super(NeedleSource, self).__init__(*args, **argkv)
-
-    def __lt__(self, another):
-        return self.ident() < another.ident()
+    def needle_id_equal(self, another):
+        return self.ident() == another.ident()
 
     def add_referrer(self, referrer):
 
-        # before the new referrers are added into the Referrers,the Referrers
+        # before the new referrers are added into the Referrers, the Referrers
         # are sorted for they are corresponding to the phy
 
         if not isinstance(referrer, Referrer):
@@ -89,8 +94,17 @@ class NeedleSource(FixedKeysDict):
                     ref = Referrer(self['Referrers'][-1])
                     ref['IsDel'] = 1
                     self['Referrers'][-1] = ref
+
                 else:
                     del self['Referrers'][-1]
+
+                self.non_del_cnt -= 1
+
+                if self.non_del_cnt >= 1:
+                    self['IsDel'] = 0
+                else:
+                    self['IsDel'] = 1
+
                 return
 
         if not self.reserve_del and referrer['IsDel'] == 1:
@@ -98,8 +112,33 @@ class NeedleSource(FixedKeysDict):
 
         self['Referrers'].append(referrer)
 
-    def needle_id_equal(self, another):
-        return self.ident() == another.ident()
+        if referrer['IsDel'] == 0:
+            self.non_del_cnt += 1
+
+        if self.non_del_cnt >= 1:
+            self['IsDel'] = 0
+        else:
+            self['IsDel'] = 1
+
+
+class NeedleSource(NeedleIdElt):
+
+    keys_default = dict((('NeedleID', str),
+                         ('Referrers', _referrer),
+                         ('Size', int),
+                         ('IsDel', int),
+                         ('Meta', dict),
+                         ('SysMeta', dict),
+                         ('Url', str),
+                         ('Level', int),))
+
+    def __lt__(self, another):
+        if another is None:
+            return True
+        elif isinstance(another, str):
+            return self.ident() < another
+        else:
+            return self.ident() < another.ident()
 
 
 def merge_referrer(needle_sources):
@@ -107,6 +146,8 @@ def merge_referrer(needle_sources):
     merged_num = len(needle_sources)
     if merged_num == 0:
         return None
+
+    sorted_needle_source = sorted(needle_sources, key=lambda needle_source: needle_source['Level'])
 
     needle_ids = [n['NeedleID'] for n in needle_sources]
     ndl_src = copy.deepcopy(needle_sources[0])
@@ -122,6 +163,11 @@ def merge_referrer(needle_sources):
         ndl_src.add_referrer(ref)
 
     if len(ndl_src['Referrers']) > 0:
+
+        ndl_src['Meta'] = sorted_needle_source[-1]['Meta']
+        ndl_src['SysMeta'] = sorted_needle_source[-1]['SysMeta']
+        ndl_src['Level'] = sorted_needle_source[0]['Level']
+
         return ndl_src
     else:
         return None
