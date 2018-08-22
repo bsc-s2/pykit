@@ -23,6 +23,7 @@
   - [zkutil.cas_loop](#zkutilcas_loop)
 - [Other methods](#other-methods)
   - [zkutil.init_hierarchy](#zkutilinit_hierarchy)
+  - [zkutil.export_hierarchy](#zkutilexport_hierarchy)
 - [Exceptions](#exceptions)
   - [zkutil.LockTimeout](#zkutillocktimeout)
 - [Classes](#classes)
@@ -35,6 +36,9 @@
     - [zkutil.ZKLock.try_acquire](#zkutilzklocktry_acquire)
     - [zkutil.ZKLock.try_release](#zkutilzklocktry_release)
     - [zkutil.ZKLock.release](#zkutilzklockrelease)
+  - [zkutil.CachedReader](#zkutilcachedreader)
+    - [zkutil.CachedReader.watch](#zkutilcachedreaderwatch)
+    - [zkutil.CachedReader.close](#zkutilcachedreaderclose)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -842,6 +846,73 @@ If this lock initiated a connection by itself, it will be closed.
 
 **return**:
 Nothing
+
+
+##  zkutil.CachedReader
+
+**syntax**:
+`zkutil.CachedReader(zk, path, callback=None)`
+
+A subclass of `dict`, cache the data in zookeeper.
+The type of data must be `dict`.
+
+```
+#bar = {
+#    'jobs': {
+#        'num' : 10
+#    }
+#}
+cr = CachedReader('127.0.0.1:2181', 'bar')
+for i in range(cr['jobs']['num']):
+    doit()
+```
+
+**arguments**:
+
+-   `zk`:
+    is the connection argument, which can be:
+
+    -   Comma separated host list, such as
+        `"127.0.0.1:2181,127.0.0.2:2181"`.
+
+    -   A `zkutil.ZKConf` instance specifying connection argument with other
+        config.
+
+    -   A plain `dict` to create a `zkutil.ZKConf` instance.
+
+-   `path`:
+    the path of the node in zookeeper.
+
+-   `callback`:
+    give a callback when the node change. Defaults to `None`.
+    It has 3 arguments `(path, old_dict, new_dict)`.
+
+
+### zkutil.CachedReader.watch
+
+**syntax**:
+`zkutil.CachedReader.watch(timeout=None)`
+
+Wait until the node change and return a list `[old_dict, new_dict]`.
+If timeout, raise a `ZKWaitTimeout`.
+
+**arguments**:
+
+-   `timeout`:
+    specifies the time(in second) to wait.
+    By default it is `None` which means to wait for a year
+
+**return**:
+If close the `CachedReader` by `zkutil.CachedReader.close()`, it return `None`.
+If the node change, it return a list `[old_dict, new_dict]`
+
+
+### zkutil.CachedReader.close
+
+**syntax**:
+`zkutil.CachedReader.close()`
+
+Stop the `zkutil.CachedReader.watch` and the callback.
 
 
 #   Author

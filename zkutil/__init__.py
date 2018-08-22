@@ -40,6 +40,10 @@ from .zklock import (
 
 )
 
+from .cached_reader import (
+    CachedReader,
+)
+
 __all__ = [
     "PermTypeError",
     "ZKWaitTimeout",
@@ -69,4 +73,6 @@ __all__ = [
     "LockTimeout",
 
     "ZKLock",
+
+    "CachedReader",
 ]
