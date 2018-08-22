@@ -7,6 +7,13 @@ from .client import (
     HeadersError,
     BadStatusLineError,
     Client,
+
+)
+
+from .util import(
+    headers_add_host,
+    request_add_host,
+
 )
 
 __all__ = [
@@ -18,4 +25,7 @@ __all__ = [
     'HeadersError',
     'BadStatusLineError',
     'Client',
+
+    'headers_add_host',
+    'request_add_host',
 ]
