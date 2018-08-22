@@ -132,13 +132,13 @@ class Client(object):
 
         self._close()
 
-    def request(self, uri, method='GET', headers={}):
+    def request(self, uri, method='GET', headers=None):
 
         self.send_request(uri, method=method, headers=headers)
 
         self.read_response()
 
-    def send_request(self, uri, method='GET', headers={}):
+    def send_request(self, uri, method='GET', headers=None):
 
         self._reset_request()
         self.method = method
