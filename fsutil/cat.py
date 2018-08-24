@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 no_data_timeout = 3600
 read_size = 1024 * 1024 * 16
-file_check_time_range = (0.05, 1.0)  # sec
+file_check_time_range = (0.5, 5.0)
 stat_dir = config.cat_stat_dir or '/tmp'
 SEEK_START = 'start'
 SEEK_END = 'end'
@@ -220,8 +220,6 @@ class Cat(object):
 
     def iter_to_file_end(self, f, read_timeout, default_seek):
 
-        full_chunk_timeout = min([read_timeout * 0.01, 1])
-
         offset = self.get_last_offset(f, default_seek)
         f.seek(offset)
 
@@ -229,19 +227,21 @@ class Cat(object):
             fn=self.fn,
             offset=offset))
 
-        self.wait_for_new_data(f, full_chunk_timeout, read_timeout)
-        for line in self.iter_lines(f):
+        for line in self.iter_lines(f, read_timeout):
             logger.debug('yield:' + repr(line))
             yield line
 
         if self.file_end_handler is not None:
             self.file_end_handler()
 
-    def wait_for_new_data(self, f, full_chunk_timeout, timeout):
+    def wait_for_new_data(self, f, timeout):
 
         # Before full_chunk_expire_at, wait for a full chunk data to be ready to
         # maximize throughput.
         # If time exceeds full_chunk_expire_at, return True if there is any data ready.
+
+        # insufficient chunk data return before read_timeout
+        full_chunk_timeout = min([timeout * 0.5, 1])
 
         full_chunk_expire_at = time.time() + full_chunk_timeout
         expire_at = time.time() + timeout
@@ -301,7 +301,7 @@ class Cat(object):
             "offset": offset,
         }
 
-        fsutil.write_file(self.stat_path(), utfjson.dump(last))
+        fsutil.write_file(self.stat_path(), utfjson.dump(last), fsync=False)
 
         logger.info('position written fn=%s inode=%d offset=%d' % (
             self.fn, ino, offset))
@@ -346,9 +346,13 @@ class Cat(object):
 
         return last['offset']
 
-    def iter_lines(self, f):
+    def iter_lines(self, f, read_timeout):
+
+        # raise NoData for the first time
+        self.wait_for_new_data(f, read_timeout)
 
         while True:
+
             offset = f.tell()
             fsize = _file_size(f)
             if offset >= fsize:
@@ -379,8 +383,16 @@ class Cat(object):
                         line = line.strip('\r\n')
                     offset += len(l)
                     yield line
+
+                # try to read a full chunk
+                self.wait_for_new_data(f, read_timeout)
+
+            except NoData:
+                pass
+
             finally:
                 self.write_last_stat(f, offset)
+
 
     def _try_open_file(self):
         try:

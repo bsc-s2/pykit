@@ -66,7 +66,7 @@ class TestCat(unittest.TestCase):
 
     def test_half_line(self):
 
-        n = 1024
+        n = 128
 
         def _append():
             for i in range(n):
@@ -170,15 +170,15 @@ class TestCat(unittest.TestCase):
 
         def _override():
             for l in expected:
-                time.sleep(0.1)
                 force_remove(self.fn)
                 append_lines(self.fn, [l])
                 dd('overrided: ', l)
+                time.sleep(0.5)
 
         th = threadutil.start_daemon(_override)
 
         try:
-            for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0.4):
+            for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=2):
                 rst.append(l)
         except fsutil.NoData:
             pass
@@ -280,7 +280,7 @@ class TestCat(unittest.TestCase):
         dd('appended 1')
 
         def _append():
-            time.sleep(0.3)
+            time.sleep(2)
             append_lines(self.fn, expected)
             dd('appended')
 
@@ -379,7 +379,7 @@ class TestCat(unittest.TestCase):
         append_lines(self.fn, expected)
 
         def _append():
-            time.sleep(0.1)
+            time.sleep(1)
             append_lines(self.fn, expected)
 
         th = threadutil.start_daemon(_append)
