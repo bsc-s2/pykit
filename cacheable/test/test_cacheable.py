@@ -176,7 +176,7 @@ class TestCacheable(unittest.TestCase):
 
         cases = (
             (2, False),
-            (3, True),
+            (4, True),
         )
 
         tm = get_cache_data('key')['tm']

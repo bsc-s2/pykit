@@ -132,6 +132,7 @@ class TestWsjobd(unittest.TestCase):
         self.ws.send(utfjson.dump(job_desc))
 
         resp = self.ws.recv()
+        dd(resp)
         resp = utfjson.load(resp)
         self.assertEqual('80%', resp)
 

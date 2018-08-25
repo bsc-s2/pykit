@@ -133,3 +133,22 @@ def pull_image(image):
     # 'daocloud.io/zookeeper:3.4.10' --> ('daocloud.io/zookeeper', '3.4.10')
     rst = dcli.pull(*image.split(':'))
     dd(rst)
+
+
+def build_image(image, path):
+
+    dcli = get_client()
+
+    rst = dcli.images(image)
+    if len(rst) > 0:
+        dd(image + ' is ready')
+        dd(rst)
+        return
+
+    dd('build: ' + image + ' from ' + path)
+
+    for line in dcli.build(path=path,
+                           nocache=True,
+                           tag=image):
+
+        dd('build ' + image + ':', line)

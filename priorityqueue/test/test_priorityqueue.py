@@ -192,7 +192,7 @@ class TestPriorityQueue(unittest.TestCase):
             us_per_call = t.spent() / ntimes / n_thread * 1000 * 1000
             dd(us_per_call, 'us/call')
 
-        self.assertLess(us_per_call, 50)
+        self.assertLess(us_per_call, 100)
 
     def test_concurrent(self):
         pq = priorityqueue.PriorityQueue()

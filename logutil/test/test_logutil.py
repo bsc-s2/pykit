@@ -9,6 +9,8 @@ from pykit import logutil
 
 logger = logging.getLogger(__name__)
 
+this_base = os.path.dirname(__file__)
+
 
 def subproc(script, cwd=None):
 
@@ -49,7 +51,7 @@ class TestFileHandler(unittest.TestCase):
 
     def test_concurrent_write_and_remove(self):
 
-        l = logutil.make_logger(base_dir='/tmp',
+        l = logutil.make_logger(base_dir=this_base,
                                 log_name='rolling',
                                 log_fn='rolling.out',
                                 level=logging.DEBUG,
@@ -60,7 +62,7 @@ class TestFileHandler(unittest.TestCase):
 
         def _remove():
             while sess['running']:
-                rm_file('/tmp/rolling.out')
+                rm_file(this_base + '/rolling.out')
 
         th = threading.Thread(target=_remove)
         th.daemon = True
@@ -77,10 +79,10 @@ class TestLogutil(unittest.TestCase):
 
     def setUp(self):
 
-        rm_file('/tmp/t.out')
+        rm_file(this_base + '/t.out')
 
         # root logger
-        logutil.make_logger(base_dir='/tmp',
+        logutil.make_logger(base_dir=this_base,
                             log_fn='t.out',
                             level=logging.DEBUG,
                             fmt='message')
@@ -111,7 +113,7 @@ class TestLogutil(unittest.TestCase):
         fmt = '{fn}::{ln} in {func}\n  {statement}'
         logutil.deprecate('foo', fmt=fmt, sep='\n')
 
-        cont = read_file('/tmp/t.out')
+        cont = read_file(this_base + '/t.out')
 
         self.assertRegexpMatches(
             cont,
@@ -183,9 +185,9 @@ class TestLogutil(unittest.TestCase):
 
     def test_make_logger(self):
 
-        rm_file('/tmp/tt')
+        rm_file(this_base + '/tt')
 
-        l = logutil.make_logger(base_dir='/tmp',
+        l = logutil.make_logger(base_dir=this_base,
                                 log_name='m',
                                 log_fn='tt',
                                 level='INFO',
@@ -196,7 +198,7 @@ class TestLogutil(unittest.TestCase):
         l.debug('debug')
         l.info('info')
 
-        cont = read_file('/tmp/tt').strip()
+        cont = read_file(this_base + '/tt').strip()
 
         self.assertEqual(cont, 'info')
 
@@ -213,9 +215,9 @@ class TestLogutil(unittest.TestCase):
 
     def test_make_file_handler(self):
 
-        rm_file('/tmp/handler_change')
+        rm_file(this_base + '/handler_change')
 
-        l = logutil.make_logger(base_dir='/tmp',
+        l = logutil.make_logger(base_dir=this_base,
                                 log_name='h',
                                 log_fn='dd',
                                 level='INFO',
@@ -223,7 +225,7 @@ class TestLogutil(unittest.TestCase):
                                 datefmt='%H%M%S'
                                 )
         l.handlers = []
-        handler = logutil.make_file_handler(base_dir='/tmp',
+        handler = logutil.make_file_handler(base_dir=this_base,
                                             log_fn='handler_change',
                                             fmt='%(message)s',
                                             datefmt='%H%M%S')
@@ -232,7 +234,7 @@ class TestLogutil(unittest.TestCase):
         l.debug('debug')
         l.info('info')
 
-        cont = read_file('/tmp/handler_change').strip()
+        cont = read_file(this_base + '/handler_change').strip()
 
         self.assertEqual(cont, 'info')
 
@@ -244,7 +246,7 @@ class TestLogutil(unittest.TestCase):
         self.assertEqual(out.strip(), 'info')
 
     def test_add_std_handler(self):
-        rm_file('/tmp/stdlog')
+        rm_file(this_base + '/stdlog')
 
         code, out, err = subproc(
             'python stdlog.py', cwd=os.path.dirname(__file__))
@@ -262,16 +264,16 @@ class TestLogutil(unittest.TestCase):
         )
 
         for inp, expected in cases:
-            rm_file('/tmp/ss')
+            rm_file(this_base + '/ss')
 
-            logger1 = logutil.make_logger(base_dir='/tmp',
+            logger1 = logutil.make_logger(base_dir=this_base,
                                           log_name='1_prefix_1',
                                           log_fn='ss',
                                           level='DEBUG',
                                           fmt='%(message)s',
                                           datefmt='%H%M%S')
 
-            logger2 = logutil.make_logger(base_dir='/tmp',
+            logger2 = logutil.make_logger(base_dir=this_base,
                                           log_name='2_prefix_1',
                                           log_fn='ss',
                                           level='DEBUG',
@@ -285,6 +287,6 @@ class TestLogutil(unittest.TestCase):
             logger1.debug('debug1')
             logger2.debug('debug2')
 
-            content = read_file('/tmp/ss')
+            content = read_file(this_base + '/ss')
 
             self.assertEqual(expected, content.strip())

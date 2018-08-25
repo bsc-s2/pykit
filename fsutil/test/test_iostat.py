@@ -103,7 +103,7 @@ class TestIostat(unittest.TestCase):
         th1 = threadutil.start_daemon(_write, args=(1, ))
         th2 = threadutil.start_daemon(_write, args=(2, ))
 
-        time.sleep(2)
+        time.sleep(5)
         force_remove('/tmp/pykit-iostat')
 
         with ututil.Timer() as t:

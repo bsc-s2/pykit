@@ -3,7 +3,7 @@ from .utfjson import (
     load,
 )
 
-from ..p3json import (
+from pykit.p3json import (
     JSONDecodeError,
 )
 

@@ -205,3 +205,10 @@ def wait_listening(ip, port, timeout=15, interval=0.5):
             time.sleep(.4)
     else:
         raise
+
+def has_env(kv):
+
+    # kv: KEY=value
+
+    k, v = kv.split('=', 1)
+    return os.environ.get(k) == v

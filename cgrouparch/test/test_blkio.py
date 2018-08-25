@@ -57,6 +57,10 @@ class TestBlkio(unittest.TestCase):
         return
 
     def test_blkio_weight(self):
+
+        if ututil.has_env('TRAVIS=true'):
+            return
+
         manager = multiprocessing.Manager()
         result_dict = manager.dict()
 

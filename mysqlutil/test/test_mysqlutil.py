@@ -33,14 +33,8 @@ class TestMysqlScanIndex(unittest.TestCase):
 
         docker_file_dir = os.path.abspath(os.path.dirname(__file__)) + '/dep'
 
-        dd('build: ' + docker_file_dir)
+        utdocker.build_image(mysql_test_tag, docker_file_dir)
 
-        dcli = utdocker.get_client()
-        for line in dcli.build(path=docker_file_dir,
-                               nocache=True,
-                               tag=mysql_test_tag):
-
-            dd('build ' + mysql_test_tag + ':', line)
 
     def setUp(self):
 
