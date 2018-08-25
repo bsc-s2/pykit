@@ -84,6 +84,13 @@ class TestLogcollector(unittest.TestCase):
 
         log_entries = []
 
+        def get_level(log_str):
+            for k in ('INFO', 'WARNING', 'ERROR'):
+                if k in log_str:
+                    return k.lower()
+            else:
+                return 'unknown'
+
         def send_log(log_entry):
             log_entries.append(log_entry)
 
@@ -95,6 +102,7 @@ class TestLogcollector(unittest.TestCase):
                 'my_test_log': {
                     'file_path': os.path.join(this_base, 'test_log.out'),
                     'level': ['error'],
+                    'get_level': get_level,
                     'is_first_line': is_first_line,
                     'parse': parse,
                 },
@@ -108,11 +116,12 @@ class TestLogcollector(unittest.TestCase):
         time.sleep(2)
 
         self.assertEqual(3, len(log_entries))
+        dd(log_entries)
 
         dd(log_entries[0]['count'])
         dd(log_entries[1]['count'])
         dd(log_entries[2]['count'])
-        self.assertAlmostEqual(100, log_entries[1]['count'], delta=15)
+        self.assertAlmostEqual(100, log_entries[1]['count'], delta=30)
 
         self.assertEqual('error', log_entries[0]['level'])
         self.assertEqual('my_test_log', log_entries[0]['log_name'])

@@ -66,6 +66,7 @@ def _iter_log(log_conf):
     try:
         for line in fsutil.Cat(file_path).iterate(
                 timeout=3, default_seek=-1024*1024*2):
+
             if log_conf['is_first_line'](line):
                 if len(log_lines) > 0:
                     yield ''.join(log_lines)
