@@ -115,6 +115,10 @@ class TestLogcollector(unittest.TestCase):
             log_cnt += le["count"]
         dd(log_cnt)
 
+        time.sleep(2)
+
+        self.assertEqual(3, len(log_entries), 'log_entries are: ' + repr(log_entries))
+
         self.assertEqual(100, log_cnt)
         self.assertEqual('error', log_entries[0]['level'])
         self.assertEqual('my_test_log', log_entries[0]['log_name'])
