@@ -5,6 +5,7 @@ unittest utility
 import inspect
 import logging
 import os
+import socket
 import time
 import unittest
 
@@ -111,7 +112,7 @@ def dd(*msg):
     """
 
     s = ' '.join([x.encode('utf-8') if isinstance(x, unicode) else str(x)
-                    for x in msg])
+                  for x in msg])
 
     _init()
 
@@ -186,3 +187,21 @@ def _find_frame_by_self(clz):
         frame = frame.f_back
 
     return None
+
+
+def wait_listening(ip, port, timeout=15, interval=0.5):
+
+    # Wait at most `timeout` second for a tcp listening service to serve.
+
+    for ii in range(40):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.connect((ip, port))
+            break
+        except socket.error:
+            dd('trying to connect to {0} failed'.format(str((ip, port))))
+            sock.close()
+            time.sleep(.4)
+    else:
+        raise

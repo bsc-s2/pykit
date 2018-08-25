@@ -44,21 +44,7 @@ class Testmysqlconnpool(unittest.TestCase):
             }
         )
 
-        addr = (mysql_test_ip, mysql_test_port)
-
-        # some time it takes several seconds to start listening
-        for ii in range(40):
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                sock.connect(addr)
-                break
-            except socket.error:
-                dd('trying to connect to {0} failed'.format(str(addr)))
-                sock.close()
-                time.sleep(.4)
-        else:
-            raise
+        ututil.wait_listening(mysql_test_ip, mysql_test_port)
 
         self.pool = mysqlconnpool.make({
             'host': mysql_test_ip,
