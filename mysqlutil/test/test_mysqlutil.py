@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import time
+import os
 import unittest
 
 import docker
@@ -9,11 +9,14 @@ import docker
 from pykit import mysqlconnpool
 from pykit import mysqlutil
 from pykit import proc
+from pykit import utdocker
 from pykit import ututil
 
 dd = ututil.dd
 
+mysql_base_tag = 'daocloud.io/mysql:5.7.13'
 mysql_test_password = '123qwe'
+mysql_test_ip = '192.168.52.40'
 mysql_test_port = 3306
 mysql_test_user = 'root'
 mysql_test_name = 'mysql_test'
@@ -22,14 +25,45 @@ mysql_test_db = 'test'
 mysql_test_table = 'errlog'
 
 
-class TestMysqlutil(unittest.TestCase):
+class TestMysqlScanIndex(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        utdocker.pull_image(mysql_base_tag)
+
+        docker_file_dir = os.path.abspath(os.path.dirname(__file__)) + '/dep'
+
+        dd('build: ' + docker_file_dir)
+
+        dcli = utdocker.get_client()
+        for line in dcli.build(path=docker_file_dir,
+                               nocache=True,
+                               tag=mysql_test_tag):
+
+            dd('build ' + mysql_test_tag + ':', line)
+
+    def setUp(self):
+
+        utdocker.create_network()
+
+        utdocker.start_container(
+            mysql_test_name,
+            mysql_test_tag,
+            ip=mysql_test_ip,
+            env={
+                'MYSQL_ROOT_PASSWORD': mysql_test_password,
+            }
+        )
+
+        ututil.wait_listening(mysql_test_ip, mysql_test_port)
+
+    def tearDown(self):
+        utdocker.remove_container(mysql_test_name)
 
     def test_scan_index(self):
 
-        mysql_ip = start_mysql_server()
-
         addr = {
-            'host': mysql_ip,
+            'host': mysql_test_ip,
             'port': mysql_test_port,
             'user': mysql_test_user,
             'passwd': mysql_test_password,
@@ -37,7 +71,7 @@ class TestMysqlutil(unittest.TestCase):
 
         conns = (addr,
                  mysqlconnpool.make(addr),
-                )
+                 )
 
         table = ('test', 'errlog')
 
@@ -50,56 +84,53 @@ class TestMysqlutil(unittest.TestCase):
               '28', '4', '5', '9', '24', '6', '15', '21', '23', '25', '26', '10', '16', '7', '17'),
 
              'test common',
-            ),
+             ),
             ([['service', 'ip', '_id'], ['common0', '127.0.0.1', '8']],
              {'left_open': True},
              ('12', '18', '20', '32', '2', '3', '13', '19', '27', '30', '11', '22', '29', '31', '14',
               '28', '4', '5', '9', '24', '6', '15', '21', '23', '25', '26', '10', '16', '7', '17'),
 
              'test left_open',
-            ),
+             ),
             ([['service', 'ip', '_id'], ['common0', '127.0.0.1', '8']],
              {'limit': 3},
              ('8', '12', '18', ),
 
              'test limit',
-            ),
+             ),
             ([['autolvl', 'service', 'ip', '_id'], ['stable', 'common0', '127.0.0.1', '8']],
              {'index_name': 'idx_service_ip__id'},
              ('12', '32', '2', '13', '19', '30', '22', '28', '6', '15', '21', '7'),
 
              'test index_name',
-            ),
+             ),
             ([['service', 'ip', '_id'], ['common0', '127.0.0.1', 8]],
              {'left_open': True, 'limit': 3, 'index_name': 'idx_time__id'},
              ('12', '18', '20', ),
 
              'test all kwargs',
-            ),
+             ),
         )
 
-        try:
-            for conn in conns:
-                dd('conn: ', conn)
+        for conn in conns:
+            dd('conn: ', conn)
 
-                for args, kwargs, rst_expect, msg in cases:
+            for args, kwargs, rst_expect, msg in cases:
 
-                    args = [conn, table, result_fields] + args
-                    kwargs['use_dict'] = False
+                args = [conn, table, result_fields] + args
+                kwargs['use_dict'] = False
 
-                    dd('msg: ', msg)
+                dd('msg: ', msg)
 
-                    rst = mysqlutil.scan_index(*args, **kwargs)
+                rst = mysqlutil.scan_index(*args, **kwargs)
 
-                    for i, rr in enumerate(rst):
-                        dd('rst:', rr)
-                        dd('except: ', rst_expect[i])
+                for i, rr in enumerate(rst):
+                    dd('rst:', rr)
+                    dd('except: ', rst_expect[i])
 
-                        self.assertEqual(rr[0], long(rst_expect[i]))
+                    self.assertEqual(rr[0], long(rst_expect[i]))
 
-                    self.assertEqual(len(rst_expect), i+1)
-        finally:
-            stop_mysql_server()
+                self.assertEqual(len(rst_expect), i+1)
 
         error_cases = (
             ([addr, table, result_fields, ['service', 'ip', '_id'], ['common0', '127.0.0.2']],
@@ -130,6 +161,9 @@ class TestMysqlutil(unittest.TestCase):
             except error as e:
                 self.assertEqual(type(e), error)
 
+
+class TestMysqlutil(unittest.TestCase):
+
     def test_make_index_scan_sql(self):
 
         table = 'errlog'
@@ -141,21 +175,21 @@ class TestMysqlutil(unittest.TestCase):
              'WHERE `service` = "common0" AND `ip` = "127.0.0.1" AND `_id` >= "8" LIMIT 1024;',
 
              'test common',
-            ),
+             ),
             ([['_id', 'ip'], ['service', 'ip', '_id'], ['common0', '127.0.0.1', '8']],
              {'left_open': True},
              'SELECT `_id`, `ip` FROM `errlog` FORCE INDEX (`idx_service_ip__id`) '
              'WHERE `service` = "common0" AND `ip` = "127.0.0.1" AND `_id` > "8" LIMIT 1024;',
 
              'test left_open',
-            ),
+             ),
             ([None, ['service', 'ip', '_id'], ['common0', '127.0.0.1', '8']],
              {'limit': 3},
              'SELECT * FROM `errlog` FORCE INDEX (`idx_service_ip__id`) '
              'WHERE `service` = "common0" AND `ip` = "127.0.0.1" AND `_id` >= "8" LIMIT 3;',
 
              'test limit',
-            ),
+             ),
             ([['_id'], ['autolvl', 'service', 'ip', '_id'], ['stable', 'common0', '127.0.0.1', '8']],
              {'index_name': 'idx_service_ip__id'},
              'SELECT `_id` FROM `errlog` FORCE INDEX (`idx_service_ip__id`) '
@@ -163,20 +197,20 @@ class TestMysqlutil(unittest.TestCase):
              'AND `_id` >= "8" LIMIT 1024;',
 
              'test index_name',
-            ),
+             ),
             ([['_id'], None, ['stable', 'common0', '127.0.0.1', '8']],
              {},
              'SELECT `_id` FROM `errlog` LIMIT 1024;',
 
              'test blank index_fields',
-            ),
+             ),
             ([['_id'], ['service', 'ip', '_id'], ['common0', '127.0.0.1', '8']],
              {'left_open': True, 'limit': 5, 'index_name': 'idx_time__id'},
              'SELECT `_id` FROM `errlog` FORCE INDEX (`idx_time__id`) '
              'WHERE `service` = "common0" AND `ip` = "127.0.0.1" AND `_id` > "8" LIMIT 5;',
 
              'test all kwargs',
-            ),
+             ),
         )
 
         for args, kwargs, rst_expect, msg in cases:
@@ -632,56 +666,3 @@ class TestMysqlutil(unittest.TestCase):
             dd('rst     : ', rst)
 
             self.assertEquals(rst_expected, rst)
-
-def docker_does_container_exist(name):
-
-    dcli = _docker_cli()
-    try:
-        dcli.inspect_container(name)
-        return True
-    except docker.errors.NotFound:
-        return False
-
-def _docker_cli():
-    dcli = docker.Client(base_url='unix://var/run/docker.sock')
-    return dcli
-
-def start_mysql_server():
-
-    # create docker image by run mysqlutil/test/dep/build_img.sh before test
-    if not docker_does_container_exist(mysql_test_name):
-
-        dd('create container: ' + mysql_test_name)
-        dcli = _docker_cli()
-        dcli.create_container(name=mysql_test_name,
-                              environment={
-                                  'MYSQL_ROOT_PASSWORD': mysql_test_password,
-                              },
-                              image=mysql_test_tag,
-                              )
-        time.sleep(2)
-
-    dd('start mysql: ' + mysql_test_name)
-    dcli = _docker_cli()
-    dcli.start(container=mysql_test_name)
-
-    dd('get mysql ip inside container')
-    rc, out, err = proc.command(
-        'docker',
-        'run',
-        '-i',
-        '--link', mysql_test_name + ':mysql',
-        '--rm', mysql_test_tag,
-        'sh', '-c', 'exec echo "$MYSQL_PORT_3306_TCP_ADDR"',
-    )
-
-    ip = out.strip()
-    dd('ip: ' + repr(ip))
-
-    return ip
-
-def stop_mysql_server():
-
-    # remove docker image by run mysqlutil/test/dep/rm_imd.sh after test
-    dcli = _docker_cli()
-    dcli.stop(container=mysql_test_name)
