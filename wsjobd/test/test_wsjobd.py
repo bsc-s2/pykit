@@ -90,6 +90,7 @@ class TestWsjobd(unittest.TestCase):
         self.ws.send(utfjson.dump(job_desc))
 
         resp = utfjson.load(self.ws.recv())
+        dd(resp)
         self.assertEqual('foo', resp['result'], 'test get result')
 
     def test_report_interval(self):

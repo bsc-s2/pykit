@@ -147,9 +147,15 @@ fi
 # UT_DEBUG controls if dd() should output debug log to stdout.
 # see ututil.py
 
+
 pkg_path="${pkg//.//}"
+
+echo "test package: path: ($pkg_path); pkg: ($pkg)"
+
 if [ -f "$pkg_path/__init__.py" ]; then
+    echo "test discover"
     PYTHONPATH="$(pwd)" UT_DEBUG=$ut_debug $pyth -m unittest discover -c $flag --failfast -s "$pkg"
 else
+    echo "test pkg"
     PYTHONPATH="$(pwd)" UT_DEBUG=$ut_debug $pyth -m unittest -c $flag --failfast "$pkg"
 fi
