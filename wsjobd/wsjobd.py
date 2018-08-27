@@ -79,6 +79,7 @@ class Job(object):
         self.worker = func
         self.ctx = {}
         self.err = None
+        self.progress_available = threading.Event()
 
         if self.ident in self.sessions:
             logger.info('job: %s already exists, created by chennel %s' %
@@ -152,7 +153,8 @@ def progress_sender(job, channel, interval=5, stat=None):
 
             channel.ws.send(utfjson.dump(to_send))
 
-            time.sleep(interval)
+            if job.progress_available.wait(interval):
+                job.progress_available.clear()
 
     except WebSocketError as e:
         if channel.ws.closed == True:
