@@ -35,8 +35,6 @@ class TestHumannum(unittest.TestCase):
                 (1024 ** 10,        '1048576Y',    ''),
 
                 (1048996,              '1.00M',    ''),
-
-                (True,                    True,    ''),
         )
 
         for _in, _out, _msg in cases:
@@ -51,6 +49,14 @@ class TestHumannum(unittest.TestCase):
             )
 
             self.assertEqual(_out, rst, msg)
+
+            rst = humannum.humannum(-_in)
+
+            if _in > 0:
+                _out = '-' + _out
+            self.assertEqual(_out, rst, msg + ': negative')
+
+        self.assertIs(True, humannum.humannum(True))
 
     def test_parse_number(self):
 
@@ -96,6 +102,7 @@ class TestHumannum(unittest.TestCase):
             )
 
             self.assertEqual(_out, rst, msg)
+            self.assertEqual(0 - _out, humannum.parsenum('-' + _in), msg + ': negative')
 
             for suff in suffixes:
 
@@ -106,17 +113,17 @@ class TestHumannum(unittest.TestCase):
     def test_parse_percentage(self):
 
         cases = (
-                ('0%',           0,        ),
-                ('-0%',          0,        ),
-                ('1%',           0.01,     ),
-                ('-1%',         -0.01,     ),
-                ('1.00%',        0.01,     ),
-                ('1.1%',         0.011,    ),
-                ('100%',         1.0,      ),
-                ('-100%',       -1.0,      ),
-                ('100.1%',       1.001,    ),
-                ('1200.123%',   12.00123,  ),
-                ('-1200.123%', -12.00123,  ),
+                ('0%',           0,),
+                ('-0%',          0,),
+                ('1%',           0.01,),
+                ('-1%',         -0.01,),
+                ('1.00%',        0.01,),
+                ('1.1%',         0.011,),
+                ('100%',         1.0,),
+                ('-100%',       -1.0,),
+                ('100.1%',       1.001,),
+                ('1200.123%',   12.00123,),
+                ('-1200.123%', -12.00123,),
         )
 
         for _in, expected in cases:

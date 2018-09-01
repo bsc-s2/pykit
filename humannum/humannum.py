@@ -36,6 +36,12 @@ def humannum_int(i, unit=None):
 
     i = int(i)
 
+    if i < 0:
+        minus = '-'
+        i = -i
+    else:
+        minus = ''
+
     if unit is None:
 
         unit = K
@@ -52,7 +58,7 @@ def humannum_int(i, unit=None):
     v = i * 1.0 / unit
 
     if v == int(v):
-        return '%d%s' % (v, value_to_unit[unit])
+        return minus + '%d%s' % (v, value_to_unit[unit])
 
     if v > 10:
         vlen = 1
@@ -61,7 +67,7 @@ def humannum_int(i, unit=None):
     else:
         vlen = 3
 
-    return ('%.' + str(vlen) + 'f%s') % (v, value_to_unit[unit])
+    return minus + ('%.' + str(vlen) + 'f%s') % (v, value_to_unit[unit])
 
 
 def humannum(data, unit=None, include=None, exclude=None):
