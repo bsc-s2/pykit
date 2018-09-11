@@ -54,12 +54,12 @@ fields = [
     },
     {
         'name': 'bbb',
-        'value': [file_path, os.path.getsize(file_path), 'abc.txt']
+        'value': [open(file_path), os.path.getsize(file_path), 'abc.txt']
     },
 ]
 
 # get http request headers
-multipart = httpmultipart.Client()
+multipart = httpmultipart.Multipart()
 res_headers = multipart.make_headers(fields, headers=headers)
 
 print res_headers
@@ -71,7 +71,7 @@ print res_headers
 #}
 
 # get http request body reader
-multipart = httpmultipart.Client()
+multipart = httpmultipart.Multipart()
 body_reader = multipart.make_body_reader(fields)
 data = []
 
