@@ -68,3 +68,34 @@ class TestRequest(unittest.TestCase):
         self.assertEqual(('eyJleHBpcmF0aW9uIjogIjIwMTgtMDEtMDFUMTI6MDA6MDAuMDAwWiIsICJjb25kaXRpb24i'
                           'OiBbWyJzdGFydHMtd2l0aCIsICIka2V5IiwgIiJdLCB7ImJ1Y2tldCI6ICJ0ZXN0LWJ1Y2tldCJ9XX0='),
                          request2['fields']['Policy'])
+
+    def test_unicode(self):
+        unicode_str = '测试'.decode('utf-8')
+        dict3 = {
+            'verb': u'GET',
+            'uri': '/' + unicode_str,
+            'args': {
+                unicode_str: unicode_str,
+            },
+            'headers': {
+                'Host': '127.0.0.1',
+                'x-amz-content-sha256': unicode_str,
+                unicode_str: unicode_str,
+                u'foo': u'bar',
+            },
+            'body': unicode_str,
+            'fields': {},
+            'do_add_auth': 1
+        }
+        request3 = request.Request(dict3)
+        ctx = request3.aws_sign(unicode_str, unicode_str, headers_not_to_sign=[unicode_str],
+                                request_date=u'20190101T120000Z', region=unicode_str, service=u's3',
+                                signing_date=u'20180101', sign_payload=True)
+
+        self.assertEqual(unicode_str.encode('utf-8'),
+                         request3['headers']['X-Amz-Content-SHA256'])
+        self.assertIsInstance(request3['headers']['Authorization'], str)
+        self.assertIsInstance(request3['headers']['X-Amz-Date'], str)
+        self.assertEqual('20190101T120000Z', ctx['request_date'])
+        self.assertEqual(
+            'foo;host;x-amz-content-sha256;x-amz-date', ctx['signed_headers'])

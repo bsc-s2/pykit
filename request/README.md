@@ -5,7 +5,8 @@
 - [Name](#name)
 - [Status](#status)
 - [Synopsis](#synopsis)
-
+- [Description](#description)
+- [Classes](#classes)
   - [Request](#request)
 - [Methods](#methods)
   - [Request.aws_sign](#requestaws_sign)
@@ -18,7 +19,7 @@
 
 request
 
-represents a http request including a normal request and  an aws version 4 signature request 
+Represents a http request including a normal request and an aws version 4 signature request 
 
 #   Status
 
@@ -27,9 +28,18 @@ This library is considered production ready.
 #   Synopsis
 
 ```python
+#!/usr/bin/env python2
+# coding: utf-8
+
+from pykit import http
+from pykit import fsutil
+from pykit.request import Request
+
 bucket_name = 'your bucket name'
-key_name = 'your key'
-endpoint = 'the endpoint'
+key_name = 'key name to upload'
+# https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html
+# Host: destinationBucket.s3.amazonaws.com
+endpoint = 'endpoint domain name'
 
 host = bucket_name + '.' + endpoint
 port = portnumber
@@ -67,13 +77,13 @@ request1.content = "send post request"
 request1.aws_sign(access_key, secret_key, request_date='20180917T120101Z')
 # send request
 conn = http.Client(host, port)
-conn.send_request(request1['uri'], method='POST', headers=request1['headers'])
+conn.send_request(request1['uri'], method=request1['verb'], headers=request1['headers'])
 conn.send_body(request1['body'])
 resp = conn.read_response()
 ```
 
 #   Description
-Request represents a http request including a normal request and  an aws version 4 signature request
+Request represents a http request including a normal request and an aws version 4 signature request.
 You need to provide a python dict which represent your request(it typically contains 'verb',
 'uri', 'args', 'headers', 'body', 'fields', 'do_add_auth'), and your access key and secret key.
 This lib will create a http request and add signature to the request(do_add_auth is True) by call function aws_sign().
@@ -104,8 +114,7 @@ This lib will create a http request and add signature to the request(do_add_auth
         at the same time. Generally this attribute is null in post request.
 
     -   `headers`:
-        a python dict contains request headers. It must contains the
-        'Host' header.
+        a python dict contains request headers. It must contain the 'Host' header.
 
     -   `body`:
         a string contains the request payload. In non-post request, If you do not want to sign
@@ -113,7 +122,7 @@ This lib will create a http request and add signature to the request(do_add_auth
         you can omit this field. In POST request, when provide a dict, body
         is null, body is obtained by the fields,
 
-    -   'fields': a python dict which contains form fields. Only the post reqeust the
+    -   'fields': a python dict which contains form fields. Only the post request the
         fields is not {}, other situations the value is {}.It may contain the following attributes:
         
         -   `Policy`:
@@ -162,7 +171,7 @@ this function can be called.
 
 -   `headers_not_to_sign`:
     a list of header names, used to indicate which headers are not
-    needed  to be signed. Generally, only non-post request may need it. Optional.
+    needed to be signed. Generally, only non-post request may need it. Optional.
 
 -   `request_date`:
     timestamp or a iso base format date string, used to specify

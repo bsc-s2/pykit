@@ -2,15 +2,13 @@
 # coding: utf-8
 
 import httplib
-import sys
 from pykit import http
-from pykit import fsutil
 from pykit.request import Request
 
 if __name__ == '__main__':
-    bucket_name = 'hu-by'
-    key_name = 'hbykey'
-    endpoint = 's2.lsl.com'
+    bucket_name = 'your bucket name'
+    key_name = 'key name to upload'
+    endpoint = 's2 endpoint domain name'
 
     # https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html
     # Host must be in the format of destinationBucket.endpoint
@@ -18,8 +16,8 @@ if __name__ == '__main__':
     host = bucket_name + '.' + endpoint
     port = 80
 
-    access_key = 'u36vatc28bqy41oershl'
-    secret_key = 'oTOZx9ONjXwOhqv6OMo1swa6eJECmf2d9xlqErdC'
+    access_key = 'your access key'
+    secret_key = 'your secret key'
     # send a post request
     dict1 = {
         'verb': 'POST',
@@ -45,12 +43,11 @@ if __name__ == '__main__':
     }
     request1 = Request(dict1)
 
-    # upload a file
-    fsutil.write_file('./hubiyong.txt', 'test upload a file')
+    # upload a file, here content is a file object
     request1.content = open('./hubiyong.txt')
     request1.aws_sign(access_key, secret_key, request_date='20180918T120101Z')
     conn = http.Client(host, port)
-    conn.send_request(request1['uri'], method='POST', headers=request1['headers'])
+    conn.send_request(request1['uri'], method=request1['verb'], headers=request1['headers'])
     conn.send_body(request1['body'])
     print conn.read_response()
 
