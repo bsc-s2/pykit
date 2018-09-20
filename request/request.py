@@ -26,7 +26,7 @@ class InvalidMethodCall(RequestError):
 # the arg  must be str or unicode type
 def _basestring(arg=''):
     if not isinstance(arg, basestring):
-        raise InvalidArgumentError('type of arg {x} is not str or unicode'.format(x=type(arg)))
+        raise InvalidArgumentError('type of arg {x} should be str or unicode'.format(x=type(arg)))
 
     return arg
 
@@ -48,15 +48,16 @@ class Request(FixedKeysDict):
 
         if self['verb'] == 'POST':
             if len(self['fields']) == 0:
-                raise InvalidRequestError('fields is null when init post request')
+                raise InvalidRequestError('fields can not be empty in post request')
             if self['body'] != '':
-                raise InvalidRequestError('body is not null when init post request')
+                raise InvalidRequestError('body in init dict should be empty in post request')
             if not self['do_add_auth']:
                 self['body'], self['headers'] = self._make_post_body_headers()
 
         else:
             if self['fields']:
-                raise InvalidRequestError('non-post request contains fields attribute: {fields}'.format(fields=self['fields']))
+                raise InvalidRequestError(
+                    'non-post request can not contain fields: {fields}'.format(fields=self['fields']))
 
     def aws_sign(self, access_key, secret_key, query_auth=False, sign_payload=False, headers_not_to_sign=None,
                  request_date=None, signing_date=None, region='us-east-1', service='s3', expires=60):
@@ -65,7 +66,7 @@ class Request(FixedKeysDict):
             headers_not_to_sign = []
 
         if not self['do_add_auth']:
-            raise InvalidMethodCall('non add_auth request calls aws_sign() method')
+            raise InvalidMethodCall('non add_auth request can not call aws_sign() method')
 
         signer = awssign.Signer(access_key, secret_key, region=region, service=service, default_expires=expires)
 
@@ -74,8 +75,8 @@ class Request(FixedKeysDict):
             self['body'], self['headers'] = self._make_post_body_headers()
 
         else:
-            ctx = signer.add_auth(self, query_auth=query_auth, sign_payload=sign_payload,
-                                  headers_not_to_sign=headers_not_to_sign, request_date=request_date, signing_date=signing_date)
+            ctx = signer.add_auth(self, query_auth=query_auth, headers_not_to_sign=headers_not_to_sign,
+                                  sign_payload=sign_payload, request_date=request_date, signing_date=signing_date)
 
         return ctx
 
