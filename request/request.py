@@ -26,7 +26,8 @@ class InvalidMethodCall(RequestError):
 # the arg  must be str or unicode type
 def _basestring(arg=''):
     if not isinstance(arg, basestring):
-        raise InvalidArgumentError('type of arg {x} should be str or unicode'.format(x=type(arg)))
+        raise InvalidArgumentError(
+            'type of arg is: {x}, should be str or unicode'.format(x=type(arg)))
 
     return arg
 
@@ -56,8 +57,7 @@ class Request(FixedKeysDict):
 
         else:
             if self['fields']:
-                raise InvalidRequestError(
-                    'non-post request can not contain fields: {fields}'.format(fields=self['fields']))
+                raise InvalidRequestError('fields should be empty in non post request')
 
     def aws_sign(self, access_key, secret_key, query_auth=False, sign_payload=False, headers_not_to_sign=None,
                  request_date=None, signing_date=None, region='us-east-1', service='s3', expires=60):
@@ -111,7 +111,8 @@ class Request(FixedKeysDict):
                     })
 
             else:
-                raise InvalidArgumentError('type of content {x} is not str or file'.format(x=type(content)))
+                raise InvalidArgumentError(
+                    'type of content is: {x}, should be str or file'.format(x=type(content)))
 
         body_reader = multipart_cli.make_body_reader(multipart_fields)
         data = []
