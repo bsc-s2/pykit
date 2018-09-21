@@ -39,13 +39,15 @@ if __name__ == '__main__':
                 ],
             },
         },
-        'do_add_auth': True
+        'do_add_auth': True,
+        'sign_args': {'access_key': access_key, 'secret_key': secret_key,
+                      'request_date': '20180918T120101Z'}
     }
     request1 = Request(dict1)
 
     # upload a file, here content is a file object
     request1.content = open('./hubiyong.txt')
-    request1.aws_sign(access_key, secret_key, request_date='20180918T120101Z')
+
     conn = http.Client(host, port)
     conn.send_request(request1['uri'], method=request1['verb'], headers=request1['headers'])
     conn.send_body(request1['body'])
@@ -67,11 +69,13 @@ if __name__ == '__main__':
             },
         'body': file_content,
         'fields': {},
-        'do_add_auth': True
+        'do_add_auth': True,
+        'sign_args': {'access_key': access_key, 'secret_key': secret_key,
+                      'sign_payload': True}
     }
 
     request2 = Request(dict2)
-    request2.aws_sign(access_key, secret_key, sign_payload=True)
+
     conn = httplib.HTTPConnection(host, port)
     conn.request(request2['verb'], request2['uri'], request2['body'], request2['headers'])
     resp = conn.getresponse()

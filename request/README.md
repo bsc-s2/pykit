@@ -8,8 +8,6 @@
 - [Description](#description)
 - [Classes](#classes)
   - [Request](#request)
-- [Methods](#methods)
-  - [Request.aws_sign](#requestaws_sign)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -67,14 +65,17 @@ dict1 = {
             ],
         },
     },
-    'do_add_auth': 1
+    'do_add_auth': 1,
+    # add add_auth args to sign_args dict
+    'sign_args': {'access_key': access_key, 'secret_key': secret_key,
+                  'request_date': '20180917T120101Z'}
 }
+
 request1 = Request(dict1)
 
 # content can be a file or str in post request
 request1.content = "send post request"
-# whether call function aws_sign() according to 'do_add_auth' value
-request1.aws_sign(access_key, secret_key, request_date='20180917T120101Z')
+
 # send request
 conn = http.Client(host, port)
 conn.send_request(request1['uri'], method=request1['verb'], headers=request1['headers'])
@@ -83,10 +84,11 @@ resp = conn.read_response()
 ```
 
 #   Description
-Request represents a http request including a normal request and an aws version 4 signature request.
-You need to provide a python dict which represent your request(it typically contains 'verb',
-'uri', 'args', 'headers', 'body', 'fields', 'do_add_auth'), and your access key and secret key.
-This lib will create a http request and add signature to the request(do_add_auth is True) by call function aws_sign().
+Request represents a http request including a normal request and an aws version 4
+signature request. You need to provide a python dict which represent your request
+(it typically contains `verb`,`uri`, `args`, `headers`, `body`, `fields`, `do_add_auth`),
+and your access key and secret key. Use request class to obtain a http request whicn can
+be sent directly.
 
 #   Classes
 
@@ -102,7 +104,7 @@ This lib will create a http request and add signature to the request(do_add_auth
     It may contain the following fields:
 
     -   `verb`:
-        the request method, such as 'GET', 'PUT', 'POST'. Required.
+        the request method, such as `GET`, `PUT`, `POST`. Required.
 
     -   `uri`:
         the url encoded uri. In PUT/GET request, it can contain query string
@@ -111,24 +113,25 @@ This lib will create a http request and add signature to the request(do_add_auth
     -   `args`:
         a python dict contains the request parameters, it should not be
         url encoded. You can not use both `args` and query string in `uri`
-        at the same time. Generally this attribute is null in post request.
+        at the same time. Generally this attribute is empty in post request.
 
     -   `headers`:
-        a python dict contains request headers. It must contain the 'Host' header.
+        a python dict contains request headers. It must contain the `Host` header.
 
     -   `body`:
-        a string contains the request payload. In non-post request, If you do not want to sign
-        the payload or you have set 'X-Amz-ContentSHA256' header in `headers`,
-        you can omit this field. In POST request, when provide a dict, body
-        is null, body is obtained by the fields,
+        a string contains the request payload. In non-post request, If you do
+        not want to sign the payload or you have set `X-Amz-ContentSHA256` header
+        in `headers`, you can omit this field. In post request, when provide a dict,
+        body is empty, body is obtained by the fields,
 
-    -   'fields': a python dict which contains form fields. Only the post request the
-        fields is not {}, other situations the value is {}.It may contain the following attributes:
+    -   `fields`: a python dict which contains form fields. Only the post
+        request fields is not empty, other situations fields is empty.
+        It may contain the following attributes:
         
         -   `Policy`:
-            is python dict, describing what is permitted in POST request.
-            After calling aws_sign() function, it will be replaced by it's base64
-            encoded version.
+            is python dict, describing what is permitted in post request.
+            After the request being signed, it will be replaced by it's
+            base64 encoded version.
 
         -   `key`:
             the key of the object to upload.
@@ -137,60 +140,49 @@ This lib will create a http request and add signature to the request(do_add_auth
         [here](http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html)
         This method will add some signature related fields to this dict.
 
-    -   'do_add_auth':
-        a bool number to mark whether the request needs to add auth. When the
-        value is True, the request needs to call the aws_sign() to update the request.
+    -   `do_add_auth`:
+        a bool to mark whether it is a request to sign.
 
-##  Request.aws_sign
+    -   `sign_args`: a python dict which contain the args to add_auth. It may
+        contain the following attributes:
 
-The method is used to get a signed request. Only when 'do_add_auth' is True,
-this function can be called.
+        -   `access_key`:
+            the access key used to sign the request.
 
-**syntax**
-`request1.aws_sign(access_key, secret_key, query_auth=query_auth, sign_payload=sign_payload,
-    headers_not_to_sign=headers_not_to_sign, request_date=request_date, signing_date=signing_date,
-    region=region, service=service, expires=expires)`
+        -   `secret_key`:
+            the secret key used to sign the request.
 
-**arguments**
+        -   `query_auth`:
+            set to `True` if you want to add the signature to the query string.
+            The default is `False`, mean add the signature in the header.
+            Generally, only non-post request may need it. Optional
 
--   `access_key`:
-    the access key used to sign the request.
+        -   `sign_payload`:
+            set to `True` if you want to sign the payload.The default is `False`.
+            Generally, only non-post request may need it. Optional
 
--   `secret_key`:
-    the secret key used to sign the request.
+        -   `headers_not_to_sign`:
+            a list of header names, used to indicate which headers are not
+            needed to be signed. Generally, only non-post request may need it. Optional.
 
--   `query_auth`:
-    set to `True` if you want to add the signature to the query string.
-    The default is `False`, mean add the signature in the header.
-    Generally, only non-post request may need it. Optional
+        -   `request_date`:
+            timestamp or a iso base format date string, used to specify
+            a custom request date, instead of using current time as request date.
+            Optional.
 
--   `sign_payload`:
-    set to `True` if you want to sign the payload.The default is `False`.
-    Generally, only non-post request may need it. Optional
+        -   `signing_date`:
+            is a 8 digital date string like `20170131`, used to specify a
+            custom signing date. Optional.
 
+        -   `region`:
+            the region name of the service, the default is `us-east-1`.
 
--   `headers_not_to_sign`:
-    a list of header names, used to indicate which headers are not
-    needed to be signed. Generally, only non-post request may need it. Optional.
+        -   `serive`:
+            the service name, the default is `s3`.
 
--   `request_date`:
-    timestamp or a iso base format date string, used to specify
-    a custom request date, instead of using current time as request date.
-    Optional.
-
--   `signing_date`:
-    is a 8 digital date string like '20170131', used to specify a
-    custom signing date. Optional.
-
--   `region`:
-    the region name of the service, the default is 'us-east-1'.
-
--   `serive`:
-    the service name, the default is 's3'.
-
--   `expires`:
-    specify the signature expire time in seconds.
-    It will overwrite the value of `default_expires`. Optional.
+        -   `expires`:
+            specify the signature expire time in seconds.
+            It will overwrite the value of `default_expires`. Optional.
 
 #   Author
 

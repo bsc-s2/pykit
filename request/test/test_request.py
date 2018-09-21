@@ -7,7 +7,7 @@ from pykit import request
 
 
 class TestRequest(unittest.TestCase):
-    def test_aws_sign(self):
+    def test_add_auth(self):
         dict1 = {
             'verb': 'GET',
             'uri': '/',
@@ -20,10 +20,12 @@ class TestRequest(unittest.TestCase):
             },
             'body': 'foo',
             'fields': {},
-            'do_add_auth': True
+            'do_add_auth': True,
+            'sign_args': {'access_key': 'access_key', 'secret_key': 'secret_key',
+                          'request_date': '20180101T120101Z', 'sign_payload': True}
         }
+
         request1 = request.Request(dict1)
-        request1.aws_sign('access_key', 'secret_key', sign_payload=True, request_date='20180101T120101Z')
 
         self.assertEqual('/?acl&foo=bar', request1['uri'])
         self.assertEqual(('AWS4-HMAC-SHA256 Credential=access_key/20180101/us-east-1/s3/aws4_request, '
@@ -54,10 +56,12 @@ class TestRequest(unittest.TestCase):
                     ],
                 },
             },
-            'do_add_auth': True
+            'do_add_auth': True,
+            'sign_args': {'access_key': 'access_key', 'secret_key': 'secret_key',
+                          'request_date': '20180101T120101Z'}
         }
+
         request2 = request.Request(dict2)
-        request2.aws_sign('access_key', 'secret_key', request_date='20180101T120101Z')
 
         self.assertEqual('AWS4-HMAC-SHA256', request2['fields']['X-Amz-Algorithm'])
         self.assertEqual('20180101T120101Z', request2['fields']['X-Amz-Date'])
@@ -65,8 +69,9 @@ class TestRequest(unittest.TestCase):
                          request2['fields']['X-Amz-Signature'])
         self.assertEqual('access_key/20180101/us-east-1/s3/aws4_request',
                          request2['fields']['X-Amz-Credential'])
-        self.assertEqual(('eyJleHBpcmF0aW9uIjogIjIwMTgtMDEtMDFUMTI6MDA6MDAuMDAwWiIsICJjb25kaXRpb24i'
-                          'OiBbWyJzdGFydHMtd2l0aCIsICIka2V5IiwgIiJdLCB7ImJ1Y2tldCI6ICJ0ZXN0LWJ1Y2tldCJ9XX0='),
+        self.assertEqual(('eyJleHBpcmF0aW9uIjogIjIwMTgtMDEtMDFUMTI6MDA6MDAuMD'
+                          'AwWiIsICJjb25kaXRpb24iOiBbWyJzdGFydHMtd2l0aCIsICIk'
+                          'a2V5IiwgIiJdLCB7ImJ1Y2tldCI6ICJ0ZXN0LWJ1Y2tldCJ9XX0='),
                          request2['fields']['Policy'])
 
     def test_unicode(self):
@@ -85,17 +90,16 @@ class TestRequest(unittest.TestCase):
             },
             'body': unicode_str,
             'fields': {},
-            'do_add_auth': 1
+            'do_add_auth': 1,
+            'sign_args': {'access_key': unicode_str, 'secret_key': unicode_str,
+                          'headers_not_to_sign': [unicode_str], 'region': unicode_str,
+                          'request_date': u'20190101T120000Z', 'service': u's3',
+                          'signing_date': u'20180101', 'sign_payload': True}
         }
+
         request3 = request.Request(dict3)
-        ctx = request3.aws_sign(unicode_str, unicode_str, headers_not_to_sign=[unicode_str],
-                                request_date=u'20190101T120000Z', region=unicode_str, service=u's3',
-                                signing_date=u'20180101', sign_payload=True)
 
         self.assertEqual(unicode_str.encode('utf-8'),
                          request3['headers']['X-Amz-Content-SHA256'])
         self.assertIsInstance(request3['headers']['Authorization'], str)
         self.assertIsInstance(request3['headers']['X-Amz-Date'], str)
-        self.assertEqual('20190101T120000Z', ctx['request_date'])
-        self.assertEqual(
-            'foo;host;x-amz-content-sha256;x-amz-date', ctx['signed_headers'])
