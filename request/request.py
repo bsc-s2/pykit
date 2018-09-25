@@ -47,22 +47,23 @@ def _get_sign_args(auth_args=None):
     if 'secret_key' not in auth_args:
         raise InvalidArgumentError('add_auth request must contain secret key')
 
-    default_value = {'query_auth': False,
-                     'sign_payload': False,
-                     'headers_not_to_sign': [],
-                     'request_date': None,
-                     'signing_date': None,
-                     'region': 'us-east-1',
-                     'service': 's3',
-                     'expires': 60}
+    rst = {
+        'query_auth': False,
+        'sign_payload': False,
+        'headers_not_to_sign': [],
+        'request_date': None,
+        'signing_date': None,
+        'region': 'us-east-1',
+        'service': 's3',
+        'expires': 60,
+    }
 
-    default_value.update(auth_args)
+    rst.update(auth_args)
 
-    # return sign_args stored in default_value
-    return default_value
+    return rst
 
 
-def _make_post_body_headers(fields, headers, do_add_auth, content):
+def _make_post_body_headers(fields, headers, content, do_add_auth=False):
 
     multipart_cli = httpmultipart.Multipart()
     multipart_fields = []
@@ -119,15 +120,10 @@ class Request(FixedKeysDict):
     def __init__(self, *args, **argkv):
         # content represents str or a file to upload in post request
         self.content = None
-        self.do_add_auth = False
 
         if 'content' in argkv:
             self.content = argkv['content']
             del argkv['content']
-
-        if 'do_add_auth' in argkv:
-            self.do_add_auth = argkv['do_add_auth']
-            del argkv['do_add_auth']
 
         super(Request, self).__init__(*args, **argkv)
 
@@ -150,16 +146,6 @@ class Request(FixedKeysDict):
             raise InvalidRequestError(
                 'content should be empty in non post request')
 
-        if self.do_add_auth:
-            if len(self['sign_args']) == 0:
-                raise InvalidRequestError(
-                    'sign_args can not be empty in add_auth request')
-
-        else:
-            if self['sign_args']:
-                raise InvalidRequestError(
-                    'sign_args must be empty in non add_auth request')
-
         if self['verb'] == 'POST':
             if len(self['fields']) == 0:
                 raise InvalidRequestError('fields can not be empty in post request')
@@ -168,22 +154,22 @@ class Request(FixedKeysDict):
                 raise InvalidRequestError(
                     'body in init dict should be empty in post request')
 
-            if self.do_add_auth:
+            if len(self['sign_args']) != 0:
                 signer.add_post_auth(self['fields'], request_date=request_date,
                                      signing_date=signing_date)
 
                 self['body'], self['headers'] = _make_post_body_headers(
-                    self['fields'], self['headers'], self.do_add_auth, self.content)
+                    self['fields'], self['headers'], self.content, do_add_auth=True)
 
             else:
                 self['body'], self['headers'] = _make_post_body_headers(
-                    self['fields'], self['headers'], self.do_add_auth, self.content)
+                    self['fields'], self['headers'], self.content, do_add_auth=False)
 
         else:
             if self['fields']:
                 raise InvalidRequestError('fields should be empty in non post request')
 
-            if self.do_add_auth:
+            if self['sign_args']:
                 signer.add_auth(self, query_auth=query_auth,
                                 sign_payload=sign_payload,
                                 request_date=request_date,

@@ -20,13 +20,15 @@ class TestRequest(unittest.TestCase):
             },
             'body': 'foo',
             'fields': {},
-            'sign_args': {'access_key': 'access_key',
-                          'secret_key': 'secret_key',
-                          'request_date': '20180101T120101Z',
-                          'sign_payload': True}
+            'sign_args': {
+                'access_key': 'access_key',
+                'secret_key': 'secret_key',
+                'request_date': '20180101T120101Z',
+                'sign_payload': True,
+            }
         }
 
-        request1 = request.Request(dict1, do_add_auth=True)
+        request1 = request.Request(dict1)
 
         self.assertEqual('/?acl&foo=bar', request1['uri'])
         self.assertEqual(('AWS4-HMAC-SHA256 Credential=access_key/20180101/us-east-1/s3/aws4_request, '
@@ -57,12 +59,14 @@ class TestRequest(unittest.TestCase):
                     ],
                 },
             },
-            'sign_args': {'access_key': 'access_key',
-                          'secret_key': 'secret_key',
-                          'request_date': '20180101T120101Z'}
+            'sign_args': {
+                'access_key': 'access_key',
+                'secret_key': 'secret_key',
+                'request_date': '20180101T120101Z',
+            }
         }
 
-        request2 = request.Request(dict2, do_add_auth=True)
+        request2 = request.Request(dict2)
 
         self.assertEqual('AWS4-HMAC-SHA256', request2['fields']['X-Amz-Algorithm'])
         self.assertEqual('20180101T120101Z', request2['fields']['X-Amz-Date'])
@@ -91,17 +95,19 @@ class TestRequest(unittest.TestCase):
             },
             'body': unicode_str,
             'fields': {},
-            'sign_args': {'access_key': unicode_str,
-                          'secret_key': unicode_str,
-                          'headers_not_to_sign': [unicode_str],
-                          'region': unicode_str,
-                          'request_date': u'20190101T120000Z',
-                          'service': u's3',
-                          'signing_date': u'20180101',
-                          'sign_payload': True}
+            'sign_args': {
+                'access_key': unicode_str,
+                'secret_key': unicode_str,
+                'headers_not_to_sign': [unicode_str],
+                'region': unicode_str,
+                'request_date': u'20190101T120000Z',
+                'service': u's3',
+                'signing_date': u'20180101',
+                'sign_payload': True,
+            }
         }
 
-        request3 = request.Request(dict3, do_add_auth=True)
+        request3 = request.Request(dict3)
 
         self.assertEqual(unicode_str.encode('utf-8'),
                          request3['headers']['X-Amz-Content-SHA256'])

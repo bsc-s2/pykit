@@ -65,14 +65,16 @@ dict1 = {
             ],
         },
     },
-    # add add_auth args to sign_args
-    'sign_args': {'access_key': access_key,
-                  'secret_key': secret_key,
-                  'request_date': '20180917T120101Z'}
+    # arguments for add authorization
+    'sign_args': {
+        'access_key': access_key,
+        'secret_key': secret_key,
+        'request_date': '20180917T120101Z',
+    }
 }
 
 # content can be a file or str in post request
-request1 = Request(dict1, do_add_auth = True, content = "file or str")
+request1 = Request(dict1, content = "file or str")
 
 # send request
 conn = http.Client(host, port)
