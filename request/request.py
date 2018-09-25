@@ -47,42 +47,19 @@ def _get_sign_args(auth_args=None):
     if 'secret_key' not in auth_args:
         raise InvalidArgumentError('add_auth request must contain secret key')
 
-    # add absent key and set default value
-    if 'query_auth' not in auth_args:
-        auth_args['query_auth'] = False
+    default_value = {'query_auth': False,
+                     'sign_payload': False,
+                     'headers_not_to_sign': [],
+                     'request_date': None,
+                     'signing_date': None,
+                     'region': 'us-east-1',
+                     'service': 's3',
+                     'expires': 60}
 
-    if 'sign_payload' not in auth_args:
-        auth_args['sign_payload'] = False
+    default_value.update(auth_args)
 
-    if 'headers_not_to_sign' not in auth_args:
-        auth_args['headers_not_to_sign'] = []
-
-    if 'request_date' not in auth_args:
-        auth_args['request_date'] = None
-
-    if 'signing_date' not in auth_args:
-        auth_args['signing_date'] = None
-
-    if 'region' not in auth_args:
-        auth_args['region'] = 'us-east-1'
-
-    if 'service' not in auth_args:
-        auth_args['service'] = 's3'
-
-    if 'expires' not in auth_args:
-        auth_args['expires'] = 60
-
-    return {'region': auth_args['region'],
-            'service': auth_args['service'],
-            'expires': auth_args['expires'],
-            'access_key': auth_args['access_key'],
-            'secret_key': auth_args['secret_key'],
-            'query_auth': auth_args['query_auth'],
-            'sign_payload': auth_args['sign_payload'],
-            'request_date': auth_args['request_date'],
-            'signing_date': auth_args['signing_date'],
-            'headers_not_to_sign': auth_args['headers_not_to_sign']
-            }
+    # return sign_args stored in default_value
+    return default_value
 
 
 def _make_post_body_headers(fields, headers, do_add_auth, content):
@@ -137,12 +114,21 @@ class Request(FixedKeysDict):
                          ('headers', dict),
                          ('body', _basestring),
                          ('fields', dict),
-                         ('do_add_auth', bool),
                          ('sign_args', _get_sign_args),))
 
     def __init__(self, *args, **argkv):
         # content represents str or a file to upload in post request
         self.content = None
+        self.do_add_auth = False
+
+        if 'content' in argkv:
+            self.content = argkv['content']
+            del argkv['content']
+
+        if 'do_add_auth' in argkv:
+            self.do_add_auth = argkv['do_add_auth']
+            del argkv['do_add_auth']
+
         super(Request, self).__init__(*args, **argkv)
 
         region = self['sign_args']['region']
@@ -160,7 +146,11 @@ class Request(FixedKeysDict):
         signer = awssign.Signer(access_key, secret_key, region=region,
                                 service=service, default_expires=expires)
 
-        if self['do_add_auth']:
+        if self['verb'] != 'POST' and self.content is not None:
+            raise InvalidRequestError(
+                'content should be empty in non post request')
+
+        if self.do_add_auth:
             if len(self['sign_args']) == 0:
                 raise InvalidRequestError(
                     'sign_args can not be empty in add_auth request')
@@ -178,22 +168,22 @@ class Request(FixedKeysDict):
                 raise InvalidRequestError(
                     'body in init dict should be empty in post request')
 
-            if self['do_add_auth']:
+            if self.do_add_auth:
                 signer.add_post_auth(self['fields'], request_date=request_date,
                                      signing_date=signing_date)
 
                 self['body'], self['headers'] = _make_post_body_headers(
-                    self['fields'], self['headers'], self['do_add_auth'], self.content)
+                    self['fields'], self['headers'], self.do_add_auth, self.content)
 
             else:
                 self['body'], self['headers'] = _make_post_body_headers(
-                    self['fields'], self['headers'], self['do_add_auth'], self.content)
+                    self['fields'], self['headers'], self.do_add_auth, self.content)
 
         else:
             if self['fields']:
                 raise InvalidRequestError('fields should be empty in non post request')
 
-            if self['do_add_auth']:
+            if self.do_add_auth:
                 signer.add_auth(self, query_auth=query_auth,
                                 sign_payload=sign_payload,
                                 request_date=request_date,

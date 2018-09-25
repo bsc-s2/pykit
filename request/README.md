@@ -35,10 +35,10 @@ from pykit.request import Request
 
 bucket_name = 'your bucket name'
 key_name = 'key name to upload'
-# https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html
-# Host: destinationBucket.s3.amazonaws.com
 endpoint = 'endpoint domain name'
 
+# https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html
+# Host: destinationBucket.endpoint
 host = bucket_name + '.' + endpoint
 port = portnumber
 
@@ -65,16 +65,14 @@ dict1 = {
             ],
         },
     },
-    'do_add_auth': 1,
-    # add add_auth args to sign_args dict
-    'sign_args': {'access_key': access_key, 'secret_key': secret_key,
+    # add add_auth args to sign_args
+    'sign_args': {'access_key': access_key,
+                  'secret_key': secret_key,
                   'request_date': '20180917T120101Z'}
 }
 
-request1 = Request(dict1)
-
 # content can be a file or str in post request
-request1.content = "send post request"
+request1 = Request(dict1, do_add_auth = True, content = "file or str")
 
 # send request
 conn = http.Client(host, port)
@@ -139,9 +137,6 @@ be sent directly.
         It also support some other fields, more infomation at
         [here](http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html)
         This method will add some signature related fields to this dict.
-
-    -   `do_add_auth`:
-        a bool to mark whether it is a request to sign.
 
     -   `sign_args`: a python dict which contain the args to add_auth. It may
         contain the following attributes:
