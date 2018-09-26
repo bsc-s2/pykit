@@ -25,6 +25,7 @@ class InvalidMethodCall(RequestError):
 
 # the arg  must be str or unicode type
 def _basestring(arg=''):
+
     if not isinstance(arg, basestring):
         raise InvalidArgumentError(
             'type of arg should be str or unicode, get {t}'.format(t=type(arg)))
@@ -42,10 +43,10 @@ def _get_sign_args(auth_args=None):
             'type of auth_args should be dict, got {t}'.format(t=type(auth_args)))
 
     if 'access_key' not in auth_args:
-        raise InvalidArgumentError('add_auth request must contain access key')
+        raise InvalidArgumentError('add authorization request must contain access key')
 
     if 'secret_key' not in auth_args:
-        raise InvalidArgumentError('add_auth request must contain secret key')
+        raise InvalidArgumentError('add authorization request must contain secret key')
 
     rst = {
         'query_auth': False,
@@ -63,7 +64,7 @@ def _get_sign_args(auth_args=None):
     return rst
 
 
-def _make_post_body_headers(fields, headers, content, do_add_auth=False):
+def _make_post_body_headers(fields, headers, data, do_add_auth):
 
     multipart_cli = httpmultipart.Multipart()
     multipart_fields = []
@@ -72,36 +73,36 @@ def _make_post_body_headers(fields, headers, content, do_add_auth=False):
         multipart_fields.append({'name': k, 'value': v})
 
     if do_add_auth:
-        if content is None:
+        if data is None:
             multipart_fields.append({
                 'name': 'file',
                 'value': '',
                 })
 
-        elif isinstance(content, str):
+        elif isinstance(data, str):
             multipart_fields.append({
                 'name': 'file',
-                'value': content,
+                'value': data,
                 })
 
-        elif isinstance(content, file):
+        elif isinstance(data, file):
             multipart_fields.append({
                 'name': 'file',
-                'value': [content, os.fstat(content.fileno()).st_size,
-                          os.path.basename(content.name)],
+                'value': [data, os.fstat(data.fileno()).st_size,
+                          os.path.basename(data.name)],
                 })
 
         else:
             raise InvalidArgumentError(
-                'type of content should be str or unicode, get {t}'.format(t=type(content)))
+                'type of data should be str or file, get {t}'.format(t=type(data)))
 
     body_reader = multipart_cli.make_body_reader(multipart_fields)
-    data = []
+    body_data = []
 
     for body in body_reader:
-        data.append(body)
+        body_data.append(body)
 
-    res_body = ''.join(data)
+    res_body = ''.join(body_data)
     headers = multipart_cli.make_headers(multipart_fields, headers)
 
     return res_body, headers
@@ -118,12 +119,12 @@ class Request(FixedKeysDict):
                          ('sign_args', _get_sign_args),))
 
     def __init__(self, *args, **argkv):
-        # content represents str or a file to upload in post request
-        self.content = None
+        # data represents str or a file to upload
+        self.data = None
 
-        if 'content' in argkv:
-            self.content = argkv['content']
-            del argkv['content']
+        if 'data' in argkv:
+            self.data = argkv['data']
+            del argkv['data']
 
         super(Request, self).__init__(*args, **argkv)
 
@@ -142,32 +143,38 @@ class Request(FixedKeysDict):
         signer = awssign.Signer(access_key, secret_key, region=region,
                                 service=service, default_expires=expires)
 
-        if self['verb'] != 'POST' and self.content is not None:
-            raise InvalidRequestError(
-                'content should be empty in non post request')
+        if self['body'] != '':
+            raise InvalidRequestError('body should be empty in provided dict')
 
         if self['verb'] == 'POST':
             if len(self['fields']) == 0:
                 raise InvalidRequestError('fields can not be empty in post request')
 
-            if self['body'] != '':
-                raise InvalidRequestError(
-                    'body in init dict should be empty in post request')
-
-            if len(self['sign_args']) != 0:
+            if self['sign_args']:
                 signer.add_post_auth(self['fields'], request_date=request_date,
                                      signing_date=signing_date)
 
-                self['body'], self['headers'] = _make_post_body_headers(
-                    self['fields'], self['headers'], self.content, do_add_auth=True)
+            do_add_auth = (len(self['sign_args']) != 0)
 
-            else:
-                self['body'], self['headers'] = _make_post_body_headers(
-                    self['fields'], self['headers'], self.content, do_add_auth=False)
+            self['body'], self['headers'] = _make_post_body_headers(
+                self['fields'], self['headers'], self.data, do_add_auth)
 
         else:
             if self['fields']:
                 raise InvalidRequestError('fields should be empty in non post request')
+
+            if self.data is not None:
+                if isinstance(self.data, basestring):
+                    self['body'] = self.data
+
+                elif isinstance(self.data, file):
+                    buf = self.data.read(os.fstat(self.data.fileno()).st_size)
+                    self['body'] = buf
+
+                else:
+                    raise InvalidArgumentError(
+                        'type of data should be str, unicode or file, get {t}'.format(
+                            t=type(self.data)))
 
             if self['sign_args']:
                 signer.add_auth(self, query_auth=query_auth,

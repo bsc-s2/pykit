@@ -18,7 +18,7 @@ class TestRequest(unittest.TestCase):
             'headers': {
                 'host': '127.0.0.1',
             },
-            'body': 'foo',
+            'body': '',
             'fields': {},
             'sign_args': {
                 'access_key': 'access_key',
@@ -28,7 +28,7 @@ class TestRequest(unittest.TestCase):
             }
         }
 
-        request1 = request.Request(dict1)
+        request1 = request.Request(dict1, data='foo')
 
         self.assertEqual('/?acl&foo=bar', request1['uri'])
         self.assertEqual(('AWS4-HMAC-SHA256 Credential=access_key/20180101/us-east-1/s3/aws4_request, '
@@ -93,7 +93,7 @@ class TestRequest(unittest.TestCase):
                 unicode_str: unicode_str,
                 u'foo': u'bar',
             },
-            'body': unicode_str,
+            'body': '',
             'fields': {},
             'sign_args': {
                 'access_key': unicode_str,
@@ -107,7 +107,7 @@ class TestRequest(unittest.TestCase):
             }
         }
 
-        request3 = request.Request(dict3)
+        request3 = request.Request(dict3, data=unicode_str)
 
         self.assertEqual(unicode_str.encode('utf-8'),
                          request3['headers']['X-Amz-Content-SHA256'])

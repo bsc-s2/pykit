@@ -46,7 +46,7 @@ if __name__ == '__main__':
         }
     }
 
-    request1 = Request(dict1, content=open('./xxx.txt'))
+    request1 = Request(dict1, data=open('./xxx.txt'))
 
     conn = http.Client(host, port)
     conn.send_request(request1['uri'], method=request1['verb'], headers=request1['headers'])
@@ -67,7 +67,7 @@ if __name__ == '__main__':
                 'Host': host,
                 'Content-Length': len(file_content),
             },
-        'body': file_content,
+        'body': '',
         'fields': {},
         'sign_args': {
             'access_key': access_key,
@@ -76,7 +76,7 @@ if __name__ == '__main__':
         }
     }
 
-    request2 = Request(dict2)
+    request2 = Request(dict2, data=file_content)
 
     conn = httplib.HTTPConnection(host, port)
     conn.request(request2['verb'], request2['uri'], request2['body'], request2['headers'])

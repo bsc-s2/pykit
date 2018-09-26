@@ -73,8 +73,8 @@ dict1 = {
     }
 }
 
-# content can be a file or str in post request
-request1 = Request(dict1, content = "file or str")
+# data can be a file or str to upload
+request1 = Request(dict1, data = "file or str")
 
 # send request
 conn = http.Client(host, port)
@@ -86,9 +86,9 @@ resp = conn.read_response()
 #   Description
 Request represents a http request including a normal request and an aws version 4
 signature request. You need to provide a python dict which represent your request
-(it typically contains `verb`,`uri`, `args`, `headers`, `body`, `fields`, `do_add_auth`),
-and your access key and secret key. Use request class to obtain a http request whicn can
-be sent directly.
+(it typically contains `verb`,`uri`, `args`, `headers`, `body`, `fields`, `sign_args`),
+and your access key and secret key. Use request class to obtain a http request whicn
+can be sent directly.
 
 #   Classes
 
@@ -140,7 +140,7 @@ be sent directly.
         [here](http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html)
         This method will add some signature related fields to this dict.
 
-    -   `sign_args`: a python dict which contain the args to add_auth. It may
+    -   `sign_args`: a python dict which contain the args to add authorization. It may
         contain the following attributes:
 
         -   `access_key`:
