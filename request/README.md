@@ -65,7 +65,7 @@ dict1 = {
             ],
         },
     },
-    # arguments for add authorization
+    # arguments for adding aws version 4 signature
     'sign_args': {
         'access_key': access_key,
         'secret_key': secret_key,
@@ -87,7 +87,7 @@ resp = conn.read_response()
 Request represents a http request including a normal request and an aws version 4
 signature request. You need to provide a python dict which represent your request
 (it typically contains `verb`,`uri`, `args`, `headers`, `body`, `fields`, `sign_args`),
-and your access key and secret key. Use request class to obtain a http request whicn
+and your access key and secret key. Use request class to obtain a http request which
 can be sent directly.
 
 #   Classes
@@ -140,7 +140,7 @@ can be sent directly.
         [here](http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html)
         This method will add some signature related fields to this dict.
 
-    -   `sign_args`: a python dict which contain the args to add authorization. It may
+    -   `sign_args`: a python dict which contains the args to add aws version 4 signature. It may
         contain the following attributes:
 
         -   `access_key`:

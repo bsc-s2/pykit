@@ -18,7 +18,6 @@ class TestRequest(unittest.TestCase):
             'headers': {
                 'host': '127.0.0.1',
             },
-            'body': '',
             'fields': {},
             'sign_args': {
                 'access_key': 'access_key',
@@ -46,7 +45,6 @@ class TestRequest(unittest.TestCase):
             'headers': {
                 'host': '127.0.0.1',
             },
-            'body': '',
             'fields': {
                 'key': 'test_key',
                 'Policy': {
@@ -93,7 +91,6 @@ class TestRequest(unittest.TestCase):
                 unicode_str: unicode_str,
                 u'foo': u'bar',
             },
-            'body': '',
             'fields': {},
             'sign_args': {
                 'access_key': unicode_str,

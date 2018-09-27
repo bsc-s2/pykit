@@ -77,20 +77,20 @@ def _make_post_body_headers(fields, headers, data, do_add_auth):
             multipart_fields.append({
                 'name': 'file',
                 'value': '',
-                })
+            })
 
         elif isinstance(data, str):
             multipart_fields.append({
                 'name': 'file',
                 'value': data,
-                })
+            })
 
         elif isinstance(data, file):
             multipart_fields.append({
                 'name': 'file',
                 'value': [data, os.fstat(data.fileno()).st_size,
                           os.path.basename(data.name)],
-                })
+            })
 
         else:
             raise InvalidArgumentError(
@@ -103,6 +103,7 @@ def _make_post_body_headers(fields, headers, data, do_add_auth):
         body_data.append(body)
 
     res_body = ''.join(body_data)
+
     headers = multipart_cli.make_headers(multipart_fields, headers)
 
     return res_body, headers
@@ -146,6 +147,8 @@ class Request(FixedKeysDict):
         if self['body'] != '':
             raise InvalidRequestError('body should be empty in provided dict')
 
+        do_add_auth = (len(self['sign_args']) != 0)
+
         if self['verb'] == 'POST':
             if len(self['fields']) == 0:
                 raise InvalidRequestError('fields can not be empty in post request')
@@ -153,8 +156,6 @@ class Request(FixedKeysDict):
             if self['sign_args']:
                 signer.add_post_auth(self['fields'], request_date=request_date,
                                      signing_date=signing_date)
-
-            do_add_auth = (len(self['sign_args']) != 0)
 
             self['body'], self['headers'] = _make_post_body_headers(
                 self['fields'], self['headers'], self.data, do_add_auth)
@@ -168,15 +169,15 @@ class Request(FixedKeysDict):
                     self['body'] = self.data
 
                 elif isinstance(self.data, file):
-                    buf = self.data.read(os.fstat(self.data.fileno()).st_size)
-                    self['body'] = buf
+                    self['body'] = self.data.read(
+                        os.fstat(self.data.fileno()).st_size)
 
                 else:
                     raise InvalidArgumentError(
                         'type of data should be str, unicode or file, get {t}'.format(
                             t=type(self.data)))
 
-            if self['sign_args']:
+            if do_add_auth:
                 signer.add_auth(self, query_auth=query_auth,
                                 sign_payload=sign_payload,
                                 request_date=request_date,

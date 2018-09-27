@@ -26,7 +26,6 @@ if __name__ == '__main__':
         'headers': {
             'Host': host,
         },
-        'body': '',
         'fields': {
             'key': key_name,
             'Policy': {
@@ -67,7 +66,6 @@ if __name__ == '__main__':
                 'Host': host,
                 'Content-Length': len(file_content),
             },
-        'body': '',
         'fields': {},
         'sign_args': {
             'access_key': access_key,
