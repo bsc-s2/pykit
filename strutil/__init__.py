@@ -5,15 +5,16 @@ from .strutil import (
     tokenize,
     break_line,
 
-    ColoredString,
-    colorize,
     struct_repr,
     format_table,
     filter_invisible_chars,
     utf8str,
 )
 
-from .strutil import (
+from .colored_string import (
+    ColoredString,
+    colorize,
+
     blue,
     cyan,
     green,

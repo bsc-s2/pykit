@@ -4,7 +4,6 @@
 import unittest
 
 from pykit import strutil
-from pykit import dictutil
 from pykit import ututil
 
 dd = ututil.dd
@@ -21,41 +20,41 @@ class TestStrutil(unittest.TestCase):
     def test_tokenize(self):
 
         base_cases = (
-                ('', [''], ''),
-                ('a', ['a'], ''),
-                ('a b', ['a', 'b'], ''),
-                (' a', ['', 'a'], ''),
-                ('b ', ['b', ''], ''),
-                ('abc def gh', ['abc', 'def', 'gh'], ''),
-                ('"ab cd"', ['"ab cd"'], ''),
-                ('"ab  cd"', ['"ab  cd"'], 'multiple space inside quotes'),
-                ('"ab cd" ', ['"ab cd"', ''], ''),
-                (' "ab cd"', ['', '"ab cd"'], ''),
-                ('"ab cd" "x', ['"ab cd"'], 'discard incomplete'),
-                ('"ab cd" "x y"', ['"ab cd"', '"x y"'], ''),
+            ('', [''], ''),
+            ('a', ['a'], ''),
+            ('a b', ['a', 'b'], ''),
+            (' a', ['', 'a'], ''),
+            ('b ', ['b', ''], ''),
+            ('abc def gh', ['abc', 'def', 'gh'], ''),
+            ('"ab cd"', ['"ab cd"'], ''),
+            ('"ab  cd"', ['"ab  cd"'], 'multiple space inside quotes'),
+            ('"ab cd" ', ['"ab cd"', ''], ''),
+            (' "ab cd"', ['', '"ab cd"'], ''),
+            ('"ab cd" "x', ['"ab cd"'], 'discard incomplete'),
+            ('"ab cd" "x y"', ['"ab cd"', '"x y"'], ''),
 
-                ('foo "ab cd" "x y"', ['foo', '"ab cd"', '"x y"'], ''),
-                ('foo "ab cd" "x', ['foo', '"ab cd"'], 'discard incomplete'),
+            ('foo "ab cd" "x y"', ['foo', '"ab cd"', '"x y"'], ''),
+            ('foo "ab cd" "x', ['foo', '"ab cd"'], 'discard incomplete'),
 
-                ('foo "\\"ab cd" "x', ['foo', '""ab cd"'], 'escape "'),
-                ('foo "\\\\"ab cd" "x', ['foo', '"\\"ab', 'cd" "x'], 'escape \\'),
-                ('foo "\\\\\\"ab cd" "x', ['foo', '"\\"ab cd"'], 'escape \\ "'),
+            ('foo "\\"ab cd" "x', ['foo', '""ab cd"'], 'escape "'),
+            ('foo "\\\\"ab cd" "x', ['foo', '"\\"ab', 'cd" "x'], 'escape \\'),
+            ('foo "\\\\\\"ab cd" "x', ['foo', '"\\"ab cd"'], 'escape \\ "'),
 
-                ('a \\"bc "d e" "f',  ['a', '"bc', '"d e"'], ''),
-                ('a \\\\"bc "d e" "f',  ['a', '\\"bc "d', 'e" "f'], ''),
-                ('a \\\\\\"bc "d e" "f',  ['a', '\\"bc', '"d e"'], ''),
+            ('a \\"bc "d e" "f',  ['a', '"bc', '"d e"'], ''),
+            ('a \\\\"bc "d e" "f',  ['a', '\\"bc "d', 'e" "f'], ''),
+            ('a \\\\\\"bc "d e" "f',  ['a', '\\"bc', '"d e"'], ''),
 
-                ('a "bc "d \\"f',  ['a', '"bc "d', '"f'], ''),
-                ('a "bc "d \\\\"f',  ['a', '"bc "d'], ''),
-                ('a "bc "d \\\\\\"f',  ['a', '"bc "d', '\\"f'], ''),
+            ('a "bc "d \\"f',  ['a', '"bc "d', '"f'], ''),
+            ('a "bc "d \\\\"f',  ['a', '"bc "d'], ''),
+            ('a "bc "d \\\\\\"f',  ['a', '"bc "d', '\\"f'], ''),
 
-                ('\\"bc "d "f',  ['"bc', '"d "f'], ''),
-                ('\\\\"bc "d "f',  ['\\"bc "d'], ''),
-                ('\\\\\\"bc "d "f',  ['\\"bc', '"d "f'], ''),
+            ('\\"bc "d "f',  ['"bc', '"d "f'], ''),
+            ('\\\\"bc "d "f',  ['\\"bc "d'], ''),
+            ('\\\\\\"bc "d "f',  ['\\"bc', '"d "f'], ''),
 
-                ('a "bc "d f\\"',  ['a', '"bc "d', 'f"'], ''),
-                ('a "bc "d f\\\\"',  ['a', '"bc "d'], ''),
-                ('a "bc "d f\\\\\\"',  ['a', '"bc "d', 'f\\"'], ''),
+            ('a "bc "d f\\"',  ['a', '"bc "d', 'f"'], ''),
+            ('a "bc "d f\\\\"',  ['a', '"bc "d'], ''),
+            ('a "bc "d f\\\\\\"',  ['a', '"bc "d', 'f\\"'], ''),
         )
 
         for _in, _out, _mes in base_cases:
@@ -70,19 +69,19 @@ class TestStrutil(unittest.TestCase):
                              ))
 
         sep_cases = (
-                ('',              None,    True,   []),
-                (' a  b  c ',     None,    True,   ['a', 'b', 'c']),
-                (' a  "b  c" ',   None,    True,   ['a', '"b  c"']),
-                (' a  "b  c" ',   None,    False,  ['a', 'b  c']),
-                ('a b c',         None,    True,   ['a', 'b', 'c']),
-                ('"a b c"',       None,    True,   ['"a b c"']),
-                ('"a b c"',       None,    False,  ['a b c']),
-                ('a b"c d"',      None,    True,   ['a', 'b"c d"']),
-                ('a b"c d"',      None,    False,  ['a', 'bc d']),
-                ('a bcd',         'bc',    True,   ['a ', 'd']),
-                ('a "bc" d',      'bc',    True,   ['a "bc" d']),
-                ('a "bc" d',      'bc',    False,  ['a bc d']),
-                ('abcd',          'abcd',  True,   ['', '']),
+            ('',              None,    True,   []),
+            (' a  b  c ',     None,    True,   ['a', 'b', 'c']),
+            (' a  "b  c" ',   None,    True,   ['a', '"b  c"']),
+            (' a  "b  c" ',   None,    False,  ['a', 'b  c']),
+            ('a b c',         None,    True,   ['a', 'b', 'c']),
+            ('"a b c"',       None,    True,   ['"a b c"']),
+            ('"a b c"',       None,    False,  ['a b c']),
+            ('a b"c d"',      None,    True,   ['a', 'b"c d"']),
+            ('a b"c d"',      None,    False,  ['a', 'bc d']),
+            ('a bcd',         'bc',    True,   ['a ', 'd']),
+            ('a "bc" d',      'bc',    True,   ['a "bc" d']),
+            ('a "bc" d',      'bc',    False,  ['a bc d']),
+            ('abcd',          'abcd',  True,   ['', '']),
         )
 
         for line, sep, preserve, rst_expected in sep_cases:
@@ -92,20 +91,20 @@ class TestStrutil(unittest.TestCase):
             self.assertEqual(rst, rst_expected)
 
         preserve_cases = (
-                ('""',                   '"',    True,    ['""']),
-                ('""',                   '"',    False,   ['']),
-                ('abc xd efx gh',        'x',    True,    ['abc', 'xd efx', 'gh']),
-                ('abc xd efx gh',        'x',    False,   ['abc', 'd ef', 'gh']),
-                ('ab cxd efx gh',        'x',    True,    ['ab', 'cxd efx', 'gh']),
-                ('ab cxd efx gh',        'x',    False,   ['ab', 'cd ef', 'gh']),
-                ('ab cxd efxgh',         'x',    True,    ['ab', 'cxd efxgh']),
-                ('ab cxd efxgh',         'x',    False,   ['ab', 'cd efgh']),
-                ('ab cxd yey fx gh',     'xy',   True,    ['ab', 'cxd yey fx', 'gh']),
-                ('ab cxd yey fx gh',     'xy',   False,   ['ab', 'cd yey f', 'gh']),
-                ('ab cxd yey f gh',      'xy',   True,    ['ab']),
-                ('ab cxd yey f gh',      'xy',   False,   ['ab']),
-                ('ab cxd xex f gh',      'x',    True,    ['ab']),
-                ('ab cxd xex f gh',      'x',    False,   ['ab']),
+            ('""',                   '"',    True,    ['""']),
+            ('""',                   '"',    False,   ['']),
+            ('abc xd efx gh',        'x',    True,    ['abc', 'xd efx', 'gh']),
+            ('abc xd efx gh',        'x',    False,   ['abc', 'd ef', 'gh']),
+            ('ab cxd efx gh',        'x',    True,    ['ab', 'cxd efx', 'gh']),
+            ('ab cxd efx gh',        'x',    False,   ['ab', 'cd ef', 'gh']),
+            ('ab cxd efxgh',         'x',    True,    ['ab', 'cxd efxgh']),
+            ('ab cxd efxgh',         'x',    False,   ['ab', 'cd efgh']),
+            ('ab cxd yey fx gh',     'xy',   True,    ['ab', 'cxd yey fx', 'gh']),
+            ('ab cxd yey fx gh',     'xy',   False,   ['ab', 'cd yey f', 'gh']),
+            ('ab cxd yey f gh',      'xy',   True,    ['ab']),
+            ('ab cxd yey f gh',      'xy',   False,   ['ab']),
+            ('ab cxd xex f gh',      'x',    True,    ['ab']),
+            ('ab cxd xex f gh',      'x',    False,   ['ab']),
         )
 
         for line, quote, preserve, rst_expected in preserve_cases:
@@ -213,7 +212,7 @@ class TestStrutil(unittest.TestCase):
             ([1, 2, 3],
              [1, 2, 4],
              [1, 2],
-            ),
+             ),
         )
 
         for args in cases:
@@ -254,7 +253,6 @@ class TestStrutil(unittest.TestCase):
             dd('rst: ', rst)
 
             self.assertEqual(expected, rst)
-
 
     def test_line_pad(self):
 
@@ -460,14 +458,13 @@ class TestStrutil(unittest.TestCase):
 
     def test_filter_invisible_chars(self):
         cases = (
-                    ("1273883926293937729\000\001\031", "1273883926293937729"),
-                    ("\x00\x01\x02\x03\x04\005", ""),
-                    (u"1122299299299299292", u"1122299299299299292"),
-                    (u"\x00\x01\x02\x03\x04\005", u""),
-                    (None, None),
-                    ("", "")
+            ("1273883926293937729\000\001\031", "1273883926293937729"),
+            ("\x00\x01\x02\x03\x04\005", ""),
+            (u"1122299299299299292", u"1122299299299299292"),
+            (u"\x00\x01\x02\x03\x04\005", u""),
+            (None, None),
+            ("", "")
         )
-
 
         for case, expected in cases:
             self.assertEqual(
@@ -490,11 +487,16 @@ class TestStrutil(unittest.TestCase):
 
     def test_break_line(self):
         case = [
-            ('a quick brown fox jumps over the lazy dog',        13,    ['a quick brown', 'fox jumps', 'over the lazy', 'dog']),
-            ('a quick\nbrown fox jumps over the lazy dog',       13,    ['a quick', 'brown fox', 'jumps over', 'the lazy dog']),
-            ('a quick\rbrown fox jumps over the lazy dog',       13,    ['a quick', 'brown fox', 'jumps over', 'the lazy dog']),
-            ('a quick brown fox jumps\r\nover the lazy dog',     13,    ['a quick brown', 'fox jumps', 'over the lazy', 'dog']),
-            ('a quick\nbrown\rfox jumps\r\nover the lazy dog',   13,    ['a quick', 'brown', 'fox jumps', 'over the lazy', 'dog']),
+            ('a quick brown fox jumps over the lazy dog',        13,
+             ['a quick brown', 'fox jumps', 'over the lazy', 'dog']),
+            ('a quick\nbrown fox jumps over the lazy dog',       13,
+             ['a quick', 'brown fox', 'jumps over', 'the lazy dog']),
+            ('a quick\rbrown fox jumps over the lazy dog',       13,
+             ['a quick', 'brown fox', 'jumps over', 'the lazy dog']),
+            ('a quick brown fox jumps\r\nover the lazy dog',     13,
+             ['a quick brown', 'fox jumps', 'over the lazy', 'dog']),
+            ('a quick\nbrown\rfox jumps\r\nover the lazy dog',   13,    [
+             'a quick', 'brown', 'fox jumps', 'over the lazy', 'dog']),
             ('aquickbrownfoxjumpsoverthelazydog',                9,     ['aquickbrownfoxjumpsoverthelazydog']),
             ('aquickbro',                                        9,     ['aquickbro']),
             (' aquickbro',                                       9,     ['', 'aquickbro']),
@@ -648,10 +650,10 @@ class TestColoredString(unittest.TestCase):
     def test_length(self):
 
         cases = (
-                '',
-                'string',
-                '幾時何時',
-                '\xf3',
+            '',
+            'string',
+            '幾時何時',
+            '\xf3',
         )
 
         for v in cases:
@@ -710,7 +712,7 @@ class TestColoredString(unittest.TestCase):
 
         prompt *= 3
         not_prompt *= 3
-        self.assertEqual(len(str(prompt)), len(str(not_prompt)) + 4*3)
+        self.assertEqual(len(str(prompt)), len(str(not_prompt)) + 4 * 3)
 
     def test_split(self):
         color_cases = [
@@ -897,16 +899,16 @@ class TestColoredString(unittest.TestCase):
              [('a', None), ('x', 'red'), ('y', 'blue'), ('b', None)],
 
              'string iter and string element',
-            ),
+             ),
 
-            ({'a':1, 'b':2},
+            ({'a': 1, 'b': 2},
 
              [('x', 'red'), ('y', 'blue')],
 
              [('a', None), ('x', 'red'), ('y', 'blue'), ('b', None)],
 
              'dict iter and string element',
-            ),
+             ),
 
             (['a', 'b', 'c'],
 
@@ -915,7 +917,7 @@ class TestColoredString(unittest.TestCase):
              [('a', None), ('x', 'red'), ('y', 'blue'), ('b', None), ('x', 'red'), ('y', 'blue'), ('c', None)],
 
              'list iter and string element',
-            ),
+             ),
 
             (['a', 'b', 'c'],
 
@@ -924,7 +926,7 @@ class TestColoredString(unittest.TestCase):
              [('a', None), ('b', None), ('c', None)],
 
              'no separator',
-            ),
+             ),
 
             (['a'],
 
@@ -933,7 +935,7 @@ class TestColoredString(unittest.TestCase):
              [('a', None)],
 
              'iter with just 1 element',
-            ),
+             ),
 
             ([],
 
@@ -942,7 +944,7 @@ class TestColoredString(unittest.TestCase):
              [],
 
              'iter with no element',
-            ),
+             ),
 
         ]
 
@@ -963,7 +965,6 @@ class TestColoredString(unittest.TestCase):
             dd('expected: ', color_expected)
             self.assertEqual(rst, color_expected)
 
-
         ColoredString_case = [
             ([[('a', 'red'), ('b', 'blue')]],
 
@@ -972,7 +973,7 @@ class TestColoredString(unittest.TestCase):
              [('a', 'red'), ('b', 'blue')],
 
              '1 ColoredString element',
-            ),
+             ),
 
             ([[('a', 'red')], [('b', 'blue'), ('c', 'white')]],
 
@@ -991,7 +992,7 @@ class TestColoredString(unittest.TestCase):
                  ('x', 'red'), ('y', 'blue'), ('d', None)],
 
              'ColoredString and string',
-            ),
+             ),
 
             ([[('a', 'red')], [('b', 'blue'), ('c', 'white')]],
 
@@ -1000,7 +1001,7 @@ class TestColoredString(unittest.TestCase):
              [('a', 'red'), (' ', None), ('b', 'blue'), ('c', 'white')],
 
              'with colored blank space',
-            ),
+             ),
 
             ([[('a', 'red')], [('b', 'blue')], [('c', 'white')]],
 
@@ -1009,7 +1010,7 @@ class TestColoredString(unittest.TestCase):
              [('a', 'red'), ('b', 'blue'), ('c', 'white')],
 
              'with no separator',
-            ),
+             ),
 
             ([[(' ', 'red')], [(' ', 'blue')]],
 
@@ -1018,7 +1019,7 @@ class TestColoredString(unittest.TestCase):
              [(' ', 'red'), (' ', 'white'),  (' ', 'blue')],
 
              'colored blank space element with blank space separator',
-            ),
+             ),
 
         ]
 

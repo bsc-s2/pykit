@@ -115,7 +115,7 @@ def sharding(sorted_iterable, size, accuracy=None, joiner=''.join):
     rst = []
 
     # iterate root node.
-    t = {'':t}
+    t = {'': t}
 
     for ks, node in dictutil.depth_iter(t, is_allowed=lambda ks, v: v.is_eol or len(v) == 0):
 
