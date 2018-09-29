@@ -1,17 +1,18 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import unittest
 import os
+import unittest
 
+from pykit import proc
 from pykit import strutil
 from pykit import ututil
-from pykit import proc
 
 dd = ututil.dd
 
 this_base = os.path.dirname(__file__)
 print this_base
+
 
 def dd_lines(lines):
     dd()
@@ -584,6 +585,7 @@ class TestStrutil(unittest.TestCase):
             dd('expected: ', color_expected)
             self.assertEqual(rst, color_expected)
 
+
 class TestPage(unittest.TestCase):
 
     def test_page_no_pager(self):
@@ -594,7 +596,7 @@ class TestPage(unittest.TestCase):
                                             '1',
                                             '2',
                                             cwd=this_base,
-        )
+                                            )
 
         dd('returncode:', returncode)
         dd('out:', out)
@@ -612,7 +614,7 @@ class TestPage(unittest.TestCase):
                                             '2',
                                             '3',
                                             cwd=this_base,
-        )
+                                            )
 
         dd('returncode:', returncode)
         dd('out:', out)

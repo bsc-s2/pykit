@@ -25,6 +25,7 @@
   - [strutil.line_pad](#strutilline_pad)
   - [strutil.make_trie](#strutilmake_trie)
   - [strutil.format_line](#strutilformat_line)
+  - [strutil.page](#strutilpage)
   - [strutil.sharding](#strutilsharding)
   - [strutil.struct_repr](#strutilstruct_repr)
   - [strutil.format_table](#strutilformat_table)

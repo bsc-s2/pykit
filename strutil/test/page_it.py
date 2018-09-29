@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import sys
+
 from pykit import strutil
 
 if __name__ == "__main__":
@@ -13,4 +14,3 @@ if __name__ == "__main__":
     lines = args
 
     strutil.page(lines, max_lines=limit, pager=pager)
-
