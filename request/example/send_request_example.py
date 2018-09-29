@@ -49,7 +49,9 @@ if __name__ == '__main__':
 
     conn = http.Client(host, port)
     conn.send_request(request1['uri'], method=request1['verb'], headers=request1['headers'])
-    conn.send_body(request1['body'])
+    # request1['body'] is a generator object
+    for body in request1['body']:
+        conn.send_body(body)
     print conn.read_response()
 
     # send a put request
@@ -77,7 +79,12 @@ if __name__ == '__main__':
     request2 = Request(dict2, data=file_content)
 
     conn = httplib.HTTPConnection(host, port)
-    conn.request(request2['verb'], request2['uri'], request2['body'], request2['headers'])
+
+    res_body = ''
+    for body in request2['body']:
+        res_body = body
+
+    conn.request(request2['verb'], request2['uri'], res_body, request2['headers'])
     resp = conn.getresponse()
     print resp.status
     print resp.getheaders()

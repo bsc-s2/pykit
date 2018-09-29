@@ -52,7 +52,6 @@ dict1 = {
     'headers': {
         'Host': host,
     },
-    'body': '',
     'fields': {
         'key': key_name,
         'Policy': {
@@ -79,7 +78,9 @@ request1 = Request(dict1, data = "file or str")
 # send request
 conn = http.Client(host, port)
 conn.send_request(request1['uri'], method=request1['verb'], headers=request1['headers'])
-conn.send_body(request1['body'])
+# request1['body'] is generator type
+for body in request1['body']:
+    conn.send_body(body)
 resp = conn.read_response()
 ```
 
@@ -119,10 +120,9 @@ can be sent directly.
         a python dict contains request headers. It must contain the `Host` header.
 
     -   `body`:
-        a string contains the request payload. In non-post request, If you do
-        not want to sign the payload or you have set `X-Amz-ContentSHA256` header
-        in `headers`, you can omit this field. In post request, when provide a dict,
-        body is empty, body is obtained by the fields,
+        a string contains the request payload. When provide a dict to construct a request,
+        body must be empty. Body is obtained by the fields in post request and is obtained
+        by the data in non post request. Body is str or generator type in our request.
 
     -   `fields`: a python dict which contains form fields. Only the post
         request fields is not empty, other situations fields is empty.

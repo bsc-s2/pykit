@@ -97,16 +97,31 @@ def _make_post_body_headers(fields, headers, data, do_add_auth):
                 'type of data should be str or file, get {t}'.format(t=type(data)))
 
     body_reader = multipart_cli.make_body_reader(multipart_fields)
-    body_data = []
-
-    for body in body_reader:
-        body_data.append(body)
-
-    res_body = ''.join(body_data)
 
     headers = multipart_cli.make_headers(multipart_fields, headers)
 
-    return res_body, headers
+    return body_reader, headers
+
+
+def _make_str_reader(data):
+    yield data
+
+
+def _make_file_reader(data):
+    block_size = 1024 * 1024
+
+    while True:
+        buf = data.read(block_size)
+        if buf == '':
+            break
+        yield buf
+
+
+def _get_body(body=None):
+    if body is None:
+        return ''
+
+    return body
 
 
 class Request(FixedKeysDict):
@@ -115,7 +130,7 @@ class Request(FixedKeysDict):
                          ('uri', _basestring),
                          ('args', dict),
                          ('headers', dict),
-                         ('body', _basestring),
+                         ('body', _get_body),
                          ('fields', dict),
                          ('sign_args', _get_sign_args),))
 
@@ -153,7 +168,7 @@ class Request(FixedKeysDict):
             if len(self['fields']) == 0:
                 raise InvalidRequestError('fields can not be empty in post request')
 
-            if self['sign_args']:
+            if do_add_auth:
                 signer.add_post_auth(self['fields'], request_date=request_date,
                                      signing_date=signing_date)
 
@@ -166,11 +181,10 @@ class Request(FixedKeysDict):
 
             if self.data is not None:
                 if isinstance(self.data, basestring):
-                    self['body'] = self.data
+                    self['body'] = _make_str_reader(self.data)
 
                 elif isinstance(self.data, file):
-                    self['body'] = self.data.read(
-                        os.fstat(self.data.fileno()).st_size)
+                    self['body'] = _make_file_reader(self.data)
 
                 else:
                     raise InvalidArgumentError(

@@ -32,9 +32,9 @@ class TestRequest(unittest.TestCase):
         self.assertEqual('/?acl&foo=bar', request1['uri'])
         self.assertEqual(('AWS4-HMAC-SHA256 Credential=access_key/20180101/us-east-1/s3/aws4_request, '
                           'SignedHeaders=host;x-amz-content-sha256;x-amz-date, '
-                          'Signature=c0b1d89ddd41df96454d3a5e2c82afdc44aa19bc6593d4fa54bc277756dcc3ef'),
+                          'Signature=206b5726935d40b8f6df695304b9bdae664694db30880ab33873bd7ff2e11b63'),
                          request1['headers']['Authorization'])
-        self.assertEqual('2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae',
+        self.assertEqual('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
                          request1['headers']['X-Amz-Content-SHA256'])
         self.assertEqual('20180101T120101Z', request1['headers']['X-Amz-Date'])
 
