@@ -107,11 +107,11 @@ def _make_str_reader(data):
     yield data
 
 
-def _make_file_reader(data):
+def _make_file_reader(file_obj):
     block_size = 1024 * 1024
 
     while True:
-        buf = data.read(block_size)
+        buf = file_obj.read(block_size)
         if buf == '':
             break
         yield buf

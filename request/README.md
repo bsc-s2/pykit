@@ -17,7 +17,7 @@
 
 request
 
-Represents a http request including a normal request and an aws version 4 signature request 
+Represents a http request including a normal request and an aws version 4 signature request.
 
 #   Status
 
@@ -87,9 +87,10 @@ resp = conn.read_response()
 #   Description
 Request represents a http request including a normal request and an aws version 4
 signature request. You need to provide a python dict which represent your request
-(it typically contains `verb`,`uri`, `args`, `headers`, `body`, `fields`, `sign_args`),
-and your access key and secret key. Use request class to obtain a http request which
-can be sent directly.
+(it typically contains `verb`, `uri`, `args`, `headers`, `fields`, `sign_args`) and
+data to upload if you need. Use request class to obtain a http request which can be
+sent directly. The obtained request typically includes `verb`, `uri`, `args`, `headers`,
+`body`, `fields`, `sign_args`. `body` is a generator object or empty str.
 
 #   Classes
 
@@ -119,11 +120,6 @@ can be sent directly.
     -   `headers`:
         a python dict contains request headers. It must contain the `Host` header.
 
-    -   `body`:
-        a string contains the request payload. When provide a dict to construct a request,
-        body must be empty. Body is obtained by the fields in post request and is obtained
-        by the data in non post request. Body is str or generator type in our request.
-
     -   `fields`: a python dict which contains form fields. Only the post
         request fields is not empty, other situations fields is empty.
         It may contain the following attributes:
@@ -152,11 +148,11 @@ can be sent directly.
         -   `query_auth`:
             set to `True` if you want to add the signature to the query string.
             The default is `False`, mean add the signature in the header.
-            Generally, only non-post request may need it. Optional
+            Generally, only non-post request may need it. Optional.
 
         -   `sign_payload`:
             set to `True` if you want to sign the payload.The default is `False`.
-            Generally, only non-post request may need it. Optional
+            Generally, only non-post request may need it. Optional.
 
         -   `headers_not_to_sign`:
             a list of header names, used to indicate which headers are not
@@ -174,7 +170,7 @@ can be sent directly.
         -   `region`:
             the region name of the service, the default is `us-east-1`.
 
-        -   `serive`:
+        -   `service`:
             the service name, the default is `s3`.
 
         -   `expires`:

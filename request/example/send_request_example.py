@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import httplib
 from pykit import http
 from pykit.request import Request
 
@@ -78,13 +77,8 @@ if __name__ == '__main__':
 
     request2 = Request(dict2, data=file_content)
 
-    conn = httplib.HTTPConnection(host, port)
-
-    res_body = ''
+    conn = http.Client(host, port)
+    conn.send_request(request2['uri'], method=request2['verb'], headers=request2['headers'])
     for body in request2['body']:
-        res_body = body
-
-    conn.request(request2['verb'], request2['uri'], res_body, request2['headers'])
-    resp = conn.getresponse()
-    print resp.status
-    print resp.getheaders()
+        conn.send_body(body)
+    print conn.read_response
