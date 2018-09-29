@@ -603,6 +603,42 @@ strutil.format_line([["name:", "age:"], ["drdrxp", "18"], "wow"], sep=" | ", ali
 formatted string.
 
 
+##  strutil.page
+
+**syntax**:
+`strutil.page(lines, max_lines=10, control_char=True, pager=('less',))`
+
+Display `lines` of string in console, with a pager program (`less`) if too many
+lines.
+
+It could be used in a interactive tool to display large content.
+
+It output strings directly to stdout.
+
+**arguments**:
+
+-   `lines`:
+    is `list` of lines to display.
+
+-   `max_lines`:
+    specifies the max lines not to use a pager.
+
+    By default it is 10 lines.
+
+-   `control_char`:
+    specifies if to interpret controlling chars, such as color char in terminal.
+
+-   `pager`:
+    specifies the program as a pager.
+
+    It is a list of command and argument.
+
+    By default it is `('less',)`.
+
+**return**:
+Nothing.
+
+
 ##  strutil.sharding
 
 **syntax**:
