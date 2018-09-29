@@ -3,8 +3,10 @@
 
 
 import re
+import os
 import string
 import types
+import subprocess32
 
 from .colored_string import ColoredString
 
@@ -12,6 +14,35 @@ listtype = (types.TupleType, types.ListType)
 
 invisible_chars = ''.join(map(unichr, range(0, 32)))
 invisible_chars_re = re.compile('[%s]' % re.escape(invisible_chars))
+
+
+def page(lines, max_lines=10, control_char=True, pager=('less',)):
+
+    if len(lines) > max_lines:
+        pp = { 'stdin': subprocess32.PIPE,
+               'stdout': None,
+               'stderr': None }
+
+        cmd_pager = list(pager)
+        if control_char:
+            if pager == ('less', ):
+                cmd_pager += ['-r']
+
+        subproc = subprocess32.Popen( cmd_pager,
+                                    close_fds=True,
+                                    cwd='./',
+                                    **pp )
+
+        try:
+            out, err = subproc.communicate( '\n'.join( lines ) )
+        except IOError as e:
+            if e[ 0 ] == errno.EPIPE:
+                pass
+            else:
+                raise
+        subproc.wait()
+    else:
+        os.write( 1, '\n'.join( lines ) + "\n" )
 
 
 def _findquote(line, quote):

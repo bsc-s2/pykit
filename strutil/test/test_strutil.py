@@ -2,12 +2,16 @@
 # coding: utf-8
 
 import unittest
+import os
 
 from pykit import strutil
 from pykit import ututil
+from pykit import proc
 
 dd = ututil.dd
 
+this_base = os.path.dirname(__file__)
+print this_base
 
 def dd_lines(lines):
     dd()
@@ -579,3 +583,40 @@ class TestStrutil(unittest.TestCase):
             dd('rst: ', rst)
             dd('expected: ', color_expected)
             self.assertEqual(rst, color_expected)
+
+class TestPage(unittest.TestCase):
+
+    def test_page_no_pager(self):
+
+        returncode, out, err = proc.command('python2', 'page_it.py',
+                                            # pager, control_char, max_lines
+                                            ' '.join(['python2', 'raw_pager.py', '>']), '0', '2',
+                                            '1',
+                                            '2',
+                                            cwd=this_base,
+        )
+
+        dd('returncode:', returncode)
+        dd('out:', out)
+        dd('err:', err)
+
+        self.assertEqual(0, returncode)
+        self.assertEqual('1\n2\n', out)
+
+    def test_page_use_pager(self):
+
+        returncode, out, err = proc.command('python2', 'page_it.py',
+                                            # pager, control_char, max_lines
+                                            ' '.join(['python2', 'raw_pager.py', '>']), '0', '2',
+                                            '1',
+                                            '2',
+                                            '3',
+                                            cwd=this_base,
+        )
+
+        dd('returncode:', returncode)
+        dd('out:', out)
+        dd('err:', err)
+
+        self.assertEqual(0, returncode)
+        self.assertEqual('> 1\n> 2\n> 3\n', out)

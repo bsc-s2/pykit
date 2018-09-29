@@ -1,6 +1,7 @@
 from .strutil import (
     common_prefix,
     format_line,
+    page,
     line_pad,
     tokenize,
     break_line,
@@ -41,6 +42,7 @@ from .trie import (
 __all__ = [
     'common_prefix',
     'format_line',
+    'page',
     'line_pad',
     'tokenize',
     'break_line',
