@@ -21,7 +21,6 @@ if __name__ == '__main__':
     dict1 = {
         'verb': 'POST',
         'uri': '/',
-        'args': {},
         'headers': {
             'Host': host,
         },
@@ -54,20 +53,19 @@ if __name__ == '__main__':
     print conn.read_response()
 
     # send a put request
-    file_content = "hby is testing sending put request"
+    file_content = "test sending put request"
     dict2 = {
         'verb': 'PUT',
-        'uri': '/hu-by/test-key2',
+        'uri': '/bucket_name/key_name',
         'args': {
                 'foo2': 'bar2',
                 'foo1': True,
                 'foo3': ['bar3', True],
-            },
+        },
         'headers': {
                 'Host': host,
                 'Content-Length': len(file_content),
-            },
-        'fields': {},
+        },
         'sign_args': {
             'access_key': access_key,
             'secret_key': secret_key,

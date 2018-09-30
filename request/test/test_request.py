@@ -7,7 +7,8 @@ from pykit import request
 
 
 class TestRequest(unittest.TestCase):
-    def test_add_auth(self):
+    def test_create_request(self):
+
         dict1 = {
             'verb': 'GET',
             'uri': '/',
@@ -18,7 +19,6 @@ class TestRequest(unittest.TestCase):
             'headers': {
                 'host': '127.0.0.1',
             },
-            'fields': {},
             'sign_args': {
                 'access_key': 'access_key',
                 'secret_key': 'secret_key',
@@ -31,8 +31,8 @@ class TestRequest(unittest.TestCase):
 
         self.assertEqual('/?acl&foo=bar', request1['uri'])
         self.assertEqual(('AWS4-HMAC-SHA256 Credential=access_key/20180101/us-east-1/s3/aws4_request, '
-                          'SignedHeaders=host;x-amz-content-sha256;x-amz-date, '
-                          'Signature=206b5726935d40b8f6df695304b9bdae664694db30880ab33873bd7ff2e11b63'),
+                          'SignedHeaders=content-length;host;x-amz-content-sha256;x-amz-date, '
+                          'Signature=67b7e51a89e7bcb8d292272b940d3e040425c160e690c824d9e8d86616e843ae'),
                          request1['headers']['Authorization'])
         self.assertEqual('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
                          request1['headers']['X-Amz-Content-SHA256'])
@@ -41,7 +41,6 @@ class TestRequest(unittest.TestCase):
         dict2 = {
             'verb': 'POST',
             'uri': '/',
-            'args': {},
             'headers': {
                 'host': '127.0.0.1',
             },
@@ -77,9 +76,57 @@ class TestRequest(unittest.TestCase):
                           'a2V5IiwgIiJdLCB7ImJ1Y2tldCI6ICJ0ZXN0LWJ1Y2tldCJ9XX0='),
                          request2['fields']['Policy'])
 
+        dict3 = {
+            'verb': 'GET',
+            'uri': '/',
+            'args': {
+                'foo': 'haha',
+                'acl': True,
+            },
+            'headers': {
+                'host': '127.0.0.1',
+            },
+            'sign_args': {
+                'access_key': 'access_key',
+                'secret_key': 'secret_key',
+                'request_date': '20180930T120101Z',
+                'sign_payload': False,
+            }
+        }
+
+        request3 = request.Request(dict3)
+
+        self.assertEqual('/?acl&foo=haha', request3['uri'])
+        self.assertEqual(('AWS4-HMAC-SHA256 Credential=access_key/20180930/us-east-1/s3/aws4_request, '
+                          'SignedHeaders=host;x-amz-content-sha256;x-amz-date, '
+                          'Signature=84e24cb298eb2438bea2c2308adc699798edef44d02d8e3cd7b75acf6c8f8bc2'),
+                         request3['headers']['Authorization'])
+        self.assertEqual('UNSIGNED-PAYLOAD',request3['headers']['X-Amz-Content-SHA256'])
+        self.assertEqual('20180930T120101Z', request3['headers']['X-Amz-Date'])
+
+        dict4 = {
+            'verb': 'PUT',
+            'uri': '/',
+            'args': {
+                'foo': 'bar',
+                'acl': True,
+            },
+            'headers': {
+                'host': '127.0.0.1',
+            },
+        }
+
+        request4 = request.Request(dict4, data='test request')
+        self.assertEqual(12, request4['headers']['Content-Length'])
+
+        for body in request4['body']:
+            res_body = body
+
+        self.assertEqual('test request', res_body)
+
     def test_unicode(self):
         unicode_str = '测试'.decode('utf-8')
-        dict3 = {
+        dict5 = {
             'verb': u'GET',
             'uri': '/' + unicode_str,
             'args': {
@@ -91,7 +138,6 @@ class TestRequest(unittest.TestCase):
                 unicode_str: unicode_str,
                 u'foo': u'bar',
             },
-            'fields': {},
             'sign_args': {
                 'access_key': unicode_str,
                 'secret_key': unicode_str,
@@ -104,7 +150,7 @@ class TestRequest(unittest.TestCase):
             }
         }
 
-        request3 = request.Request(dict3, data=unicode_str)
+        request3 = request.Request(dict5, data=unicode_str)
 
         self.assertEqual(unicode_str.encode('utf-8'),
                          request3['headers']['X-Amz-Content-SHA256'])

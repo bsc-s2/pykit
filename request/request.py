@@ -23,7 +23,7 @@ class InvalidMethodCall(RequestError):
     pass
 
 
-# the arg  must be str or unicode type
+# the arg must be str or unicode type
 def _basestring(arg=''):
 
     if not isinstance(arg, basestring):
@@ -35,7 +35,7 @@ def _basestring(arg=''):
 
 def _get_sign_args(auth_args=None):
 
-    if auth_args is None:
+    if auth_args is None or len(auth_args) == 0:
         return {}
 
     if not isinstance(auth_args, dict):
@@ -72,20 +72,34 @@ def _make_post_body_headers(fields, headers, data, do_add_auth):
     for k, v in fields.iteritems():
         multipart_fields.append({'name': k, 'value': v})
 
-    if do_add_auth:
-        if data is None:
+    if data is None:
+        if do_add_auth:
             multipart_fields.append({
                 'name': 'file',
                 'value': '',
             })
 
-        elif isinstance(data, str):
+        else:
+            multipart_fields.append({
+                'name': 'update nothing',
+                'value': '',
+            })
+
+    elif isinstance(data, str):
+        if do_add_auth:
             multipart_fields.append({
                 'name': 'file',
                 'value': data,
             })
 
-        elif isinstance(data, file):
+        else:
+            multipart_fields.append({
+                'name': 'upload str',
+                'value': data,
+            })
+
+    elif isinstance(data, file):
+        if do_add_auth:
             multipart_fields.append({
                 'name': 'file',
                 'value': [data, os.fstat(data.fileno()).st_size,
@@ -93,8 +107,15 @@ def _make_post_body_headers(fields, headers, data, do_add_auth):
             })
 
         else:
-            raise InvalidArgumentError(
-                'type of data should be str or file, get {t}'.format(t=type(data)))
+            multipart_fields.append({
+                'name': 'upload a file',
+                'value': [data, os.fstat(data.fileno()).st_size,
+                          os.path.basename(data.name)],
+            })
+
+    else:
+        raise InvalidArgumentError(
+            'type of data should be str or file, get {t}'.format(t=type(data)))
 
     body_reader = multipart_cli.make_body_reader(multipart_fields)
 
@@ -144,25 +165,27 @@ class Request(FixedKeysDict):
 
         super(Request, self).__init__(*args, **argkv)
 
-        region = self['sign_args']['region']
-        service = self['sign_args']['service']
-        expires = self['sign_args']['expires']
-        access_key = self['sign_args']['access_key']
-        secret_key = self['sign_args']['secret_key']
-
-        query_auth = self['sign_args']['query_auth']
-        sign_payload = self['sign_args']['sign_payload']
-        request_date = self['sign_args']['request_date']
-        signing_date = self['sign_args']['signing_date']
-        headers_not_to_sign = self['sign_args']['headers_not_to_sign']
-
-        signer = awssign.Signer(access_key, secret_key, region=region,
-                                service=service, default_expires=expires)
-
         if self['body'] != '':
             raise InvalidRequestError('body should be empty in provided dict')
 
         do_add_auth = (len(self['sign_args']) != 0)
+
+        if do_add_auth:
+
+            region = self['sign_args']['region']
+            service = self['sign_args']['service']
+            expires = self['sign_args']['expires']
+            access_key = self['sign_args']['access_key']
+            secret_key = self['sign_args']['secret_key']
+
+            query_auth = self['sign_args']['query_auth']
+            sign_payload = self['sign_args']['sign_payload']
+            request_date = self['sign_args']['request_date']
+            signing_date = self['sign_args']['signing_date']
+            headers_not_to_sign = self['sign_args']['headers_not_to_sign']
+
+            signer = awssign.Signer(access_key, secret_key, region=region,
+                                    service=service, default_expires=expires)
 
         if self['verb'] == 'POST':
             if len(self['fields']) == 0:
@@ -181,9 +204,12 @@ class Request(FixedKeysDict):
 
             if self.data is not None:
                 if isinstance(self.data, basestring):
+                    self['headers']['Content-Length'] = len(self.data)
                     self['body'] = _make_str_reader(self.data)
 
                 elif isinstance(self.data, file):
+                    self['headers']['Content-Length'] = os.fstat(
+                        self.data.fileno()).st_size
                     self['body'] = _make_file_reader(self.data)
 
                 else:

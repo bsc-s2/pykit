@@ -30,7 +30,6 @@ This library is considered production ready.
 # coding: utf-8
 
 from pykit import http
-from pykit import fsutil
 from pykit.request import Request
 
 bucket_name = 'your bucket name'
@@ -48,7 +47,6 @@ secret_key = 'your secret key'
 dict1 = {
     'verb': 'POST',
     'uri': '/',
-    'args': {},
     'headers': {
         'Host': host,
     },
@@ -109,8 +107,8 @@ sent directly. The obtained request typically includes `verb`, `uri`, `args`, `h
         the request method, such as `GET`, `PUT`, `POST`. Required.
 
     -   `uri`:
-        the url encoded uri. In PUT/GET request, it can contain query string
-        only when you did not specify `args` in `request`. Required.
+        the url encoded uri, it can contain query string only when
+        you did not specify `args` in `request`. Required.
 
     -   `args`:
         a python dict contains the request parameters, it should not be

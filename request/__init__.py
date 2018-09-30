@@ -1,6 +1,7 @@
-from .request import(
+from .request import (
     Request,
 
+    RequestError,
     InvalidRequestError,
     InvalidArgumentError,
     InvalidMethodCall,
@@ -9,6 +10,7 @@ from .request import(
 __all__ = [
     'Request',
 
+    'RequestError'
     'InvalidRequestError',
     'InvalidArgumentError',
     'InvalidMethodCall',
