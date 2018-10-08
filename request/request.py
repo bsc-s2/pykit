@@ -35,12 +35,15 @@ def _basestring(arg=''):
 
 def _get_sign_args(auth_args=None):
 
-    if auth_args is None or len(auth_args) == 0:
+    if auth_args is None:
         return {}
 
     if not isinstance(auth_args, dict):
         raise InvalidArgumentError(
             'type of auth_args should be dict, got {t}'.format(t=type(auth_args)))
+
+    if len(auth_args) == 0:
+        return {}
 
     if 'access_key' not in auth_args:
         raise InvalidArgumentError('add authorization request must contain access key')
@@ -64,7 +67,7 @@ def _get_sign_args(auth_args=None):
     return rst
 
 
-def _make_post_body_headers(fields, headers, data, do_add_auth):
+def _make_post_body_headers(fields, headers, data):
 
     multipart_cli = httpmultipart.Multipart()
     multipart_fields = []
@@ -73,45 +76,22 @@ def _make_post_body_headers(fields, headers, data, do_add_auth):
         multipart_fields.append({'name': k, 'value': v})
 
     if data is None:
-        if do_add_auth:
-            multipart_fields.append({
-                'name': 'file',
-                'value': '',
-            })
-
-        else:
-            multipart_fields.append({
-                'name': 'update nothing',
-                'value': '',
-            })
+        multipart_fields.append({
+            'name': 'file',
+            'value': '',
+        })
 
     elif isinstance(data, str):
-        if do_add_auth:
-            multipart_fields.append({
-                'name': 'file',
-                'value': data,
-            })
-
-        else:
-            multipart_fields.append({
-                'name': 'upload str',
-                'value': data,
-            })
+        multipart_fields.append({
+            'name': 'file',
+            'value': data,
+        })
 
     elif isinstance(data, file):
-        if do_add_auth:
-            multipart_fields.append({
-                'name': 'file',
-                'value': [data, os.fstat(data.fileno()).st_size,
-                          os.path.basename(data.name)],
-            })
-
-        else:
-            multipart_fields.append({
-                'name': 'upload a file',
-                'value': [data, os.fstat(data.fileno()).st_size,
-                          os.path.basename(data.name)],
-            })
+        multipart_fields.append({
+            'name': 'file',
+            'value': [data, os.fstat(data.fileno()).st_size, os.path.basename(data.name)],
+        })
 
     else:
         raise InvalidArgumentError(
@@ -196,26 +176,27 @@ class Request(FixedKeysDict):
                                      signing_date=signing_date)
 
             self['body'], self['headers'] = _make_post_body_headers(
-                self['fields'], self['headers'], self.data, do_add_auth)
+                self['fields'], self['headers'], self.data)
 
         else:
             if self['fields']:
                 raise InvalidRequestError('fields should be empty in non post request')
 
             if self.data is not None:
-                if isinstance(self.data, basestring):
+                if isinstance(self.data, str):
                     self['headers']['Content-Length'] = len(self.data)
                     self['body'] = _make_str_reader(self.data)
 
                 elif isinstance(self.data, file):
-                    self['headers']['Content-Length'] = os.fstat(
-                        self.data.fileno()).st_size
+                    self['headers']['Content-Length'] = os.fstat(self.data.fileno()).st_size
                     self['body'] = _make_file_reader(self.data)
 
                 else:
                     raise InvalidArgumentError(
-                        'type of data should be str, unicode or file, get {t}'.format(
-                            t=type(self.data)))
+                        'type of data should be str or file, get {t}'.format(t=type(self.data)))
+
+            else:
+                self['headers']['Content-Length'] = 0
 
             if do_add_auth:
                 signer.add_auth(self, query_auth=query_auth,

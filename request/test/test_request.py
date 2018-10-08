@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# coding:utf-8
+# coding: utf-8
 
 import unittest
 
@@ -77,7 +77,7 @@ class TestRequest(unittest.TestCase):
                          request2['fields']['Policy'])
 
         dict3 = {
-            'verb': 'GET',
+            'verb': 'PUT',
             'uri': '/',
             'args': {
                 'foo': 'haha',
@@ -98,10 +98,10 @@ class TestRequest(unittest.TestCase):
 
         self.assertEqual('/?acl&foo=haha', request3['uri'])
         self.assertEqual(('AWS4-HMAC-SHA256 Credential=access_key/20180930/us-east-1/s3/aws4_request, '
-                          'SignedHeaders=host;x-amz-content-sha256;x-amz-date, '
-                          'Signature=84e24cb298eb2438bea2c2308adc699798edef44d02d8e3cd7b75acf6c8f8bc2'),
+                          'SignedHeaders=content-length;host;x-amz-content-sha256;x-amz-date, '
+                          'Signature=9c4e4cbe1b58958e9e026c404b0a54ae107e5a90fd2870f31f6d207216e2c4e8'),
                          request3['headers']['Authorization'])
-        self.assertEqual('UNSIGNED-PAYLOAD',request3['headers']['X-Amz-Content-SHA256'])
+        self.assertEqual('UNSIGNED-PAYLOAD', request3['headers']['X-Amz-Content-SHA256'])
         self.assertEqual('20180930T120101Z', request3['headers']['X-Amz-Date'])
 
         dict4 = {
@@ -150,7 +150,7 @@ class TestRequest(unittest.TestCase):
             }
         }
 
-        request3 = request.Request(dict5, data=unicode_str)
+        request3 = request.Request(dict5)
 
         self.assertEqual(unicode_str.encode('utf-8'),
                          request3['headers']['X-Amz-Content-SHA256'])

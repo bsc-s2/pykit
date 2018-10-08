@@ -64,7 +64,6 @@ if __name__ == '__main__':
         },
         'headers': {
                 'Host': host,
-                'Content-Length': len(file_content),
         },
         'sign_args': {
             'access_key': access_key,
