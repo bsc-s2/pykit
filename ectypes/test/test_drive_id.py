@@ -15,42 +15,55 @@ class TestDriveID(unittest.TestCase):
 
     def test_drive_id(self):
         cases = (
-            (_idcid + '112233445566', 1),
-            (_idcid + '112233445566', 10),
-            (_idcid + '112233445566', 100),
-            (_idcid + '112233445566', 999),
+            (_idcid + '112233445566', 1, 6001),
+            (_idcid + '112233445566', 10, 6010),
+            (_idcid + '112233445566', 100, 6100),
+            (_idcid + '112233445566', 999, 6999),
 
-            (_idcid + 'aabbccddeeff', 1),
-            (_idcid + 'aabbccddeeff', 10),
-            (_idcid + 'aabbccddeeff', 100),
-            (_idcid + 'aabbccddeeff', 999),
+            (_idcid + 'aabbccddeeff', 1, 6001),
+            (_idcid + 'aabbccddeeff', 10, 6010),
+            (_idcid + 'aabbccddeeff', 100, 6100),
+            (_idcid + 'aabbccddeeff', 999, 6999),
 
-            (_idcid + '1122ccddeeff', 1),
-            (_idcid + '1122ccddeeff', 10),
-            (_idcid + '1122ccddeeff', 100),
-            (_idcid + '1122ccddeeff', 999),
+            (_idcid + '1122ccddeeff', 1, 6001),
+            (_idcid + '1122ccddeeff', 10, 6010),
+            (_idcid + '1122ccddeeff', 100, 6100),
+            (_idcid + '1122ccddeeff', 999, 6999),
         )
 
-        for sid, mp_idx in cases:
-            drive_id = DriveID(sid, mp_idx)
+        for sid, mp_idx, port in cases:
+            drive_id = DriveID(sid, mp_idx, port)
             self.assertEqual(sid, drive_id.server_id)
             self.assertEqual('%03d' % mp_idx, drive_id.mountpoint_index)
             self.assertEqual(mp_idx, int(drive_id.mountpoint_index))
+            self.assertEqual(port, drive_id.port)
             self.assertEqual('%s0%03d' % (sid[:18], mp_idx % 1000), drive_id)
 
             drvid = DriveID(drive_id)
             self.assertEqual(sid, drvid.server_id)
+            self.assertEqual(port, drvid.port)
             self.assertEqual(drvid, DriveID(drvid))
 
     def test_drive_id_server_id(self):
 
-        for drive_id in (DriveID('idc000112233445566', 1),
+        for drive_id in (DriveID('idc000112233445566', 1, 6001),
                          DriveID('idc0001122334455660001')):
 
             dd(drive_id)
 
             self.assertIsInstance(drive_id.server_id, str)
             self.assertEqual('idc000112233445566', drive_id.server_id)
+            self.assertEqual('idc0001122334455660001', str(drive_id))
+
+    def test_drive_id_port(self):
+
+        for drive_id in (DriveID('idc000112233445566', 1, 6001),
+                         DriveID('idc0001122334455660001')):
+
+            dd(drive_id)
+
+            self.assertIsInstance(drive_id.port, int)
+            self.assertEqual(port, drive_id.port)
             self.assertEqual('idc0001122334455660001', str(drive_id))
 
     def test_validate_drive_id(self):

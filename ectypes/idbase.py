@@ -10,6 +10,7 @@ class IDBase(str):
         # ('server_id', 0, 12, ServerID),
         # ('_non_attr', 12, 13, validator),
         # ('mountpoint_index', 13, 16, MountPointIndex),
+        # ('port', 13, 16, _port),
     )
 
     _str_len = 0
