@@ -12,6 +12,10 @@ def _padding_0(s):
         raise ValueError('padding must be "0", but: {s}'.format(s=s))
     return str(s)
 
+def _port():
+
+    return config.port + int(MountPointIndex)
+
 
 class DriveID(IDBase):
 
@@ -19,6 +23,7 @@ class DriveID(IDBase):
         ('server_id', 0, 18, ServerID),
         ('_padding_0', 18, 19, _padding_0),
         ('mountpoint_index', 19, 22, MountPointIndex),
+        ('port', 19 ,22, _port),
     )
 
     _str_len = 22
