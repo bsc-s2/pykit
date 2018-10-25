@@ -24,7 +24,7 @@ class DriveID(IDBase):
         ('server_id', 0, 18, ServerID),
         ('_padding_0', 18, 19, _padding_0),
         ('mountpoint_index', 19, 22, MountPointIndex),
-        ('port', 19 ,22, _port),
+        ('port', 19 ,22, _port, False),
     )
 
     _str_len = 22

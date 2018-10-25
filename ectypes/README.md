@@ -388,7 +388,7 @@ print ectypes.ServerID.local_server_id('idc123')
 ##  ectypes.DriveID
 
 **syntax**:
-`ectypes.DriveID(server_id, mount_point_index, port)`
+`ectypes.DriveID(server_id, mount_point_index)`
 
 A subclass of `IDBase`. Make a drive id, format: 16 chars
 `<server_id>0<mount_point_index><port>`
@@ -401,14 +401,11 @@ A subclass of `IDBase`. Make a drive id, format: 16 chars
     `mount_point_index`:
     It is a 3-digit mount path, `001` for `/drives/001`.
 
-    `port`:
-    It is `blocksvr_base_port`(6000) + `mount_point_index`
-
 
 ```python
 from pykit import ectypes
 
-print ectypes.DriveID('idc000' 'aabbccddeeff', 10, 6010)
+print ectypes.DriveID('idc000' 'aabbccddeeff', 10)
 # out: aabbccddeeff0010
 ```
 
