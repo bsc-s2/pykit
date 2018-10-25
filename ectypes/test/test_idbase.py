@@ -8,6 +8,7 @@ from pykit.ectypes import BlockGroupID
 from pykit.ectypes import BlockID
 from pykit.ectypes import BlockIndex
 from pykit.ectypes import DriveID
+from pykit.ectypes import IDBase
 
 
 def id_str(_id): return '"{s}"'.format(s=str(_id))
@@ -90,3 +91,37 @@ class TestIDBase(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             block_index = BlockIndex(i='01', j='345')
+
+
+class NonKeyID(IDBase):
+    _attrs = (
+        ('foo',  0,  1, str),
+        ('foo2', 1,  2, str),
+        ('bar',  1,  2, str, False),
+        ('wow',  1,  2, str, {'key_attr': False}),
+    )
+
+    _str_len = 2
+
+    _tostr_fmt = '{foo}{foo2}'
+
+
+class TestNonKeyAttr(unittest.TestCase):
+
+    def test_non_key_attr(self):
+
+        s = NonKeyID('12')
+        self.assertEqual(('12', '1', '2', '2', '2'), (s, s.foo, s.foo2, s.bar, s.wow))
+
+        s = NonKeyID('1', '2')
+        self.assertEqual(('12', '1', '2', '2', '2'), (s, s.foo, s.foo2, s.bar, s.wow))
+
+        s = NonKeyID('1', foo2='2')
+        self.assertEqual(('12', '1', '2', '2', '2'), (s, s.foo, s.foo2, s.bar, s.wow))
+
+        s = NonKeyID(foo='1', foo2='2')
+        self.assertEqual(('12', '1', '2', '2', '2'), (s, s.foo, s.foo2, s.bar, s.wow))
+
+    def test_as_tuple(self):
+        s = NonKeyID('12')
+        self.assertEqual(('1', '2'), s.as_tuple())

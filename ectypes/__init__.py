@@ -1,3 +1,8 @@
+
+from .idbase import(
+    IDBase,
+)
+
 from .block_id import (
     BlockID,
 )
@@ -61,6 +66,8 @@ from .region import (
 )
 
 __all__ = [
+    "IDBase",
+
     "BlockID",
     "BlockIDError",
 

@@ -19,6 +19,7 @@
 - [Classes](#classes)
   - [ectypes.ReplicationConfig](#ectypesreplicationconfig)
   - [ectypes.IDBase](#ectypesidbase)
+    - [To declare a new ID type:](#to-declare-a-new-id-type)
   - [ectypes.IDCID](#ectypesidcid)
   - [ectypes.ServerID](#ectypesserverid)
   - [ectypes.local_server_id](#ectypeslocal_server_id)
@@ -297,6 +298,40 @@ A subclass of `str`, it is an *inner* format class for all IDs.
 IDBase(xxxID)
 IDBase(attr_1_value, attr_2_value, ...)
 IDBase(attr_1=value, attr_2=value, ...)
+```
+
+### To declare a new ID type:
+
+```
+class MyID(IDBase):
+    _attrs = (
+        ('foo',    0,  1, str),
+        ('bar',    1,  2, str),
+        ('alias1', 1,  2, str, False),
+        ('alias2', 1,  2, str, {'key_attr': False}),
+    )
+
+    _str_len = 2
+
+    _tostr_fmt = '{foo}{bar}'
+```
+
+`_attr` defines what attribute to extract from input string.
+Here we have two attribute `foo` and `bar` and two **alias** attributes `alias1`
+and `alias2`.
+
+To declare an alias attribute, add a fifth field as attribute options:
+`{'key_attr': False}` or just a `False` as shortcut.
+
+**Alias attribute does not need to present in constructor**.
+
+With the above definition, MyID can be created in the following ways:
+
+```
+MyID('12')
+MyID('1', '2')
+MyID('1', bar='2')
+MyID(foo='1', bar='2')
 ```
 
 
