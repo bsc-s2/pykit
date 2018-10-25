@@ -130,7 +130,7 @@ class RedisProxyClient(object):
         sign_payload = True if 'body' in req else False
         signer = awssign.Signer(self.access_key, self.secret_key)
         sign_ctx = signer.add_auth(req, query_auth=True, sign_payload=sign_payload)
-        logger.info('signing details: {ctx}'.format(ctx=sign_ctx))
+        logger.debug('signing details: {ctx}'.format(ctx=sign_ctx))
 
     def _make_req_uri(self, params, qs):
         path = [self.ver]
