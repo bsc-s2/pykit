@@ -15,7 +15,7 @@ def _padding_0(s):
 
 def _port(s):
 
-    return config.port + int(s)
+    return config.ec_block_port + int(s)
 
 
 class DriveID(IDBase):
