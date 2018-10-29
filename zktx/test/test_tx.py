@@ -456,7 +456,7 @@ class TestTX(TXBase):
         self.assertEqual({PURGED: [[0, 5]], COMMITTED: [[0, 10]]}, journal_id_set)
 
         for i in range(5):
-            self.assertRaises(NoNodeError, t.zkstorage.journal.get, '%010d' % i)
+            self.assertRaises(NoNodeError, t.zkstorage.journal.get, i)
 
     def test_concurrent_single_record(self):
 

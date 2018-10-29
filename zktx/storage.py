@@ -41,7 +41,7 @@ class StorageHelper(object):
 
         for rng in topurge:
             for jid in range(rng[0], rng[1]):
-                self.journal.safe_delete('{jid:0>10}'.format(jid=jid))
+                self.journal.safe_delete(jid)
 
         sets[PURGED] = rangeset.union(sets[PURGED], topurge)
 
