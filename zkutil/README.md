@@ -16,6 +16,7 @@
   - [zkutil.parse_kazoo_acl](#zkutilparse_kazoo_acl)
   - [zkutil.perm_to_long](#zkutilperm_to_long)
   - [zkutil.perm_to_short](#zkutilperm_to_short)
+  - [zkutil.close_zk](#zkutilclose_zk)
 - [Conditioned access methods](#conditioned-access-methods)
   - [zkutil.get_next](#zkutilget_next)
   - [zkutil.wait_absent](#zkutilwait_absent)
@@ -332,6 +333,22 @@ such as `cdrw`.
 
 **return**:
 a string of short permissions.
+
+
+##  zkutil.close_zk
+
+**syntax**:
+`zkutil.close_zk(zk)`
+
+Stop and close a zk client.
+
+**arguments**:
+
+-   `zk`:
+    a `KazooClient` or `KazooClientExt` instance, otherwise raise a `TypeError`.
+
+**return**:
+nothing
 
 
 #   Conditioned access methods

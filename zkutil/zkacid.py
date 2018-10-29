@@ -5,6 +5,7 @@ from kazoo.exceptions import BadVersionError
 from pykit import txutil
 
 from .zkconf import kazoo_client_ext
+from . import zkutil
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,4 @@ def cas_loop(zkclient, path, json=True):
             yield curr
     finally:
         if owning_zk:
-            try:
-                zkclient.stop()
-            except Exception as e:
-                logger.info(repr(e) + ' while stop owning zkclient')
+            zkutil.close_zk(zkclient)

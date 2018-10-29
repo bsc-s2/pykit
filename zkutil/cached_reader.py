@@ -5,8 +5,8 @@ import logging
 import threading
 
 from . import zkconf
+from . import zkutil
 from . import exceptions
-from kazoo.exceptions import KazooException
 
 logger = logging.getLogger(__name__)
 
@@ -57,10 +57,7 @@ class CachedReader(dict):
 
         self.zke.remove_listener(self.conn_change_cb)
         if self.owning_zk:
-            try:
-                self.zke.stop()
-            except KazooException as e:
-                logger.exception(repr(e) + ' while close kazoo client')
+            zkutil.close_zk(self.zke)
 
     def _on_conn_change(self, state):
         logger.info('state changed: {state}'.format(state=state))

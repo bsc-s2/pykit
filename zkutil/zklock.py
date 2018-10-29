@@ -6,7 +6,6 @@ import threading
 import time
 
 from kazoo.client import KazooClient
-from kazoo.exceptions import KazooException
 from kazoo.exceptions import LockTimeout
 from kazoo.exceptions import NodeExistsError
 from kazoo.exceptions import NoNodeError
@@ -213,13 +212,8 @@ class ZKLock(object):
         self.zkclient.remove_listener(self.on_connection_change)
 
         if self.owning_client:
-
             logger.info('zk client is made by me, close it')
-
-            try:
-                self.zkclient.stop()
-            except KazooException as e:
-                logger.info(repr(e) + ' while stop my own client')
+            zkutil.close_zk(self.zkclient)
 
     def is_locked(self):
 

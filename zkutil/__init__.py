@@ -16,6 +16,7 @@ from .zkconf import (
 from .zkutil import (
     PermTypeError,
 
+    close_zk,
     init_hierarchy,
     export_hierarchy,
     is_backward_locking,
@@ -55,6 +56,7 @@ __all__ = [
 
     "kazoo_client_ext",
 
+    "close_zk",
     "init_hierarchy",
     "export_hierarchy",
     "is_backward_locking",

@@ -10,6 +10,7 @@ from collections import namedtuple
 from kazoo import security
 from kazoo.client import KazooClient
 from kazoo.exceptions import NoNodeError
+from kazoo.exceptions import KazooException
 from pykit import config
 from pykit import net
 from pykit import utfjson
@@ -45,6 +46,23 @@ class PermTypeError(Exception):
 
 class ZkPathError(Exception):
     pass
+
+
+def close_zk(zk):
+    if not isinstance(zk, KazooClient):
+        raise TypeError('expect KazooClient or KazooClientExt, but got {t}'.format(t=type(zk)))
+
+    try:
+        zk.stop()
+
+    except KazooException as e:
+        logger.exception(repr(e) + ' while stop zk client')
+
+    try:
+        zk.close()
+
+    except Exception as e:
+        logger.exception(repr(e) + ' while close zk client')
 
 
 def lock_data(node_id=None):
@@ -251,7 +269,7 @@ def init_hierarchy(hosts, hierarchy, users, auth):
             _init_hierarchy(children, path)
 
     _init_hierarchy(hierarchy, '/')
-    zkcli.stop()
+    close_zk(zkcli)
 
 
 def _make_zk_path(*paths):

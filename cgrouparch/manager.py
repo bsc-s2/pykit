@@ -7,6 +7,7 @@ from kazoo.client import KazooClient
 
 from pykit import threadutil
 from pykit import utfjson
+from pykit import zkutil
 from pykit.cgrouparch import account
 from pykit.cgrouparch import cgroup_manager
 from pykit.cgrouparch import communicate
@@ -85,11 +86,7 @@ def init_arch_conf(context):
         except Exception as e:
             logger.warn('failed to get arch conf from zk: %s' % repr(e))
 
-            try:
-                context['zk_client'].stop()
-            except Exception as e:
-                logger.info('failed to stop zk client: ' + repr(e))
-
+            zkutil.close_zk(context['zk_client'])
             context['zk_client'] = None
             time.sleep(10)
 
@@ -129,7 +126,7 @@ def get_cgexec_arg(cgroup_names, **argkv):
         zk_path = '%s/arch_conf' % context['zk_prefix']
         resp = zk_client.get(zk_path)
 
-        zk_client.stop()
+        zkutil.close_zk(zk_client)
 
         context['arch_conf'] = {
             'version': resp[1].version,

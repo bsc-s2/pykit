@@ -411,10 +411,7 @@ class ZKTransaction(object):
         self.modifications = {}
 
         if self.owning_zk:
-            try:
-                self.zke.stop()
-            except KazooException as e:
-                logger.info(repr(e) + ' while zkclient.stop()')
+            zkutil.close_zk(self.zke)
 
     def release_all_key_locks(self):
 
