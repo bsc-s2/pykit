@@ -201,7 +201,9 @@ def kazoo_client_ext(zk, json=True):
         owning = True
 
     zkclient = KazooClientExt(zk, json=json)
-    zkclient._zkconf = zkconf
+
+    if zkclient._zkconf is None:
+        zkclient._zkconf = zkconf
 
     zkclient.start()
 

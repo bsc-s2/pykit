@@ -345,7 +345,8 @@ class ZKTransaction(object):
 
             if curr.version == -1:
                 kazootx.create(cnf.record(rec.k),
-                               utfjson.dump(record_vals))
+                               utfjson.dump(record_vals),
+                               acl=cnf.kazoo_digest_acl())
             else:
                 kazootx.set_data(cnf.record(rec.k),
                                  utfjson.dump(record_vals),
@@ -362,7 +363,10 @@ class ZKTransaction(object):
             # provide a str "journal_id", because
             # kazootx.create('xx/', '', sequence=True) => xx0000000000
             # kazootx.create('xx/a', '', sequence=True) => xx/a0000000000
-            kazootx.create(cnf.journal("journal_id"), utfjson.dump(jour), sequence=True)
+            kazootx.create(cnf.journal("journal_id"),
+                           utfjson.dump(jour),
+                           acl=cnf.kazoo_digest_acl(),
+                           sequence=True)
             rst = kazootx.commit()
             for r in rst:
                 if isinstance(r, KazooException):

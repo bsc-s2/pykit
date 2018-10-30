@@ -628,6 +628,20 @@ class TestTX(TXBase):
         except CommitError:
             pass
 
+    def test_acl(self):
+        k = 'tacl'
+        with ZKTransaction(self.zkauthed) as t1:
+            foo = t1.lock_get(k)
+            foo.v = 'foo'
+            t1.set(foo)
+            t1.commit()
+
+            acls, _ = self.zk.get_acls(self.zkauthed._zkconf.record(k))
+            self.assertEqual(self.zkauthed._zkconf.kazoo_digest_acl(), acls)
+
+            acls, _ = self.zk.get_acls(self.zkauthed._zkconf.journal(0))
+            self.assertEqual(self.zkauthed._zkconf.kazoo_digest_acl(), acls)
+
 
 class TestTXState(TXBase):
 
