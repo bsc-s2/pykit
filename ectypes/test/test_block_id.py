@@ -28,6 +28,31 @@ class TestBlockID(unittest.TestCase):
         self.assertEqual('idc000' 'c62d8736c7280002', bid.drive_id)
         self.assertEqual(1, bid.block_id_seq)
 
+    def test_block_id_block_id(self):
+
+        block_id = 'd1g0006300000001230101idc000c62d8736c72800020000000001'
+        bid = BlockID('d1', 'g000630000000123', '0101',
+                      DriveID('idc000' 'c62d8736c728' '0002'), 1)
+
+        self.assertEqual('d1g0006300000001230101idc000c62d8736c72800020000000001', bid.block_id)
+        self.assertEqual(block_id, bid.block_id)
+        self.assertIs(bid, bid.block_id)
+
+    def test_block_id_embed(self):
+
+        block_id = 'd1g0006300000001230101idc000c62d8736c72800020000000001'
+        bid = BlockID('d1', 'g000630000000123', '0101',
+                      DriveID('idc000' 'c62d8736c728' '0002'), 1)
+
+        # embedded drive_id attrs
+        self.assertEqual('idc000' 'c62d8736c728', bid.server_id)
+        self.assertEqual('002', bid.mountpoint_index)
+        self.assertEqual(6002, bid.port)
+
+        # embedded server_id attrs
+        self.assertEqual('idc000', bid.idc_id)
+        self.assertEqual('c62d8736c728', bid.mac_addr)
+
     def test_new_invalid(self):
 
         block_id_invalid = 'd1g0006300000001230101idc000c62d8736c728000200000'

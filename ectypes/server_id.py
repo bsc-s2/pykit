@@ -21,6 +21,8 @@ class ServerID(IDBase):
     _attrs = (
             ('idc_id', 0, IDC_ID_LEN, IDCID), 
             ('mac_addr', IDC_ID_LEN, IDC_ID_LEN + SERVER_ID_LEN, _mac_addr),
+
+            ('server_id', None, None, None, 'self'),
     )
 
     _str_len = IDC_ID_LEN + SERVER_ID_LEN

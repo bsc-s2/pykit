@@ -62,6 +62,10 @@ class TestServerID(unittest.TestCase):
             sid = ectypes.ServerID(_idcid + c)
             self.assertEqual(_idcid + c, sid)
 
+    def test_server_id_self(self):
+        sid = ectypes.ServerID('idc000' '112233aabbcc')
+        self.assertIs(sid, sid.server_id)
+
     def test_server_id_to_str(self):
 
         sid = ectypes.ServerID.local_server_id(_idcid)

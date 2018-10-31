@@ -64,6 +64,17 @@ class TestDriveID(unittest.TestCase):
             self.assertEqual(6001, drive_id.port)
             self.assertEqual('idc0001122334455660001', str(drive_id))
 
+    def test_drive_id_self(self):
+        d = DriveID('idc0001122334455660001')
+        self.assertEqual('idc0001122334455660001', d.drive_id)
+        self.assertEqual(d, d.drive_id)
+        self.assertIs(d, d.drive_id)
+
+    def test_drive_id_embed(self):
+        d = DriveID('idc000' '112233445566' '0001')
+        self.assertEqual('idc000', d.idc_id)
+        self.assertEqual('112233445566', d.mac_addr)
+
     def test_validate_drive_id(self):
         invalid_cases = (
             (),

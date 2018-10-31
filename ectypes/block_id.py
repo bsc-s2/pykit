@@ -13,8 +13,10 @@ class BlockID(IDBase):
         ('type',           0,  2,  str),
         ('block_group_id', 2,  18, BlockGroupID),
         ('block_index',    18, 22, BlockIndex),
-        ('drive_id',       22, 44, DriveID),
+        ('drive_id',       22, 44, DriveID, 'embed'),
         ('block_id_seq',   44, 54, int),
+
+        ('block_id',       None, None, None, 'self'),
     )
 
     _str_len = 54

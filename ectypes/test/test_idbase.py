@@ -93,17 +93,35 @@ class TestIDBase(unittest.TestCase):
             block_index = BlockIndex(i='01', j='345')
 
 
+class SubID1(IDBase):
+    _attrs = (
+        ('a',  0,  1, lambda x: 1),
+    )
+    _str_len = 1
+
+
+class SubID2(IDBase):
+    _attrs = (
+        ('b',  0,  1, lambda x: 2),
+    )
+    _str_len = 1
+
 class NonKeyID(IDBase):
     _attrs = (
         ('foo',  0,  1, str),
-        ('foo2', 1,  2, str),
+        ('sub1', 1,  2, SubID1, 'embed'),
+        ('sub2', 1,  2, SubID2, {'embed': True, 'key_attr': False}),
+
         ('bar',  1,  2, str, False),
         ('wow',  1,  2, str, {'key_attr': False}),
+
+        ('me',   1,  2, str, 'self'),
+        ('me2',  1,  2, str, {'self': True}),
     )
 
     _str_len = 2
 
-    _tostr_fmt = '{foo}{foo2}'
+    _tostr_fmt = '{foo}{sub1}'
 
 
 class TestNonKeyAttr(unittest.TestCase):
@@ -111,17 +129,27 @@ class TestNonKeyAttr(unittest.TestCase):
     def test_non_key_attr(self):
 
         s = NonKeyID('12')
-        self.assertEqual(('12', '1', '2', '2', '2'), (s, s.foo, s.foo2, s.bar, s.wow))
+        self.assertEqual(('12', '1', '2', '2', '2'), (s, s.foo, s.sub1, s.bar, s.wow))
 
         s = NonKeyID('1', '2')
-        self.assertEqual(('12', '1', '2', '2', '2'), (s, s.foo, s.foo2, s.bar, s.wow))
+        self.assertEqual(('12', '1', '2', '2', '2'), (s, s.foo, s.sub1, s.bar, s.wow))
 
-        s = NonKeyID('1', foo2='2')
-        self.assertEqual(('12', '1', '2', '2', '2'), (s, s.foo, s.foo2, s.bar, s.wow))
+        s = NonKeyID('1', sub1='2')
+        self.assertEqual(('12', '1', '2', '2', '2'), (s, s.foo, s.sub1, s.bar, s.wow))
 
-        s = NonKeyID(foo='1', foo2='2')
-        self.assertEqual(('12', '1', '2', '2', '2'), (s, s.foo, s.foo2, s.bar, s.wow))
+        s = NonKeyID(foo='1', sub1='2')
+        self.assertEqual(('12', '1', '2', '2', '2'), (s, s.foo, s.sub1, s.bar, s.wow))
 
     def test_as_tuple(self):
         s = NonKeyID('12')
         self.assertEqual(('1', '2'), s.as_tuple())
+
+    def test_self(self):
+        s = NonKeyID('12')
+        self.assertIs(s, s.me)
+        self.assertIs(s, s.me2)
+
+    def test_embed(self):
+        s = NonKeyID('12')
+        self.assertEqual(1, s.a)
+        self.assertEqual(2, s.b)

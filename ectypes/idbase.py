@@ -60,31 +60,72 @@ class IDBase(str):
 
         x = super(IDBase, clz).__new__(clz, s)
 
+        id_attrs = []
+
         for attr_definition in clz._attrs:
 
-            k, start_idx, end_idx, attr_type, opt = (attr_definition + (None,))[:5]
+            k, start_idx, end_idx, attr_type, opt = clz._normalize(attr_definition)
 
-            val = attr_type(s[start_idx:end_idx])
+            if opt['self']:
+                val = x
+            else:
+                val = attr_type(s[start_idx:end_idx])
+
+                if opt['embed']:
+                    for a in val._id_base_attrs:
+                        if not a.startswith('_'):
+                            super(IDBase, x).__setattr__(a, getattr(val, a))
+                            id_attrs.append(a)
+
 
             if k.startswith('_'):
                 continue
 
             super(IDBase, x).__setattr__(k, val)
+            id_attrs.append(k)
+
+        super(IDBase, x).__setattr__('_id_base_attrs', tuple(id_attrs))
 
         return x
 
     @classmethod
     def _is_key_attr(clz, attr_definition):
-        name, s, e, attr_type, opt = (attr_definition + (None,))[:5]
+        name, s, e, attr_type, opt = clz._normalize(attr_definition)
 
         if name.startswith('_'):
             return False
 
-        if opt is not None:
-            if opt is False or not opt['key_attr']:
-                return False
+        return opt['key_attr']
 
-        return True
+    @classmethod
+    def _normalize(clz, attr_definition):
+
+        name, s, e, attr_type, opt = (attr_definition + (None,))[:5]
+
+        if opt is None:
+            opt = {}
+        elif opt is False:
+            opt = {'key_attr': False}
+        elif opt == 'self':
+            opt = {'key_attr': False, 'self': True}
+        elif opt == 'embed':
+            opt = {'embed': True}
+        else:
+            pass
+
+        tmpl = {'key_attr': True,
+                'self': False,
+                'embed': False,
+                }
+
+        tmpl.update(opt)
+        opt = tmpl
+
+        if opt['self']:
+            opt['key_attr'] = False
+
+        return name, s, e, attr_type, opt
+
 
     def __setattr__(self, n, v):
         raise TypeError('{clz} does not allow to change attribute'.format(

@@ -320,6 +320,8 @@ class MyID(IDBase):
 Here we have two attribute `foo` and `bar` and two **alias** attributes `alias1`
 and `alias2`.
 
+#### Non key-attribute
+
 To declare an alias attribute, add a fifth field as attribute options:
 `{'key_attr': False}` or just a `False` as shortcut.
 
@@ -332,6 +334,49 @@ MyID('12')
 MyID('1', '2')
 MyID('1', bar='2')
 MyID(foo='1', bar='2')
+```
+
+#### Self attribute
+
+To declare a **self** attribute, which reference the instance itself, use opt:
+`{'self': True}` or `'self'` as a shortcut.
+
+```
+class MyID(IDBase):
+    _attrs = (
+        ('foo',    0,  1, str),
+        ('me',     None,  None, None, 'self'),
+    _str_len = 1
+
+i = MyID('a')
+print i is i.me    # True
+print i is i.me.me # True
+```
+
+
+#### Embedded attribute
+
+To embed sub-attributes, use opt:
+`{'embed': True}` or `'embed'` as shortcut:
+
+```
+class SubID1(IDBase):
+    _attrs = (
+        ('one',  0,  1, lambda x: 1),
+    )
+    _str_len = 1
+
+
+class MyID(IDBase):
+    _attrs = (
+        ('foo',  0,  1, str),
+        ('sub',  1,  2, SubID1, 'embed'),
+    )
+    _str_len = 2
+
+i = MyID('ab')
+print i.sub.one     # 1
+print i.one         # 1
 ```
 
 
@@ -395,10 +440,10 @@ A subclass of `IDBase`. Make a drive id, format: 16 chars
 
 **arguments**:
 
-    `server_id`:
+-   `server_id`:
     A string, Format: 18 chars of idc and primary MAC addr.
 
-    `mount_point_index`:
+-   `mount_point_index`:
     It is a 3-digit mount path, `001` for `/drives/001`.
 
 
@@ -408,6 +453,8 @@ from pykit import ectypes
 print ectypes.DriveID('idc000' 'aabbccddeeff', 10)
 # out: aabbccddeeff0010
 ```
+
+`DriveID` embeds `ServerID` attributes.
 
 
 ##  ectypes.BlockID
@@ -430,6 +477,9 @@ print bid.block_id_seq    # 1
 # test __str__()
 print bid                 # d0g0006300000001230101idc000c62d8736c72800020000000001
 ```
+
+`BlockID` embeds `DriveID` attributes.
+
 
 ### block id
 
