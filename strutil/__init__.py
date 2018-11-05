@@ -3,6 +3,7 @@ from .strutil import (
     format_line,
     page,
     line_pad,
+    parse_colon_kvs,
     tokenize,
     break_line,
 
@@ -44,6 +45,7 @@ __all__ = [
     'format_line',
     'page',
     'line_pad',
+    'parse_colon_kvs',
     'tokenize',
     'break_line',
 

@@ -84,6 +84,22 @@ def _findquote(line, quote):
     return -1, -1, escape
 
 
+def parse_colon_kvs(data):
+    data = tokenize(data, quote='"\'')
+
+    ret = {}
+    for buf in data:
+        if ':' not in buf:
+            raise ValueError('invalid arguments, arguments'
+                             'need key-val like: "k:v"')
+
+        k, v = buf.split(':', 1)
+
+        ret[k] = v
+
+    return ret
+
+
 def tokenize(line, sep=None, quote='"\'', preserve=False):
     if sep == quote:
         raise ValueError, 'diffrent sep and quote is required'

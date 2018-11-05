@@ -31,6 +31,7 @@
   - [strutil.format_table](#strutilformat_table)
   - [strutil.filter_invisible_chars](#strutilfilter_invisible_chars)
   - [strutil.tokenize](#strutiltokenize)
+  - [strutil.parse_colon_kvs](#strutilparse_colon_kvs)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -969,6 +970,36 @@ print tokenize(' a xa bx yc dy ', sep=' ', quote='xy', preserve=True)
 
 **return**:
 a list of string.
+
+## strutil.parse_colon_kvs
+
+**syntax**:
+`strutil.parse_colon_kvs(data)`
+
+Convert a string constant to a dict type of data
+
+```python
+from pykit.strutil import parse_colon_kvs
+
+print parse_colon_kvs("abc:123")
+# {'abc': '123'}
+
+# For repeated keys, using the back value
+print parse_colon_kvs("abc:123 abc:456")
+# {'abc': '456'}
+
+print parse_colon_kvs("")
+# {}
+```
+
+**arguments**:
+
+-    `data`:
+    A string constant, in the format "k:v", is used to convert
+    to data of dict type
+
+**return**:
+the data of dict type
 
 #   Author
 
