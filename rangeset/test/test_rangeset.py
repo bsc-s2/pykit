@@ -1,3 +1,6 @@
+#!/usr/bin/env python2
+# coding: utf-8
+
 import logging
 import unittest
 
@@ -231,6 +234,42 @@ class TestRange(unittest.TestCase):
         for rng, expected in cases:
             rst = rangeset.ValueRange(*rng)
             self.assertEqual(expected, rst.val())
+
+    def test_unicode(self):
+
+        # fix: https://github.com/bsc-s2/pykit/issues/430
+
+        # valid unicode range
+        cases = (
+            [u'我', None, 0],
+            [None, u'我', 0],
+            [u'它', u'我', 0],
+        )
+
+        for rng in cases:
+            r = rangeset.ValueRange(*rng)
+
+        # left > right
+        cases = (
+            [u'我a', u'我', 0],
+        )
+
+        for rng in cases:
+            self.assertRaises(ValueError, rangeset.ValueRange, *rng)
+
+        # incompatible
+        cases = (
+            [u'我', '我', 0],
+            [u'我', 0, 0],
+            [u'我', 0.0, 0],
+            [u'我', (), 0],
+            [u'我', [], 0],
+            [u'我', {}, 0],
+        )
+
+        for l, r, v in cases:
+            self.assertRaises(TypeError, rangeset.ValueRange, l, r, v)
+            self.assertRaises(TypeError, rangeset.ValueRange, r, l, v)
 
 
 class TestRangeSet(unittest.TestCase):
