@@ -14,6 +14,7 @@
     - [Range.has(val)](#rangehasval)
     - [Range.is_adjacent](#rangeis_adjacent)
     - [Range.intersect](#rangeintersect)
+    - [Range.substract](#rangesubstract)
     - [Range.length](#rangelength)
     - [Range.val](#rangeval)
   - [rangeset.ValueRange](#rangesetvaluerange)
@@ -173,6 +174,32 @@ Range(1, 5).intersect(2, None) # Range(2, 5)
 
 **return**:
 `None` if it has no itersection with `rng`, or a new instance of intersection.
+
+
+###  Range.substract
+
+**syntax**:
+`Range.substract(rng)`
+
+Remove `rng` from a range.
+The result is a list of 2 `Range`.
+Because `rng` might split it into two separate sub range.
+
+**Synopsis**:
+
+```
+Range(0, 5).substract([1, 2])    # [[0, 1], [2, 5]]
+Range(0, 5).substract([-1, 2])   # [None, [2, 5]]
+Range(0, 5).substract([None, 6]) # [None, None]
+```
+
+**arguments**:
+
+-   `rng`:
+    is another `Range` or `list` of 2 elements that represents a range.
+
+**return**:
+a list of 2 `Range` instance.
 
 
 ###  Range.length
