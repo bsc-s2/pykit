@@ -30,6 +30,7 @@ class TestRange(unittest.TestCase):
                 ([1,    None], 0, False),
                 ([1,    None], 1, True),
                 ([1,    None], 2, True),
+                ([1,    1],    1, False),
                 ([1,    3],    0, False),
                 ([1,    3],    1, True),
                 ([1,    3],    2, True),
@@ -207,6 +208,7 @@ class TestRange(unittest.TestCase):
             ([None, ()], inf),
             ([None, []], inf),
 
+            ([1, 1], 0),
             ([1, 2], 1),
             ([1.0, 2.2], 1.2),
             (['', '\0'], 1.0/257),
