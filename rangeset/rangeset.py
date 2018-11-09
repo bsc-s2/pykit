@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# coding: utf-8
 
 
 int_types = (int, long)
@@ -9,6 +11,7 @@ compatible_types = {
     long:       (type(None), int,   long, ),
     float:      (type(None), int,   long, float, ),
     str:        (type(None), str,),
+    unicode:    (type(None), unicode,),
     tuple:      (type(None), tuple, ),
     list:       (type(None), list,),
 }
@@ -30,7 +33,7 @@ class ValueRange(list):
 
         if cmp_boundary(left, right) > 0:
             raise ValueError('left not smaller or equal right: {left}, {right}'.format(
-                left=left, right=right))
+                left=repr(left), right=repr(right)))
 
         super(ValueRange, self).__init__([left, right, val])
 
@@ -137,7 +140,7 @@ class Range(ValueRange):
 
         if cmp_boundary(left, right) > 0:
             raise ValueError('left not smaller or equal right: {left}, {right}'.format(
-                left=left, right=right))
+                left=repr(left), right=repr(right)))
 
         super(ValueRange, self).__init__([left, right])
 
@@ -603,7 +606,7 @@ def bisect_left(a, x, lo=0, hi=None):
 def assert_compatible(l, r):
     if not is_compatible(l, r):
         raise TypeError('{l} {ltyp} is incompatible with {r} {rtyp}'.format(
-            l=l, ltyp=type(l), r=r, rtyp=type(r)))
+            l=repr(l), ltyp=type(l), r=repr(r), rtyp=type(r)))
 
 
 def is_compatible(l, r):
