@@ -75,6 +75,31 @@ class ValueRange(list):
 
         return rst
 
+    def substract(self, b):
+
+        if self.cmp(b) > 0:
+            # keep value for ValueRange
+            return [None,
+                    self.dup() + self[2:]]
+
+        if self.cmp(b) < 0:
+            # keep value for ValueRange
+            return [self.dup() + self[2:],
+                    None]
+
+        # keep value for ValueRange
+        rst = [None, None]
+
+        if self.cmp_left(b[0]) < 0:
+            o = [self[0], b.prev_right()] + self[2:]
+            rst[0] = self.__class__(*o)
+
+        if b.cmp_right(self[1]) < 0:
+            o = [b.next_left(), self[1]] + self[2:]
+            rst[1] = self.__class__(*o)
+
+        return rst
+
     def cmp_left(self, pos):
         # left is None means it is negative infinite
         return cmp_val(self[0], pos, none_cmp_finite=-1)
@@ -558,29 +583,7 @@ def union_range(a, b):
 
 
 def substract_range(a, b):
-
-    if a.cmp(b) > 0:
-        # keep value for ValueRange
-        return [None,
-                a.dup() + a[2:]]
-
-    if a.cmp(b) < 0:
-        # keep value for ValueRange
-        return [a.dup() + a[2:],
-                None]
-
-    # keep value for ValueRange
-    rst = [None, None]
-
-    if a.cmp_left(b[0]) < 0:
-        o = [a[0], b.prev_right()] + a[2:]
-        rst[0] = a.__class__(*o)
-
-    if b.cmp_right(a[1]) < 0:
-        o = [b.next_left(), a[1]] + a[2:]
-        rst[1] = a.__class__(*o)
-
-    return rst
+    return a.substract(b)
 
 
 def bisect_left(a, x, lo=0, hi=None):

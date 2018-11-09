@@ -144,10 +144,18 @@ class TestRange(unittest.TestCase):
             a = rangeset.Range(*a)
             b = rangeset.Range(*b)
 
+            # test module method
             rst = rangeset.substract_range(a, b)
             dd('rst:', rst)
 
             self.assertEqual(expected, rst)
+
+            # test class method
+            rst = a.substract(b)
+            dd('rst:', rst)
+
+            self.assertEqual(expected, rst)
+
 
     def test_intersect(self):
 
