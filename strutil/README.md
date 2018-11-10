@@ -17,6 +17,8 @@
     - [TrieNode.char](#trienodechar)
     - [TrieNode.outstanding](#trienodeoutstanding)
     - [TrieNode.is_outstanding](#trienodeis_outstanding)
+  - [strutil.Hex](#strutilhex)
+    - [Hex instance attributes](#hex-instance-attributes)
 - [Methods](#methods)
   - [strutil.break_line](#strutilbreak_line)
   - [strutil.color](#strutilcolor)
@@ -293,6 +295,96 @@ This attribute points to the last added child node.
 
 If this node is an outstanding node to its parent node.  When created, a node
 must be an outstanding node.
+
+
+##  strutil.Hex
+
+**syntax**:
+`strutil.Hex(data, byte_length)`
+
+Create a `str` based instance that represents a fixed-length hex string,
+to simplify hex and arithmetic operations.
+
+An `Hex` instance supports arithmetic operations: `+ - * / % **`.
+
+NOTE: **it overrides native `str` operation such as `str + str`**.
+
+**arguments**:
+
+-   `data`:
+    can be a `str`, `int` or tuple in form of `(<prefix_hex>, <filling_byte>)`
+
+-   `byte_length`:
+    specifies number of bytes for this hex.
+    It can not be changed after creating it.
+
+    > byte length x 2 = hex length
+
+    It also can be a symblic name: `crc32`, `md5`, `sha1` or `sha256`.
+
+**Synopsis**:
+
+```python
+from pykit.strutil import Hex
+
+
+# Different ways to create a 4-byte crc32 hex str
+
+Hex(0x0102, 4)           # 00000102
+Hex(0x0102, 'crc32')     # 00000102
+Hex.crc32(0x0102)        # 00000102
+Hex('00000102', 'crc32') # 00000102
+Hex.crc32('00000102')    # 00000102
+
+
+# Create with a tuple of prefix and a filling byte
+
+Hex(('12', 1), 'crc32')  # 12010101
+
+
+# Arithmetic operations
+
+c = Hex(0x0102, 'crc32')
+d = c + 1
+print type(d), d         # <class 'pykit.strutil.hex.Hex'> 00000006
+print repr(c*2)          # '00000204'
+print c - 1000000        # 00000000 # overflow protection
+print c * 1000000        # ffffffff # overflow protection
+
+
+# Iterate over sha1 space with a specific step:
+
+c = Hex.sha1(0)
+step = Hex.sha1(('10', 0))
+for i in range(16):
+    print c
+    c += step
+
+# 0000000000000000000000000000000000000000
+# 1000000000000000000000000000000000000000
+# 2000000000000000000000000000000000000000
+# 3000000000000000000000000000000000000000
+# 4000000000000000000000000000000000000000
+# 5000000000000000000000000000000000000000
+# 6000000000000000000000000000000000000000
+# 7000000000000000000000000000000000000000
+# 8000000000000000000000000000000000000000
+# 9000000000000000000000000000000000000000
+# a000000000000000000000000000000000000000
+# b000000000000000000000000000000000000000
+# c000000000000000000000000000000000000000
+# d000000000000000000000000000000000000000
+# e000000000000000000000000000000000000000
+# f000000000000000000000000000000000000000
+
+```
+
+###  Hex instance attributes
+
+-   `Hex.hex`: a plain string of hex `'00000102'`.
+-   `Hex.bytes`: a plain string of bytes `'\0\0\1\2'`.
+-   `Hex.int`: a int value `0x0102` same as `int('00000102', 16)`.
+-   `Hex.byte_length`: number of bytes in `Hex.bytes`.
 
 
 #   Methods

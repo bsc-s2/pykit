@@ -34,6 +34,10 @@ from .colored_string import (
     fading_color,
 )
 
+from .hex import (
+    Hex
+)
+
 from .trie import (
     TrieNode,
     make_trie,
@@ -67,6 +71,8 @@ __all__ = [
     'danger',
 
     'fading_color',
+
+    'Hex',
 
     'struct_repr',
     'format_table',
