@@ -156,6 +156,9 @@ class ValueRange(list):
     def val(self):
         return self[2]
 
+    def set(self, v):
+        self[2] = v
+
 
 class Range(ValueRange):
 
@@ -243,10 +246,22 @@ class RangeDict(list):
 
     default_range_clz = ValueRange
 
-    def __init__(self, iterable=None, range_clz=None):
+    # dimension = 1 indicates the value is a RangeDict whose value is any type.
+    # dimension = 2 indicates the value is a RangeDict thus to represent a 2D
+    # range dict.
+    dimension = 1
+
+    def __init__(self, iterable=None, range_clz=None, dimension=None):
 
         if iterable is None:
             iterable = []
+
+        if dimension is not None:
+            self.dimension = int(dimension)
+
+        if self.dimension < 1:
+            raise ValueError('dimension must >= 1, but: {d}'.format(
+                d=self.dimension))
 
         self.range_clz = range_clz or self.default_range_clz
 
@@ -262,7 +277,23 @@ class RangeDict(list):
                     ripp=self[i + 1],
                 ))
 
+        if self.dimension > 1:
+            for rng in self:
+                v = rng.val()
+                if v is not None:
+                    v = self.__class__(v,
+                                       range_clz=self.range_clz,
+                                       dimension=self.dimension-1)
+                    rng.set(v)
+
+
     def add(self, rng, val=None):
+
+        if (val is not None
+                and self.dimension > 1):
+
+            val = self.__class__(val, range_clz=self.range_clz,
+                                 dimension=self.dimension-1)
 
         rng = _to_range(self.range_clz, list(rng) + [val])
 
@@ -303,14 +334,21 @@ class RangeDict(list):
 
         self.normalize()
 
-    def get(self, pos):
+    def get(self, pos, *positions):
         rng = [pos, None]
         i = bisect_left(self, rng)
 
         if i == len(self) or not self[i].has(pos):
             raise KeyError('not in range: ' + repr(pos))
 
-        return self[i].val()
+        v = self[i].val()
+
+        if len(positions) > 0:
+            if len(positions) + 1 <= self.dimension:
+                v = v.get(*positions)
+            else:
+                raise TypeError('too many position to get')
+        return v
 
     def get_min(self, is_lt=None):
 
@@ -471,10 +509,10 @@ def substract(a, *bs):
 def _substract(a, b):
 
     if len(a) == 0:
-        return a.__class__([], range_clz=a.range_clz)
+        return a.__class__([], range_clz=a.range_clz, dimension=a.dimension)
 
     if len(b) == 0:
-        return a.__class__(a, range_clz=a.range_clz)
+        return a.__class__(a, range_clz=a.range_clz, dimension=a.dimension)
 
     rst = []
 
@@ -500,7 +538,7 @@ def _substract(a, b):
         if sb is not None:
             rst.append(sb)
 
-    return a.__class__(rst, range_clz=a.range_clz)
+    return a.__class__(rst, range_clz=a.range_clz, dimension=a.dimension)
 
 
 def intersect(a, b):

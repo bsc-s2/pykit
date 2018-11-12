@@ -984,3 +984,88 @@ class TestRangeDict(unittest.TestCase):
             self.assertEqual(expected, a.find_overlapped(b))
             self.assertEqual(expected, a.find_overlapped(rangeset.Range(*b)))
             self.assertEqual(expected, a.find_overlapped(rangeset.ValueRange(*(b+['bar']))))
+
+
+class TestRangeDictMultiDimension(unittest.TestCase):
+
+    """
+    A sample of 2d mapped value: time(t) and a string range:
+    This setting split the entire plain into 4 areas.
+
+        range
+        ^
+        |
+      d +----+----+
+        |    | cd |
+      c + bd +----+
+        |    |    |
+      b +----+    |
+        | ab | ac |
+      a +----+----+
+        |
+     '' +----+----+--------> t
+        0    1    2
+    """
+
+    inp = [
+        [0, 1, [['a', 'b', 'ab'],
+                ['b', 'd', 'bd'],
+                ]],
+        [1, 2, [['a', 'c', 'ac'],
+                ['c', 'd', 'cd'],
+                ]],
+    ]
+
+    def test_get(self):
+
+        r = rangeset.RangeDict(self.inp, dimension=2)
+
+        cases = (
+            (0.5, 'a', 'ab'),
+            (0.5, 'c', 'bd'),
+            (1.5, 'a', 'ac'),
+            (1.5, 'c', 'cd'),
+        )
+
+        for tm, string, expected in cases:
+
+            dd(tm, string, expected)
+
+            rst = r.get(tm).get(string)
+            dd('rst:', rst)
+
+            self.assertEqual(expected, rst)
+
+            # in one get
+
+            rst = r.get(tm, string)
+            dd('rst:', rst)
+
+            self.assertEqual(expected, rst)
+
+        # too many args
+        self.assertRaises(TypeError, r.get, 1, 'a', 1)
+
+    def test_add(self):
+        r = rangeset.RangeDict(self.inp, dimension=2)
+        r.add([2, None], [['a', 'd', 'ad']])
+
+        rst = r.get(2.5, 'b')
+        self.assertEqual('ad', rst)
+
+        self.assertRaises(KeyError, r.get, 2.5, 'e')
+
+    def test_substract(self):
+        r = rangeset.RangeDict(self.inp, dimension=2)
+        r = rangeset.substract(r, rangeset.RangeDict([[0.5, 1.5, None]]))
+        dd(r)
+
+        self.assertRaises(KeyError, r.get, 2)
+        self.assertRaises(KeyError, r.get, 2, 'e')
+
+        self.assertEqual('bd', r.get(0, 'b'))
+        self.assertEqual('ac', r.get(1.6, 'b'))
+
+        r = rangeset.substract(r, rangeset.RangeDict([[0, 1.5, None]]))
+        dd(r)
+        self.assertRaises(KeyError, r.get, 0)

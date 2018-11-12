@@ -18,6 +18,7 @@
     - [Range.length](#rangelength)
     - [Range.val](#rangeval)
   - [rangeset.ValueRange](#rangesetvaluerange)
+    - [ValueRange.set](#valuerangeset)
   - [rangeset.RangeSet](#rangesetrangeset)
     - [RangeSet.add](#rangesetadd)
     - [RangeSet.find_overlapped](#rangesetfind_overlapped)
@@ -263,6 +264,20 @@ A `ValueRange` is left-close and right-open.
 `ValueRange` has the same methods as `Range`.
 
 
+###  ValueRange.set
+
+**syntax**:
+`ValueRange.set(v)`
+
+**arguments**:
+
+-   `v`:
+    the value to update to this range.
+
+**return**:
+Nothing
+
+
 ##  rangeset.RangeSet
 
 **syntax**:
@@ -356,7 +371,7 @@ RangeSet([[10, 20], [30, 40]]).has(50) # False
 ##  rangeset.RangeDict
 
 **syntax**:
-`rangeset.RangeDict(iterable=None, range_clz=None)`
+`rangeset.RangeDict(iterable=None, range_clz=None, dimension=None)`
 
 `RangeDict` defines a mapping from ranges to values.
 E.g.:
@@ -377,6 +392,87 @@ Because in `RangeDict` each range there is a value bound.
 **arguments**:
 are same as `RangeSet` except the default value for `range_clz` is `ValueRange`
 instead of `Range`.
+
+-   `dimension`:
+    specifies if to convert the value in it into a nested `RangeDict`.
+    It is used to create multi dimension RangeDict.
+    By default it is `1`.
+
+    **Synopsis**:
+
+    ```python
+    """
+    A sample of 2d mapped value: time(t) and a string range:
+    This setting split the entire plain into 4 areas.
+
+        range
+        ^
+        |
+      d +----+----+
+        |    | cd |
+      c + bd +----+
+        |    |    |
+      b +----+    |
+        | ab | ac |
+      a +----+----+
+        |
+     '' +----+----+--------> t
+        0    1    2
+    """
+
+    inp = [
+            [0, 1, [['a', 'b', 'ab'],
+                    ['b', 'd', 'bd'],
+            ]],
+            [1, 2, [['a', 'c', 'ac'],
+                    ['c', 'd', 'cd'],
+            ]],
+    ]
+
+    r = rangeset.RangeDict(inp, dimension=2)
+
+    print r.get(0.5, 'a') # 'ab'
+    print r.get(1.5, 'a') # 'ac'
+    ```
+
+> One of a useful scenario for 2d `RangeDict` is to store sharding info.
+> Because sharding config might change, there might be a migration period a server
+> needs two config.
+>
+> With the following example:
+>
+> ```
+>     range
+>     ^
+>     |
+>   d +----+----+
+>     |    | cd |
+>   c + bd +----+
+>     |    |    |
+>   b +----+    |
+>     | ab | ac |
+>   a +----+----+
+>     |
+>  '' +----+----+--------> t
+>     0    1    2
+> ```
+>
+> At first(before time `1`) we store keys start with `a ~ b` in database `ab`,
+> and keys start with `b ~ d` in database `bd`.
+>
+> At time `1` the administrator decide to re-balance all keys with a new
+> sharding config:
+> storing keys starts with `a ~ c` in database `ac`,
+> and keys start with `c ~ d` in database `cd`.
+>
+> All API servers must be aware of the config change in order to run a dual-read
+> mechanism.
+> E.g. to read a key `bb`:
+>
+> -   First read it from the latest configured database `ac`, if not found:
+> -   Then read it from database `bd`: the previous shard for `bb`.
+>
+> This way it let the system to smoothly transfer from one config to another.
 
 Methods of `RangeDict` are the same as `RangeSet` except the following three:
 
@@ -403,12 +499,15 @@ Nothing
 ###  RangeDict.get
 
 **syntax**:
-`RangeDict.get(pos)`
+`RangeDict.get(pos, *positions)`
 
 **arguments**:
 
 -   `pos`:
     position in `RangeDict`
+
+-   `positions`:
+    the nested position to get if this `RangeDict.dimension > 1`.
 
 **return**:
 the value of range that `pos` is in.
