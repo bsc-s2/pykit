@@ -346,7 +346,7 @@ Hex(('12', 1), 'crc32')  # 12010101
 
 c = Hex(0x0102, 'crc32')
 d = c + 1
-print type(d), d         # <class 'pykit.strutil.hex.Hex'> 00000006
+print type(d), d         # <class 'pykit.strutil.hex.Hex'> 00000103
 print repr(c*2)          # '00000204'
 print c - 1000000        # 00000000 # overflow protection
 print c * 1000000        # ffffffff # overflow protection
