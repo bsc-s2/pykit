@@ -20,6 +20,10 @@ from privilege import (
     privileges
 )
 
+from .mysql import (
+    query_by_jinja2,
+)
+
 __all__ = [
     "ConnectionTypeError",
     "InvalidLength",
@@ -34,4 +38,6 @@ __all__ = [
     "make_update_sql",
     "privileges",
     "scan_index",
+
+    "query_by_jinja2",
 ]

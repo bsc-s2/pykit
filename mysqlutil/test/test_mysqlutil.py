@@ -1,66 +1,30 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import os
 import unittest
-
-import docker
 
 from pykit import mysqlconnpool
 from pykit import mysqlutil
-from pykit import proc
-from pykit import utdocker
 from pykit import ututil
+
+from . import base
 
 dd = ututil.dd
 
-mysql_base_tag = 'daocloud.io/mysql:5.7.13'
-mysql_test_password = '123qwe'
-mysql_test_ip = '192.168.52.40'
-mysql_test_port = 3306
 mysql_test_user = 'root'
-mysql_test_name = 'mysql_test'
-mysql_test_tag = 'test-mysql:0.0.1'
 mysql_test_db = 'test'
 mysql_test_table = 'errlog'
 
 
-class TestMysqlScanIndex(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        utdocker.pull_image(mysql_base_tag)
-
-        docker_file_dir = os.path.abspath(os.path.dirname(__file__)) + '/dep'
-
-        utdocker.build_image(mysql_test_tag, docker_file_dir)
-
-
-    def setUp(self):
-
-        utdocker.create_network()
-
-        utdocker.start_container(
-            mysql_test_name,
-            mysql_test_tag,
-            ip=mysql_test_ip,
-            env={
-                'MYSQL_ROOT_PASSWORD': mysql_test_password,
-            }
-        )
-
-        ututil.wait_listening(mysql_test_ip, mysql_test_port)
-
-    def tearDown(self):
-        utdocker.remove_container(mysql_test_name)
+class TestMysqlScanIndex(base.Base):
 
     def test_scan_index(self):
 
         addr = {
-            'host': mysql_test_ip,
-            'port': mysql_test_port,
+            'host': base.mysql_test_ip,
+            'port': base.mysql_test_port,
             'user': mysql_test_user,
-            'passwd': mysql_test_password,
+            'passwd': base.mysql_test_password,
         }
 
         conns = (addr,

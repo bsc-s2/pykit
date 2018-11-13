@@ -1,0 +1,10 @@
+CREATE TABLE `{{ db }}`.`user_{{ sharding_start }}` (
+    `_id`      bigint                                      NOT NULL AUTO_INCREMENT,
+    `data`     json,
+    `username` varchar(64) as (data->"$.username") VIRTUAL NOT NULL,
+    `email`    varchar(64) as (data->"$.email")    VIRTUAL NOT NULL,
+
+    PRIMARY KEY (`_id`),
+    UNIQUE KEY idx_username (`username`),
+    UNIQUE KEY idx_email (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
