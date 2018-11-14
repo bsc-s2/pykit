@@ -1,5 +1,6 @@
 from .timeutil import (
     formats,
+    parse_to_ts,
     parse,
     format,
     format_ts,
@@ -20,6 +21,7 @@ from .timeutil import (
 __all__ = [
     'formats',
     'parse',
+    'parse_to_ts',
     'format',
     'format_ts',
     'utc_datetime_to_ts',

@@ -39,6 +39,11 @@ def parse(time_str, fmt_key, timezone=None):
     return dt
 
 
+def parse_to_ts(time_str, fmt_key):
+    dt = datetime.datetime.strptime(time_str, _get_format(fmt_key))
+    return utc_datetime_to_ts(dt)
+
+
 def format(dt, fmt_key):
     return dt.strftime(_get_format(fmt_key))
 
@@ -53,7 +58,7 @@ def _get_format(fmt_key):
 
 
 def utc_datetime_to_ts(dt):
-    return calendar.timegm(dt.timetuple())
+    return int(calendar.timegm(dt.timetuple()))
 
 
 def datetime_to_ts(dt):

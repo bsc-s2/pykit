@@ -59,17 +59,22 @@ class TestTimeutil(unittest.TestCase):
 
     def test_parse(self):
 
+        tss = test_case['ts']
+
         for fmt_key, tm_str in test_case['format'].items():
 
             dt = timeutil.parse(tm_str, fmt_key)
             ts = timeutil.utc_datetime_to_ts(dt)
 
             if fmt_key == 'archive':
-                self.assertEqual(test_case['ts']['hour_accuracy'], ts)
+                self.assertEqual(tss['hour_accuracy'], ts)
+                self.assertEqual(tss['hour_accuracy'], timeutil.parse_to_ts(tm_str, fmt_key))
             elif fmt_key.startswith('daily'):
-                self.assertEqual(test_case['ts']['day_accuracy'], ts)
+                self.assertEqual(tss['day_accuracy'], ts)
+                self.assertEqual(tss['day_accuracy'], timeutil.parse_to_ts(tm_str, fmt_key))
             else:
-                self.assertEqual(test_case['ts']['second_accuracy'], ts)
+                self.assertEqual(tss['second_accuracy'], ts)
+                self.assertEqual(tss['second_accuracy'], timeutil.parse_to_ts(tm_str, fmt_key))
 
     def test_format(self):
 
@@ -108,8 +113,7 @@ class TestTimeutil(unittest.TestCase):
             (timeutil.ns, 19, 0.000000001, 30000),
         ]
 
-        for case in cases:
-            timestamp_func, length, unit_ts, tolerance_ts = case
+        for timestamp_func, length, unit_ts, tolerance_ts in cases:
 
             ts1 = timestamp_func()
 
@@ -117,7 +121,7 @@ class TestTimeutil(unittest.TestCase):
 
             ts2 = timestamp_func()
 
-            self.assertTrue(ts1 < ts2 and ts2 < ts1 + tolerance_ts)
+            self.assertTrue(ts1 < ts2 < ts1 + tolerance_ts)
 
             self.assertEqual(length, len(str(ts2)))
 

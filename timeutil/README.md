@@ -8,6 +8,7 @@
 - [Description](#description)
 - [Methods](#methods)
   - [timeutil.parse](#timeutilparse)
+  - [timeutil.parse_to_ts](#timeutilparse_to_ts)
   - [timeutil.format](#timeutilformat)
   - [timeutil.format_ts](#timeutilformat_ts)
   - [timeutil.utc_datetime_to_ts](#timeutilutc_datetime_to_ts)
@@ -98,6 +99,27 @@ parse time string to datetime instance.
 
 **return**:
 datetime instance
+
+
+##  timeutil.parse_to_ts
+
+**syntax**:
+`timeutil.parse_to_ts(time_str, fmt_key)`
+
+Similar to `parse` but returns a timestamp in second instead of a `datetime`
+instance.
+
+**arguments**:
+
+-   `time_str`:
+    time in string.
+
+-   `fmt_key`:
+    specify time string format.
+
+**return**:
+an int timestamp in second.
+
 
 ##  timeutil.format
 
