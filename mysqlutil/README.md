@@ -20,6 +20,8 @@
   - [mysqlutil.make_sql_range_conditions](#mysqlutilmake_sql_range_conditions)
   - [mysqlutil.make_update_sql](#mysqlutilmake_update_sql)
   - [mysqlutil.scan_index](#mysqlutilscan_index)
+  - [mysqlutil.query_by_jinja2](#mysqlutilquery_by_jinja2)
+  - [mysqlutil.setup_user](#mysqlutilsetup_user)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -613,6 +615,70 @@ for rr in rst:
 
 **return**:
 a generator which generates rows of the sql select result with those arguments once a time.
+
+
+##  mysqlutil.query_by_jinja2
+
+**syntax**:
+`mysqlutil.query_by_jinja2(conn_argkw, jinja2_argkw)`
+
+Make a `sql` by jinja2 template and send it on the connection.
+
+**arguments**:
+
+-   `conn_argkw`:
+    provide a connection with a database manager.
+
+    - If it is a `dict`, see argument `connpool` in `mysql.scan_index`.
+
+    - It can also be a `pykit.mysqlconnpool.MysqlConnectionPool`
+      or `MySQLdb.connections.Connection` instance.
+
+-   `jinja2_argkw`:
+    a `dict`, the elements:
+
+    -   `template`: the content of the template.
+
+    -   `template_path`: the path of a template file. `template` and `template_path`,
+        at least one field must be present.
+
+    -   `vars`: a `dict`, the variables for jinja2 template.
+
+**return**:
+query result in a list of dictionary.
+
+
+##  mysqlutil.setup_user
+
+**syntax**:
+`mysqlutil.setup_user(conn_argkw, users)`
+
+Setup users from a MySQL database.
+
+**arguments**:
+
+-   `conn_argkw`:
+    see `conn_argkw` in `mysqlutil.query_by_jinja2`.
+
+-   `users`:
+    a `list` of `dict`, the element:
+
+    -   `name`: the user name.
+
+    -   `host`: the host for connecting mysql. Defaults to `%`.
+
+    -   `password`: the password of the user.
+
+    -   `priv`: a `str` or a `dict`, the privileges of the users.
+        If it is a `str`, the format:`"<db>.<table>:REPLICATION SLAVE,REPLICATION CLIENT"`.
+        If it is a `dict`, the key format: `"<db>.<table>"` or `(<db>, <table>)`, the value format:
+        `["INSERT", "UPDATE"]`.
+        NOTE: **the privilege must be in `mysqlutil.privileges`**
+
+    -   `state`: `present` or `absent`, means grant or revoke the privileges. Defaults to `present`.
+
+**return**:
+nothing
 
 
 #   Author

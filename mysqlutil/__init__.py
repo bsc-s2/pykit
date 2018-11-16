@@ -22,6 +22,7 @@ from privilege import (
 
 from .mysql import (
     query_by_jinja2,
+    setup_user,
 )
 
 __all__ = [
@@ -40,4 +41,5 @@ __all__ = [
     "scan_index",
 
     "query_by_jinja2",
+    "setup_user",
 ]
