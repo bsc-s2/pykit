@@ -5,6 +5,7 @@ from collections import defaultdict
 
 from pykit.dictutil import FixedKeysDict
 
+from .block_id import BlockID
 from .block_desc import BlockDesc
 from .block_group_id import BlockGroupID
 from .block_index import BlockIndex
@@ -264,3 +265,74 @@ class BlockGroup(FixedKeysDict):
         blks = self.indexes_to_blocks(idxes)
 
         return [blk for blk in blks if blk is not None]
+
+    def is_ec_block(self, block_id):
+        block_id = BlockID(block_id)
+
+        blk = self.get_block(block_id.block_index)
+        if blk is None or blk['block_id'] != block_id:
+            raise BlockNotFoundError(
+                'block_id:{bid}'
+                ' not found in block_group:{block_group_id}'.format(bid=block_id, **self))
+
+        if block_id.type.endswith('p'):
+            return True
+
+        r_indexes = self.get_replica_indexes(block_id.block_index)
+        r_blks = [self.get_block(x) for x in r_indexes]
+
+        return None in r_blks
+
+    def get_ec_blocks(self, idc_idx):
+        nr_data, nr_parity = self['config']['in_idc']
+
+        blks = []
+        for i in range(0, nr_data + nr_parity):
+            blk = self.get_block(BlockIndex(idc_idx, i))
+
+            if blk is None:
+                continue
+
+            if self.is_ec_block(blk['block_id']):
+                blks.append(blk)
+
+        return blks
+
+    def get_ec_broken_blocks(self, idc_idx, broken_bids):
+        broken_blks = []
+
+        for blk in self.get_ec_blocks(idc_idx):
+            if blk['block_id'] in broken_bids:
+                broken_blks.append(blk)
+
+        return broken_blks
+
+    def get_ec_block_ids(self, idc_idx):
+        bids = []
+
+        for blk in self.get_ec_blocks(idc_idx):
+            bids.append(blk['block_id'])
+
+        return bids
+
+    def get_replica_blocks(self, block_id, include_me=True):
+        block_id = BlockID(block_id)
+        r_indexes = self.get_replica_indexes(block_id.block_index, include_me)
+
+        blks = []
+        for idx in r_indexes:
+            blk = self.get_block(idx)
+
+            if blk is not None:
+                blks.append(blk)
+
+        return blks
+
+    def get_block_byid(self, block_id):
+        block_id = BlockID(block_id)
+
+        blk = self.get_block(block_id.block_index)
+        if blk is None or blk['block_id'] != block_id:
+            return None
+
+        return blk

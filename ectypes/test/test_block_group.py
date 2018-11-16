@@ -16,6 +16,7 @@ from pykit.ectypes import (
     BlockTypeNotSupportReplica,
     BlockTypeNotSupported,
     DriveID,
+    BlockIndex,
 )
 
 dd = ututil.dd
@@ -371,3 +372,134 @@ class TestBlockGroup(unittest.TestCase):
             idxes.append(idx)
 
         self.assertEqual(parity_idxes, idxes)
+
+    def make_test_block_group(self, blk_idxes, config=None):
+        gid = 'g000640000000123'
+
+        base_blk = BlockDesc({
+            'size': 1000,
+            'range': ['0a', '0b'],
+            'is_del': 0
+        })
+
+        if config is None:
+            config = _ec_config
+
+        num_idcs = sum(config['cross_idc'])
+        idcs = ['idc' + (str(i).rjust(3, '0')) for i in range(num_idcs)]
+
+        bg = BlockGroup(block_group_id=gid, idcs=idcs, config=config)
+
+        for i, bi in enumerate(blk_idxes):
+            bi = BlockIndex(bi)
+            typ = bg.get_block_type(bi)
+
+            drive_id = DriveID(idcs[int(bi[0])] + 'c62d8736c7280002')
+            blkid = BlockID(typ, gid, bi, drive_id, i)
+
+            blk = copy.deepcopy(base_blk)
+            blk['block_id'] = blkid
+            bg.add_block(blk)
+
+        return bg
+
+    def test_is_ec_block(self):
+        idc_idx = 0
+        ec_blk_idxes = ['0000', '0001', '0005']
+        replica_blk_idxes = ['0002', '0008', '0012']
+
+        bg = self.make_test_block_group(ec_blk_idxes + replica_blk_idxes)
+
+        with self.assertRaises(BlockNotFoundError):
+            gid = 'g000640000000123'
+            bid = BlockID('dp', gid, '0001', DriveID('idc000' 'ab2d8736c7280002'), 0)
+            bg.is_ec_block(bid)
+
+        act_ec_blk_idxes = []
+
+        nr_data, nr_parity = bg['config']['in_idc']
+        for i in range(0, nr_data + nr_parity):
+            bi = BlockIndex(idc_idx, i)
+            blk = bg.get_block(bi)
+            if blk is None:
+                continue
+
+            if bg.is_ec_block(blk['block_id']):
+                act_ec_blk_idxes.append(bi)
+
+        self.assertListEqual(ec_blk_idxes, act_ec_blk_idxes)
+
+    def test_get_ec_blocks(self):
+        idc_idx = 0
+        ec_blk_idxes = ['0000', '0001']
+        replica_blk_idxes = ['0002', '0008', '0012']
+
+        bg = self.make_test_block_group(ec_blk_idxes + replica_blk_idxes)
+
+        ec_blks = bg.indexes_to_blocks(ec_blk_idxes)
+        act_ec_blks = bg.get_ec_blocks(idc_idx)
+
+        self.assertListEqual(ec_blks, act_ec_blks)
+
+    def test_get_ec_broken_blocks(self):
+        idc_idx = 0
+        ec_blk_idxes = ['0000', '0001', '0003']
+        replica_blk_idxes = ['0002', '0008', '0012']
+
+        bg = self.make_test_block_group(ec_blk_idxes + replica_blk_idxes)
+
+        broken_blk_idxes = ec_blk_idxes[1:]
+        broken_blks = bg.indexes_to_blocks(broken_blk_idxes)
+        broken_ec_bids = [blk['block_id'] for blk in broken_blks]
+
+        act_broken_blks = bg.get_ec_broken_blocks(idc_idx, broken_ec_bids)
+
+        self.assertListEqual(broken_blks, act_broken_blks)
+
+    def test_get_ec_block_ids(self):
+        idc_idx = 0
+        ec_blk_idxes = ['0000', '0001', '0003']
+        replica_blk_idxes = ['0002', '0008', '0012']
+
+        bg = self.make_test_block_group(ec_blk_idxes + replica_blk_idxes)
+
+        ec_blks = bg.indexes_to_blocks(ec_blk_idxes)
+        ec_bids = [blk['block_id'] for blk in ec_blks]
+
+        act_ec_bids = bg.get_ec_block_ids(idc_idx)
+
+        self.assertListEqual(ec_bids, act_ec_bids)
+
+    def test_get_replica_blocks(self):
+        ec_blk_idxes = ['0000', '0001', '0003']
+        replica_blk_idxes = ['0002', '0008', '0012']
+
+        bg = self.make_test_block_group(ec_blk_idxes + replica_blk_idxes)
+
+        replica_blks = bg.indexes_to_blocks(replica_blk_idxes)
+
+        for blk in replica_blks:
+            bid = blk['block_id']
+
+            act_replica_blks = bg.get_replica_blocks(bid)
+            self.assertListEqual(replica_blks, act_replica_blks)
+
+            _replica_blks = copy.deepcopy(replica_blks)
+            _replica_blks.remove(blk)
+
+            act_replica_blks = bg.get_replica_blocks(bid, include_me=False)
+            self.assertListEqual(_replica_blks, act_replica_blks)
+
+    def test_get_block_byid(self):
+        blk_idxes = ['0000', '0001', '0002', '0003', '0008', '0012']
+
+        bg = self.make_test_block_group(blk_idxes)
+
+        blks = bg.indexes_to_blocks(blk_idxes)
+        bids = [blk['block_id'] for blk in blks]
+
+        act_blks = []
+        for bid in bids:
+            act_blks.append(bg.get_block_byid(bid))
+
+        self.assertListEqual(blks, act_blks)
