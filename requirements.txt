@@ -53,7 +53,8 @@ snakefood
 
 gevent==1.3.0
 redis==2.10.6
-PyYAML==3.11
+# previous 3.11 has a security issue, which is fixed in at least 4.2b1
+PyYAML==4.2b4
 
 # MySQLdb
 MySQL-python==1.2.5
