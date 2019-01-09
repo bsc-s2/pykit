@@ -1160,12 +1160,17 @@ class TestIsSubDict(unittest.TestCase):
 
     def test_dict(self):
 
-        for case in [
+        for a, b, expected in [
             (1, 1, True),
             (1, 2, False),
             ("x", "x", True),
             ("x", "b", False),
             (None, None, True),
+
+            # value is a `type`
+            ({"a": list}, {"a": 1}, False),
+            ({"a": list}, {}, True),
+            ({}, {"a": list}, False),
 
             ({"a": 1}, {"a": 1}, True),
             ({}, {"a": None}, False),
@@ -1186,9 +1191,21 @@ class TestIsSubDict(unittest.TestCase):
             ({"a": 1, "b": {"c": 3, "d": 4}}, {"a": 1, "b": {"d": 4}}, True),
             ({"a": 1, "b": {"c": 3, "d": 4}}, {"a": 1, "b": 2}, False),
         ]:
-            self.assertEqual(dictutil.contains(case[0], case[1]), case[2])
+            dd(a)
+            dd(b)
+            dd(expected)
+
+            rst = dictutil.contains(a, b)
+            self.assertEqual(expected, rst)
 
     def test_recursive_dict(self):
+
+        # a -> {}
+        # ^    |
+        #  `---'
+        # b -> {} -> {}
+        # ^          |
+        #  `---------'
         a = {}
         a[1] = {}
         a[1][1] = a
@@ -1199,6 +1216,37 @@ class TestIsSubDict(unittest.TestCase):
         b[1][1][1] = b
 
         self.assertEqual(dictutil.contains(a, b), True)
+
+        # a -> {} -> b -> {} -> {}
+        # ^                     |
+        #  `--------------------'
+        a = {}
+        b = {}
+        a[1] = {1:b}
+        b[1] = {1:{1:a}}
+
+        self.assertEqual(dictutil.contains(a, b), True)
+
+        # a -.
+        # ^  |
+        #  `-'
+        # b -.
+        # ^  |
+        #  `-'
+        a = {}
+        b = {}
+        a[1] = a
+        b[1] = b
+        self.assertEqual(dictutil.contains(a, b), True)
+
+        # a
+        # b -.
+        # ^  |
+        #  `-'
+        a = {}
+        b = {}
+        b[1] = b
+        self.assertEqual(dictutil.contains(a, b), False)
 
     def test_recursive_dict_with_list(self):
         a = {'k': [0, 2]}

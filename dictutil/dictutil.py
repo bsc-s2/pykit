@@ -3,7 +3,6 @@
 
 import copy
 import operator
-from collections import defaultdict
 
 
 def depth_iter(mydict, ks=None, maxdepth=10240,
@@ -198,44 +197,47 @@ def make_setter(key_path, value=None, incr=False):
     return _set_dict
 
 
-def _contains(a, b, ref_table):
-    if a is b:
+class NoSuchKey(object):
+    pass
+
+
+_iter_types = (dict, list, tuple)
+
+
+def _contains(a, b, has_compared):
+
+    ida, idb = id(a), id(b)
+
+    # a, b is:
+    #   a pair of nodes already compared,
+    #   a pair of same nodes,
+    #   or a pair of leaves.
+    if (ida, idb) in has_compared or a is b:
         return True
 
-    if (isinstance(a, list) and isinstance(b, list)
-            or (isinstance(a, tuple) and isinstance(b, tuple))):
+    if type(a) != type(b) or not isinstance(a, _iter_types):
+        return False
 
-        if len(a) < len(b):
-            return False
+    # a, b is a pair of iterable type node: list, tuple, or dict
 
-        for i, v in enumerate(b):
-            if not _contains(a[i], v, ref_table):
-                return False
-        else:
-            return True
+    has_compared[(ida, idb)] = True
 
-    if not isinstance(a, dict) or not isinstance(b, dict):
-        return a == b
+    # convert list/tuple and dict to series of value for recursive compare
+    if isinstance(a, dict):
+        ks = sorted(b.keys())
+        ab = [(a.get(k, NoSuchKey), b[k]) for k in ks]
+    else:
+        ab = zip(list(a) + [NoSuchKey] * len(b), b)
 
-    id_a, id_b = id(a), id(b)
-
-    if ref_table[id_a].get(id_b) is not None:
-        return ref_table[id_a][id_b]
-
-    ref_table[id_a][id_b] = True
-
-    for k, v in b.items():
-        if a.get(k) is None:
-            return False
-
-        if not _contains(a[k], v, ref_table):
+    for va, vb in ab:
+        if not _contains(va, vb, has_compared):
             return False
 
     return True
 
 
 def contains(a, b):
-    return _contains(a, b, defaultdict(dict))
+    return _contains(a, b, {})
 
 
 class AttrDict(dict):
