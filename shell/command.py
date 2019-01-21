@@ -107,6 +107,7 @@ def add_param_help(parser, param_msgs):
     params = []
     for param, msg in param_msgs:
         parser.add_argument(param, **msg)
+        param = param.lstrip('-')
         params.append(param)
 
     return params
