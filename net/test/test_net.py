@@ -1,5 +1,6 @@
 import unittest
 
+from pykit import config
 from pykit import net
 from pykit import ututil
 
@@ -380,3 +381,29 @@ class TestNet(unittest.TestCase):
 
         for ipn in cases_not_ip4_and_not_ip4_num:
             self.assertRaises(net.InvalidIP4Number, net.num_to_ip, ipn)
+
+    def test_iner_ip_patterns(self):
+
+        old = config.inner_ip_patterns
+
+        config.inner_ip_patterns = ['172\.18\.2\.((3[2-9])|(4[0-7]))']
+
+        case_inner_ip_true = (
+            '172.18.2.32',
+            '172.18.2.37',
+            '172.18.2.47',
+        )
+
+        case_inner_ip_false = (
+            '172.18.2.31',
+            '172.18.2.48',
+            '172.18.2.49',
+        )
+
+        for inp in case_inner_ip_true:
+            self.assertEqual(True, net.is_inn(inp))
+
+        for inp in case_inner_ip_false:
+            self.assertEqual(False, net.is_inn(inp))
+
+        config.inner_ip_patterns = old

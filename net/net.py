@@ -17,8 +17,6 @@ LOCALHOST = '127.0.0.1'
 
 logger = logging.getLogger(__name__)
 
-inner_ip_patterns = config.inner_ip_patterns
-
 
 class NetworkError(Exception):
     pass
@@ -60,7 +58,7 @@ def ip_class(ip):
     if ip.startswith('127.0.0.'):
         return INN
 
-    for ptn in inner_ip_patterns:
+    for ptn in config.inner_ip_patterns:
 
         if re.match(ptn, ip):
             return INN
