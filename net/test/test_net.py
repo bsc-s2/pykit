@@ -386,7 +386,7 @@ class TestNet(unittest.TestCase):
 
         old = config.inner_ip_patterns
 
-        config.inner_ip_patterns = ['172\.18\.2\.((3[2-9])|(4[0-7]))']
+        config.inner_ip_patterns = ['^172[.]18[.]2[.](3[2-9])$', '^172[.]18[.]2[.](4[0-7])$']
 
         case_inner_ip_true = (
             '172.18.2.32',
