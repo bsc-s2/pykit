@@ -1198,6 +1198,12 @@ class TestIsSubDict(unittest.TestCase):
             rst = dictutil.contains(a, b)
             self.assertEqual(expected, rst)
 
+    def test_intern_string(self):
+
+        a = {'key': '123'}
+        b = {'key': ''.join(['1', '2', '3'])}
+        self.assertTrue(dictutil.contains(a, b))
+
     def test_recursive_dict(self):
 
         # a -> {}
@@ -1222,8 +1228,8 @@ class TestIsSubDict(unittest.TestCase):
         #  `--------------------'
         a = {}
         b = {}
-        a[1] = {1:b}
-        b[1] = {1:{1:a}}
+        a[1] = {1: b}
+        b[1] = {1: {1: a}}
 
         self.assertEqual(dictutil.contains(a, b), True)
 
@@ -1464,7 +1470,6 @@ class TestCombine(unittest.TestCase):
                     self.assertNotEqual(b[k], result[k])
 
 
-
 class TestDictutil(unittest.TestCase):
 
     def test_subdict(self):
@@ -1626,6 +1631,7 @@ class TestDictutil(unittest.TestCase):
                 for k in [x for x in flds if x not in source_dict]:
                     self.assertIs(expected[k], rst[k])
 
+
 class UserDefinedType(object):
 
     def __init__(self, value=None):
@@ -1661,16 +1667,16 @@ class TestFixedKeysDict(unittest.TestCase):
         self.assertRaises(TypeError, StrictFixedKeysDictFoo, {})
 
         # ok
-        foo = StrictFixedKeysDictFoo(foo=1)
+        StrictFixedKeysDictFoo(foo=1)
 
     def test_fixed_keys_dict(self):
 
         cases = (
             (('10.1', 32, {'a': 1}, 'user_value'),  (32, '10.1')),
             ((10.1, '32', {'a': 1}, 'user_value'),  (32, '10.1')),
-            ((10.1, '32', [('a',1)], 'user_value'), (32, '10.1')),
+            ((10.1, '32', [('a', 1)], 'user_value'), (32, '10.1')),
 
-            ((10.1, '32', [('a',1)]), (32, '10.1')),
+            ((10.1, '32', [('a', 1)]), (32, '10.1')),
             ((10.1,), (0, '10.1')),
             ((), (0, '')),
         )
@@ -1706,6 +1712,7 @@ class TestFixedKeysDict(unittest.TestCase):
             'key_2': 32,
         }
         d = ForTestDict(case)
+
         def _set():
             d['key_2'] = 10
             d['key_0'] = 10
@@ -1717,9 +1724,11 @@ class TestFixedKeysDict(unittest.TestCase):
             'key_2': 32,
         }
         d = ForTestDict(case)
+
         def _set():
             d['key_2'] = '32.0'
         self.assertRaises(ValueError, _set)
+
         def _set():
             d['key_3'] = UserDefinedType(10)
         self.assertRaises(ValueError, _set)
@@ -1753,6 +1762,7 @@ class TestFixedKeysDict(unittest.TestCase):
         d = ForTestDict(d)
 
         d.ident_keys = ('no_such_key',)
+
         def _ident():
             return d.ident()
         self.assertRaises(KeyError, _ident)

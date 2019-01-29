@@ -1,6 +1,7 @@
 #!/bin/env python2
 # coding: utf-8
 
+
 class FixedKeysDict(dict):
 
     # {'key', value_constructor}
@@ -30,7 +31,7 @@ class FixedKeysDict(dict):
             raise KeyError('key: {key} is invalid'.format(key=key))
         except (ValueError, TypeError) as e:
             raise ValueError('value: {value} is invalid. {e}'.format(
-                                    value=repr(value), e=repr(e)))
+                value=repr(value), e=repr(e)))
 
         super(FixedKeysDict, self).__setitem__(key, value)
 

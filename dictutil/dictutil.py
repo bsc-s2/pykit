@@ -206,17 +206,19 @@ _iter_types = (dict, list, tuple)
 
 def _contains(a, b, has_compared):
 
+    if type(a) != type(b):
+        return False
+
+    if not isinstance(a, _iter_types):
+        # For primitive types, still use `==` instead of `is` for compare.
+        # Interned string `is` NOT non-interned string!
+        # It is a bug in python 2.7.10 or older
+        return a == b
+
     ida, idb = id(a), id(b)
 
-    # a, b is:
-    #   a pair of nodes already compared,
-    #   a pair of same nodes,
-    #   or a pair of leaves.
-    if (ida, idb) in has_compared or a is b:
+    if (ida, idb) in has_compared:
         return True
-
-    if type(a) != type(b) or not isinstance(a, _iter_types):
-        return False
 
     # a, b is a pair of iterable type node: list, tuple, or dict
 
