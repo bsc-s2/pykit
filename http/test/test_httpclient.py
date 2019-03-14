@@ -145,6 +145,7 @@ class TestHttpClient(unittest.TestCase):
             ('/get_30m_range', 50 * MB, 'opq' * 10 * MB, (2 * MB, 25 * MB), False),
             ('/get_30m_range', None, 'opq' * 10 * MB, (2 * MB, 25 * MB), False),
         )
+
         h = http.Client(HOST, PORT)
         for uri, each_read_size, expected_res, content_range, chunked in cases:
             h.request(uri)
@@ -392,6 +393,36 @@ class TestHttpClient(unittest.TestCase):
 
             self.assertEqual(200, cli.status)
             self.assertEqual(expected_res, body)
+
+    def test_set_timeout(self):
+
+        uri, body, headers = ('/put_30m', 'cde' * 10 * MB, {'Content-Length': 30 * MB})
+        kwargs = {'method': 'PUT', 'headers': headers}
+
+        h = http.Client(HOST, PORT)
+
+        fail_timeout = 0.000001
+        succ_timeout = 2
+
+        h.set_timeout(fail_timeout)
+        self.assertRaises(socket.timeout, h.send_request, uri, **kwargs)
+
+        h.set_timeout(succ_timeout)
+        h.send_request(uri, **kwargs)
+
+        h.set_timeout(fail_timeout)
+        self.assertRaises(socket.timeout, h.send_body, body)
+
+        h.set_timeout(succ_timeout)
+        h.send_body(body)
+
+        h.set_timeout(fail_timeout)
+        self.assertRaises(socket.timeout, h.read_response)
+
+        h.set_timeout(succ_timeout)
+        h.send_request(uri, **kwargs)
+        h.send_body(body)
+        h.read_response()
 
     def __init__(self, *args, **kwargs):
 

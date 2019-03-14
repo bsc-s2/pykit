@@ -418,6 +418,13 @@ class Client(object):
 
         return ''.join(buf)
 
+    def set_timeout(self, timeout):
+
+        self.timeout = timeout
+
+        if self.sock is not None:
+            self.sock.settimeout(timeout)
+
 
 def _recv_loop(sock, timeout):
 
