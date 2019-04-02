@@ -720,8 +720,8 @@ It is similar to standard zookeeper mechanism except:
     If `config.zk_lock_dir` is `None` it uses a predefined const: `lock/`.
 
 -   `identifier`:
-    specifies a lock identifier in str,
-    which is used to check if a process has been holding a lock.
+    specifies a lock identifier in str or dict with `id` and `val`,
+    which `id` is used to check if a process has been holding a lock.
 
     **Two different processes must specifies different identifier**.
 

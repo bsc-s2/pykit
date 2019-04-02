@@ -38,6 +38,7 @@ from .zklock import (
     LockTimeout,
 
     ZKLock,
+    make_identifier,
 
 )
 
@@ -77,4 +78,5 @@ __all__ = [
     "ZKLock",
 
     "CachedReader",
+    "make_identifier",
 ]

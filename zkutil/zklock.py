@@ -5,10 +5,13 @@ import logging
 import threading
 import time
 
+from pykit import utfjson
+
 from kazoo.client import KazooClient
 from kazoo.exceptions import LockTimeout
 from kazoo.exceptions import NodeExistsError
 from kazoo.exceptions import NoNodeError
+from .exceptions import ZKUtilError
 
 from . import zkutil
 from .zkconf import ZKConf
@@ -56,6 +59,11 @@ class ZKLock(object):
 
         if identifier is None:
             identifier = zkutil.lock_id(zkconf.node_id())
+
+        if not isinstance(identifier, dict):
+            identifier = make_identifier(identifier, None)
+
+        assert sorted(['id', 'val']) == sorted(list(identifier.keys()))
 
         # a copy of hosts for debugging and tracking
         self._hosts = ','.join(['{0}:{1}'.format(*x)
@@ -162,11 +170,13 @@ class ZKLock(object):
 
         try:
             holder, zstat = self.zkclient.get(self.lock_path)
+            holder = utfjson.load(holder)
+
             self.lock_holder = (holder, zstat.version)
 
             logger.debug('got lock holder: {s}'.format(s=str(self)))
 
-            if holder == self.identifier:
+            if self.cmp_identifier(holder, self.identifier):
 
                 self.zkclient.remove_listener(self.on_connection_change)
 
@@ -218,9 +228,10 @@ class ZKLock(object):
     def is_locked(self):
 
         l = self.lock_holder
+        if l is None:
+            return False
 
-        return (l is not None
-                and l[0] == self.identifier)
+        return self.cmp_identifier(l[0], self.identifier)
 
     def _create(self):
 
@@ -228,7 +239,7 @@ class ZKLock(object):
 
         try:
             self.zkclient.create(self.lock_path,
-                                 self.identifier,
+                                 utfjson.dump(self.identifier),
                                  ephemeral=self.ephemeral,
                                  acl=self.zkconf.kazoo_digest_acl())
 
@@ -245,6 +256,27 @@ class ZKLock(object):
 
         logger.info('CREATE OK: {s}'.format(s=str(self)))
 
+    def set_lock_val(self, val, version=-1):
+        locked, holder, ver = self.try_acquire()
+        if not locked:
+            raise ZKUtilError("set non-locked: {k}".format(k=self.lock_name))
+
+        self.identifier['val'] = val
+
+        value = utfjson.dump(self.identifier)
+        st = self.zkclient.set(self.lock_path, value, version=version)
+
+        return st.version
+
+    def get_lock_val(self):
+        holder, zstat = self.zkclient.get(self.lock_path)
+        holder = utfjson.load(holder)
+
+        return holder['val'], zstat.version
+
+    def cmp_identifier(self, ia, ib):
+        return ia['id'] == ib['id']
+
     def _acquire_by_get(self):
 
         logger.debug('to get: {s}'.format(s=str(self)))
@@ -253,11 +285,13 @@ class ZKLock(object):
             with self.mutex:
 
                 holder, zstat = self.zkclient.get(self.lock_path, watch=self.on_node_change)
+                holder = utfjson.load(holder)
+
                 self.lock_holder = (holder, zstat.version)
 
                 logger.debug('got lock holder: {s}'.format(s=str(self)))
 
-                if holder == self.identifier:
+                if self.cmp_identifier(holder, self.identifier):
                     logger.info('ACQUIRED: {s}'.format(s=str(self)))
                     return
 
@@ -273,7 +307,7 @@ class ZKLock(object):
 
     def __str__(self):
         return '<id={id} {l}:[{holder}] on {h}>'.format(
-            id=self.identifier,
+            id=self.identifier['id'],
             l=self.lock_path,
             holder=(self.lock_holder or ''),
             h=str(self._hosts),
@@ -296,3 +330,7 @@ def make_owning_zkclient(hosts, auth):
         zkclient.add_auth(scheme, name + ':' + passw)
 
     return zkclient
+
+
+def make_identifier(_id, val):
+    return {'id': _id, 'val': val}

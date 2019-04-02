@@ -10,6 +10,7 @@ from pykit import threadutil
 from pykit import utdocker
 from pykit import ututil
 from pykit import zkutil
+from pykit import utfjson
 
 dd = ututil.dd
 
@@ -187,8 +188,13 @@ class TestZKLock(unittest.TestCase):
         b = zkutil.ZKLock('foo_name', on_lost=lambda: True)
 
         with a:
+            self.assertIsInstance(a.identifier, dict)
+            self.assertIsNone(a.identifier['val'], None)
+
             self.assertEqual((a.identifier, 0), a.lock_holder)
             val, zstate = self.zk.get(a.lock_path)
+            val = utfjson.load(val)
+
             self.assertEqual((val, zstate.version), a.lock_holder)
 
             locked, holder, ver = b.try_acquire()
@@ -215,9 +221,12 @@ class TestZKLock(unittest.TestCase):
         holder, ver = it.next()
         self.assertEqual((a.identifier, 0), (holder, ver))
 
-        self.zk.set(a.lock_path, 'xx')
+        a.identifier['val'] = 'xx'
+        value = utfjson.dump(a.identifier)
+        self.zk.set(a.lock_path, value)
+
         holder, ver = it.next()
-        self.assertEqual(('xx', 1), (holder, ver), 'watched node change')
+        self.assertEqual(('xx', 1), (holder['val'], ver), 'watched node change')
 
         a.release()
         try:
@@ -227,6 +236,27 @@ class TestZKLock(unittest.TestCase):
             pass
 
         self.assertTrue(b.is_locked())
+
+    def test_set_locked_key(self):
+        l1 = zkutil.ZKLock('foo_name', on_lost=lambda: True)
+
+        with l1:
+            val, zstate = self.zk.get(l1.lock_path)
+            val = utfjson.load(val)
+            self.assertEqual(val, l1.identifier)
+            self.assertEqual((val, zstate.version), l1.lock_holder)
+
+            self.assertIsInstance(val, dict)
+            self.assertIsNone(val['val'], None)
+
+            l1.set_lock_val("foo_val", zstate.version)
+
+            val, zstate = self.zk.get(l1.lock_path)
+            val = utfjson.load(val)
+            self.assertEqual(val, l1.identifier)
+
+            self.assertIsInstance(val, dict)
+            self.assertEqual(val['val'], "foo_val")
 
     def test_try_lock(self):
 
@@ -426,6 +456,7 @@ class TestZKLock(unittest.TestCase):
         with l:
             # should have created lock node
             data, zstate = self.zk.get(l.lock_path)
+            data = utfjson.load(data)['id']
             dd(data)
 
             self.assertEqual('abc', data.split('-')[0])
