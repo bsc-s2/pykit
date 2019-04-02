@@ -634,6 +634,8 @@ Even if a tx does not need to write to this record.
 `lock_get()` on a same key more than one time is OK.
 But it always returns a copy of the first returned `TXRecord`.
 
+When a tx is restored, `lock_get()` will return the value of the previous set, if `latest` is set true
+
 **arguments**:
 
 -   `key`:
@@ -687,7 +689,9 @@ Nothing
 **syntax**:
 `ZKTransaction.set(rec)`
 
-Tell the tx instance the `rec` should be update when committing.
+Tell the tx instance the `rec` should be update when committing and persist it to zk `lock/<rec.k>` node.
+
+`rec` must be returned by `lock_get()`, otherwise `exceptions.NotLocked`
 
 A record that the tx not `set()` it will not be written when committing.
 

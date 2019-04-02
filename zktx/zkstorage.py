@@ -7,12 +7,14 @@ from kazoo.exceptions import BadVersionError
 
 from pykit import rangeset
 from pykit import zkutil
-from pykit import utfjson
 
 from .status import STATUS
 from .storage import Storage
 from .zkaccessor import ZKKeyValue
 from .zkaccessor import ZKValue
+
+from .exceptions import NotLocked
+from kazoo.exceptions import NoNodeError
 
 logger = logging.getLogger(__name__)
 
@@ -43,13 +45,31 @@ class ZKStorage(Storage):
                                 nonode_callback=state_nonode_cb)
 
     def acquire_key_loop(self, txid, key, timeout):
-
         logger.info('watch acquire: {txid} {key}'.format(txid=txid, key=key))
 
         keylock = self._make_key_lock(txid, key)
 
         for holder, ver in keylock.acquire_loop(timeout=timeout):
-            yield int(holder), ver
+            # int(txid)
+            holder['id'] = int(holder['id'])
+            yield holder, ver
+
+        # locked
+        holder, ver = keylock.lock_holder
+        holder['id'] = int(holder['id'])
+
+        yield holder, ver
+
+    def set_lock_key_val(self, txid, key, val, version=-1):
+        logger.info('set: {txid} {key} {val} {ver}'.format(
+            txid=txid, key=key, val=val, ver=version))
+
+        keylock = self._make_key_lock(txid, key)
+
+        try:
+            return keylock.set_lock_val(val, version)
+        except NoNodeError:
+            raise NotLocked("Not allowed to set non-locked: {k}".format(k=key))
 
     def try_release_key(self, txid, key):
 
@@ -57,20 +77,21 @@ class ZKStorage(Storage):
 
         keylock = self._make_key_lock(txid, key)
 
-        locked, txid, ver = keylock.try_acquire()
+        locked, holder, ver = keylock.try_acquire()
         if locked:
             keylock.release()
         else:
             keylock.close()
 
-        return locked, utfjson.load(txid), ver
+        return locked, int(holder['id']), ver
 
     def _make_key_lock(self, txid, key):
+        ident = zkutil.make_identifier(txid, None)
         keylock = zkutil.ZKLock(key,
                                 zkclient=self.zke,
                                 zkconf=self.zke._zkconf,
                                 ephemeral=False,
-                                identifier=utfjson.dump(txid))
+                                identifier=ident)
 
         return keylock
 

@@ -58,14 +58,18 @@ class TestZKStorage(base.ZKTestBase):
     def test_lock(self):
 
         for holder, ver in self.zs.acquire_key_loop(2, 'foo', 10):
-            self.fail("should not yield other lock holder")
+            exp_holder = zkutil.make_identifier(2, None)
+            self.assertDictEqual(
+                exp_holder, holder, "should not yield other lock holder")
 
         for holder, ver in self.zs.acquire_key_loop(2, 'foo', 10):
-            self.fail("lock twice should be allowed.")
+            exp_holder = zkutil.make_identifier(2, None)
+            self.assertDictEqual(
+                exp_holder, holder, "lock twice should be allowed.")
 
         try:
             for holder, ver in self.zs.acquire_key_loop(3, 'foo', 0.1):
-                self.assertEqual(2, holder)
+                self.assertEqual(zkutil.make_identifier(2, None), holder)
             self.fail('expect lock timeout')
         except zkutil.LockTimeout:
             pass
@@ -81,3 +85,15 @@ class TestZKStorage(base.ZKTestBase):
         # duplicated release
         released, txid, ver = self.zs.try_release_key(2, 'foo')
         self.assertEqual((True, 2), (released, txid))
+
+    def test_set_lock_key_val(self):
+        holder, ver = None, None
+        for holder, ver in self.zs.acquire_key_loop(4, 'foox', 10):
+            pass
+        self.assertDictEqual(holder, zkutil.make_identifier(4, None))
+
+        self.zs.set_lock_key_val(4, 'foox', 'xxx_val')
+
+        for holder, ver in self.zs.acquire_key_loop(4, 'foox', 10):
+            pass
+        self.assertDictEqual(holder, zkutil.make_identifier(4, 'xxx_val'))

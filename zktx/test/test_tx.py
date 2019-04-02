@@ -9,6 +9,7 @@ from pykit import threadutil
 from pykit import utfjson
 from pykit import ututil
 from pykit import zktx
+from pykit import zkutil
 from pykit.zktx import COMMITTED
 from pykit.zktx import PURGED
 from pykit.zktx import ConnectionLoss
@@ -713,6 +714,52 @@ class TestTXState(TXBase):
         val, ver = t.zkstorage.state.get(txid)
         self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
 
+    def test_exception_and_recover(self):
+
+        # tx raised by other exception is recoverable
+
+        t = ZKTransaction(zkhost)
+        txid = None
+
+        try:
+            with ZKTransaction(zkhost) as t1:
+
+                txid = t1.txid
+
+                f1 = t1.lock_get('foox')
+                f1.v = "foox_val"
+                t1.set(f1)
+
+                t1.set_state('bar')
+
+                val, ver = t.zkstorage.state.get(txid)
+                self.assertEqual({'got_keys': ["foox"], 'data': 'bar'}, val)
+
+                raise ValueError('foo')
+
+        except ValueError:
+            pass
+
+        val, ver = t.zkstorage.state.get(txid)
+        self.assertEqual({'got_keys': ['foox'], 'data': 'bar'}, val)
+
+        ident = zkutil.make_identifier(txid, None)
+        keylock = zkutil.ZKLock('foox',
+                                zkclient=t.zke,
+                                zkconf=t.zke._zkconf,
+                                ephemeral=False,
+                                identifier=ident)
+
+        val, ver = keylock.get_lock_val()
+        self.assertEqual(val['v'], "foox_val")
+
+        with ZKTransaction(zkhost, txid=txid, timeout=1) as t1:
+            f1 = t1.lock_get('foox')
+            self.assertEqual(f1.v, "foox_val")
+
+            val = t1.get_state()
+            self.assertEqual(val, 'bar')
+
     def test_timeout(self):
 
         # timeout on waiting is recoverable
@@ -809,12 +856,26 @@ class TestTXState(TXBase):
         with ZKTransaction(zkhost, timeout=0.5) as t1:
 
             txid = t1.txid
-            t1.lock_get('foo')
+            f1 = t1.lock_get('foo')
+            f2 = t1.lock_get('foo2')
+
+            f1.v = "foo_val"
+            f2.v = "foo2_val"
+
+            t1.set(f1)
+            t1.set(f2)
+
             t1.set_state('bar')
 
         with ZKTransaction(zkhost, txid=txid, timeout=0.5) as t2:
             st = t2.get_state()
             self.assertEqual('bar', st)
+
+            f1 = t2.lock_get('foo')
+            f2 = t2.lock_get('foo2')
+
+            self.assertEqual(f1.v, "foo_val")
+            self.assertEqual(f2.v, "foo2_val")
 
             try:
                 with ZKTransaction(zkhost, txid=txid, timeout=0.5) as t3:
