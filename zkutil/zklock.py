@@ -15,6 +15,7 @@ from .exceptions import ZKUtilError
 
 from . import zkutil
 from .zkconf import ZKConf
+from .zkconf import KazooClientExt
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +71,9 @@ class ZKLock(object):
                                 for x in zkclient.hosts])
 
         self.zkclient = zkclient
+        if isinstance(self.zkclient, KazooClientExt):
+            self.zkclient = self.zkclient._zk
+
         self.on_lost = on_lost
 
         self.lock_name = lock_name
