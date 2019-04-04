@@ -62,6 +62,7 @@ from .region import (
     Region,
 
     BlockNotInRegion,
+    BlockAreadyInRegion,
     LevelOutOfBound,
 )
 
@@ -105,5 +106,6 @@ __all__ = [
     "Region",
 
     "BlockNotInRegion",
+    "BlockAreadyInRegion",
     "LevelOutOfBound",
 ]

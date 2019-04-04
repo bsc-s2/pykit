@@ -1,6 +1,8 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
+import copy
+
 from collections import defaultdict
 
 from pykit.dictutil import FixedKeysDict
@@ -95,18 +97,37 @@ class BlockGroup(FixedKeysDict):
         if block is not None:
             del self['blocks'][str(block_index)]
 
-    def add_block(self, new_block, replace=False):
+    def mark_delete_block_byid(self, block_id):
+        block = self.get_block_byid(block_id)
+        if block is not None:
+            block['is_del'] = 1
 
-        desc = BlockDesc(new_block)
-        bi = desc['block_id']
+    def delete_block_byid(self, block_id):
+        block = self.get_block_byid(block_id)
+        if block is not None:
+            del self['blocks'][block_id.block_index]
 
-        bidx = str(bi.block_index)
+    def has(self, block):
+        bid = block['block_id']
+        bidx = bid.block_index
+
+        existent = self['blocks'].get(bidx)
+        return existent == block
+
+    def add_block(self, new_block, replace=False, allow_exist=False):
+
+        if self.has(new_block) and allow_exist:
+            return new_block
+
+        bid = new_block['block_id']
+        bidx = bid.block_index
 
         prev = self['blocks'].get(bidx)
         if not replace and prev is not None:
-            raise BlockExists('there is already a block at {bi}'.format(bi=bi))
+            raise BlockExists(
+                'there is already a block at {bid}'.format(bid=bid))
 
-        self['blocks'][bidx] = desc
+        self['blocks'][bidx] = new_block
 
         if prev is None:
             return None
@@ -276,12 +297,22 @@ class BlockGroup(FixedKeysDict):
                 ' not found in block_group:{block_group_id}'.format(bid=block_id, **self))
 
         if block_id.type.endswith('p'):
+            blk = self.get_block(block_id.block_index)
             return True
 
         r_indexes = self.get_replica_indexes(block_id.block_index)
         r_blks = [self.get_block(x) for x in r_indexes]
 
         return None in r_blks
+
+    def get_blocks(self):
+        blks = []
+
+        for idx in sorted(self['blocks'].keys()):
+            blk = self['blocks'][idx]
+            blks.append(blk)
+
+        return blks
 
     def get_ec_blocks(self, idc_idx):
         nr_data, nr_parity = self['config']['in_idc']
@@ -336,3 +367,25 @@ class BlockGroup(FixedKeysDict):
             return None
 
         return blk
+
+    def get_idc_blocks(self, idc_idx, is_del=None):
+        blks = []
+
+        for idx in sorted(self['blocks'].keys()):
+            blk = self['blocks'][idx]
+
+            idx = BlockIndex(idx)
+
+            if idx.i != idc_idx:
+                continue
+
+            if is_del is not None and blk['is_del'] != is_del:
+                continue
+
+            blks.append(blk)
+
+        return blks
+
+    def get_idc_block_ids(self, idc_idx, is_del=None):
+        blks = self.get_idc_blocks(idc_idx, is_del=is_del)
+        return [BlockID(b['block_id']) for b in blks]

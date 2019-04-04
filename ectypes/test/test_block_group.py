@@ -503,3 +503,76 @@ class TestBlockGroup(unittest.TestCase):
             act_blks.append(bg.get_block_byid(bid))
 
         self.assertListEqual(blks, act_blks)
+
+    def test_delete_block_byid(self):
+
+        blk_idxes = ['0000', '0001', '0002', '0003', '0008', '0012']
+
+        bg = self.make_test_block_group(blk_idxes)
+
+        blks = bg.indexes_to_blocks(blk_idxes)
+        bids = [blk['block_id'] for blk in blks]
+
+        bg.delete_block_byid(bids[1])
+
+        blks.pop(1)
+
+        act_blks = bg.indexes_to_blocks(blk_idxes)
+        act_blks = [blk for blk in act_blks if blk is not None]
+
+        self.assertListEqual(blks, act_blks)
+
+    def test_add_block(self):
+
+        blk_idxes = ['0000', '0001', '0002', '0003', '0008', '0012']
+
+        bg = self.make_test_block_group(blk_idxes)
+        blks = bg.indexes_to_blocks(blk_idxes)
+
+        args = [blks[1], False, False]
+        self.assertRaises(BlockExists, bg.add_block, *args)
+        act_blks = bg.indexes_to_blocks(blk_idxes)
+        self.assertListEqual(blks, act_blks)
+
+        self.assertDictEqual(blks[1], bg.add_block(blks[1], allow_exist=True))
+        act_blks = bg.indexes_to_blocks(blk_idxes)
+        self.assertListEqual(blks, act_blks)
+
+    def test_get_idc_blocks(self):
+        idc0 = ['0000', '0001', '0002']
+        idc1 = ['0103', '0108', '0112']
+
+        blk_idxes = idc0 + idc1
+
+        bg = self.make_test_block_group(blk_idxes)
+
+        idc0_blks = bg.indexes_to_blocks(idc0)
+        act_idc0_blks = bg.get_idc_blocks(0)
+        self.assertListEqual(idc0_blks, act_idc0_blks)
+
+        idc1_blks = bg.indexes_to_blocks(idc1)
+        act_idc1_blks = bg.get_idc_blocks(1)
+        self.assertListEqual(idc1_blks, act_idc1_blks)
+
+        for blk in idc1:
+            bg.mark_delete_block(blk)
+        act_idc1_blks = bg.get_idc_blocks(1, is_del=False)
+        self.assertListEqual([], act_idc1_blks)
+
+        act_idc1_blks = bg.get_idc_blocks(1, is_del=True)
+        self.assertListEqual(idc1_blks, act_idc1_blks)
+
+        act_idc2_blks = bg.get_idc_blocks(2)
+        self.assertListEqual([], act_idc2_blks)
+
+    def test_get_get_blocks(self):
+        idc0 = ['0000', '0001', '0002']
+        idc1 = ['0103', '0108', '0112']
+
+        blk_idxes = idc0 + idc1
+
+        bg = self.make_test_block_group(blk_idxes)
+
+        blks = bg.indexes_to_blocks(blk_idxes)
+        act_blks = bg.get_blocks()
+        self.assertListEqual(blks, act_blks)

@@ -8,6 +8,7 @@ from pykit import ututil
 from pykit.ectypes import BlockDesc
 from pykit.ectypes import BlockID
 from pykit.ectypes import BlockNotInRegion
+from pykit.ectypes import BlockAreadyInRegion
 from pykit.ectypes import LevelOutOfBound
 from pykit.ectypes import Region
 
@@ -325,6 +326,42 @@ class TestRegion(unittest.TestCase):
                 ]},
                 LevelOutOfBound,
             ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                ]},
+                (['b', 'c'], BlockDesc(size=2), 2, True),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                ]},
+                None
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                ]},
+                (['b', 'c'], BlockDesc(size=2), 2, False),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                ]},
+                BlockAreadyInRegion,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                ]},
+                (None, BlockDesc(size=2), 2, False),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                ]},
+                BlockAreadyInRegion,
+            ),
         )
 
         for case, args, excepted, err in region_cases:
@@ -335,6 +372,60 @@ class TestRegion(unittest.TestCase):
                 continue
 
             region.add_block(*args)
+
+            self.assertEqual(excepted, region)
+
+    def test_delete_block(self):
+        region_cases = (
+            (
+                {},
+                (BlockDesc(size=2),),
+                {},
+                BlockNotInRegion,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)], [
+                        'b', 'c', BlockDesc(size=2)]],
+                ]},
+                (BlockDesc(size=3),),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)], [
+                        'b', 'c', BlockDesc(size=2)]],
+                ]},
+                BlockNotInRegion,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                ]},
+                (BlockDesc(size=2),),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
+                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                ]},
+                None,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)]],
+                ]},
+                (BlockDesc(size=1),),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': []},
+                None,
+            ),
+        )
+
+        for case, args, excepted, err in region_cases:
+            region = Region(case)
+
+            if err is not None:
+                self.assertRaises(err, region.delete_block, *args)
+                continue
+
+            region.delete_block(*args)
 
             self.assertEqual(excepted, region)
 

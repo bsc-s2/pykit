@@ -16,6 +16,10 @@ class BlockNotInRegion(Exception):
     pass
 
 
+class BlockAreadyInRegion(Exception):
+    pass
+
+
 class LevelOutOfBound(Exception):
     pass
 
@@ -147,7 +151,34 @@ class Region(FixedKeysDict):
 
         raise BlockNotInRegion('block_id: %s' % str(block_id))
 
-    def add_block(self, active_range, block, level=None):
+    def delete_block(self, block, active_range=None):
+        region_levels = self['levels']
+
+        for level, level_blocks in enumerate(region_levels):
+            for blk in level_blocks:
+
+                if active_range is not None and active_range != blk[:2]:
+                    continue
+
+                if blk[2] == block:
+                    level_blocks.remove(blk)
+                    break
+            else:
+                continue
+
+            if len(level_blocks) == 0:
+                region_levels.pop(level)
+
+            return
+
+        raise BlockNotInRegion('block: {bi}'.format(bi=block))
+
+    def add_block(self, active_range, block, level=None, allow_exist=False):
+
+        if self.has(block):
+            if not allow_exist:
+                raise BlockAreadyInRegion('block {bi}'.format(bi=block))
+            return
 
         max_level = len(self['levels']) - 1
 
@@ -187,3 +218,15 @@ class Region(FixedKeysDict):
             rst.append(block_desc['block_id'])
 
         return rst
+
+    def has(self, block, active_range=None):
+        for blocks in self['levels']:
+            for blk in blocks:
+
+                if active_range is not None and active_range != blk[:2]:
+                    continue
+
+                if blk[2] == block:
+                    return True
+
+        return False
