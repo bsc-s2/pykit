@@ -1,8 +1,6 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
-import copy
-
 from collections import defaultdict
 
 from pykit.dictutil import FixedKeysDict
@@ -38,13 +36,23 @@ def _idcs(lst):
     return list(lst)
 
 
+def _blocks(blocks=None):
+    if blocks is None:
+        return {}
+
+    for idx, blk in blocks.items():
+        blocks[idx] = BlockDesc(blk)
+
+    return blocks
+
+
 class BlockGroup(FixedKeysDict):
 
     keys_default = dict(
         block_group_id=BlockGroupID,
         config=ReplicationConfig,
         idcs=_idcs,
-        blocks=dict,
+        blocks=_blocks,
     )
 
     ident_keys = ('block_group_id',)
