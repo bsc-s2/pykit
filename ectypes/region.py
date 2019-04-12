@@ -151,10 +151,14 @@ class Region(FixedKeysDict):
 
         raise BlockNotInRegion('block_id: %s' % str(block_id))
 
-    def delete_block(self, block, active_range=None):
+    def delete_block(self, block, active_range=None, level=None, move=True):
         region_levels = self['levels']
 
-        for level, level_blocks in enumerate(region_levels):
+        for lvl, level_blocks in enumerate(region_levels):
+
+            if level is not None and level != lvl:
+                continue
+
             for blk in level_blocks:
 
                 if active_range is not None and active_range != blk[:2]:
@@ -166,8 +170,8 @@ class Region(FixedKeysDict):
             else:
                 continue
 
-            if len(level_blocks) == 0:
-                region_levels.pop(level)
+            if move and len(level_blocks) == 0:
+                region_levels.pop(lvl)
 
             return
 

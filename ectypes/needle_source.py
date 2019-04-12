@@ -136,7 +136,7 @@ class NeedleSource(NeedleIdElt):
         if another is None:
             return True
         elif isinstance(another, str):
-            return self.ident() < another
+            return ''.join(self.ident()) < another
         else:
             return self.ident() < another.ident()
 

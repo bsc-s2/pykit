@@ -410,6 +410,61 @@ class TestRegion(unittest.TestCase):
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                ]},
+                (BlockDesc(size=2), ['b', 'c'], 1, True),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
+                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                ]},
+                None,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                ]},
+                (BlockDesc(size=2), ['b', 'd'], 1, True),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                ]},
+                BlockNotInRegion,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                ]},
+                (BlockDesc(size=2), ['b', 'c'], 2, True),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                ]},
+                BlockNotInRegion,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
+                    [['b', 'c', BlockDesc(size=2)]],
+                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                ]},
+                (BlockDesc(size=2), ['b', 'c'], 1, False),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
+                    [],
+                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                ]},
+                None,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
                     [['a', 'b', BlockDesc(size=1)]],
                 ]},
                 (BlockDesc(size=1),),
