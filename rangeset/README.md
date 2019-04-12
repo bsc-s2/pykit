@@ -10,6 +10,7 @@
   - [rangeset.IntIncRange](#rangesetintincrange)
   - [rangeset.IntIncRangeSet](#rangesetintincrangeset)
   - [rangeset.Range](#rangesetrange)
+    - [Range `&`](#range-&)
     - [Range.cmp](#rangecmp)
     - [Range.has(val)](#rangehasval)
     - [Range.is_adjacent](#rangeis_adjacent)
@@ -98,6 +99,23 @@ E.g. a range `[1, 3]` has 2 elements `1` and `2`, but `3` is not in this range.
 
 **return**:
 a `rangeset.Range` instance.
+
+
+### Range `&`
+
+Overriding operator `&`.
+`a & b` is the same as `a.intersect(b)`.
+
+**syntax**:
+`Range(1, 3) & Range(2, 4) # Range(2, 3)`.
+
+**syntax**:
+`Range(1, 3) & [2, 4] # Range(2, 3)`.
+
+**syntax**:
+`[1, 3] & Range(2, 4) # Range(2, 3)`.
+
+
 
 ### Range.cmp
 

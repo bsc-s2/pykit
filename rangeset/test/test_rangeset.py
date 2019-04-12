@@ -191,12 +191,28 @@ class TestRange(unittest.TestCase):
             self.assertEqual(expected, a.intersect(rangeset.Range(*b)))
             self.assertEqual(expected, a.intersect(rangeset.ValueRange(*(b+['bar']))))
 
+            # __and__
+            self.assertEqual(expected, a & b)
+            self.assertEqual(expected, a & (b+['bar']))
+
+            # __rand__
+            self.assertEqual(expected, b & a)
+            self.assertEqual(expected, (b+['bar']) & a)
+
             a = rangeset.ValueRange(*(a+['ahh']))
             if expected is not None:
                 expected = expected + ['ahh']
 
             self.assertEqual(expected, a.intersect(rangeset.Range(*b)))
             self.assertEqual(expected, a.intersect(rangeset.ValueRange(*(b+['bar']))))
+
+            # __and__
+            self.assertEqual(expected, a & b)
+            self.assertEqual(expected, a & (b+['bar']))
+
+            # __rand__
+            self.assertEqual(expected, b & a)
+            self.assertEqual(expected, (b+['bar']) & a)
 
     def test_length(self):
         inf = float('inf')

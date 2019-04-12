@@ -159,6 +159,11 @@ class ValueRange(list):
     def set(self, v):
         self[2] = v
 
+    def __and__(self, b):
+        return self.intersect(b)
+
+    def __rand__(self, b):
+        return self.intersect(b)
 
 class Range(ValueRange):
 
