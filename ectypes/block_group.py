@@ -1,6 +1,8 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
+import re
+
 from collections import defaultdict
 
 from pykit.dictutil import FixedKeysDict
@@ -100,20 +102,25 @@ class BlockGroup(FixedKeysDict):
         block = self.get_block(block_index, raise_error=True)
         block['is_del'] = 1
 
+        return block
+
     def delete_block(self, block_index):
-        block = self.get_block(block_index)
-        if block is not None:
-            del self['blocks'][str(block_index)]
+        block = self.get_block(block_index, raise_error=True)
+        del self['blocks'][str(block_index)]
+
+        return block
 
     def mark_delete_block_byid(self, block_id):
-        block = self.get_block_byid(block_id)
-        if block is not None:
-            block['is_del'] = 1
+        block = self.get_block_byid(block_id, raise_error=True)
+        block['is_del'] = 1
+
+        return block
 
     def delete_block_byid(self, block_id):
-        block = self.get_block_byid(block_id)
-        if block is not None:
-            del self['blocks'][block_id.block_index]
+        block = self.get_block_byid(block_id, raise_error=True)
+        del self['blocks'][block_id.block_index]
+
+        return block
 
     def has(self, block):
         bid = block['block_id']
@@ -354,25 +361,44 @@ class BlockGroup(FixedKeysDict):
 
         return bids
 
-    def get_replica_blocks(self, block_id, include_me=True):
+    def get_replica_blocks(self, block_id, include_me=True, raise_error=False):
         block_id = BlockID(block_id)
-        r_indexes = self.get_replica_indexes(block_id.block_index, include_me)
+        r_indexes = self.get_replica_indexes(block_id.block_index, True)
+
+        is_exist = False
 
         blks = []
         for idx in r_indexes:
             blk = self.get_block(idx)
 
-            if blk is not None:
-                blks.append(blk)
+            if blk is None:
+                continue
+
+            if blk['block_id'] == block_id:
+                is_exist = True
+
+                if not include_me:
+                    continue
+
+            blks.append(blk)
+
+        if not is_exist:
+            if raise_error:
+                raise BlockNotFoundError(self['block_group_id'], block_id)
+            else:
+                return None
 
         return blks
 
-    def get_block_byid(self, block_id):
+    def get_block_byid(self, block_id, raise_error=False):
         block_id = BlockID(block_id)
 
-        blk = self.get_block(block_id.block_index)
+        blk = self.get_block(block_id.block_index, raise_error=False)
         if blk is None or blk['block_id'] != block_id:
-            return None
+            if raise_error:
+                raise BlockNotFoundError(self['block_group_id'], block_id)
+            else:
+                return None
 
         return blk
 
@@ -397,3 +423,12 @@ class BlockGroup(FixedKeysDict):
     def get_idc_block_ids(self, idc_idx, is_del=None):
         blks = self.get_idc_blocks(idc_idx, is_del=is_del)
         return [BlockID(b['block_id']) for b in blks]
+
+    def is_data(self, block_id):
+        return block_id.type in ('d0', 'x0')
+
+    def is_replica(self, block_id):
+        return re.match(r'd[1-9]', block_id.type) is not None
+
+    def is_parity(self, block_id):
+        return block_id.type in ('dp', 'xp')

@@ -149,11 +149,26 @@ class TestBlockGroup(unittest.TestCase):
         g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
 
         g.add_block(self.foo_block)
-        g.mark_delete_block('0000')
-        block = g.get_block('0000')
+        del_blk = g.mark_delete_block('0000')
+        self.assertDictEqual(del_blk, g.get_block('0000'))
 
-        self.assertEqual(1, block['is_del'])
+        self.assertEqual(1, del_blk['is_del'])
         self.assertRaises(BlockNotFoundError, g.mark_delete_block, '9999')
+
+    def test_mark_delete_block_byid(self):
+        g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
+
+        g.add_block(self.foo_block)
+        del_blk = g.mark_delete_block_byid(self.foo_block['block_id'])
+        self.assertDictEqual(del_blk, g.get_block_byid(self.foo_block['block_id']))
+
+        self.assertEqual(1, del_blk['is_del'])
+
+        fake_bid = BlockID(
+            'd0', 'g000640000000125', '0000',
+            DriveID('idc000' 'c62d8736c7280002'), 1)
+
+        self.assertRaises(BlockNotFoundError, g.mark_delete_block_byid, fake_bid)
 
     def test_delete_block(self):
 
@@ -163,11 +178,11 @@ class TestBlockGroup(unittest.TestCase):
         g.add_block(self.foo_block)
         self.assertIsNotNone(g.get_block('0000'))
 
-        g.delete_block('0000')
+        del_blk = g.delete_block('0000')
         self.assertIsNone(g.get_block('0000'))
+        self.assertDictEqual(self.foo_block, del_blk)
 
-        g.delete_block('0000')
-        self.assertIsNone(g.get_block('0000'))
+        self.assertRaises(BlockNotFoundError, g.delete_block, '0000')
 
     def test_replace_block(self):
 
@@ -490,6 +505,14 @@ class TestBlockGroup(unittest.TestCase):
             act_replica_blks = bg.get_replica_blocks(bid, include_me=False)
             self.assertListEqual(_replica_blks, act_replica_blks)
 
+        fake_bid = BlockID(
+            'd0', 'g000640000000125', '0000',
+            DriveID('idc000' 'c62d8736c7280002'), 1)
+
+        self.assertIsNone(bg.get_replica_blocks(fake_bid))
+        self.assertRaises(
+            BlockNotFoundError, bg.get_replica_blocks, fake_bid, raise_error=True)
+
     def test_get_block_byid(self):
         blk_idxes = ['0000', '0001', '0002', '0003', '0008', '0012']
 
@@ -504,6 +527,14 @@ class TestBlockGroup(unittest.TestCase):
 
         self.assertListEqual(blks, act_blks)
 
+        fake_bid = BlockID(
+            'd0', 'g000640000000125', '0000',
+            DriveID('idc000' 'c62d8736c7280002'), 1)
+
+        self.assertIsNone(bg.get_block_byid(fake_bid))
+
+        self.assertRaises(BlockNotFoundError, bg.get_block_byid, fake_bid, True)
+
     def test_delete_block_byid(self):
 
         blk_idxes = ['0000', '0001', '0002', '0003', '0008', '0012']
@@ -513,7 +544,10 @@ class TestBlockGroup(unittest.TestCase):
         blks = bg.indexes_to_blocks(blk_idxes)
         bids = [blk['block_id'] for blk in blks]
 
-        bg.delete_block_byid(bids[1])
+        del_blk = bg.delete_block_byid(bids[1])
+        self.assertDictEqual(del_blk, blks[1])
+
+        self.assertRaises(BlockNotFoundError, bg.delete_block_byid, bids[1])
 
         blks.pop(1)
 
@@ -576,3 +610,23 @@ class TestBlockGroup(unittest.TestCase):
         blks = bg.indexes_to_blocks(blk_idxes)
         act_blks = bg.get_blocks()
         self.assertListEqual(blks, act_blks)
+
+    def test_block_type(self):
+        ec_idxes = ['0000', '0001', '0004', '0005']
+        replica_idxes = ['0002', '0008', '0012']
+
+        idxes = ec_idxes + replica_idxes
+
+        bg = self.make_test_block_group(idxes)
+
+        blks = bg.indexes_to_blocks(idxes)
+
+        self.assertTrue(bg.is_data(blks[0]['block_id']))
+        self.assertTrue(bg.is_data(blks[1]['block_id']))
+        self.assertTrue(bg.is_parity(blks[2]['block_id']))
+
+        self.assertTrue(bg.is_parity(blks[3]['block_id']))
+        self.assertTrue(bg.is_data(blks[4]['block_id']))
+
+        self.assertTrue(bg.is_replica(blks[5]['block_id']))
+        self.assertTrue(bg.is_replica(blks[6]['block_id']))
