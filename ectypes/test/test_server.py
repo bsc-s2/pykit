@@ -1,5 +1,7 @@
 #!/usr/bin/env python2
 # coding: utf-8
+
+import mock
 import socket
 import unittest
 
@@ -13,16 +15,45 @@ dd = ututil.dd
 
 class TestServer(unittest.TestCase):
 
-    def test_serverrec(self):
+    @mock.patch("pykit.ectypes.server._make_mountpoints_info")
+    def test_serverrec(self, mock_mnt):
         cases = (
-            ('idc000', 'center', {'role1': 1}, {'foo': 1}),
-            ('idc001', 'xx', {'role1': 1, 'role2': 1}, {'foo': 1, 'bar': 2}),
-            ('idc002', 'yy', {'role1': 1, 'role2': 1, 'role3': 1}, {'foo': 1}),
-            ('idc003', 'zz', {'role1': 1, 'role4': 4}, {'foo': 1, 'bar': 2, 'foobar': 3}),
+            (
+                'idc000',
+                'center',
+                {'role1': 1},
+                {"/foo": {"fs": "vfs", "capacity": 100}},
+                {'foo': 1}
+            ),
+
+            (
+                'idc001',
+                'xx',
+                {'role1': 1, 'role2': 1},
+                {"/foo": {"fs": "vfs", "capacity": 100}, "/bar/d/010": {"fs": "vfs", "capacity": 200}},
+                {'foo': 1, 'bar': 2}
+            ),
+
+            (
+                'idc002',
+                'yy',
+                {'role1': 1, 'role2': 1, 'role3': 1},
+                {},
+                {'foo': 1}
+            ),
+
+            (
+                'idc003',
+                'zz',
+                {'role1': 1, 'role4': 4},
+                {"/bar/d/020": {"fs": "vfs", "capacity": 1000}, "/bar/d/010": {"fs": "vfs", "capacity": 200}},
+                {'foo': 1, 'bar': 2, 'foobar': 3}
+            ),
         )
 
-        for idc, idc_type, roles, argkv in cases:
-            serverrec = ectypes.make_serverrec('idc000aabbccddeeff', idc, idc_type, roles, '/s2', **argkv)
+        for idc, idc_type, roles, mnt_info, argkv in cases:
+            mock_mnt.return_value = mnt_info
+            serverrec = ectypes.make_serverrec('idc000aabbccddeeff', idc, idc_type, roles, '/bar', **argkv)
 
             dd('serverrec:' + repr(serverrec))
 
@@ -37,13 +68,19 @@ class TestServer(unittest.TestCase):
             if hasattr(psutil, 'cpu_freq'):
                 self.assertIn('frequency', serverrec['cpu'])
 
-            self.assertIn('mountpoints', serverrec)
-            self.assertEqual(1, serverrec['next_mount_index'])
-            self.assertIn('allocated_drive', serverrec)
+            self.assertEqual(serverrec['mountpoints'], mnt_info)
 
-            for k, v in serverrec['allocated_drive'].items():
-                self.assertIn('/s2', k)
-                self.assertEqual({'status': 'normal'}, v)
+            idx = 0
+            for mp, info in mnt_info.items():
+                if not mp.startswith('/bar'):
+                    continue
+
+                mp_idx = int(mp.split('/')[-1])
+                idx = idx if idx > mp_idx else mp_idx
+                self.assertEqual(serverrec['allocated_drive'][mp], {'status': 'normal'})
+
+            self.assertEqual(idx + 1, serverrec['next_mount_index'])
+            dd("next_mount_index:", serverrec['next_mount_index'])
 
             self.assertEqual(socket.gethostname(), serverrec['hostname'])
             self.assertEqual(idc, serverrec['idc'])
