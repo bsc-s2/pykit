@@ -244,7 +244,7 @@ class Polynomial(list):
         return clz.evaluate(coef, x)
 
     @classmethod
-    def plot(clz, polynomials, rng, width=120, height=20, points=()):
+    def plot(clz, polynomials, rangex, rangey=None, width=120, height=20, points=()):
         # polynomials: is list of coefficients and point symbol
         #
         # [
@@ -252,18 +252,22 @@ class Polynomial(list):
         #     ([0, 2], 'x'),
         # ]
         # TODO test
-        rng = (float(rng[0]), float(rng[1]))
-        rng_width = rng[1] - rng[0]
+        rangex = (float(rangex[0]), float(rangex[1]))
+        rng_width = rangex[1] - rangex[0]
         ys = []
         jys = []
         for i in range(width):
-            x = float(i) / width * rng_width + rng[0]
+            x = float(i) / width * rng_width + rangex[0]
             for poly, sym in polynomials:
                 y = clz.evaluate(poly, x)
                 ys.append(y)
                 jys.append((i, y, sym))
 
-        y_range = ys + [xx[1] for xx in points]
+        if rangey is None:
+            y_range = ys + [xx[1] for xx in points]
+        else:
+            y_range = [rangey[0], rangey[1]]
+
         bot, top = min(y_range), max(y_range)
 
         lines = []
@@ -274,7 +278,14 @@ class Polynomial(list):
             h = y - bot
             h = h * height / (top - bot)
             h = int(h)
-            lines[height - h][j] = sym
+
+            if height - h < 0:
+                continue
+            try:
+                lines[height - h][j] = sym
+            except IndexError:
+                # point out of range. ignore
+                pass
 
         for ii, xyv in enumerate(points):
             x, y = xyv[:2]
@@ -287,7 +298,7 @@ class Polynomial(list):
             i = int(i)
             i = height - i
 
-            j = (float(x) - rng[0]) * width / rng_width
+            j = (float(x) - rangex[0]) * width / rng_width
             j = int(j)
 
             if 0 <= i <= height and 0 <= j <= width:

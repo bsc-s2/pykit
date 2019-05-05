@@ -217,7 +217,7 @@ a `Polynomial` instance.
 ###  Polynomial.plot
 
 **syntax**:
-`Polynomial.plot(polynomials, rng, width=120, height=20, points=())`
+`Polynomial.plot(polynomials, rangex, rangey=None, width=120, height=20, points=())`
 
 Plot a polynomial.
 
@@ -230,7 +230,7 @@ from pykit.mathtoy import Polynomial
 poly = [3.5, 3.4, 1]
 
 for l in Polynomial.plot([(poly, '.')],
-                         rng=[-1, 6],
+                         rangex=[-1, 6],
                          width=40, height=10):
     print l
 #                                        .
@@ -256,8 +256,11 @@ for l in Polynomial.plot([(poly, '.')],
     ]
     ```
 
--   `rng`:
+-   `rangex`:
     is a tuple of two floats that specifies range of x.
+
+-   `rangey`:
+    is a tuple of two floats that specifies range of y.
 
 -   `width`: specifies plot graph width.
 
