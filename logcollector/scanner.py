@@ -34,9 +34,19 @@ def build_entry(context, log_name, file_name, log_str, log_conf):
     return log_entry
 
 
-def put_into_cache(log_cache, log_entry):
-    log_ts = log_entry['log_ts']
+def put_into_cache(log_cache, log_entry, merge=True, nlimit=None):
     source_file = log_entry['source_file']
+    if not merge:
+        nlimit = nlimit or 10240
+        if source_file not in log_cache:
+            log_cache[source_file] = []
+
+        log_cache[source_file].append(log_entry)
+        if len(log_cache[source_file]) > nlimit:
+            log_cache[source_file] = log_cache[source_file][:nlimit]
+        return
+
+    log_ts = log_entry['log_ts']
     line_number = log_entry['line_number']
 
     if log_ts not in log_cache:
@@ -106,7 +116,7 @@ def _scan(context, log_name):
     log_stat['reported_n'] = 0
 
     for log_str in iter_log(log_conf):
-        log_str = log_str[:1024]
+        log_str = log_str[:10240]
         log_stat['total_n'] += 1
 
         log_level = log_conf['get_level'](log_str)
@@ -121,8 +131,10 @@ def _scan(context, log_name):
 
         log_stat['reported_n'] += 1
 
+        cache_nlimit = log_conf.get("cache_nlimit", None)
+        merge = log_conf.get("merge", True)
         with context['cache_lock']:
-            put_into_cache(log_cache, log_entry)
+            put_into_cache(log_cache, log_entry, merge, cache_nlimit)
 
 
 def scan(context, log_name):

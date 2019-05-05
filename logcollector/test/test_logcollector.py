@@ -18,7 +18,7 @@ this_base = os.path.dirname(__file__)
 
 standard_level = {
     'ERROR': 'error',
-    'WARNING': 'warn',
+    'WARNING': 'warning',
     'INFO': 'info',
 }
 
@@ -63,33 +63,29 @@ class TestLogcollector(unittest.TestCase):
     def tearDown(self):
         self._clean()
 
-    def test_basic(self):
+    def log(self):
         logger = logutil.make_logger(base_dir=this_base,
                                      log_name='test_log')
 
-        def log():
-            start_time = time.time()
+        cnt = 1
+        while True:
+            logger.info('info')
+            logger.warn('warn')
+            logger.error('error')
+            time.sleep(0.001)
+            cnt += 1
+            if cnt > 100:
+                break
 
-            while True:
-                logger.info('info')
-                logger.warn('warn')
-                logger.error('error')
+    def get_level(self, log_str):
+        for k in standard_level:
+            if k in log_str:
+                return k.lower()
+        else:
+            return 'unknown'
 
-                if time.time() > start_time + 2.5:
-                    break
-
-                time.sleep(0.01)
-
-        log_th = threadutil.start_daemon_thread(log)
-
+    def test_basic(self):
         log_entries = []
-
-        def get_level(log_str):
-            for k in ('INFO', 'WARNING', 'ERROR'):
-                if k in log_str:
-                    return k.lower()
-            else:
-                return 'unknown'
 
         def send_log(log_entry):
             log_entries.append(log_entry)
@@ -102,27 +98,54 @@ class TestLogcollector(unittest.TestCase):
                 'my_test_log': {
                     'file_path': os.path.join(this_base, 'test_log.out'),
                     'level': ['error'],
-                    'get_level': get_level,
+                    'get_level': self.get_level,
                     'is_first_line': is_first_line,
                     'parse': parse,
                 },
             },
         }
 
-        threadutil.start_daemon_thread(collector.run, kwargs=kwargs)
+        threadutil.start_daemon(self.log)
+        threadutil.start_daemon(collector.run, kwargs=kwargs)
+        time.sleep(8)
 
-        log_th.join()
-
-        time.sleep(2)
-
-        self.assertEqual(3, len(log_entries))
         dd(log_entries)
+        log_cnt = 0
+        for le in log_entries:
+            log_cnt += le["count"]
+        dd(log_cnt)
 
-        dd(log_entries[0]['count'])
-        dd(log_entries[1]['count'])
-        dd(log_entries[2]['count'])
-        self.assertAlmostEqual(100, log_entries[1]['count'], delta=30)
-
+        self.assertEqual(100, log_cnt)
         self.assertEqual('error', log_entries[0]['level'])
         self.assertEqual('my_test_log', log_entries[0]['log_name'])
         self.assertEqual('test_log.out', log_entries[0]['log_file'])
+
+    def test_no_merge(self):
+        log_entries = []
+
+        def send_log(log_entry):
+            print log_entry
+            log_entries.append(log_entry)
+
+        kwargs = {
+            'node_id': '123abc',
+            'node_ip': '1.2.3.4',
+            'send_log': send_log,
+            'conf': {
+                'my_test_log': {
+                    'file_path': os.path.join(this_base, 'test_log.out'),
+                    'level': ['error'],
+                    'get_level': self.get_level,
+                    'is_first_line': is_first_line,
+                    'parse': parse,
+                    'merge': False,
+                },
+            },
+        }
+
+        threadutil.start_daemon(self.log)
+        threadutil.start_daemon(collector.run, kwargs=kwargs)
+        time.sleep(8)
+
+        self.assertEqual(100, len(log_entries))
+        self.assertEqual('error', log_entries[0]['level'])
