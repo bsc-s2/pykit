@@ -6,7 +6,7 @@ from .redisutil import (
     RedisChannel,
 )
 
-from .redis_proxy_cli import(
+from .redis_proxy_cli import (
     KeyNotFoundError,
     RedisProxyError,
     SendRequestError,

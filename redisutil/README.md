@@ -29,6 +29,9 @@
     - [RedisProxyClient.set](#redisproxyclientset)
     - [RedisProxyClient.hget](#redisproxyclienthget)
     - [RedisProxyClient.hset](#redisproxyclienthset)
+    - [RedisProxyClient.hkeys](#redisproxyclienthkeys)
+    - [RedisProxyClient.hvals](#redisproxyclienthvals)
+    - [RedisProxyClient.hgetall](#redisproxyclienthgetall)
 - [Author](#author)
 - [Copyright and License](#copyright-and-license)
 
@@ -342,7 +345,7 @@ a list of channel names.
 ##  redisutil.RedisProxyClient
 
 **syntax**:
-`redisutil.RedisProxyClient(hosts, nwr=None, ak_sk=None, timeout=None)`
+`redisutil.RedisProxyClient(hosts, proxy_hosts=None, nwr=None, ak_sk=None, timeout=None)`
 
 A client for redis proxy server.
 
@@ -350,6 +353,9 @@ A client for redis proxy server.
 
 -   `hosts`:
     a `tuple` each element is a `(ip, port)`, retry with next addr while failed to use prev one.
+
+-   `proxy_hosts`:
+    a `tuple` each element is `hosts`, as the backup hosts.
 
 -   `nwr`:
     `tuple` of `(n, w, r)`, count of replicas, count of write, count of read.
@@ -457,6 +463,66 @@ Set `hashkey` to `val` within `hashname`.
 
 **return**:
 nothing
+
+###  RedisProxyClient.hkeys
+
+**syntax**:
+`RedisProxyClient.hkeys(hashname, retry=0)`
+
+Return the list of keys within `hashname`.
+Raise a `redisutil.KeyNotFoundError` if the `hashname` doesn’t exist.
+
+**arguments**:
+
+-   `hashname`:
+    specifies the hash name to redis.
+
+-   `retry`:
+    try to send request for another N times while failed to send request.
+    By default, it is `0`.
+
+**return**:
+a `list` contains all the keys.
+
+###  RedisProxyClient.hvals
+
+**syntax**:
+`RedisProxyClient.hvals(hashname, retry=0)`
+
+Return the list of values within `hashname`.
+Raise a `redisutil.KeyNotFoundError` if the `hashname` doesn’t exist.
+
+**arguments**:
+
+-   `hashname`:
+    specifies the hash name to redis.
+
+-   `retry`:
+    try to send request for another N times while failed to send request.
+    By default, it is `0`.
+
+**return**:
+a `list` contains all the values.
+
+###  RedisProxyClient.hgetall
+
+**syntax**:
+`RedisProxyClient.hgetall(hashname, retry=0)`
+
+Return a dict of the hash’s name/value pairs.
+Raise a `redisutil.KeyNotFoundError` if the `hashname` doesn’t exist.
+
+**arguments**:
+
+-   `hashname`:
+    specifies the hash name to redis.
+
+-   `retry`:
+    try to send request for another N times while failed to send request.
+    By default, it is `0`.
+
+**return**:
+a `dict` of the hash’s name/value pairs.
 
 #   Author
 

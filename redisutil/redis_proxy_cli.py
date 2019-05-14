@@ -29,22 +29,48 @@ class ServerResponseError(RedisProxyError):
     pass
 
 
+def _proxy(func):
+
+    def _wrapper(self, verb, retry, *args):
+        all_hosts = [self.hosts]
+        if self.proxy_hosts is not None:
+            all_hosts += self.proxy_hosts
+
+        rst = None
+        if verb == "GET":
+            for hosts in all_hosts:
+                try:
+                    return func(self, hosts, verb, retry, *args)
+                except RedisProxyError as e:
+                    continue
+            else:
+                raise e
+
+        else:
+            for hosts in all_hosts:
+                rst = func(self, hosts, verb, retry, *args)
+
+        return rst
+
+    return _wrapper
+
+
 def _retry(func):
 
-    def _wrapper(self, *args):
-        retry_cnt = args[-1] or 0
+    def _wrapper(self, hosts, verb, retry, *args):
+        retry = retry or 0
 
-        for _ in range(retry_cnt + 1):
-            for ip, port in self.hosts:
+        for _ in range(retry + 1):
+            for ip, port in hosts:
                 self.ip = ip
                 self.port = port
 
                 try:
-                    return func(self, *args)
+                    return func(self, verb, *args)
 
                 except (http.HttpError, socket.error) as e:
-                    logger.error('{e} while send request to redis proxy with {ip}:{p}'.format(
-                                 e=repr(e), ip=ip, p=port))
+                    logger.exception('{e} while send request to redis proxy with {ip}:{p}'.format(
+                        e=repr(e), ip=ip, p=port))
 
         else:
             raise SendRequestError(repr(e))
@@ -87,7 +113,7 @@ class SetAPI(object):
 
         path = [self.redis_op] + mtd_args
 
-        return self.cli._api(self.http_mtd, path, body, qs, retry)
+        return self.cli._api(self.http_mtd, retry, path, body, qs)
 
 
 class RedisProxyClient(object):
@@ -105,10 +131,20 @@ class RedisProxyClient(object):
 
         # hset(hashname, hashkey, val, expire=None, retry=0)
         'hset': ('PUT', 5, ('expire',)),
+
+        # hkeys(hashname, retry=0)
+        'hkeys': ('GET', 2, ()),
+
+        # hvals(hashname, retry=0)
+        'hvals': ('GET', 2, ()),
+
+        # hgetall(hashname, retry=0)
+        'hgetall': ('GET', 2, ()),
     }
 
-    def __init__(self, hosts, nwr=None, ak_sk=None, timeout=None):
+    def __init__(self, hosts, proxy_hosts=None, nwr=None, ak_sk=None, timeout=None):
         self.hosts = hosts
+        self.proxy_hosts = proxy_hosts
 
         if nwr is None:
             nwr = config.rp_cli_nwr
@@ -184,8 +220,9 @@ class RedisProxyClient(object):
 
         return res
 
+    @_proxy
     @_retry
-    def _api(self, verb, path, body, qs, retry):
+    def _api(self, verb, path, body, qs):
         req = {
             'verb': verb,
             'uri': self._make_req_uri(path, qs),

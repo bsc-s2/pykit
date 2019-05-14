@@ -301,6 +301,7 @@ class TestRedisProxyClient(unittest.TestCase):
 
     def setUp(self):
         self.addr = ('127.0.0.1', 22038)
+        self.proxy_addr = ('127.0.0.1', 22039)
 
         self.response['http-status'] = 200
 
@@ -308,7 +309,12 @@ class TestRedisProxyClient(unittest.TestCase):
             self.http_server = HTTPServer(self.addr, HttpHandle)
             self.http_server.serve_forever()
 
+        def _start_proxy_http_svr():
+            self.proxy_http_server = HTTPServer(self.proxy_addr, HttpHandle)
+            self.proxy_http_server.serve_forever()
+
         threadutil.start_daemon_thread(_start_http_svr)
+        threadutil.start_daemon_thread(_start_proxy_http_svr)
         time.sleep(0.1)
 
         self.cli = redisutil.RedisProxyClient([self.addr])
@@ -319,6 +325,49 @@ class TestRedisProxyClient(unittest.TestCase):
     def tearDown(self):
         self.http_server.shutdown()
         self.http_server.server_close()
+        self.proxy_http_server.shutdown()
+        self.proxy_http_server.server_close()
+
+    def test_proxy_get(self):
+        cli = redisutil.RedisProxyClient([self.addr], proxy_hosts=[[self.proxy_addr]])
+
+        res = cli.get("foo")
+        time.sleep(0.1)
+        exp_res = {'foo': 1, 'bar': 2}
+        self.assertDictEqual(exp_res, res)
+
+        self.http_server.shutdown()
+        self.http_server.server_close()
+        res = cli.get("foo")
+        time.sleep(0.1)
+        self.assertDictEqual(exp_res, res)
+
+        self.response['http-status'] = 404
+        self.assertRaises(redisutil.KeyNotFoundError, cli.get, 'foo')
+
+        self.response['http-status'] = 500
+        self.assertRaises(redisutil.ServerResponseError, cli.get, 'foo')
+
+        self.proxy_http_server.shutdown()
+        self.proxy_http_server.server_close()
+        self.assertRaises(redisutil.SendRequestError, cli.get, 'foo')
+
+    def test_proxy_set(self):
+        cli = redisutil.RedisProxyClient([self.addr], proxy_hosts=[[self.proxy_addr]])
+        # expect no exception
+        cli.set("foo", "bar")
+
+        self.response['http-status'] = 500
+        self.assertRaises(redisutil.ServerResponseError, cli.set, 'foo', 'bar')
+
+        self.response['http-status'] = 200
+        self.proxy_http_server.shutdown()
+        self.proxy_http_server.server_close()
+        self.assertRaises(redisutil.SendRequestError, cli.set, 'foo', 'bar')
+
+        self.http_server.shutdown()
+        self.http_server.server_close()
+        self.assertRaises(redisutil.SendRequestError, cli.set, 'foo', 'bar')
 
     def test_send_request_failed(self):
         # close http server
@@ -330,10 +379,17 @@ class TestRedisProxyClient(unittest.TestCase):
         self.assertRaises(redisutil.SendRequestError, self.cli.hget, 'foo', 'bar')
         self.assertRaises(redisutil.SendRequestError, self.cli.hset, 'foo', 'bar', 'xx')
 
+        self.assertRaises(redisutil.SendRequestError, self.cli.hkeys, 'foo')
+        self.assertRaises(redisutil.SendRequestError, self.cli.hvals, 'foo')
+        self.assertRaises(redisutil.SendRequestError, self.cli.hgetall, 'foo')
+
     def test_not_found(self):
         self.response['http-status'] = 404
         self.assertRaises(redisutil.KeyNotFoundError, self.cli.get, 'foo')
         self.assertRaises(redisutil.KeyNotFoundError, self.cli.hget, 'foo', 'bar')
+        self.assertRaises(redisutil.KeyNotFoundError, self.cli.hkeys, 'foo')
+        self.assertRaises(redisutil.KeyNotFoundError, self.cli.hvals, 'foo')
+        self.assertRaises(redisutil.KeyNotFoundError, self.cli.hgetall, 'foo')
 
     def test_server_response_error(self):
         cases = (
@@ -349,6 +405,9 @@ class TestRedisProxyClient(unittest.TestCase):
             self.assertRaises(redisutil.ServerResponseError, self.cli.hget, 'foo', 'bar')
             self.assertRaises(redisutil.ServerResponseError, self.cli.set, 'foo', 'val')
             self.assertRaises(redisutil.ServerResponseError, self.cli.hset, 'foo', 'bar', 'val')
+            self.assertRaises(redisutil.ServerResponseError, self.cli.hkeys, 'foo')
+            self.assertRaises(redisutil.ServerResponseError, self.cli.hvals, 'foo')
+            self.assertRaises(redisutil.ServerResponseError, self.cli.hgetall, 'foo')
 
     def test_get(self):
         cases = (
@@ -449,6 +508,42 @@ class TestRedisProxyClient(unittest.TestCase):
             self.assertIn(exp_qs, TestRedisProxyClient.request['req-qs'])
             self.assertEqual(utfjson.dump(val), TestRedisProxyClient.request['req-body'])
 
+    def test_hkeys_hvals_hgetall(self):
+        cases = (
+            'hname1',
+            'hname2',
+            'hname3',
+            'hname4',
+        )
+
+        for hname in cases:
+            self.cli.hkeys(hname)
+            time.sleep(0.1)
+
+            exp_path = '{ver}/HKEYS/{hn}'.format(ver=self.cli.ver, hn=hname)
+            self.assertEqual(exp_path, TestRedisProxyClient.request['req-path'])
+
+            exp_qs = 'n=3&w=2&r=2'
+            self.assertIn(exp_qs, TestRedisProxyClient.request['req-qs'])
+
+            self.cli.hvals(hname)
+            time.sleep(0.1)
+
+            exp_path = '{ver}/HVALS/{hn}'.format(ver=self.cli.ver, hn=hname)
+            self.assertEqual(exp_path, TestRedisProxyClient.request['req-path'])
+
+            exp_qs = 'n=3&w=2&r=2'
+            self.assertIn(exp_qs, TestRedisProxyClient.request['req-qs'])
+
+            self.cli.hgetall(hname)
+            time.sleep(0.1)
+
+            exp_path = '{ver}/HGETALL/{hn}'.format(ver=self.cli.ver, hn=hname)
+            self.assertEqual(exp_path, TestRedisProxyClient.request['req-path'])
+
+            exp_qs = 'n=3&w=2&r=2'
+            self.assertIn(exp_qs, TestRedisProxyClient.request['req-qs'])
+
     def test_retry(self):
         # close http server
         self.tearDown()
@@ -511,13 +606,9 @@ class HttpHandle(BaseHTTPRequestHandler):
         TestRedisProxyClient.request['req-path'] = path_res.path
         TestRedisProxyClient.request['req-qs'] = path_res.query
 
-        body = TestRedisProxyClient.response.get('body', '')
         self.send_response(TestRedisProxyClient.response['http-status'])
-        self.send_header('Content-Length', len(body))
+        self.send_header('Content-Length', 0)
         self.end_headers()
-
-        if len(body) > 0:
-            self.wfile.write(body)
 
     def do_GET(self):
         response = utfjson.dump({
