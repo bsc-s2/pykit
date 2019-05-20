@@ -147,12 +147,7 @@ def load_st(devname):
     else:
         raise DeviceNotFound("device not found in /proc/diskstats: " + sys_key)
 
-    sector_size = fsutil.read_file('/sys/block/{sys_key}/queue/hw_sector_size'.format(
-        sys_key=sys_key))
-
-    sector_size = int(sector_size)
-
-    st = format_dev_st(elts, sector_size)
+    st = format_dev_st(elts, 512)
     st['name'] = devname
     return st
 
