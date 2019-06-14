@@ -118,28 +118,34 @@ class SetAPI(object):
 
 class RedisProxyClient(object):
 
-    # http method, count of args, optional args name
+    # redis operation, http method, count of args, optional args name
     methods = {
         # get(key, retry=0)
-        'get': ('GET', 2, ()),
+        'get': ('get', 'GET', 2, ()),
 
         # set(key, val, expire=None, retry=0)
-        'set': ('PUT', 4, ('expire',)),
+        'set': ('set', 'PUT', 4, ('expire',)),
 
         # hget(hashname, hashkey, retry=0)
-        'hget': ('GET', 3, ()),
+        'hget': ('hget', 'GET', 3, ()),
 
         # hset(hashname, hashkey, val, expire=None, retry=0)
-        'hset': ('PUT', 5, ('expire',)),
+        'hset': ('hset', 'PUT', 5, ('expire',)),
 
         # hkeys(hashname, retry=0)
-        'hkeys': ('GET', 2, ()),
+        'hkeys': ('hkeys', 'GET', 2, ()),
 
         # hvals(hashname, retry=0)
-        'hvals': ('GET', 2, ()),
+        'hvals': ('hvals', 'GET', 2, ()),
 
         # hgetall(hashname, retry=0)
-        'hgetall': ('GET', 2, ()),
+        'hgetall': ('hgetall', 'GET', 2, ()),
+
+        # delete(key, retry=0)
+        'delete': ('del', 'DELETE', 2, ()),
+
+        # hdel(hashname, key, retry=0)
+        'hdel': ('hdel', 'DELETE', 3, ()),
     }
 
     def __init__(self, hosts, proxy_hosts=None, nwr=None, ak_sk=None, timeout=None):
@@ -159,7 +165,7 @@ class RedisProxyClient(object):
         self.ver = '/redisproxy/v1'
 
         for mtd_name, mtd_info in self.methods.items():
-            api_obj = SetAPI(self, mtd_name, mtd_info)
+            api_obj = SetAPI(self, mtd_info[0], mtd_info[1:])
             setattr(self, mtd_name, api_obj.api)
 
     def _sign_req(self, req):

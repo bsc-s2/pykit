@@ -368,6 +368,26 @@ A client for redis proxy server.
 -   `timeout`:
     timeout of connecting redis proxy server in seconds. Defaults to `None`.
 
+### RedisProxyClient.delete
+
+**syntax**:
+`RedisProxyClient.delete(key, retry=0)`
+
+Delete the specified key.
+Do nothing if the key doesn’t exist.
+
+**arguments**:
+
+-   `key`:
+    specifies the key to redis.
+
+-   `retry`:
+    try to send request for another N times while failed to send request.
+    By default, it is `0`.
+
+**return**:
+None
+
 ###  RedisProxyClient.get
 
 **syntax**:
@@ -387,6 +407,30 @@ Raise a `redisutil.KeyNotFoundError` if the key doesn’t exist.
 
 **return**:
 the value at `key`.
+
+### RedisProxyClient.hdel
+
+**syntax**:
+`RedisProxyClient.hdel(hashname, hashkey, retry=0)`
+
+Delete the specified `hashkey` in the specified `hashname`.
+Raise a `redisutil.KeyNotFoundError` if it doesn’t exist.
+
+**arguments**:
+
+-   `hashname`:
+    specifies the hash name to redis.
+
+-   `hashkey`:
+    specifies the hash key to redis.
+
+-   `retry`:
+    try to send request for another N times while failed to send request.
+    By default, it is `0`.
+
+
+**return**:
+None
 
 ###  RedisProxyClient.set
 

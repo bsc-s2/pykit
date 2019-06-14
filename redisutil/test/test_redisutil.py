@@ -383,6 +383,9 @@ class TestRedisProxyClient(unittest.TestCase):
         self.assertRaises(redisutil.SendRequestError, self.cli.hvals, 'foo')
         self.assertRaises(redisutil.SendRequestError, self.cli.hgetall, 'foo')
 
+        self.assertRaises(redisutil.SendRequestError, self.cli.delete, 'foo')
+        self.assertRaises(redisutil.SendRequestError, self.cli.hdel, 'foo', 'bar')
+
     def test_not_found(self):
         self.response['http-status'] = 404
         self.assertRaises(redisutil.KeyNotFoundError, self.cli.get, 'foo')
@@ -408,6 +411,8 @@ class TestRedisProxyClient(unittest.TestCase):
             self.assertRaises(redisutil.ServerResponseError, self.cli.hkeys, 'foo')
             self.assertRaises(redisutil.ServerResponseError, self.cli.hvals, 'foo')
             self.assertRaises(redisutil.ServerResponseError, self.cli.hgetall, 'foo')
+            self.assertRaises(redisutil.ServerResponseError, self.cli.delete, 'foo')
+            self.assertRaises(redisutil.ServerResponseError, self.cli.hdel, 'foo', 'bar')
 
     def test_get(self):
         cases = (
@@ -588,6 +593,44 @@ class TestRedisProxyClient(unittest.TestCase):
 
             self.assertEqual(exp_cnt, sess['run_times'])
 
+    def test_delete(self):
+        cases = (
+            ('foo', None),
+            ('bar', 1),
+            ('123', 2),
+            ('foobar123', 3),
+        )
+
+        for key, retry_cnt in cases:
+            self.cli.delete(key, retry_cnt)
+            time.sleep(0.1)
+
+            exp_path = '{ver}/DEL/{key}'.format(ver=self.cli.ver, key=key)
+            self.assertEqual(exp_path, TestRedisProxyClient.request['req-path'])
+
+            exp_qs = 'n=3&w=2&r=2'
+
+            self.assertIn(exp_qs, TestRedisProxyClient.request['req-qs'])
+
+    def test_hdel(self):
+        cases = (
+            ('hashname', 'key0', None),
+            ('hashname', 'key1', 1),
+            ('hashname', 'key2', 2),
+            ('hashname', 'key3', 3),
+        )
+
+        for hname, key, retry_cnt in cases:
+            self.cli.hdel(hname, key, retry_cnt)
+            time.sleep(0.1)
+
+            exp_path = '{ver}/HDEL/{hname}/{key}'.format(ver=self.cli.ver, hname=hname, key=key)
+            self.assertEqual(exp_path, TestRedisProxyClient.request['req-path'])
+
+            exp_qs = 'n=3&w=2&r=2'
+
+            self.assertIn(exp_qs, TestRedisProxyClient.request['req-qs'])
+
 
 class HttpHandle(BaseHTTPRequestHandler):
 
@@ -626,6 +669,16 @@ class HttpHandle(BaseHTTPRequestHandler):
         self.end_headers()
 
         self.wfile.write(response)
+
+    def do_DELETE(self):
+        path_res = urlparse.urlparse(self.path)
+
+        TestRedisProxyClient.request['req-path'] = path_res.path
+        TestRedisProxyClient.request['req-qs'] = path_res.query
+
+        self.send_response(TestRedisProxyClient.response['http-status'])
+        self.send_header('Content-Length', 0)
+        self.end_headers()
 
 
 def child_exit():
