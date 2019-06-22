@@ -126,10 +126,10 @@ class TestBlockGroup(unittest.TestCase):
     def test_get_block(self):
         g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
 
-        block = g.get_block('0000')
+        block = g.get_block('0000', raise_error=False)
         self.assertIsNone(block)
 
-        block = g.get_block('9999')
+        block = g.get_block('9999', raise_error=False)
         self.assertIsNone(block)
 
         with self.assertRaises(BlockNotFoundError):
@@ -173,13 +173,13 @@ class TestBlockGroup(unittest.TestCase):
     def test_delete_block(self):
 
         g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
-        self.assertIsNone(g.get_block('0000'))
+        self.assertIsNone(g.get_block('0000', raise_error=False))
 
         g.add_block(self.foo_block)
         self.assertIsNotNone(g.get_block('0000'))
 
         del_blk = g.delete_block('0000')
-        self.assertIsNone(g.get_block('0000'))
+        self.assertIsNone(g.get_block('0000', raise_error=False))
         self.assertDictEqual(self.foo_block, del_blk)
 
         self.assertRaises(BlockNotFoundError, g.delete_block, '0000')
@@ -435,7 +435,7 @@ class TestBlockGroup(unittest.TestCase):
         nr_data, nr_parity = bg['config']['in_idc']
         for i in range(0, nr_data + nr_parity):
             bi = BlockIndex(idc_idx, i)
-            blk = bg.get_block(bi)
+            blk = bg.get_block(bi, raise_error=False)
             if blk is None:
                 continue
 
@@ -509,9 +509,11 @@ class TestBlockGroup(unittest.TestCase):
             'd0', 'g000640000000125', '0000',
             DriveID('idc000' 'c62d8736c7280002'), 1)
 
-        self.assertIsNone(bg.get_replica_blocks(fake_bid))
+        self.assertIsNone(bg.get_replica_blocks(fake_bid, raise_error=False))
         self.assertRaises(
             BlockNotFoundError, bg.get_replica_blocks, fake_bid, raise_error=True)
+        self.assertRaises(
+            BlockNotFoundError, bg.get_replica_blocks, fake_bid)
 
     def test_get_block_byid(self):
         blk_idxes = ['0000', '0001', '0002', '0003', '0008', '0012']
@@ -531,9 +533,10 @@ class TestBlockGroup(unittest.TestCase):
             'd0', 'g000640000000125', '0000',
             DriveID('idc000' 'c62d8736c7280002'), 1)
 
-        self.assertIsNone(bg.get_block_byid(fake_bid))
+        self.assertIsNone(bg.get_block_byid(fake_bid, raise_error=False))
 
         self.assertRaises(BlockNotFoundError, bg.get_block_byid, fake_bid, True)
+        self.assertRaises(BlockNotFoundError, bg.get_block_byid, fake_bid)
 
     def test_delete_block_byid(self):
 

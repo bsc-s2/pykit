@@ -171,12 +171,12 @@ class BlockGroup(FixedKeysDict):
                 if block_type is not None and typ != block_type:
                     continue
 
-                if self.get_block(bi) is None:
+                if self.get_block(bi, raise_error=False) is None:
                     free_block_index[idc].append(str(bi))
 
         return free_block_index
 
-    def get_block(self, block_index, raise_error=False):
+    def get_block(self, block_index, raise_error=True):
 
         bi = BlockIndex(block_index)
         b = self['blocks'].get(str(bi))
@@ -247,7 +247,7 @@ class BlockGroup(FixedKeysDict):
 
             bi = BlockIndex(idc_index, i)
 
-            blk = self.get_block(bi)
+            blk = self.get_block(bi, raise_error=False)
             if blk is None:
                 continue
 
@@ -277,7 +277,7 @@ class BlockGroup(FixedKeysDict):
         for idx in indexes:
             bi = BlockIndex(idx)
 
-            blk = self.get_block(bi)
+            blk = self.get_block(bi, raise_error=False)
             blks.append(blk)
 
         return blks
@@ -305,18 +305,18 @@ class BlockGroup(FixedKeysDict):
     def is_ec_block(self, block_id):
         block_id = BlockID(block_id)
 
-        blk = self.get_block(block_id.block_index)
+        blk = self.get_block(block_id.block_index, raise_error=False)
         if blk is None or blk['block_id'] != block_id:
             raise BlockNotFoundError(
                 'block_id:{bid}'
                 ' not found in block_group:{block_group_id}'.format(bid=block_id, **self))
 
         if block_id.type.endswith('p'):
-            blk = self.get_block(block_id.block_index)
+            blk = self.get_block(block_id.block_index, raise_error=True)
             return True
 
         r_indexes = self.get_replica_indexes(block_id.block_index)
-        r_blks = [self.get_block(x) for x in r_indexes]
+        r_blks = [self.get_block(x, raise_error=False) for x in r_indexes]
 
         return None in r_blks
 
@@ -334,7 +334,7 @@ class BlockGroup(FixedKeysDict):
 
         blks = []
         for i in range(0, nr_data + nr_parity):
-            blk = self.get_block(BlockIndex(idc_idx, i))
+            blk = self.get_block(BlockIndex(idc_idx, i), raise_error=False)
 
             if blk is None:
                 continue
@@ -361,7 +361,7 @@ class BlockGroup(FixedKeysDict):
 
         return bids
 
-    def get_replica_blocks(self, block_id, include_me=True, raise_error=False):
+    def get_replica_blocks(self, block_id, include_me=True, raise_error=True):
         block_id = BlockID(block_id)
         r_indexes = self.get_replica_indexes(block_id.block_index, True)
 
@@ -369,7 +369,7 @@ class BlockGroup(FixedKeysDict):
 
         blks = []
         for idx in r_indexes:
-            blk = self.get_block(idx)
+            blk = self.get_block(idx, raise_error=False)
 
             if blk is None:
                 continue
@@ -390,7 +390,7 @@ class BlockGroup(FixedKeysDict):
 
         return blks
 
-    def get_block_byid(self, block_id, raise_error=False):
+    def get_block_byid(self, block_id, raise_error=True):
         block_id = BlockID(block_id)
 
         blk = self.get_block(block_id.block_index, raise_error=False)
