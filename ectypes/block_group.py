@@ -424,11 +424,14 @@ class BlockGroup(FixedKeysDict):
         blks = self.get_idc_blocks(idc_idx, is_del=is_del)
         return [BlockID(b['block_id']) for b in blks]
 
-    def is_data(self, block_id):
+    @classmethod
+    def is_data(cls, block_id):
         return block_id.type in ('d0', 'x0')
 
-    def is_replica(self, block_id):
+    @classmethod
+    def is_replica(cls, block_id):
         return re.match(r'd[1-9]', block_id.type) is not None
 
-    def is_parity(self, block_id):
+    @classmethod
+    def is_parity(cls, block_id):
         return block_id.type in ('dp', 'xp')

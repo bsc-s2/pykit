@@ -624,12 +624,12 @@ class TestBlockGroup(unittest.TestCase):
 
         blks = bg.indexes_to_blocks(idxes)
 
-        self.assertTrue(bg.is_data(blks[0]['block_id']))
-        self.assertTrue(bg.is_data(blks[1]['block_id']))
-        self.assertTrue(bg.is_parity(blks[2]['block_id']))
+        self.assertTrue(BlockGroup.is_data(blks[0]['block_id']))
+        self.assertTrue(BlockGroup.is_data(blks[1]['block_id']))
+        self.assertTrue(BlockGroup.is_parity(blks[2]['block_id']))
 
-        self.assertTrue(bg.is_parity(blks[3]['block_id']))
-        self.assertTrue(bg.is_data(blks[4]['block_id']))
+        self.assertTrue(BlockGroup.is_parity(blks[3]['block_id']))
+        self.assertTrue(BlockGroup.is_data(blks[4]['block_id']))
 
-        self.assertTrue(bg.is_replica(blks[5]['block_id']))
-        self.assertTrue(bg.is_replica(blks[6]['block_id']))
+        self.assertTrue(BlockGroup.is_replica(blks[5]['block_id']))
+        self.assertTrue(BlockGroup.is_replica(blks[6]['block_id']))
