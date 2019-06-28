@@ -1,4 +1,3 @@
-
 from .idbase import(
     IDBase,
 )
@@ -66,6 +65,16 @@ from .region import (
     LevelOutOfBound,
 )
 
+from .server_status import (
+    ServerStatus,
+    InvalidServerStatus,
+)
+
+from .drive_status import (
+    DriveStatus,
+    InvalidDriveStatus,
+)
+
 __all__ = [
     "IDBase",
 
@@ -108,4 +117,8 @@ __all__ = [
     "BlockNotInRegion",
     "BlockAreadyInRegion",
     "LevelOutOfBound",
+
+    "ServerStatus"
+
+    "DviveStatus"
 ]
