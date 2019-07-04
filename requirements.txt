@@ -45,7 +45,7 @@ numpy==1.7.1
 
 
 # zkutil
-kazoo==2.2.1
+kazoo==2.6.1
 
 
 # for building dependency graph
