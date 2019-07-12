@@ -75,6 +75,10 @@ from .drive_status import (
     InvalidDriveStatus,
 )
 
+from .block_status import (
+    BlockStatus,
+)
+
 __all__ = [
     "IDBase",
 
@@ -121,4 +125,6 @@ __all__ = [
     "ServerStatus"
 
     "DviveStatus"
+
+    "BlockStatus"
 ]
