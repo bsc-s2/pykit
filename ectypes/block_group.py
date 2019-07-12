@@ -420,6 +420,23 @@ class BlockGroup(FixedKeysDict):
 
         return blks
 
+    def get_d0_idcs(self):
+        cross_idc = self["config"]["cross_idc"]
+        return self["idcs"][:cross_idc[0]]
+
+    def get_dtype_by_idc(self, idc):
+        cfg = self["config"]
+
+        assert idc in self["idcs"]
+        assert sum(cfg["cross_idc"]) == len(self["idcs"])
+
+        d0_idcs = self["idcs"][:cfg["cross_idc"][0]]
+
+        if idc in d0_idcs:
+            return "d0"
+        else:
+            return "x0"
+
     def get_idc_block_ids(self, idc_idx, is_del=None):
         blks = self.get_idc_blocks(idc_idx, is_del=is_del)
         return [BlockID(b['block_id']) for b in blks]

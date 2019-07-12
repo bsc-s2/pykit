@@ -633,3 +633,23 @@ class TestBlockGroup(unittest.TestCase):
 
         self.assertTrue(BlockGroup.is_replica(blks[5]['block_id']))
         self.assertTrue(BlockGroup.is_replica(blks[6]['block_id']))
+
+    def test_get_d0_idcs(self):
+        g = BlockGroup(
+            block_group_id='g000640000000123',
+            idcs=['a', 'b', 'c'],
+            config=_ec_config)
+
+        self.assertEqual(["a", "b"], g.get_d0_idcs())
+
+    def test_get_dtype_by_idc(self):
+        g = BlockGroup(
+            block_group_id='g000640000000123',
+            idcs=['a', 'b', 'c'],
+            config=_ec_config)
+
+        self.assertEqual("d0", g.get_dtype_by_idc("a"))
+        self.assertEqual("d0", g.get_dtype_by_idc("b"))
+        self.assertEqual("x0", g.get_dtype_by_idc("c"))
+
+        self.assertRaises(AssertionError, g.get_dtype_by_idc, "d")
