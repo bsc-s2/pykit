@@ -11,7 +11,7 @@ class DriveStatus():
 
     @classmethod
     def def_status(cls):
-        return cls.READONLY,
+        return cls.READONLY
 
     @classmethod
     def all_status(cls):

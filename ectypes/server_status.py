@@ -11,7 +11,7 @@ class ServerStatus():
 
     @classmethod
     def def_status(cls):
-        return cls.INIT,
+        return cls.INIT
 
     @classmethod
     def all_status(cls):
