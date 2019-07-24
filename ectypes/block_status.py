@@ -1,7 +1,10 @@
 class BlockStatus():
     NORMAL = 'normal'
-    BROKEN = 'broken'
-    NOTFOUND = 'notFound'
+    BROKENBLOCK = 'brokenBlock'
+    BROKENCHECKSUM = 'brokenChecksum'
+    BLOCKNOTFOUND = 'blockNotFound'
+    CHECKSUMNOTFOUND = 'checksumNotFound'
+    MIGRATE = 'migrate'
     MIGRATING = 'migrating'
     RECOVING = 'recoving'
 
@@ -15,6 +18,11 @@ class BlockStatus():
             cls.NORMAL,
             cls.BROKEN,
             cls.NOTFOUND,
+            cls.BROKENBLOCK,
+            cls.BLOCKNOTFOUND,
+            cls.BROKENCHECKSUM,
+            cls.CHECKSUMNOTFOUND,
+            cls.MIGRATE,
             cls.MIGRATING,
             cls.RECOVING,
         ]
