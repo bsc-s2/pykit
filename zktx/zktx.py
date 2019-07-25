@@ -254,13 +254,10 @@ class ZKTransaction(object):
             other_txid = other_holder['id']
             other_val = other_holder['val']
 
-            logger.info('{tx} wait[{key}]-> {other_txid}'.format(
-                tx=self, key=key, other_txid=txidstr(other_txid)))
-
             if other_txid == self.txid:
                 return True, self.txid, other_val, ver
 
-            logger.info('{tx} wait[{key}]-> {other_txid} ver: {ver}'.format(
+            logger.info('my tx: {tx} wait [{key}] locked by other txid: {other_txid} ver: {ver}'.format(
                 tx=self, key=key, other_txid=txidstr(other_txid), ver=ver))
 
             # A tx that has state saved is recoverable, is treated as alive tx.
@@ -271,7 +268,7 @@ class ZKTransaction(object):
                 self.zkstorage.try_release_key(other_txid, key)
                 continue
 
-            logger.info('{tx}: other tx {other_txid} is alive'.format(
+            logger.info('other txid: {other_txid} is alive'.format(
                 tx=self, other_txid=txidstr(other_txid)))
 
             if self.txid > other_txid:
@@ -279,7 +276,7 @@ class ZKTransaction(object):
                 if len(self.got_keys) == 0:
 
                     # no locking, no deadlock
-                    logger.info('{tx} wait[{key}]-> {other_txid} no-lock'.format(
+                    logger.info('my tx: {tx} wait[{key}]-> {other_txid} no-lock'.format(
                         tx=self, key=key, other_txid=txidstr(other_txid)))
 
                     for i in range(other_txid, self.txid):
@@ -298,14 +295,14 @@ class ZKTransaction(object):
                     for i in range(other_txid, self.txid):
                         self.wait_tx_to_finish(i, _time_left())
 
-                    raise Deadlock('my txid: {mytxid} lockholder txid: {other_txid}'.format(
-                        mytxid=self.txid, other_txid=other_txid))
+                    raise Deadlock('my txid: {mytxid} key: {key} locked by txid: {other_txid}'.format(
+                        mytxid=self.txid, key=key, other_txid=other_txid))
 
         raise NotLocked("key: {k}".format(k=key))
 
     def wait_tx_to_finish(self, txid, timeout):
 
-        logger.info('{tx} wait-> {other_txid}'.format(tx=self, other_txid=txidstr(txid)))
+        logger.info('{tx} wait-> {other_txid} finish'.format(tx=self, other_txid=txidstr(txid)))
 
         try:
             zkutil.wait_absent(self.zke,
