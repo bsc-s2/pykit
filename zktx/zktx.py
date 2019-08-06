@@ -13,6 +13,7 @@ from kazoo.exceptions import NoNodeError
 
 from pykit import zkutil
 from pykit import utfjson
+from pykit import config
 
 from .exceptions import ConnectionLoss
 from .exceptions import Deadlock
@@ -29,8 +30,6 @@ from .status import UNKNOWN
 from .zkstorage import ZKStorage
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_TIMEOUT = 1 * 365 * 24 * 3600
 
 
 class TXRecord(object):
@@ -59,13 +58,13 @@ class TXRecord(object):
 
 class ZKTransaction(object):
 
-    def __init__(self, zk, txid=None, timeout=DEFAULT_TIMEOUT, lock_timeout=300):
+    def __init__(self, zk, txid=None, timeout=None, lock_timeout=300):
 
         # Save the original arg for self.run()
         self._zk = zk
 
         self.zke, self.owning_zk = zkutil.kazoo_client_ext(zk)
-        self.timeout = timeout
+        self.timeout = timeout or getattr(config, "zk_tx_timeout")
         self.lock_timeout = lock_timeout
 
         self.txid = txid
@@ -87,6 +86,8 @@ class ZKTransaction(object):
         self.zkstorage.max_value_history = 2
 
         self.zke.add_listener(self._on_conn_change)
+
+        self.start_ts = time.time()
 
     def _on_conn_change(self, state):
 
@@ -160,6 +161,7 @@ class ZKTransaction(object):
     def set_state(self, state_data):
         txst = {
             'got_keys': self.got_keys.keys(),
+            "start_ts": self.start_ts,
             'data': state_data,
         }
 
@@ -328,7 +330,7 @@ class ZKTransaction(object):
 
         assert self.expire_at is None
 
-        self.expire_at = time.time() + self.timeout
+        self.expire_at = self.start_ts + self.timeout
 
         if self.txid is None:
 
@@ -355,10 +357,17 @@ class ZKTransaction(object):
             raise TXTimeout(repr(e) + ' while waiting for tx alive lock')
 
         state, ver = self._get_state(self.txid)
-        if state is not None and 'got_keys' in state:
-            for key in state['got_keys']:
-                self.lock_get(key, latest=False)
+        if state is not None:
+            if "start_ts" in state:
+                self.start_ts = state["start_ts"]
+                self.expire_at = self.start_ts + self.timeout
 
+            if 'got_keys' in state:
+                for key in state['got_keys']:
+                    self.lock_get(key, latest=False)
+
+        if self.time_left() < 0:
+            raise TXTimeout('{tx} timeout when begin'.format(tx=self))
 
     def commit(self, force=False):
 
@@ -539,7 +548,7 @@ class ZKTransaction(object):
 def run_tx(zk, func, txid=None, timeout=None, lock_timeout=300, args=(), kwargs=None):
 
     if timeout is None:
-        timeout = DEFAULT_TIMEOUT
+        timeout = getattr(config, "zk_tx_timeout")
 
     if kwargs is None:
         kwargs = {}

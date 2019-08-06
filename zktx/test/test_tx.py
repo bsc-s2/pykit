@@ -664,7 +664,7 @@ class TestTXState(TXBase):
             t1.set_state('bar')
 
             val, ver = t.zkstorage.state.get(txid)
-            self.assertEqual({'got_keys': ['foo'], 'data': 'bar'}, val)
+            self.assertEqual({'got_keys': ['foo'], 'data': 'bar', "start_ts": t1.start_ts}, val)
 
             t1.commit()
 
@@ -682,7 +682,7 @@ class TestTXState(TXBase):
                 t1.set_state('bar')
 
                 val, ver = t.zkstorage.state.get(txid)
-                self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
+                self.assertEqual({'got_keys': [], 'data': 'bar', "start_ts": t1.start_ts}, val)
 
                 t1.abort()
         except UserAborted:
@@ -702,9 +702,10 @@ class TestTXState(TXBase):
 
                 txid = t1.txid
                 t1.set_state('bar')
+                start_ts = t1.start_ts
 
                 val, ver = t.zkstorage.state.get(txid)
-                self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
+                self.assertEqual({'got_keys': [], 'data': 'bar', "start_ts": t1.start_ts}, val)
 
                 raise ValueError('foo')
 
@@ -712,9 +713,9 @@ class TestTXState(TXBase):
             pass
 
         val, ver = t.zkstorage.state.get(txid)
-        self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
+        self.assertEqual({'got_keys': [], 'data': 'bar', "start_ts": start_ts}, val)
 
-    def test_exception_and_recover(self):
+    def test_recover_and_timeout(self):
 
         # tx raised by other exception is recoverable
 
@@ -731,9 +732,10 @@ class TestTXState(TXBase):
                 t1.set(f1)
 
                 t1.set_state('bar')
+                start_ts = t1.start_ts
 
                 val, ver = t.zkstorage.state.get(txid)
-                self.assertEqual({'got_keys': ["foox"], 'data': 'bar'}, val)
+                self.assertEqual({'got_keys': ["foox"], 'data': 'bar', "start_ts": t1.start_ts}, val)
 
                 raise ValueError('foo')
 
@@ -741,7 +743,52 @@ class TestTXState(TXBase):
             pass
 
         val, ver = t.zkstorage.state.get(txid)
-        self.assertEqual({'got_keys': ['foox'], 'data': 'bar'}, val)
+        self.assertEqual({'got_keys': ["foox"], 'data': 'bar', "start_ts": start_ts}, val)
+
+        time.sleep(2)
+
+        try:
+            with ZKTransaction(zkhost, txid=txid, timeout=3) as t1:
+                self.assertEqual(t1.start_ts, start_ts)
+
+                f1 = t1.lock_get('foox')
+                self.assertEqual(f1.v, "foox_val")
+
+                val = t1.get_state()
+                self.assertEqual(val, 'bar')
+        except TXTimeout:
+            pass
+
+    def test_exception_and_recover(self):
+
+        # tx raised by other exception is recoverable
+
+        t = ZKTransaction(zkhost)
+        txid = None
+
+        try:
+            with ZKTransaction(zkhost) as t1:
+                start_ts = t1.start_ts
+
+                txid = t1.txid
+
+                f1 = t1.lock_get('foox')
+                f1.v = "foox_val"
+                t1.set(f1)
+
+                t1.set_state('bar')
+                start_ts = t1.start_ts
+
+                val, ver = t.zkstorage.state.get(txid)
+                self.assertEqual({'got_keys': ["foox"], 'data': 'bar', "start_ts": start_ts}, val)
+
+                raise ValueError('foo')
+
+        except ValueError:
+            pass
+
+        val, ver = t.zkstorage.state.get(txid)
+        self.assertEqual({'got_keys': ['foox'], 'data': 'bar', "start_ts": start_ts}, val)
 
         ident = zkutil.make_identifier(txid, None)
         keylock = zkutil.ZKLock('foox',
@@ -754,6 +801,8 @@ class TestTXState(TXBase):
         self.assertEqual(val['v'], "foox_val")
 
         with ZKTransaction(zkhost, txid=txid, timeout=1) as t1:
+            self.assertEqual(t1.start_ts, start_ts)
+
             f1 = t1.lock_get('foox')
             self.assertEqual(f1.v, "foox_val")
 
@@ -771,6 +820,7 @@ class TestTXState(TXBase):
             with ZKTransaction(zkhost, timeout=0.5) as t1:
 
                 txid = t1.txid
+                start_ts = t1.start_ts
 
                 # t.txid is higher
                 t.begin()
@@ -783,7 +833,7 @@ class TestTXState(TXBase):
             pass
 
         val, ver = t.zkstorage.state.get(txid)
-        self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
+        self.assertEqual({'got_keys': [], 'data': 'bar', "start_ts": start_ts}, val)
 
     def test_deadlock(self):
 
@@ -829,9 +879,10 @@ class TestTXState(TXBase):
             txid = t1.txid
             t1.lock_get('foo')
             t1.set_state('bar')
+            start_ts = t1.start_ts
 
         val, ver = t.zkstorage.state.get(txid)
-        self.assertEqual({'got_keys': ['foo'], 'data': 'bar'}, val)
+        self.assertEqual({'got_keys': ['foo'], 'data': 'bar', "start_ts": start_ts}, val)
 
     def test_list_recoverable(self):
 
@@ -895,6 +946,7 @@ class TestTXState(TXBase):
 
                 txid = t1.txid
                 t1.set_state('bar')
+                start_ts = t1.start_ts
 
                 foo = t1.lock_get('foo')
                 t1.unlock(foo)
@@ -905,7 +957,7 @@ class TestTXState(TXBase):
 
         t = ZKTransaction(zkhost)
         val, ver = t.zkstorage.state.get(txid)
-        self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
+        self.assertEqual({'got_keys': [], 'data': 'bar', "start_ts": start_ts}, val)
 
         # UnlockNotAllowed is retrieable
 
@@ -916,6 +968,7 @@ class TestTXState(TXBase):
 
                 txid = t1.txid
                 t1.set_state('bar')
+                start_ts = t1.start_ts
 
                 foo = t1.lock_get('foo')
                 t1.set(foo)
@@ -926,7 +979,7 @@ class TestTXState(TXBase):
 
         t = ZKTransaction(zkhost)
         val, ver = t.zkstorage.state.get(txid)
-        self.assertEqual({'got_keys': [], 'data': 'bar'}, val)
+        self.assertEqual({'got_keys': [], 'data': 'bar', "start_ts": start_ts}, val)
 
     def test_exception_with_state(self):
 
@@ -948,12 +1001,13 @@ class TestTXState(TXBase):
                 txid = t2.txid
                 t2.lock_get('foo')
                 t2.set_state('bar')
+                start_ts = t2.start_ts
                 raise ValueError('foo')
         except ValueError:
             pass
 
         val, ver = t.zkstorage.state.get(txid)
-        self.assertEqual({'got_keys': ['foo'], 'data': 'bar'}, val)
+        self.assertEqual({'got_keys': ['foo'], 'data': 'bar', "start_ts": start_ts}, val)
 
         nodes = t.zke.get_children('/lock')
         self.assertEqual(['foo'], nodes)
