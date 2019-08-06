@@ -59,7 +59,7 @@ class TXRecord(object):
 
 class ZKTransaction(object):
 
-    def __init__(self, zk, txid=None, timeout=DEFAULT_TIMEOUT, lock_timeout=None):
+    def __init__(self, zk, txid=None, timeout=DEFAULT_TIMEOUT, lock_timeout=300):
 
         # Save the original arg for self.run()
         self._zk = zk
@@ -536,7 +536,7 @@ class ZKTransaction(object):
                                        locked=','.join(sorted(self.got_keys.keys())))
 
 
-def run_tx(zk, func, txid=None, timeout=None, lock_timeout=None, args=(), kwargs=None):
+def run_tx(zk, func, txid=None, timeout=None, lock_timeout=300, args=(), kwargs=None):
 
     if timeout is None:
         timeout = DEFAULT_TIMEOUT
