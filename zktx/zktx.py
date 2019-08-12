@@ -128,6 +128,9 @@ class ZKTransaction(object):
         if lock_val is not None:
             self.modifications[key] = TXRecord.from_dict(lock_val)
 
+            if latest:
+                return copy.deepcopy(self.modifications[key])
+
         rec = TXRecord(k=key, v=copy.deepcopy(lvalue), version=version, values=val)
         return rec
 
