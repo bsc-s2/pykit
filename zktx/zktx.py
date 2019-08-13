@@ -89,6 +89,8 @@ class ZKTransaction(object):
 
         self.start_ts = time.time()
 
+        self.mem_state = None
+
     def _on_conn_change(self, state):
 
         logger.debug('state changed: {state}'.format(state=state,))
@@ -160,6 +162,27 @@ class ZKTransaction(object):
             self.txid, rec.k, rec.to_dict(), lock_ver)
 
         self.got_keys_ver[rec.k] = lock_ver
+
+    def set_mem_state(self, state_data):
+        txst = {
+            'got_keys': self.got_keys.keys(),
+            "start_ts": self.start_ts,
+            'data': state_data,
+        }
+
+        self.mem_state = txst
+
+    def get_mem_state(self):
+        if self.mem_state is None:
+            return None
+
+        return self.mem_state['data']
+
+    def has_mem_state(self):
+        return self.get_mem_state is not None
+
+    def delete_mem_state(self):
+        self.mem_state = None
 
     def set_state(self, state_data):
         txst = {
@@ -284,8 +307,7 @@ class ZKTransaction(object):
                     logger.info('my tx: {tx} wait[{key}]-> {other_txid} no-lock'.format(
                         tx=self, key=key, other_txid=txidstr(other_txid)))
 
-                    for i in range(other_txid, self.txid):
-                        self.wait_tx_to_finish(i, _time_left())
+                    self.wait_tx_to_finish(other_txid, _time_left())
                     continue
 
                 else:
@@ -296,6 +318,7 @@ class ZKTransaction(object):
 
                     self.release_all_key_locks()
                     self.delete_state(self.txid)
+                    self.delete_mem_state()
 
                     for i in range(other_txid, self.txid):
                         self.wait_tx_to_finish(i, _time_left())
@@ -441,7 +464,9 @@ class ZKTransaction(object):
             status = PURGED
 
         self.tx_status = status
+
         self.modifications = {}
+
         self._close()
 
     def abort(self):
@@ -454,6 +479,8 @@ class ZKTransaction(object):
         return self.expire_at - time.time()
 
     def _close(self, release_got_keys=True):
+
+        self.delete_mem_state()
 
         if release_got_keys:
             self.release_all_key_locks()
