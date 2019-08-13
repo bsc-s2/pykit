@@ -644,6 +644,164 @@ class TestTX(TXBase):
             self.assertEqual(self.zkauthed._zkconf.kazoo_digest_acl(), acls)
 
 
+class TestTXMemState(TXBase):
+    def test_mem_committed(self):
+
+        t = ZKTransaction(zkhost)
+        txid = None
+
+        with ZKTransaction(zkhost) as t1:
+
+            txid = t1.txid
+
+            # not set yet
+            self.assertIsNone(t.zkstorage.state.get(txid)[0])
+
+            foo = t1.lock_get('foo')
+            foo.v = 100
+            t1.set(foo)
+            t1.set_mem_state('bar')
+
+            self.assertIsNone(t.zkstorage.state.get(txid)[0])
+
+            val = t1.mem_state
+            self.assertEqual({'got_keys': ['foo'], 'data': 'bar', "start_ts": t1.start_ts}, val)
+
+            val = t1.get_mem_state()
+            self.assertEqual('bar', val)
+
+            t1.commit()
+
+        self.assertIsNone(t1.get_mem_state())
+
+    def test_user_abort(self):
+
+        t = ZKTransaction(zkhost)
+        txid = None
+
+        try:
+            with ZKTransaction(zkhost) as t1:
+
+                txid = t1.txid
+                t1.set_mem_state('bar')
+
+                self.assertIsNone(t.zkstorage.state.get(txid)[0])
+
+                val = t1.mem_state
+                self.assertEqual({'got_keys': [], 'data': 'bar', "start_ts": t1.start_ts}, val)
+
+                val = t1.get_mem_state()
+                self.assertEqual('bar', val)
+
+                t1.abort()
+        except UserAborted:
+            pass
+
+        self.assertIsNone(t.zkstorage.state.get(txid)[0])
+
+    def test_exception(self):
+
+        # tx raised by other exception is recoverable
+
+        t = ZKTransaction(zkhost)
+        txid = None
+
+        try:
+            with ZKTransaction(zkhost) as t1:
+
+                txid = t1.txid
+                t1.set_mem_state('bar')
+
+                self.assertIsNone(t.zkstorage.state.get(txid)[0])
+
+                val = t1.mem_state
+                self.assertEqual({'got_keys': [], 'data': 'bar', "start_ts": t1.start_ts}, val)
+
+                val = t1.get_mem_state()
+                self.assertEqual('bar', val)
+
+                raise ValueError('foo')
+
+        except ValueError:
+            pass
+
+        self.assertIsNone(t.zkstorage.state.get(txid)[0])
+
+    def test_timeout(self):
+
+        # timeout on waiting is recoverable
+
+        t = ZKTransaction(zkhost)
+        txid = None
+
+        try:
+            with ZKTransaction(zkhost, timeout=0.5) as t1:
+                txid = t1.txid
+
+                # t.txid is higher
+                t.begin()
+                t.lock_get('foo')
+
+                t1.set_mem_state('bar')
+                t1.lock_get('foo')  # should timeout waiting for higher txid
+
+        except TXTimeout:
+            pass
+
+        self.assertIsNone(t.zkstorage.state.get(txid)[0])
+
+    def test_recover(self):
+
+        txid = None
+        with ZKTransaction(zkhost, timeout=0.5) as t1:
+
+            txid = t1.txid
+            f1 = t1.lock_get('foo')
+            f2 = t1.lock_get('foo2')
+
+            f1.v = "foo_val"
+            f2.v = "foo2_val"
+
+            t1.set(f1)
+            t1.set(f2)
+
+            t1.set_mem_state('bar')
+
+        with ZKTransaction(zkhost, txid=txid, timeout=0.5) as t2:
+            st = t2.get_state()
+            self.assertEqual(None, st)
+
+            f1 = t2.lock_get('foo')
+            f2 = t2.lock_get('foo2')
+
+            self.assertEqual(f1.v, None)
+            self.assertEqual(f2.v, None)
+
+            try:
+                with ZKTransaction(zkhost, txid=txid, timeout=0.5) as t3:
+                    dd(t3)
+                self.fail("expected TXTimeout")
+            except TXTimeout:
+                pass
+
+    def test_list_recoverable(self):
+
+        txid = None
+        with ZKTransaction(zkhost, timeout=0.5) as t1:
+
+            txid = t1.txid
+            t1.lock_get('foo')
+            t1.set_mem_state('bar')
+
+            with ZKTransaction(zkhost, timeout=0.5) as t2:
+                txid = t2.txid
+                t2.lock_get('foo2')
+                t2.set_mem_state('bar2')
+
+            self.assertEqual([],
+                             [x for x in zktx.list_recoverable(zkhost)])
+
+
 class TestTXState(TXBase):
 
     def test_committed(self):
