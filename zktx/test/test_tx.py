@@ -643,6 +643,22 @@ class TestTX(TXBase):
             acls, _ = self.zk.get_acls(self.zkauthed._zkconf.journal(0))
             self.assertEqual(self.zkauthed._zkconf.kazoo_digest_acl(), acls)
 
+    def test_tx_identifer(self):
+        for zk_owner in (None, "test_zk_owner"):
+            exp_ident_val = None
+
+            if zk_owner is not None:
+                exp_ident_val = {'zk_owner': zk_owner}
+
+            def get_tx_ident(tx):
+                return t1.tx_alive_lock.get_lock_val()[0]
+
+            with ZKTransaction(self.zkauthed, zk_owner=zk_owner) as t1:
+                self.assertEqual(exp_ident_val, get_tx_ident(t1))
+
+            def _tx(tx):
+                self.assertEqual(exp_ident_val, get_tx_ident(t1))
+
 
 class TestTXMemState(TXBase):
     def test_mem_committed(self):

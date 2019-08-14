@@ -58,7 +58,7 @@ class TXRecord(object):
 
 class ZKTransaction(object):
 
-    def __init__(self, zk, txid=None, timeout=None, lock_timeout=300):
+    def __init__(self, zk, txid=None, timeout=None, lock_timeout=300, zk_owner=None):
 
         # Save the original arg for self.run()
         self._zk = zk
@@ -90,6 +90,8 @@ class ZKTransaction(object):
         self.start_ts = time.time()
 
         self.mem_state = None
+
+        self.zk_owner = zk_owner
 
     def _on_conn_change(self, state):
 
@@ -374,9 +376,17 @@ class ZKTransaction(object):
         zkconf = copy.deepcopy(self.zke._zkconf.conf)
         zkconf['lock_dir'] = self.zke._zkconf.tx_alive()
 
+        identifier = None
+        if self.zk_owner is not None:
+            identifier = {
+                'id': zkutil.lock_id(self.zke._zkconf.node_id()),
+                'val': {'zk_owner': self.zk_owner},
+            }
+
         self.tx_alive_lock = zkutil.ZKLock(self.txid,
                                            zkconf=zkconf,
                                            zkclient=self.zke,
+                                           identifier=identifier,
                                            timeout=self.expire_at-time.time())
 
         try:
@@ -577,7 +587,7 @@ class ZKTransaction(object):
                                        locked=','.join(sorted(self.got_keys.keys())))
 
 
-def run_tx(zk, func, txid=None, timeout=None, lock_timeout=300, args=(), kwargs=None):
+def run_tx(zk, func, txid=None, timeout=None, lock_timeout=300, args=(), kwargs=None, zk_owner=None):
 
     if timeout is None:
         timeout = getattr(config, "zk_tx_timeout")
@@ -589,7 +599,7 @@ def run_tx(zk, func, txid=None, timeout=None, lock_timeout=300, args=(), kwargs=
 
     while True:
 
-        tx = ZKTransaction(zk, timeout=expire_at - time.time(), lock_timeout=lock_timeout, txid=txid)
+        tx = ZKTransaction(zk, timeout=expire_at - time.time(), lock_timeout=lock_timeout, txid=txid, zk_owner=zk_owner)
         txid = None
 
         try:
