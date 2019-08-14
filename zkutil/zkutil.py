@@ -340,17 +340,16 @@ def _conditioned_get_loop(zkclient, path, conditioned_get, timeout=None, **kwarg
     try:
         while True:
 
-            with lck:
-                it = conditioned_get(zkclient, path, **kwargs)
-                it.next()
-                rst = it.send((NeedWait, set_available))
+            it = conditioned_get(zkclient, path, **kwargs)
+            it.next()
+            rst = it.send((NeedWait, set_available))
 
-                if rst is NeedWait:
-                    maybe_available.clear()
-                else:
-                    return rst
+            if rst is not NeedWait:
+                return rst
 
             if maybe_available.wait(expire_at - time.time()):
+                with lck:
+                    maybe_available.clear()
                 continue
 
             raise ZKWaitTimeout("timeout({timeout} sec)"
