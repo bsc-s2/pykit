@@ -170,6 +170,8 @@ class ZKTransaction(object):
             'data': state_data,
         }
 
+        logger.info('{tx} tx.set_mem_state: {txst}'.format(tx=self, txst=txst))
+
         self.mem_state = txst
 
     def get_mem_state(self):
