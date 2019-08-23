@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import threading
 import logging
 
 from kazoo.exceptions import NoNodeError
 
 from pykit import rangeset
 from pykit import zkutil
+from pykit import jobq
+from pykit import cachepool
 
 from .status import COMMITTED
 from .status import PURGED
@@ -16,6 +19,10 @@ from .zkstorage import record_nonode_cb
 from .zkstorage import journal_id_set_load
 
 logger = logging.getLogger(__name__)
+
+
+class SlaveError(Exception):
+    pass
 
 
 class Slave(object):
@@ -53,23 +60,59 @@ class Slave(object):
         meta_path = ''.join([record_dir, 'meta'])
         names = self.zke.get_children(meta_path)
 
-        existed = {}
-        for n in names:
-            keys_path = '/'.join([meta_path, n])
-            keys = self.zke.get_children(keys_path)
-            existed[n] = {}
+        lock = threading.RLock()
+        st = {'existed': {}, 'failed': []}
+        zke_pool = cachepool.CachePool(lambda c: zkutil.kazoo_client_ext(c)[0],
+                                       generator_args=[self.zke._zkconf],
+                                       close_callback=zkutil.close_zk)
 
-            for k in keys:
-                path = '/'.join([keys_path, k])
-                val, _ = self.zke.get(path)
+        def _iter_key():
+            for n in names:
+                keys_path = '/'.join([meta_path, n])
+                keys = self.zke.get_children(keys_path)
+
+                with lock:
+                    if n not in st['existed']:
+                        st['existed'][n] = {}
+
+                for k in keys:
+                    path = '/'.join([keys_path, k])
+                    yield (n, k, path)
+
+        def _set_record(args):
+            try:
+                n, k, path = args
+                try:
+                    with cachepool.make_wrapper(zke_pool)() as zke:
+                        val, _ = zke.get(path)
+                except NoNodeError:
+                    # the node may be deleted after get children
+                    logger.warn('{p} has been deleted'.format(p=path))
+                    return
 
                 # k='record_dir/meta/server/<server_id>
                 # remove record_dir
                 path = path[len(record_dir):]
                 self.storage.apply_record(path, val[-1])
-                existed[n][k] = 1
 
-        self.storage.delete_absent_record(existed)
+                with lock:
+                    st['existed'][n][k] = 1
+
+            except Exception as e:
+                logger.exception(repr(e) + ' while set record {a}'.format(a=args))
+                with lock:
+                    st['failed'].append(args)
+
+        jobq.run(_iter_key(), [(_set_record, 20)])
+        if len(st['failed']) > 0:
+            logger.error('failed to set record {f}'.format(f=st['failed']))
+            raise SlaveError('failed to set record')
+
+        while not zke_pool.queue.empty():
+            ele = zke_pool.queue.get()
+            zkutil.close_zk(ele)
+
+        self.storage.delete_absent_record(st['existed'])
         self.storage.set_journal_id_set(self.zk_journal_id_set)
 
     def apply(self):

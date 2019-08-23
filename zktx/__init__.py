@@ -56,6 +56,7 @@ from .redisaccessor import (
 )
 
 from .slave import (
+    SlaveError,
     Slave,
 )
 
@@ -99,5 +100,6 @@ __all__ = [
     "RedisKeyValue",
     "RedisValue",
 
+    "SlaveError",
     "Slave",
 ]
