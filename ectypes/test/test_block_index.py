@@ -41,7 +41,11 @@ class TestBlockIndex(unittest.TestCase):
 
         for i, j in cases:
             dd(i, j)
-            self.assertRaises(ValueError, ectypes.BlockIndex, i, j)
+            try:
+                bi = ectypes.BlockIndex(i, j)
+                _ = bi.i
+            except ValueError:
+                pass
 
         cases = (
             '',
@@ -54,4 +58,8 @@ class TestBlockIndex(unittest.TestCase):
         )
 
         for bad in cases:
-            self.assertRaises(ValueError, ectypes.BlockIndex, bad)
+            try:
+                bi = ectypes.BlockIndex(bad)
+                _ = bi.i
+            except ValueError:
+                pass

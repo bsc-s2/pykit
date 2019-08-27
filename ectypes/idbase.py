@@ -58,35 +58,43 @@ class IDBase(str):
                                  sl=len(s),
                                  s=s))
 
-        x = super(IDBase, clz).__new__(clz, s)
+        return super(IDBase, clz).__new__(clz, s)
 
+    def _init_by_str(self):
         id_attrs = []
 
-        for attr_definition in clz._attrs:
+        clz = self.__class__
+
+        for ii, attr_definition in enumerate(clz._attrs):
 
             k, start_idx, end_idx, attr_type, opt = clz._normalize(attr_definition)
 
+            # avoid repeated init, when accessing a key that does not exist
+            try:
+                if ii == 0:
+                    return super(IDBase, self).__getattribute__(k)
+            except AttributeError:
+                pass
+
             if opt['self']:
-                val = x
+                val = self
             else:
-                val = attr_type(s[start_idx:end_idx])
+                val = attr_type(self[start_idx:end_idx])
 
                 if opt['embed']:
                     for a in val._id_base_attrs:
                         if not a.startswith('_'):
-                            super(IDBase, x).__setattr__(a, getattr(val, a))
+                            super(IDBase, self).__setattr__(a, getattr(val, a))
                             id_attrs.append(a)
-
 
             if k.startswith('_'):
                 continue
 
-            super(IDBase, x).__setattr__(k, val)
+            super(IDBase, self).__setattr__(k, val)
             id_attrs.append(k)
 
-        super(IDBase, x).__setattr__('_id_base_attrs', tuple(id_attrs))
+        super(IDBase, self).__setattr__('_id_base_attrs', tuple(id_attrs))
 
-        return x
 
     @classmethod
     def _is_key_attr(clz, attr_definition):
@@ -126,10 +134,13 @@ class IDBase(str):
 
         return name, s, e, attr_type, opt
 
-
     def __setattr__(self, n, v):
         raise TypeError('{clz} does not allow to change attribute'.format(
             clz=self.__class__.__name__))
+
+    def __getattr__(self, n):
+        self._init_by_str()
+        return super(IDBase, self).__getattribute__(n)
 
     def as_tuple(self):
         lst = []
