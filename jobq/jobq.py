@@ -379,10 +379,12 @@ def run(input_it, workers, keep_order=False, timeout=None, probe=None):
 
     mgr = JobManager(workers, probe=probe, keep_order=keep_order)
 
-    for args in input_it:
-        mgr.put(args)
+    try:
+        for args in input_it:
+            mgr.put(args)
 
-    mgr.join(timeout=timeout)
+    finally:
+        mgr.join(timeout=timeout)
 
 
 def stat(probe):
