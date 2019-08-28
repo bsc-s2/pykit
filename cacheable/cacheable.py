@@ -5,6 +5,7 @@ import copy
 import logging
 import threading
 import time
+import msgpack
 
 logger = logging.getLogger(__name__)
 _lock_mutex_update = threading.RLock()
@@ -95,10 +96,11 @@ class LRU(object):
 class Cacheable(object):
 
     def __init__(self, capacity=1024 * 4, timeout=60,
-                    is_deepcopy=True, mutex_update=False):
+                    is_deepcopy=True, is_pack=False, mutex_update=False):
 
         self.lru = LRU(capacity, timeout)
         self.is_deepcopy = is_deepcopy
+        self.is_pack = is_pack
         self.mutex_update = mutex_update
 
     def _arg_str(self, args, argkv):
@@ -124,10 +126,17 @@ class Cacheable(object):
                             val = self.lru[generate_key]
                         except KeyError:
                             val = fun(*args, **argkv)
+                            if self.is_pack:
+                                val = msgpack.packb(val, use_bin_type=True)
                             self.lru[generate_key] = val
                 else:
                     val = fun(*args, **argkv)
+                    if self.is_pack:
+                        val = msgpack.packb(val, use_bin_type=True)
                     self.lru[generate_key] = val
+
+            if self.is_pack:
+                val = msgpack.unpackb(val, raw=False)
 
             if self.is_deepcopy:
                 return copy.deepcopy(val)
@@ -140,7 +149,8 @@ class Cacheable(object):
 caches = {}
 
 
-def cache(name, capacity=1024 * 4, timeout=60, is_deepcopy=True, mutex_update=False):
+def cache(name, capacity=1024 * 4, timeout=60,
+        is_deepcopy=True, is_pack=False, mutex_update=False):
 
     c = caches.get(name)
     if c is None:

@@ -103,7 +103,7 @@ Least Recently Used Cache.
 ##  cacheable.Cacheable
 
 **syntax**:
-`cacheable.Cacheable(capacity=1024 * 4, timeout=60, is_deepcopy=True, mutex_update=False)`
+`cacheable.Cacheable(capacity=1024 * 4, timeout=60, is_deepcopy=True, is_pack=False, mutex_update=False)`
 
 Create a `LRU` object, all items will be cached in it.
 
@@ -117,6 +117,13 @@ Create a `LRU` object, all items will be cached in it.
     to return deepcopy or reference of cached item.
 
     -   `True`: return deepcopy of cached item
+
+    -   `False`: return reference of cached item
+
+-   `is_pack`: `cacheable.cache` return a decorator that use `is_pack`
+    to return `msgpack.pack` item.
+
+    -   `True`: return `msgpack.pack` of cached item
 
     -   `False`: return reference of cached item
 
@@ -187,7 +194,7 @@ so can get value and set value like `dict`
 ##  cacheable.cache
 
 **syntax**:
-`cacheable.cache(name, capacity=1024 * 4, timeout=60, is_deepcopy=True, mutex_update=False)`
+`cacheable.cache(name, capacity=1024 * 4, timeout=60, is_deepcopy=True, is_pack=False, mutex_update=False)`
 
 If not exist, create a `cacheable.Cacheable` and save it, else use exist one.
 

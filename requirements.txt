@@ -62,3 +62,6 @@ objgraph==3.1.0
 
 # geventwebsocket
 gevent-websocket==0.10.1
+
+# msgpack
+msgpack==0.6.1
