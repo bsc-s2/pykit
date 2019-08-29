@@ -102,6 +102,7 @@ class ZKTransaction(object):
                 self.connected = False
 
     def lock_get(self, key, blocking=True, latest=True, timeout=None):
+        self._assert_connected()
 
         # We use persistent lock(ephemeral=False)
         # thus we do not need to care about connection loss during locking
@@ -151,6 +152,8 @@ class ZKTransaction(object):
         del self.got_keys[rec.k]
 
     def set(self, rec):
+        self._assert_connected()
+
         logger.info('{tx} tx.set: {rec}'.format(tx=self, rec=rec))
         if rec.k not in self.got_keys:
             raise NotLocked(
@@ -166,6 +169,8 @@ class ZKTransaction(object):
         self.got_keys_ver[rec.k] = lock_ver
 
     def set_mem_state(self, state_data):
+        self._assert_connected()
+
         txst = {
             'got_keys': self.got_keys.keys(),
             "start_ts": self.start_ts,
@@ -189,6 +194,8 @@ class ZKTransaction(object):
         self.mem_state = None
 
     def set_state(self, state_data):
+        self._assert_connected()
+
         txst = {
             'got_keys': self.got_keys.keys(),
             "start_ts": self.start_ts,
@@ -198,7 +205,6 @@ class ZKTransaction(object):
         self.zkstorage.state.set_or_create(self.txid, txst)
 
     def get_state(self, txid=None):
-
         txst, ver = self._get_state(txid=txid)
         if txst is None:
             return None
@@ -226,6 +232,7 @@ class ZKTransaction(object):
             pass
 
     def lock_key(self, key, timeout):
+        self._assert_connected()
 
         try:
             return self._lock_key(key, timeout)
@@ -235,6 +242,7 @@ class ZKTransaction(object):
         logger.info('{tx} [{key}] locked'.format(tx=self, key=key))
 
     def try_lock_key(self, key):
+        self._assert_connected()
 
         while True:
             other_txid, other_val, ver = [None] * 3
