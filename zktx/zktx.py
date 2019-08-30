@@ -470,15 +470,20 @@ class ZKTransaction(object):
                            utfjson.dump(jour),
                            acl=cnf.kazoo_digest_acl(),
                            sequence=True)
+
+            kazootx.check(self.tx_alive_lock.lock_path, self.tx_alive_lock.lock_holder[1])
+
             rst = kazootx.commit()
             for r in rst:
                 if isinstance(r, KazooException):
                     raise CommitError(rst)
 
             status = COMMITTED
-            journal_id = rst[-1].split('/')[-1][-10:]
+            journal_id = rst[-2].split('/')[-1][-10:]
             self.zkstorage.add_to_journal_id_set(status, journal_id)
         else:
+            kazootx.check(self.tx_alive_lock.lock_path, self.tx_alive_lock.lock_holder[1])
+
             # Nothing to commit, make it an aborted tx.
             kazootx.commit()
             status = PURGED
