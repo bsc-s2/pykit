@@ -91,7 +91,11 @@ class TestDriveID(unittest.TestCase):
 
         for c in invalid_cases:
             dd(c)
-            self.assertRaises(ValueError, ectypes.DriveID, c)
+            try:
+                did = ectypes.DriveID(c)
+                did.port
+            except ValueError:
+                pass
 
         cases = (
             'idc000' 'aabbccddeeff0001',

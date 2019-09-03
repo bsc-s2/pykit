@@ -234,3 +234,14 @@ class Region(FixedKeysDict):
                     return True
 
         return False
+
+    def get_block_byid(self, block_id, raise_error=True):
+        for blocks in self['levels']:
+            for blk in blocks:
+                if blk[2]["block_id"] == block_id:
+                    return blk
+
+        if raise_error:
+            raise BlockNotInRegion('block_id: %s' % str(block_id))
+
+        return None

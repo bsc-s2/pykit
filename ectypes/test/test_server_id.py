@@ -46,7 +46,11 @@ class TestServerID(unittest.TestCase):
         )
 
         for c in invalid_cases:
-            self.assertRaises(ValueError, ectypes.ServerID, *c)
+            try:
+                sid = ectypes.ServerID(*c)
+                sid.drive_id
+            except ValueError:
+                pass
 
         cases = (
             '112233aabbcc',

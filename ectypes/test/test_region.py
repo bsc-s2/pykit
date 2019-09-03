@@ -564,3 +564,51 @@ class TestRegion(unittest.TestCase):
             region = Region(region_meta)
             result = region.get_block_ids_by_needle_id(needle_id)
             self.assertEqual(block_ids, result)
+
+    def test_get_block_byid(self):
+        bid1 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000001')
+        bid2 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000002')
+        bid3 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000003')
+
+        region_cases = [
+            (
+                {},
+                'xx',
+                None,
+                BlockNotInRegion,
+            ),
+            (
+                {'range': ['a', 'e'], 'levels': [
+                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                ]},
+                bid1,
+                ['a', 'b', {'block_id': bid1}],
+                None
+            ),
+            (
+                {'range': ['a', 'e'], 'levels': [
+                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                ]},
+                bid2,
+                ['c', 'z', {'block_id': bid2}],
+                None
+            ),
+            (
+                {'range': ['a', 'e'], 'levels': [
+                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                ]},
+                bid3,
+                None,
+                BlockNotInRegion,
+            ),
+        ]
+
+        for region_meta, bid, blk, err in region_cases:
+
+            region = Region(region_meta)
+
+            if err is not None:
+                self.assertRaises(err, region.get_block_byid, bid)
+                self.assertEqual(None, region.get_block_byid(bid, raise_error=False))
+            else:
+                self.assertEqual(blk[2]["block_id"], region.get_block_byid(bid)[2]["block_id"])
