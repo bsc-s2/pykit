@@ -3,6 +3,7 @@
 
 import copy
 import unittest
+import time
 
 from pykit import utfjson
 from pykit import ututil
@@ -153,6 +154,7 @@ class TestBlockGroup(unittest.TestCase):
         self.assertDictEqual(del_blk, g.get_block('0000'))
 
         self.assertEqual(1, del_blk['is_del'])
+        self.assertTrue(int(time.time()) - del_blk["mtime"] < 3)
         self.assertRaises(BlockNotFoundError, g.mark_delete_block, '9999')
 
     def test_mark_delete_block_byid(self):
@@ -163,6 +165,7 @@ class TestBlockGroup(unittest.TestCase):
         self.assertDictEqual(del_blk, g.get_block_byid(self.foo_block['block_id']))
 
         self.assertEqual(1, del_blk['is_del'])
+        self.assertTrue(int(time.time()) - del_blk["mtime"] < 3)
 
         fake_bid = BlockID(
             'd0', 'g000640000000125', '0000',

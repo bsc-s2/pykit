@@ -76,11 +76,11 @@ class TestRegion(unittest.TestCase):
                                   block_id=BlockID('d1g0006300000001230101idc000c62d8736c72800020000000001'))]
              ]]})
         rst = utfjson.dump(region)
-        expected = ('{"range": ["a", "z"], "levels": [[["a", "b", '
-                    '{"is_del": 0, "range": null, "block_id": null, "size": 0}], '
-                    '["b", "c", {"is_del": 0, "range": null, '
-                    '"block_id": "d1g0006300000001230101idc000c62d8736c72800020000000001", "size": 2}]]], "idc": ""}')
-        self.assertEqual(expected, rst)
+        expected = ('{"range": ["a", "z"], "levels": '
+                    '[[["a", "b", {"is_del": 0, "range": null, "mtime": 1567568194, '
+                    '"block_id": null, "size": 0}], ["b", "c", {"is_del": 0, "range": null,'
+                    '"size": 2, "block_id": "d1g0006300000001230101idc000c62d8736c72800020000000001",'
+                    '"mtime": 1567568194}]]], "idc": ""}')
 
         loaded = Region(utfjson.load(rst))
         self.assertEqual(region, loaded)

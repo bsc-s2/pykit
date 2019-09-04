@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # coding: utf-8
+import time
 
 from pykit import rangeset
 from pykit.dictutil import FixedKeysDict
@@ -32,6 +33,14 @@ def _is_del(is_del=0):
     return is_del
 
 
+def _mtime(ts=None):
+
+    if ts is None:
+        ts = time.time()
+
+    return int(ts)
+
+
 class BlockDesc(FixedKeysDict):
 
     keys_default = dict(
@@ -39,4 +48,9 @@ class BlockDesc(FixedKeysDict):
         size=int,
         range=_range,
         is_del=_is_del,
+        mtime=_mtime,
     )
+
+    def mark_del(self):
+        self["is_del"] = 1
+        self.mtime = int(time.time())

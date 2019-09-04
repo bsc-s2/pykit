@@ -24,23 +24,28 @@ class TestBlockDesc(unittest.TestCase):
                  ({'block_id': block_id,
                    'range': ['a', 'b'],
                    'size': 34,
+                   'mtime': 1,
                    'is_del': 0},
                   {'block_id': BlockID(block_id),
                    'range': rangeset.Range('a', 'b'),
                    'size': 34,
+                   'mtime': 1,
                    'is_del': 0}),
 
                  ({'block_id': BlockID(block_id),
-                   'range': rangeset.Range('b', 'bb')},
+                   'range': rangeset.Range('b', 'bb'),
+                   'mtime': 1},
                   {'block_id': BlockID(block_id),
                    'range': rangeset.Range('b', 'bb'),
                    'size': 0,
+                   'mtime': 1,
                    'is_del': 0, })
                  )
 
         for b, expected in cases:
             if b is None:
                 blk = BlockDesc()
+                expected['mtime'] = blk["mtime"]
             else:
                 blk = BlockDesc(b)
 
@@ -56,11 +61,13 @@ class TestBlockDesc(unittest.TestCase):
                                     DriveID('idc000' 'c62d8736c7280002'), 1),
             'size': 1000,
             'range': ['0a', '0b'],
-            'is_del': 0
+            'is_del': 0,
+            'mtime': 1,
+
         })
 
         rst = utfjson.dump(blk)
-        expected = ('{"is_del": 0, "range": ["0a", "0b"], "block_id": '
+        expected = ('{"is_del": 0, "range": ["0a", "0b"], "mtime": 1, "block_id": '
                     '"d0g0006400000001230000idc000c62d8736c72800020000000001", "size": 1000}')
 
         self.assertEqual(expected, rst)

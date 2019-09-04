@@ -100,7 +100,7 @@ class BlockGroup(FixedKeysDict):
 
     def mark_delete_block(self, block_index):
         block = self.get_block(block_index, raise_error=True)
-        block['is_del'] = 1
+        block.mark_del()
 
         return block
 
@@ -112,7 +112,7 @@ class BlockGroup(FixedKeysDict):
 
     def mark_delete_block_byid(self, block_id):
         block = self.get_block_byid(block_id, raise_error=True)
-        block['is_del'] = 1
+        block.mark_del()
 
         return block
 
