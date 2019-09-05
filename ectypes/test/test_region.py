@@ -5,7 +5,6 @@ import unittest
 
 from pykit import utfjson
 from pykit import ututil
-from pykit.ectypes import BlockDesc
 from pykit.ectypes import BlockID
 from pykit.ectypes import BlockNotInRegion
 from pykit.ectypes import BlockAreadyInRegion
@@ -13,6 +12,22 @@ from pykit.ectypes import LevelOutOfBound
 from pykit.ectypes import Region
 
 dd = ututil.dd
+
+tbid0 = BlockID('d0g0006300000001230101idc000c62d8736c72800020000000000')
+tbid1 = BlockID('d0g0006300000001230101idc000c62d8736c72800020000000001')
+tbid2 = BlockID('d0g0006300000001230101idc000c62d8736c72800020000000002')
+tbid3 = BlockID('d0g0006300000001230101idc000c62d8736c72800020000000003')
+tbid4 = BlockID('d0g0006300000001230101idc000c62d8736c72800020000000004')
+tbid5 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000005')
+tbid6 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000006')
+tbid7 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000007')
+tbid8 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000008')
+tbid9 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000009')
+tbid10 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000010')
+tbid11 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000011')
+tbid12 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000012')
+tbid13 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000013')
+tbid14 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000014')
 
 
 class TestRegion(unittest.TestCase):
@@ -29,12 +44,12 @@ class TestRegion(unittest.TestCase):
                 {'idc': '.bei', 'range': ['a', 'b'], 'levels': []}
             ),
             (
-                {'levels': [[['a', 'b', BlockDesc()]], [['c', 'd', BlockDesc(size=1)]]]},
-                {'idc': '', 'range': None, 'levels': [[['a', 'b', BlockDesc()]], [['c', 'd', BlockDesc(size=1)]]]}
+                {'levels': [[['a', 'b', tbid1]], [['c', 'd', tbid2]]]},
+                {'idc': '', 'range': None, 'levels': [[['a', 'b', tbid1]], [['c', 'd', tbid2]]]}
             ),
             (
-                {'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc()], ['b', 'c', BlockDesc(size=2)]]]},
-                {'idc': '', 'range': ['a', 'z'], 'levels': [[['a', 'b', BlockDesc()], ['b', 'c', BlockDesc(size=2)]]]}
+                {'range': ['a', 'z'], 'levels': [[['a', 'b', tbid1], ['b', 'c', tbid2]]]},
+                {'idc': '', 'range': ['a', 'z'], 'levels': [[['a', 'b', tbid1], ['b', 'c', tbid2]]]}
             ),
         ]
 
@@ -45,8 +60,8 @@ class TestRegion(unittest.TestCase):
 
         region_cases_argkv = [
             (
-                [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]],
-                {'idc': '', 'range': None, 'levels': [[['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]]}
+                [[['a', 'b', tbid1], ['c', 'd', tbid2]]],
+                {'idc': '', 'range': None, 'levels': [[['a', 'b', tbid1], ['c', 'd', tbid2]]]}
             ),
             (
                 ['a', 'z'],
@@ -55,7 +70,7 @@ class TestRegion(unittest.TestCase):
             (
                 [],
                 {'idc': '', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc(size=2)]]]}
+                    [['a', 'b', tbid1], ['c', 'd', tbid2]]]}
             ),
         ]
 
@@ -69,83 +84,81 @@ class TestRegion(unittest.TestCase):
         self.assertEqual(region_cases_argkv[2][1], region)
 
     def test_json(self):
-        region = Region({'range': ['a', 'z'],
-                                 'levels': [
-            [['a', 'b', BlockDesc()],
-             ['b', 'c', BlockDesc(size=2,
-                                  block_id=BlockID('d1g0006300000001230101idc000c62d8736c72800020000000001'))]
-             ]]})
-        rst = utfjson.dump(region)
-        expected = ('{"range": ["a", "z"], "levels": '
-                    '[[["a", "b", {"is_del": 0, "range": null, "mtime": 1567568194, '
-                    '"block_id": null, "size": 0}], ["b", "c", {"is_del": 0, "range": null,'
-                    '"size": 2, "block_id": "d1g0006300000001230101idc000c62d8736c72800020000000001",'
-                    '"mtime": 1567568194}]]], "idc": ""}')
+        region = Region({
+                'range': ['a', 'z'],
+                'levels': [
+                    [['a', 'b', tbid1], ['b', 'c', tbid2]]
+                ]})
 
-        loaded = Region(utfjson.load(rst))
-        self.assertEqual(region, loaded)
+        rst = utfjson.dump(region)
+
+        expected = ('{"range": ["a", "z"], "levels": '
+                    '[[["a", "b", "' + tbid1 + '"], ["b", "c", "' + tbid2 + '"]]], "idc": ""}')
+
+        self.assertEqual(utfjson.load(expected), region)
+        self.assertEqual(region, Region(utfjson.load(rst)))
 
     def test_move_down(self):
 
         region_levels = [
             [
-                ['aa', 'ee', BlockDesc(size=1)],
-                ['hh', 'hz', BlockDesc(size=2)],
-                ['pp', 'zz', BlockDesc(size=3)],
-                ['zz', None, BlockDesc(size=4)]
+                ['aa', 'ee', tbid1],
+                ['hh', 'hz', tbid2],
+                ['pp', 'zz', tbid3],
+                ['zz', None, tbid4]
             ],
             [
-                ['cf', 'cz', BlockDesc(size=5)],
-                ['mm', 'oo', BlockDesc(size=6)],
-                ['oo', 'qq', BlockDesc(size=7)]
+                ['cf', 'cz', tbid5],
+                ['mm', 'oo', tbid6],
+                ['oo', 'qq', tbid7]
             ],
             [
-                ['aa', 'bb', BlockDesc(size=8)],
-                ['cc', 'cd', BlockDesc(size=9)],
-                ['ee', 'ff', BlockDesc(size=10)]
+                ['aa', 'bb', tbid8],
+                ['cc', 'cd', tbid9],
+                ['ee', 'ff', tbid10]
             ],
             [
-                ['aa', 'ab', BlockDesc(size=11)],
-                ['az', 'bb', BlockDesc(size=12)],
-                ['za', None, BlockDesc(size=13)]
+                ['aa', 'ab', tbid11],
+                ['az', 'bb', tbid12],
+                ['za', None, tbid13]
             ],
             [
-                ['d', 'fz', BlockDesc(size=14)]
+                ['d', 'fz', tbid14]
             ],
         ]
 
         excepted_region_levels = [
             [
-                ['aa', 'ee', BlockDesc(size=1)],
-                ['ee', 'ff', BlockDesc(size=10)],
-                ['hh', 'hz', BlockDesc(size=2)],
-                ['mm', 'oo', BlockDesc(size=6)],
-                ['pp', 'zz', BlockDesc(size=3)],
-                ['zz', None, BlockDesc(size=4)]
+                ['aa', 'ee', tbid1],
+                ['ee', 'ff', tbid10],
+                ['hh', 'hz', tbid2],
+                ['mm', 'oo', tbid6],
+                ['pp', 'zz', tbid3],
+                ['zz', None, tbid4]
             ],
             [
-                ['aa', 'bb', BlockDesc(size=8)],
-                ['cc', 'cd', BlockDesc(size=9)],
-                ['cf', 'cz', BlockDesc(size=5)],
-                ['d', 'fz', BlockDesc(size=14)],
-                ['oo', 'qq', BlockDesc(size=7)],
-                ['za', None, BlockDesc(size=13)]
+                ['aa', 'bb', tbid8],
+                ['cc', 'cd', tbid9],
+                ['cf', 'cz', tbid5],
+                ['d', 'fz', tbid14],
+                ['oo', 'qq', tbid7],
+                ['za', None, tbid13]
             ],
             [
-                ['aa', 'ab', BlockDesc(size=11)],
-                ['az', 'bb', BlockDesc(size=12)]
+                ['aa', 'ab', tbid11],
+                ['az', 'bb', tbid12]
             ],
         ]
 
         excepted_moved_blocks = [
-            (1, 0, ['mm', 'oo', BlockDesc(size=6)]),
-            (2, 1, ['aa', 'bb', BlockDesc(size=8)]),
-            (2, 1, ['cc', 'cd', BlockDesc(size=9)]),
-            (2, 0, ['ee', 'ff', BlockDesc(size=10)]),
-            (3, 2, ['aa', 'ab', BlockDesc(size=11)]),
-            (3, 2, ['az', 'bb', BlockDesc(size=12)]),
-            (3, 1, ['za', None, BlockDesc(size=13)]),
-            (4, 1, ['d',  'fz', BlockDesc(size=14)]),
+            (1, 0, ['mm', 'oo', tbid6]),
+            (2, 1, ['aa', 'bb', tbid8]),
+            (2, 1, ['cc', 'cd', tbid9]),
+            (2, 0, ['ee', 'ff', tbid10]),
+            (3, 2, ['aa', 'ab', tbid11]),
+            (3, 2, ['az', 'bb', tbid12]),
+            (3, 1, ['za', None, tbid13]),
+            (4, 1, ['d',  'fz', tbid14]),
         ]
 
         region = Region(levels=region_levels)
@@ -155,8 +168,12 @@ class TestRegion(unittest.TestCase):
         self.assertEqual(excepted_region_levels, region['levels'])
 
         region_levels = [
-            [['aa', 'ee', BlockDesc(size=1)], ['ee', 'ff', BlockDesc(size=10)], ['hh', 'hz', BlockDesc(size=2)]],
-            [['aa', 'yy', BlockDesc(size=8)]]
+            [
+                ['aa', 'ee', tbid1],
+                ['ee', 'ff', tbid10],
+                ['hh', 'hz', tbid2],
+            ],
+            [['aa', 'yy', tbid8]]
         ]
 
         region = Region(levels=region_levels)
@@ -165,62 +182,24 @@ class TestRegion(unittest.TestCase):
         self.assertEqual([], moved_blocks)
         self.assertEqual(region_levels, region['levels'])
 
-    def test_find_merge(self):
-
-        region_levels_cases = [
-            [[[
-                ['aa', 'ee', {'size': 8}],
-                ['ee', 'ff', {'size': 16}],
-                ['pp', 'zz', {'size': 8}],
-                ['zz', None, {'size': 4}]
-            ],
-                [
-                ['aa', 'pz', {'size': 4}],
-                ['qq', 'zz', {'size': 8}]
-            ]],
-                (1, ['qq', 'zz', BlockDesc(size=8)], [['pp', 'zz', BlockDesc(size=8)]])],
-            [[[
-                ['aa', 'ee', {'size': 8}],
-                ['ee', 'ff', {'size': 8}],
-                ['hh', 'hz', {'size': 8}]
-            ],
-                [
-                ['mm', 'yy', {'size': 8}]
-            ]],
-                None]
-        ]
-
-        for levels, excepted in region_levels_cases:
-            region = Region(levels=levels)
-            res = region.find_merge()
-
-            self.assertEqual(excepted, res)
-
     def test_list_block_ids(self):
-
-        bid1 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000001')
-        bid2 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000002')
-        bid3 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000003')
-        bid4 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000004')
-        bid5 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000005')
-        bid6 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000006')
 
         region_levels = [
             [
-                ['aa', 'ee', {'block_id': bid1}],
-                ['hh', 'zz', {'block_id': bid2}]
+                ['aa', 'ee', tbid1],
+                ['hh', 'zz', tbid2]
             ],
             [
-                ['ea', 'ff', {'block_id': bid4}],
-                ['mm', 'yy', {'block_id': bid5}]
+                ['ea', 'ff', tbid4],
+                ['mm', 'yy', tbid5]
             ],
         ]
 
         cases = (
-                (None, [bid1, bid2, bid4, bid5]),
-                (bid3, [bid4, bid5]),
-                (bid5, [bid5]),
-                (bid6, []),
+                (None, [tbid1, tbid2, tbid4, tbid5]),
+                (tbid3, [tbid4, tbid5]),
+                (tbid5, [tbid5]),
+                (tbid6, []),
         )
 
         region = Region(levels=region_levels)
@@ -231,134 +210,127 @@ class TestRegion(unittest.TestCase):
 
     def test_replace_block_id(self):
 
-        bid1 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000001')
-        bid2 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000002')
-        bid3 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000003')
-        bid4 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000004')
-        bid5 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000005')
-        bid6 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000006')
-
         region_levels = [
-            [['aa', 'ee', {'block_id': bid1}], ['hh', 'zz', {'block_id': bid2}]],
-            [['ea', 'ff', {'block_id': bid4}], ['mm', 'yy', {'block_id': bid5}]],
+            [['aa', 'ee', tbid1], ['hh', 'zz', tbid2]],
+            [['ea', 'ff', tbid4], ['mm', 'yy', tbid5]],
         ]
 
         excepted_region_levels = [
-            [['aa', 'ee', BlockDesc({'block_id': bid1})], ['hh', 'zz', BlockDesc({'block_id': bid2})]],
-            [['ea', 'ff', BlockDesc({'block_id': bid3})], ['mm', 'yy', BlockDesc({'block_id': bid5})]],
+            [['aa', 'ee', tbid1], ['hh', 'zz', tbid2]],
+            [['ea', 'ff', tbid3], ['mm', 'yy', tbid5]],
         ]
 
         region = Region(levels=region_levels)
 
-        region.replace_block_id(bid4, bid3)
+        region.replace_block_id(tbid4, tbid3)
         self.assertEqual(excepted_region_levels, region['levels'])
 
-        self.assertRaises(BlockNotInRegion, region.replace_block_id, bid6, bid1)
+        self.assertRaises(BlockNotInRegion, region.replace_block_id, tbid6, tbid1)
 
     def test_add_block(self):
 
         region_cases = (
             (
                 {},
-                (['a', 'c'], BlockDesc(), None),
+                (['a', 'c'], tbid0, None),
                 {'idc': '', 'range': None, 'levels': [
-                    [['a', 'c', BlockDesc()]],
+                    [['a', 'c', tbid0]],
                 ]},
                 None,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['b', 'c', BlockDesc(size=2)]],
+                    [['a', 'b', tbid1], ['b', 'c', tbid2]],
                 ]},
-                (['c', 'd'], BlockDesc(), None),
+                (['c', 'd'], tbid0, None),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['b', 'c', BlockDesc(size=2)]],
-                    [['c', 'd', BlockDesc()]],
-                ]},
-                None,
-            ),
-            (
-                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
-                    [['b', 'c', BlockDesc(size=2)]],
-                ]},
-                (['c', 'd'], BlockDesc(), 0),
-                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
-                    [['b', 'c', BlockDesc(size=2)]],
+                    [['a', 'b', tbid1], ['b', 'c', tbid2]],
+                    [['c', 'd', tbid0]],
                 ]},
                 None,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
-                    [['b', 'c', BlockDesc(size=2)]],
+                    [['a', 'b', tbid1]],
+                    [['b', 'c', tbid2]],
                 ]},
-                (['c', 'd'], BlockDesc(), 1),
+                (['c', 'd'], tbid0, 0),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
-                    [['b', 'c', BlockDesc(size=2)], ['c', 'd', BlockDesc()]],
-                ]},
-                None,
-            ),
-            (
-                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
-                    [['b', 'c', BlockDesc(size=2)]],
-                ]},
-                (['c', 'd'], BlockDesc(), 2),
-                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
-                    [['b', 'c', BlockDesc(size=2)]],
-                    [['c', 'd', BlockDesc()]],
+                    [['a', 'b', tbid1], ['c', 'd', tbid0]],
+                    [['b', 'c', tbid2]],
                 ]},
                 None,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
-                    [['b', 'c', BlockDesc(size=2)]],
+                    [['a', 'b', tbid1]],
+                    [['b', 'c', tbid2]],
                 ]},
-                (['c', 'd'], BlockDesc(), 3),
+                (['c', 'd'], tbid0, 1),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
-                    [['b', 'c', BlockDesc(size=2)]],
+                    [['a', 'b', tbid1]],
+                    [['b', 'c', tbid2], ['c', 'd', tbid0]],
+                ]},
+                None,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', tbid1]],
+                    [['b', 'c', tbid2]],
+                ]},
+                (['c', 'd'], tbid0, 2),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', tbid1]],
+                    [['b', 'c', tbid2]],
+                    [['c', 'd', tbid0]],
+                ]},
+                None,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', tbid1]],
+                    [['b', 'c', tbid2]],
+                ]},
+                (['c', 'd'], tbid0, 3),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', tbid1]],
+                    [['b', 'c', tbid2]],
                 ]},
                 LevelOutOfBound,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
-                    [['b', 'c', BlockDesc(size=2)]],
+                    [['a', 'b', tbid1]],
+                    [['b', 'c', tbid2]],
                 ]},
-                (['b', 'c'], BlockDesc(size=2), 2, True),
+                (['b', 'c'], tbid2, 2, True),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
-                    [['b', 'c', BlockDesc(size=2)]],
+                    [['a', 'b', tbid1]],
+                    [['b', 'c', tbid2]],
                 ]},
                 None
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
-                    [['b', 'c', BlockDesc(size=2)]],
+                    [['a', 'b', tbid1]],
+                    [['b', 'c', tbid2]],
                 ]},
-                (['b', 'c'], BlockDesc(size=2), 2, False),
+                (['b', 'c'], tbid2, 2, False),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
-                    [['b', 'c', BlockDesc(size=2)]],
+                    [['a', 'b', tbid1]],
+                    [['b', 'c', tbid2]],
                 ]},
                 BlockAreadyInRegion,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
-                    [['b', 'c', BlockDesc(size=2)]],
+                    [['a', 'b', tbid1]],
+                    [['b', 'c', tbid2]],
                 ]},
-                (None, BlockDesc(size=2), 2, False),
+                (None, tbid2, 2, False),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
-                    [['b', 'c', BlockDesc(size=2)]],
+                    [['a', 'b', tbid1]],
+                    [['b', 'c', tbid2]],
                 ]},
                 BlockAreadyInRegion,
             ),
@@ -379,95 +351,95 @@ class TestRegion(unittest.TestCase):
         region_cases = (
             (
                 {},
-                (BlockDesc(size=2),),
+                (tbid2,),
                 {},
                 BlockNotInRegion,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], [
-                        'b', 'c', BlockDesc(size=2)]],
+                    [['a', 'b', tbid1], [
+                        'b', 'c', tbid2]],
                 ]},
-                (BlockDesc(size=3),),
+                (tbid3,),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], [
-                        'b', 'c', BlockDesc(size=2)]],
+                    [['a', 'b', tbid1], [
+                        'b', 'c', tbid2]],
                 ]},
                 BlockNotInRegion,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
-                    [['b', 'c', BlockDesc(size=2)]],
-                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                    [['a', 'b', tbid1], ['c', 'd', tbid0]],
+                    [['b', 'c', tbid2]],
+                    [['c', 'd', tbid3], ['d', 'e', tbid0]],
                 ]},
-                (BlockDesc(size=2),),
+                (tbid2,),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
-                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                    [['a', 'b', tbid1], ['c', 'd', tbid0]],
+                    [['c', 'd', tbid3], ['d', 'e', tbid0]],
                 ]},
                 None,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
-                    [['b', 'c', BlockDesc(size=2)]],
-                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                    [['a', 'b', tbid1], ['c', 'd', tbid0]],
+                    [['b', 'c', tbid2]],
+                    [['c', 'd', tbid3], ['d', 'e', tbid0]],
                 ]},
-                (BlockDesc(size=2), ['b', 'c'], 1, True),
+                (tbid2, ['b', 'c'], 1, True),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
-                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                    [['a', 'b', tbid1], ['c', 'd', tbid0]],
+                    [['c', 'd', tbid3], ['d', 'e', tbid0]],
                 ]},
                 None,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
-                    [['b', 'c', BlockDesc(size=2)]],
-                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                    [['a', 'b', tbid1], ['c', 'd', tbid0]],
+                    [['b', 'c', tbid2]],
+                    [['c', 'd', tbid3], ['d', 'e', tbid0]],
                 ]},
-                (BlockDesc(size=2), ['b', 'd'], 1, True),
+                (tbid2, ['b', 'd'], 1, True),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
-                    [['b', 'c', BlockDesc(size=2)]],
-                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
-                ]},
-                BlockNotInRegion,
-            ),
-            (
-                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
-                    [['b', 'c', BlockDesc(size=2)]],
-                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
-                ]},
-                (BlockDesc(size=2), ['b', 'c'], 2, True),
-                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
-                    [['b', 'c', BlockDesc(size=2)]],
-                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                    [['a', 'b', tbid1], ['c', 'd', tbid0]],
+                    [['b', 'c', tbid2]],
+                    [['c', 'd', tbid3], ['d', 'e', tbid0]],
                 ]},
                 BlockNotInRegion,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
-                    [['b', 'c', BlockDesc(size=2)]],
-                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                    [['a', 'b', tbid1], ['c', 'd', tbid0]],
+                    [['b', 'c', tbid2]],
+                    [['c', 'd', tbid3], ['d', 'e', tbid0]],
                 ]},
-                (BlockDesc(size=2), ['b', 'c'], 1, False),
+                (tbid2, ['b', 'c'], 2, True),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)], ['c', 'd', BlockDesc()]],
+                    [['a', 'b', tbid1], ['c', 'd', tbid0]],
+                    [['b', 'c', tbid2]],
+                    [['c', 'd', tbid3], ['d', 'e', tbid0]],
+                ]},
+                BlockNotInRegion,
+            ),
+            (
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', tbid1], ['c', 'd', tbid0]],
+                    [['b', 'c', tbid2]],
+                    [['c', 'd', tbid3], ['d', 'e', tbid0]],
+                ]},
+                (tbid2, ['b', 'c'], 1, False),
+                {'idc': 'test', 'range': ['a', 'z'], 'levels': [
+                    [['a', 'b', tbid1], ['c', 'd', tbid0]],
                     [],
-                    [['c', 'd', BlockDesc(size=3)], ['d', 'e', BlockDesc()]],
+                    [['c', 'd', tbid3], ['d', 'e', tbid0]],
                 ]},
                 None,
             ),
             (
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', BlockDesc(size=1)]],
+                    [['a', 'b', tbid1]],
                 ]},
-                (BlockDesc(size=1),),
+                (tbid1,),
                 {'idc': 'test', 'range': ['a', 'z'], 'levels': []},
                 None,
             ),
@@ -486,9 +458,6 @@ class TestRegion(unittest.TestCase):
 
     def test_get_block_ids_by_needle_id(self):
 
-        bid1 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000001')
-        bid2 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000002')
-
         # each tuple in region_cases consists of
         # region
         # needle_id
@@ -502,60 +471,60 @@ class TestRegion(unittest.TestCase):
             ),
             (
                 {'range': ['a', 'e'], 'levels': [
-                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                    [['a', 'b', tbid1], ['c', 'z', tbid2]]
                 ]},
                 'a',
-                [bid1],
+                [tbid1],
             ),
             (
                 {'range': ['a', 'e'], 'levels': [
-                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                    [['a', 'b', tbid1], ['c', 'z', tbid2]]
                 ]},
                 'b',
                 [],
             ),
             (
                 {'range': ['a', None], 'levels': [
-                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                    [['a', 'b', tbid1], ['c', 'z', tbid2]]
                 ]},
                 'c',
-                [bid2],
+                [tbid2],
             ),
             (
                 {'range': [None, 'e'], 'levels': [
-                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                    [['a', 'b', tbid1], ['c', 'z', tbid2]]
                 ]},
                 'c',
-                [bid2],
+                [tbid2],
             ),
             (
                 {'range': [None, None], 'levels': [
-                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                    [['a', 'b', tbid1], ['c', 'z', tbid2]]
                 ]},
                 'a',
-                [bid1],
+                [tbid1],
             ),
             (
                 {'range': ['a', 'e'], 'levels': [
-                    [['a', 'b', {'block_id': bid1}], ['b', 'e', {'block_id': bid2}]]
+                    [['a', 'b', tbid1], ['b', 'e', tbid2]]
                 ]},
                 'x',
                 [],
             ),
             (
                 {'range': ['a', 'e'], 'levels': [
-                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
+                    [['a', 'b', tbid1], ['c', 'z', tbid2]]
                 ]},
                 'x',
                 [],
             ),
             (
                 {'range': ['a', 'z'], 'levels': [
-                    [['a', 'b', {'block_id': bid1}]],
-                    [['a', 'z', {'block_id': bid2}]]
+                    [['a', 'b', tbid1]],
+                    [['a', 'z', tbid2]]
                 ]},
                 'a',
-                [bid2, bid1]
+                [tbid2, tbid1]
             ),
         ]
 
@@ -564,51 +533,3 @@ class TestRegion(unittest.TestCase):
             region = Region(region_meta)
             result = region.get_block_ids_by_needle_id(needle_id)
             self.assertEqual(block_ids, result)
-
-    def test_get_block_byid(self):
-        bid1 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000001')
-        bid2 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000002')
-        bid3 = BlockID('d1g0006300000001230101idc000c62d8736c72800020000000003')
-
-        region_cases = [
-            (
-                {},
-                'xx',
-                None,
-                BlockNotInRegion,
-            ),
-            (
-                {'range': ['a', 'e'], 'levels': [
-                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
-                ]},
-                bid1,
-                ['a', 'b', {'block_id': bid1}],
-                None
-            ),
-            (
-                {'range': ['a', 'e'], 'levels': [
-                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
-                ]},
-                bid2,
-                ['c', 'z', {'block_id': bid2}],
-                None
-            ),
-            (
-                {'range': ['a', 'e'], 'levels': [
-                    [['a', 'b', {'block_id': bid1}], ['c', 'z', {'block_id': bid2}]]
-                ]},
-                bid3,
-                None,
-                BlockNotInRegion,
-            ),
-        ]
-
-        for region_meta, bid, blk, err in region_cases:
-
-            region = Region(region_meta)
-
-            if err is not None:
-                self.assertRaises(err, region.get_block_byid, bid)
-                self.assertEqual(None, region.get_block_byid(bid, raise_error=False))
-            else:
-                self.assertEqual(blk[2]["block_id"], region.get_block_byid(bid)[2]["block_id"])

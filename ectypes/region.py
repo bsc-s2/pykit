@@ -6,7 +6,6 @@ import bisect
 from pykit import rangeset
 from pykit.dictutil import FixedKeysDict
 
-from .block_desc import BlockDesc
 from .block_id import BlockID
 
 MERGE_COEF = 4
@@ -37,11 +36,11 @@ def _levels(levels=None):
     if levels is None:
         levels = []
 
-    for level, blocks in enumerate(levels):
-        for b in blocks:
-            b[2] = BlockDesc(b[2])
+    for level, range_bids in enumerate(levels):
+        for b in range_bids:
+            b[2] = BlockID(b[2])
 
-        levels[level] = rangeset.RangeDict(blocks)
+        levels[level] = rangeset.RangeDict(range_bids)
 
     return levels
 
@@ -53,16 +52,6 @@ class Region(FixedKeysDict):
         range=_range,
         levels=_levels,
     )
-
-    def need_merge(self, source, targets):
-
-        src_blk_size = source[2]['size']
-
-        target_blk_size = 0
-        for target in targets:
-            target_blk_size += target[2]['size']
-
-        return MERGE_COEF * src_blk_size >= target_blk_size
 
     def find_moved_to_level(self, src_block, src_level, region_levels):
 
@@ -102,31 +91,12 @@ class Region(FixedKeysDict):
 
         return moved_blocks
 
-    def find_merge(self):
-
-        region_levels = self['levels']
-
-        for level, src_blocks in enumerate(region_levels):
-            if level == 0:
-                continue
-
-            lower_blocks = region_levels[level - 1]
-
-            for src in src_blocks:
-                overlapped = lower_blocks.find_overlapped(src)
-
-                if len(overlapped) == 0:
-                    continue
-
-                if self.need_merge(src, overlapped):
-                    return (level, src, overlapped)
-
     def list_block_ids(self, start_block_id=None):
 
         block_ids = []
 
         for blocks in self['levels']:
-            level_bids = [b[2]['block_id'] for b in blocks]
+            level_bids = [b[2] for b in blocks]
             block_ids.extend(level_bids)
 
         block_ids.sort()
@@ -145,13 +115,13 @@ class Region(FixedKeysDict):
         for blocks in self['levels']:
 
             for block in blocks:
-                if block[2]['block_id'] == block_id:
-                    block[2]['block_id'] = new_block_id
+                if block[2] == block_id:
+                    block[2] = new_block_id
                     return
 
         raise BlockNotInRegion('block_id: %s' % str(block_id))
 
-    def delete_block(self, block, active_range=None, level=None, move=True):
+    def delete_block(self, block_id, active_range=None, level=None, move=True):
         region_levels = self['levels']
 
         for lvl, level_blocks in enumerate(region_levels):
@@ -164,7 +134,7 @@ class Region(FixedKeysDict):
                 if active_range is not None and active_range != blk[:2]:
                     continue
 
-                if blk[2] == block:
+                if blk[2] == block_id:
                     level_blocks.remove(blk)
                     break
             else:
@@ -175,13 +145,13 @@ class Region(FixedKeysDict):
 
             return
 
-        raise BlockNotInRegion('block: {bi}'.format(bi=block))
+        raise BlockNotInRegion('block_id: {bid}'.format(bid=block_id))
 
-    def add_block(self, active_range, block, level=None, allow_exist=False):
+    def add_block(self, active_range, block_id, level=None, allow_exist=False):
 
-        if self.has(block):
+        if self.has(block_id):
             if not allow_exist:
-                raise BlockAreadyInRegion('block {bi}'.format(bi=block))
+                raise BlockAreadyInRegion('block_id {bid}'.format(bid=block_id))
             return
 
         max_level = len(self['levels']) - 1
@@ -196,8 +166,7 @@ class Region(FixedKeysDict):
         if level == max_level + 1:
             self['levels'].append(rangeset.RangeDict())
 
-        desc = BlockDesc(block)
-        self['levels'][level].add(active_range, desc)
+        self['levels'][level].add(active_range, BlockID(block_id))
 
     def get_block_ids_by_needle_id(self, needle_id):
 
@@ -215,30 +184,34 @@ class Region(FixedKeysDict):
         for level in reversed(levels):
 
             try:
-                block_desc = level.get(needle_id)
+                block_id = level.get(needle_id)
             except KeyError:
                 continue
 
-            rst.append(block_desc['block_id'])
+            rst.append(block_id)
 
         return rst
 
-    def has(self, block, active_range=None):
+    def has(self, block_id, active_range=None):
         for blocks in self['levels']:
             for blk in blocks:
 
                 if active_range is not None and active_range != blk[:2]:
                     continue
 
-                if blk[2] == block:
+                if blk[2] == block_id:
                     return True
 
         return False
 
-    def get_block_byid(self, block_id, raise_error=True):
+    def get_block_byid(self, block_id, active_range=None, raise_error=True):
         for blocks in self['levels']:
             for blk in blocks:
-                if blk[2]["block_id"] == block_id:
+
+                if active_range is not None and active_range != blk[:2]:
+                    continue
+
+                if blk[2] == block_id:
                     return blk
 
         if raise_error:

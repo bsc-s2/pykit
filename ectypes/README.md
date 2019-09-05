@@ -46,7 +46,6 @@
   - [ectypes.Region](#ectypesregion)
     - [ectypes.Region.add_block](#ectypesregionadd_block)
     - [ectypes.Region.move_down](#ectypesregionmove_down)
-    - [ectypes.Region.find_merge](#ectypesregionfind_merge)
     - [ectypes.Region.list_block_ids](#ectypesregionlist_block_ids)
     - [ectypes.Region.replace_block_id](#ectypesregionreplace_block_id)
     - [ectypes.Region.get_block_ids_by_needle_id](#ectypesregionget_block_ids_by_needle_id)
@@ -887,31 +886,6 @@ Nothing
 A list of `(source_level, target_level, block)`.
 This list of 3-tuple records all movable blocks which should move from
 `source_level` to `target_level`.
-
-### ectypes.Region.find_merge
-
-**syntax**:
-`ectypes.Region.find_merge()`
-
-A merge includes blocks from two different, adjacent level.
-If block A overlaps lower level blocks set s = {X, Y...}. and size(A) >= size(s)/4, merge them.
-`find_merge` find one block and its overlapped blocks that can merge and return.
-
-**arguments**:
-Nothing
-
-**return**:
-
--   `src_level`
-    level of `src_block` that can merge downward.
-
--   `src_block`
-    the block that can merge downward.
-
--   `overlapped_blocks`
-    blocks in lower level that have overlap with `src_block`.
-
-If no blocks can merge, return None.
 
 ### ectypes.Region.list_block_ids
 
