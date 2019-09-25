@@ -110,6 +110,12 @@ def start_process(cmd, target, env, *args):
         args = list(args)
         env = dict(os.environ, **env)
         args.append(env)
-        os.execlpe(cmd, cmd, target, *args)
+        try:
+            os.execlpe(cmd, cmd, target, *args)
+        except Exception:
+            # we can do nothing when error in execlpe
+            # don't logger here, logger need get GIL lock
+            # children process may dead lock
+            pass
     else:
         _waitpid(pid)
