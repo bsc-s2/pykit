@@ -100,27 +100,55 @@ class BlockGroup(FixedKeysDict):
 
     def mark_delete_block(self, block_index):
         block = self.get_block(block_index, raise_error=True)
-        block.mark_del()
 
-        return block
+        block.rm_ref()
 
-    def delete_block(self, block_index):
-        block = self.get_block(block_index, raise_error=True)
-        del self['blocks'][str(block_index)]
+        if block.can_del():
+            block.mark_del()
+            return block
 
-        return block
+        return None
 
     def mark_delete_block_byid(self, block_id):
         block = self.get_block_byid(block_id, raise_error=True)
-        block.mark_del()
 
-        return block
+        block.rm_ref()
+
+        if block.can_del():
+            block.mark_del()
+            return block
+
+        return None
+
+    def unlink_block(self, block_index):
+        block = self.get_block(block_index, raise_error=True)
+
+        if not block.is_mark_del():
+            block.rm_ref()
+
+        if block.can_del():
+            del self['blocks'][str(block_index)]
+            return block
+
+        return None
+
+    def unlink_block_byid(self, block_id):
+        block = self.get_block_byid(block_id, raise_error=True)
+
+        if not block.is_mark_del():
+            block.rm_ref()
+
+        if block.can_del():
+            del self['blocks'][block_id.block_index]
+            return block
+
+        return None
+
+    def delete_block(self, block_index):
+        return self.unlink_block(block_index)
 
     def delete_block_byid(self, block_id):
-        block = self.get_block_byid(block_id, raise_error=True)
-        del self['blocks'][block_id.block_index]
-
-        return block
+        return self.unlink_block_byid(block_id)
 
     def has(self, block):
         bid = block['block_id']
@@ -128,6 +156,18 @@ class BlockGroup(FixedKeysDict):
 
         existent = self['blocks'].get(bidx)
         return existent == block
+
+    def link_block(self, block_index):
+        block = self.get_block(block_index, raise_error=True)
+
+        block.add_ref()
+        return block
+
+    def link_block_byid(self, block_id):
+        block = self.get_block_byid(block_id, raise_error=True)
+
+        block.add_ref()
+        return block
 
     def add_block(self, new_block, replace=False, allow_exist=False):
 
@@ -251,7 +291,7 @@ class BlockGroup(FixedKeysDict):
             if blk is None:
                 continue
 
-            if blk['is_del'] == 1:
+            if blk.is_mark_del():
                 mark_del.append(blk)
                 continue
 
