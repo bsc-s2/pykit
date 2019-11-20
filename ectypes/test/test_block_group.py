@@ -77,6 +77,8 @@ class TestBlockGroup(unittest.TestCase):
                                     DriveID('idc000' 'c62d8736c7280002'), 1),
             'size': 1000,
             'range': ['0a', '0b'],
+            'ts_range': None,
+            'ref_num': 1,
             'is_del': 0
         })
 
@@ -150,6 +152,12 @@ class TestBlockGroup(unittest.TestCase):
         g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
 
         g.add_block(self.foo_block)
+
+        self.foo_block.add_ref()
+        self.assertIsNone(g.mark_delete_block('0000'))
+        self.assertEqual(self.foo_block['ref_num'], 1)
+        self.assertEqual(0, self.foo_block['is_del'])
+
         del_blk = g.mark_delete_block('0000')
         self.assertDictEqual(del_blk, g.get_block('0000'))
 
@@ -161,6 +169,12 @@ class TestBlockGroup(unittest.TestCase):
         g = BlockGroup(block_group_id='g000640000000123', idcs=['a', 'b', 'c'], config=_ec_config)
 
         g.add_block(self.foo_block)
+
+        self.foo_block.add_ref()
+        self.assertIsNone(g.mark_delete_block_byid(self.foo_block['block_id']))
+        self.assertDictEqual(self.foo_block, g.get_block_byid(self.foo_block['block_id']))
+        self.assertEqual(self.foo_block['ref_num'], 1)
+
         del_blk = g.mark_delete_block_byid(self.foo_block['block_id'])
         self.assertDictEqual(del_blk, g.get_block_byid(self.foo_block['block_id']))
 
@@ -180,6 +194,10 @@ class TestBlockGroup(unittest.TestCase):
 
         g.add_block(self.foo_block)
         self.assertIsNotNone(g.get_block('0000'))
+
+        self.foo_block.add_ref()
+        del_blk = g.delete_block('0000')
+        self.assertIsNotNone(g.get_block('0000', raise_error=False))
 
         del_blk = g.delete_block('0000')
         self.assertIsNone(g.get_block('0000', raise_error=False))
@@ -281,7 +299,9 @@ class TestBlockGroup(unittest.TestCase):
                                     DriveID('idc000' 'c62d8736c7280002'), 1),
             'size': 1000,
             'range': ['0a', '0b'],
-            'is_del': 0
+            'is_del': 0,
+            'ref_num': 1,
+            'ts_range': ["123", "456"]
         })
         g.add_block(d0)
         self.assertEqual('a', g.get_block_idc('0000'))
@@ -310,7 +330,9 @@ class TestBlockGroup(unittest.TestCase):
         base_blk = BlockDesc({
             'size': 1000,
             'range': ['0a', '0b'],
-            'is_del': 0
+            'is_del': 0,
+            'ref_num': 1,
+            'ts_range': ["123", "456"]
         })
 
         ec_blk_idxes = ['0000', '0001']
@@ -364,7 +386,9 @@ class TestBlockGroup(unittest.TestCase):
         base_parity = BlockDesc({
             'size': 1000,
             'range': ['0a', '0b'],
-            'is_del': 0
+            'is_del': 0,
+            'ref_num': 1,
+            'ts_range': ["123", "456"]
         })
 
         parity_idxes = ['0004', '0005']
@@ -397,7 +421,11 @@ class TestBlockGroup(unittest.TestCase):
         base_blk = BlockDesc({
             'size': 1000,
             'range': ['0a', '0b'],
-            'is_del': 0
+            'ts_range': ["123", "456"],
+            'ref_num': 1,
+            'is_del': 0,
+            'ref_num': 1,
+            'ts_range': ["123", "456"]
         })
 
         if config is None:
@@ -541,7 +569,7 @@ class TestBlockGroup(unittest.TestCase):
         self.assertRaises(BlockNotFoundError, bg.get_block_byid, fake_bid, True)
         self.assertRaises(BlockNotFoundError, bg.get_block_byid, fake_bid)
 
-    def test_delete_block_byid(self):
+    def test_unlink_block_byid(self):
 
         blk_idxes = ['0000', '0001', '0002', '0003', '0008', '0012']
 
@@ -549,6 +577,14 @@ class TestBlockGroup(unittest.TestCase):
 
         blks = bg.indexes_to_blocks(blk_idxes)
         bids = [blk['block_id'] for blk in blks]
+
+        bg.link_block_byid(bids[1])
+        self.assertEqual(blks[1]['ref_num'], 2)
+
+        self.assertIsNone(bg.delete_block_byid(bids[1]))
+
+        del_blk = bg.mark_delete_block_byid(bids[1])
+        self.assertEqual(del_blk["is_del"], 1)
 
         del_blk = bg.delete_block_byid(bids[1])
         self.assertDictEqual(del_blk, blks[1])
@@ -560,6 +596,27 @@ class TestBlockGroup(unittest.TestCase):
         act_blks = bg.indexes_to_blocks(blk_idxes)
         act_blks = [blk for blk in act_blks if blk is not None]
 
+        self.assertListEqual(blks, act_blks)
+
+    def test_link_block(self):
+
+        blk_idxes = ['0000', '0001', '0002', '0003', '0008', '0012']
+
+        bg = self.make_test_block_group(blk_idxes)
+        blks = bg.indexes_to_blocks(blk_idxes)
+
+        args = [blks[1], False, False]
+        self.assertRaises(BlockExists, bg.add_block, *args)
+        act_blks = bg.indexes_to_blocks(blk_idxes)
+        self.assertListEqual(blks, act_blks)
+
+        bg.link_block(blk_idxes[1])
+        self.assertEqual(blks[1]['ref_num'], 2)
+
+        bg.unlink_block(blk_idxes[1])
+        self.assertDictEqual(blks[1], bg.add_block(blks[1], allow_exist=True))
+
+        act_blks = bg.indexes_to_blocks(blk_idxes)
         self.assertListEqual(blks, act_blks)
 
     def test_add_block(self):
