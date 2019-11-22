@@ -8,6 +8,8 @@ class ServerStatus():
     FAILED = 'failed'
     DELETING = 'deleting'
     DELETED = 'deleted'
+    ARCHIVE_ONLINE = 'archive_online'
+    ARCHIVE_OFFLINE = 'archive_offline'
 
     @classmethod
     def def_status(cls):
@@ -21,4 +23,6 @@ class ServerStatus():
             cls.FAILED,
             cls.DELETING,
             cls.DELETED,
+            cls.ARCHIVE_ONLINE,
+            cls.ARCHIVE_OFFLINE,
         ]
