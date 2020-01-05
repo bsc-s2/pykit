@@ -69,7 +69,7 @@ class TestCat(unittest.TestCase):
         n = 128
 
         def _append():
-            for i in range(n):
+            for _ in range(n):
                 time.sleep(0.001)
                 append_bytes(self.fn, 'a' * 2048)
                 time.sleep(0.001)
@@ -267,7 +267,7 @@ class TestCat(unittest.TestCase):
             for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0.1):
                 rst.append(l)
 
-            self.failed('expect NoSuchFile to raise')
+            self.fail('expect NoSuchFile to raise')
         except fsutil.NoSuchFile:
             pass
 
@@ -297,7 +297,7 @@ class TestCat(unittest.TestCase):
             for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0.3):
                 rst.append(l)
 
-            self.failed('expect NoData to raise')
+            self.fail('expect NoData to raise')
         except fsutil.NoData:
             pass
 
@@ -326,7 +326,7 @@ class TestCat(unittest.TestCase):
             for l in fsutil.Cat(self.fn, strip=True).iterate(timeout=0.1):
                 rst.append(l)
 
-            self.failed('expect NoData to raise')
+            self.fail('expect NoData to raise')
         except fsutil.NoData:
             pass
 

@@ -358,41 +358,43 @@ class Cat(object):
             if offset >= fsize:
                 break
 
-            lines = f.readlines(self.read_chunk_size)
-            if self.bufferred is not None:
-                offset = self.bufferred[0]
-                lines[0] = self.bufferred[1] + lines[0]
-                self.bufferred = None
-
             try:
-                for l in lines[:-1]:
-                    line = l
+                while True:
+                    # On Mac 17.5.0, x86_64, python 2.7.15/2.7.16:
+                    # The second time calling f.readlines() returns empty list,
+                    # even when in another thread something is appended.
+                    # Thus we have to use f.readline(), manually deal with every
+                    # line.
+                    _line = f.readline(self.read_chunk_size)
+                    if _line == "":
+                        break
+
+                    if self.bufferred is not None:
+                        offset = self.bufferred[0]
+                        _line = self.bufferred[1] + _line
+                        self.bufferred = None
+
+                    if not _line.endswith(('\r', '\n')):
+                        self.bufferred = (offset, _line)
+                        offset += len(_line)
+                        continue
+
+                    line = _line
                     if self.strip:
                         line = line.strip('\r\n')
-
-                    offset += len(l)
+                    offset += len(_line)
                     yield line
 
-                l = lines[-1]
-                if not l.endswith(('\r', '\n')):
-                    self.bufferred = (offset, l)
-                    offset += len(l)
-                else:
-                    line = l
-                    if self.strip:
-                        line = line.strip('\r\n')
-                    offset += len(l)
-                    yield line
-
-                # try to read a full chunk
-                self.wait_for_new_data(f, read_timeout)
-
-            except NoData:
-                pass
+                try:
+                    # try to read a full chunk
+                    self.wait_for_new_data(f, read_timeout)
+                except NoData:
+                    pass
 
             finally:
+                # `yield` might be interrupted by its caller. But we still need
+                # to record how much data has been returned to upper level.
                 self.write_last_stat(f, offset)
-
 
     def _try_open_file(self):
         try:

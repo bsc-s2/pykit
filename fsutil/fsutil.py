@@ -10,7 +10,6 @@ import sys
 import time
 
 import psutil
-
 from pykit import config
 from pykit import timeutil
 
@@ -178,10 +177,10 @@ def list_fns(path, pattern='.*'):
 
     pt = re.compile(pattern)
 
-    fns = [ x for x in fns
-            if re.search(pt, x) is not None
-            and os.path.isfile(os.path.join(path, x))
-    ]
+    fns = [x for x in fns
+           if re.search(pt, x) is not None
+           and os.path.isfile(os.path.join(path, x))
+           ]
 
     fns.sort()
 
