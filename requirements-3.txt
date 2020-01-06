@@ -33,7 +33,9 @@ pytz==2018.4
 docker-py==1.10.6
 
 
-numpy==1.9.3
+# If fails building with python3.
+# Do not know why. no time to check. 2020 Jan 06 by xp
+# numpy==1.9.3
 
 
 # zkutil
