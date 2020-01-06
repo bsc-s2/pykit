@@ -16,7 +16,8 @@ jobs:
           install:
               - pip install -r requirements-3.txt
           script:
-              - sudo -E env "PATH=$PATH" bash ./script/t -C -v fsutil
+              - python -c 'import psutil'
+              - UT_DEBUG=1 PYTHONPATH="$(cd ..; pwd)" python -m unittest discover -c -v --failfast -s fsutil
 
 # python:
 #   - "2.7"
