@@ -128,14 +128,14 @@ def get_path_inode_usage(path):
 
 
 def makedirs(*paths, **kwargs):
-    mode = kwargs.get('mode', 0755)
+    mode = kwargs.get('mode', 0o755)
     uid = kwargs.get('uid') or config.uid
     gid = kwargs.get('gid') or config.gid
 
     path = os.path.join(*paths)
 
     # retry to deal with concurrent check-and-then-set issue
-    for ii in range(2):
+    for _ in range(2):
 
         if os.path.isdir(path):
 

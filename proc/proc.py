@@ -5,7 +5,12 @@ import errno
 import logging
 import os
 
-import subprocess32
+try:
+    # python 2 need this to workaround the concurrent fork issue
+    import subprocess32 as subprocess
+except ModuleNotFoundError:
+    import subprocess
+    
 
 logger = logging.getLogger(__name__)
 
@@ -39,14 +44,14 @@ def command(cmd, *arguments, **options):
         env = dict(os.environ, **env)
     stdin = options.get('stdin', None)
 
-    subproc = subprocess32.Popen([cmd] + list(arguments),
+    subproc = subprocess.Popen([cmd] + list(arguments),
                                  close_fds=close_fds,
                                  shell=shell,
                                  cwd=cwd,
                                  env=env,
-                                 stdin=subprocess32.PIPE,
-                                 stdout=subprocess32.PIPE,
-                                 stderr=subprocess32.PIPE, )
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE, )
 
     out, err = subproc.communicate(input=stdin)
 

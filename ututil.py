@@ -100,7 +100,7 @@ def _init():
         _glb['unittest_logger'] = logger
 
     except Exception as e:
-        print repr(e) + ' while init root logger'
+        print(repr(e) + ' while init root logger')
 
 
 def dd(*msg):
@@ -123,7 +123,7 @@ def dd(*msg):
     if not debug_to_stdout:
         return
 
-    print s
+    print(s)
 
 
 def get_ut_verbosity():

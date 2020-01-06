@@ -154,7 +154,9 @@ def str_to_addr(x):
     # re-hash it with 32 bit fibonacci hash.
     # And finally embed it into ip and port
 
-    r = hashlib.sha1(str(x)).hexdigest()
+    print(repr(x))
+    print(type(x))
+    r = hashlib.sha1(str(x).encode('utf-8')).hexdigest()
     r = int(r, 16)
     p = r % (PORT_RANGE[1] - PORT_RANGE[0]) + PORT_RANGE[0]
 
@@ -171,12 +173,12 @@ def test_collision():
     for i in range(1 << 15):
         key = str(hashlib.sha1(str(i)).hexdigest())
         lck = key
-        print 'lock is', i, lck
+        print('lock is', i, lck)
         l = Portlock(lck, timeout=8)
         r = l.try_lock()
         if not r:
-            print 'collide', i, l.addr
-            print l.socks
+            print('collide', i, l.addr)
+            print(l.socks)
 
         dd[l.addr] = i
         ls.append(l)
