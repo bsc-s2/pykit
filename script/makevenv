@@ -14,6 +14,7 @@
 # # run your tests
 # deactivate
 
+echo "install py2 venv"
 pip2 install virtualenv
 virtualenv --no-site-packages p2venv
 source ./p2venv/bin/activate
@@ -21,6 +22,7 @@ pip install -r ../requirements.txt
 deactivate
 
 
+echo "install py3 venv"
 python3 -m venv p3venv
 source ./p3venv/bin/activate
 pip install -r ../requirements-3.txt
