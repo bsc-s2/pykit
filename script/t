@@ -151,6 +151,7 @@ fi
 pkg_path="${pkg//.//}"
 
 echo "test package: path: ($pkg_path); pkg: ($pkg)"
+echo "pwd: $(pwd)"
 
 if [ -f "$pkg_path/__init__.py" ]; then
     echo "test discover"
