@@ -1,0 +1,59 @@
+# usage:
+#   pip3 install -r requirements-3.txt
+
+
+# tool kits
+pyflakes
+autopep8
+autoflake
+isort
+
+# fsutil
+# wsjobd
+psutil==4.3.1
+
+
+# net
+netifaces==0.10.6
+
+
+# timeutil
+# jobscheduler
+tzlocal==1.5.1
+
+
+# timeutil
+# jobscheduler
+pytz==2018.4
+
+
+# mysqlconnpool.test
+# etcd.test
+# redisutil.test
+docker-py==1.10.6
+
+
+numpy==1.7.1
+
+
+# zkutil
+kazoo==2.6.1
+
+
+# for building dependency graph
+snakefood
+
+gevent==1.3.0
+redis==2.10.6
+# previous 3.11 has a security issue, which is fixed in at least 4.2b1
+PyYAML==4.2b4
+
+# MySQLdb
+MySQL-python==1.2.5
+objgraph==3.1.0
+
+# geventwebsocket
+gevent-websocket==0.10.1
+
+# msgpack
+msgpack==0.6.1

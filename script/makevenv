@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# Make python virtualenv for test,
+# without polluting host python env.
+
+# Usage:
+# ./makevenv
+#   Create virtual env and install requirements.
+#   This only need to run once.
+#
+# To test with python2:
+#
+# ./py2venv/bin/activate # use this venv
+# # run your tests
+# deactivate
+
+pip2 install virtualenv
+virtualenv --no-site-packages p2venv
+source ./p2venv/bin/activate
+pip install -r ../requirements.txt
+deactivate
+
+
+python3 -m venv p3venv
+source ./p3venv/bin/activate
+pip install -r ../requirements-3.txt
+deactivate
