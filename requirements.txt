@@ -19,7 +19,7 @@ netifaces==0.10.9
 
 # timeutil
 # jobscheduler
-tzlocal==1.5.1
+tzlocal==2.0.0
 
 
 # timeutil
