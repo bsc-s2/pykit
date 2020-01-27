@@ -20,8 +20,13 @@ jobs:
               # -- by xp 2020 Jan 27
 
               # Enable debug log: UT_DEBUG=1
+                  # aws
+                  # awssign
+                  # cacheable
+                  # cachepool
               - >-
                   sudo env "PATH=$PATH" ./script/run-test
+                  argchecker
                   daemonize
                   fsutil
                   humannum
