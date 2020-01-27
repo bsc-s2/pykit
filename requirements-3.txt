@@ -60,7 +60,7 @@ PyYAML==4.2b4
 #
 # Doc: https://pymysql.readthedocs.io/en/latest/
 PyMySQL==0.9.3
-objgraph==3.1.0
+objgraph==3.4.1
 
 # geventwebsocket
 gevent-websocket==0.10.1
