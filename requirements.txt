@@ -38,7 +38,7 @@ docker-py==1.10.6
 # p3json
 # proc
 # strutil
-subprocess32==3.2.7
+subprocess32==3.5.4
 
 
 numpy==1.7.1
