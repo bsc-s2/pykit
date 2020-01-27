@@ -27,11 +27,33 @@ jobs:
                   awssign
                   cacheable
                   cachepool
+                  csvutil
                   daemonize
+                  dictutil
+                  ectypes
                   fsutil
+                  heap
+                  httpmultipart
                   humannum
+                  jobq
+                  logcollector
+                  logutil
+                  mathtoy
+                  mime
+                  modutil
                   net
+                  priorityqueue
                   proc
+                  profiling
+                  rangeset
+                  ratelimiter
+                  request
+                  shell
+                  strutil
+                  threadutil
+                  timeutil
+                  utfyaml
+                  wsjobd
 
 # after_success:
 #   - pip install python-coveralls && coveralls
