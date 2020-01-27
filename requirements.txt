@@ -24,7 +24,7 @@ tzlocal==1.5.1
 
 # timeutil
 # jobscheduler
-pytz==2018.4
+pytz==2019.3
 
 
 # mysqlconnpool.test
