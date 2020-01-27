@@ -20,7 +20,7 @@ def write_file(fn, cont):
 
 def run():
     try:
-        code, out, err = proc.shell_script('/usr/sbin/lsof -p ' + str(os.getpid()))
+        code, out, err = proc.shell_script('lsof -p ' + str(os.getpid()))
     except Exception as e:
         print repr(e)
     write_file(foo_fn, repr(out))
