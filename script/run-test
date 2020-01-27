@@ -1,0 +1,21 @@
+#!/bin/sh
+
+allpkgs="$(find . -mindepth 2 -maxdepth 2 -name "__init__.py" | awk -F/ '{print $2}')"
+
+for pkg in $allpkgs; do
+    { echo "$@" | grep -q "$pkg"; } || echo "Not tested: $pkg"
+done
+
+for pkg in "$@"; do
+
+    echo "=== Test $pkg ==="
+
+    UT_DEBUG=0                     \
+        PYTHONPATH="$(cd ..; pwd)" \
+        python -m unittest         \
+        discover                   \
+        -c                         \
+        -s                         \
+        --failfast                 \
+        "$pkg"
+done
