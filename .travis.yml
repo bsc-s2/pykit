@@ -36,6 +36,7 @@ jobs:
                   httpmultipart
                   humannum
                   jobq
+                  jobscheduler
                   logcollector
                   logutil
                   mathtoy
