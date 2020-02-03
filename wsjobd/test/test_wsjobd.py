@@ -118,12 +118,12 @@ class TestWsjobd(unittest.TestCase):
         # tolerate 0.1 second of difference
         self.assertLess(diff, 0.1)
 
-    def test_progress_key(self):
+    def test_invalid_progress_key(self):
         job_desc = {
             'func': 'test_job_progress_key.run',
             'ident': self.get_random_ident(),
             'progress': {
-                'key': 'foo',
+                'key': 'inexistent',
             },
             'report_system_load': True,
             'jobs_dir': 'pykit/wsjobd/test/test_jobs',
@@ -132,9 +132,31 @@ class TestWsjobd(unittest.TestCase):
         self.ws.send(utfjson.dump(job_desc))
 
         resp = self.ws.recv()
-        dd(resp)
+        dd(repr(resp))
         resp = utfjson.load(resp)
-        self.assertEqual('80%', resp)
+        self.assertIsNone(resp)
+
+    def test_progress_key(self):
+        job_desc = {
+            'func': 'test_job_progress_key.run',
+            'ident': self.get_random_ident(),
+            'progress': {
+                'key': 'foo',
+            },
+            # progress_sender may try to read data["foo"] before job starts.
+            # need to preset a value.
+            "foo": "0%",
+            'report_system_load': True,
+            'jobs_dir': 'pykit/wsjobd/test/test_jobs',
+        }
+
+        self.ws.send(utfjson.dump(job_desc))
+
+        resp = self.ws.recv()
+        dd(repr(resp))
+        resp = utfjson.load(resp)
+        # progress may be set by job runner or job desc
+        self.assertIn(resp, ('80%', '0%'))
 
     def test_check_system_load(self):
         job_desc = {
