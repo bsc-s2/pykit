@@ -1,11 +1,22 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
+import datetime
 import time
 import unittest
 
+import pytz
+
 from pykit import jobscheduler
 from pykit import timeutil
+
+
+def local_time_tostr(time_str, tz=None):
+    ts = timeutil.parse_to_ts(time_str, '%Y-%m-%d %H:%M:%S')
+    ts += time.timezone
+    tz = pytz.timezone(tz)
+    dt = datetime.datetime.fromtimestamp(ts, tz)
+    return str(dt)
 
 
 class TestJobScheduler(unittest.TestCase):
@@ -24,14 +35,14 @@ class TestJobScheduler(unittest.TestCase):
                     'every': [1, 'hour'],
                     'at': {'minute': 33, 'second': 44},
                 },
-                '2018-03-06 16:33:44+08:00'
+                '2018-03-06 08:33:44+00:00'
             ),
             (
                 '2018-03-06 15:08:11',
                 {
                     'every': [1, 'hour'],
                 },
-                '2018-03-06 16:08:11+08:00',
+                '2018-03-06 08:08:11+00:00',
             ),
             (
                 '2018-03-06 15:08:11',
@@ -39,7 +50,7 @@ class TestJobScheduler(unittest.TestCase):
                     'every': [1, 'hour'],
                     'at': {'minute': 0, 'second': 0},
                 },
-                '2018-03-06 16:00:00+08:00'
+                '2018-03-06 08:00:00+00:00'
             ),
             (
                 '2018-03-06 15:00:00',
@@ -47,7 +58,7 @@ class TestJobScheduler(unittest.TestCase):
                     'every': [1, 'hour'],
                     'at': {'minute': 0, 'second': 0},
                 },
-                '2018-03-06 16:00:00+08:00'
+                '2018-03-06 08:00:00+00:00'
             ),
             (
                 '2018-03-06 15:10:02',
@@ -55,7 +66,7 @@ class TestJobScheduler(unittest.TestCase):
                     'every': [2, 'day'],
                     'at': {'minute': 0, 'second': 0},
                 },
-                '2018-03-08 15:00:00+08:00'
+                '2018-03-08 07:00:00+00:00'
             ),
             (
                 '2018-03-06 15:59:59',
@@ -63,7 +74,7 @@ class TestJobScheduler(unittest.TestCase):
                     'every': [1, 'hour'],
                     'at': {'minute': 0, 'second': 0},
                 },
-                '2018-03-06 16:00:00+08:00'
+                '2018-03-06 08:00:00+00:00'
             ),
             (
                 '2018-03-06 15:59:59',
@@ -71,7 +82,7 @@ class TestJobScheduler(unittest.TestCase):
                     'every': [1, 'minute'],
                     'at': {'second': 0},
                 },
-                '2018-03-06 16:00:00+08:00'
+                '2018-03-06 08:00:00+00:00'
             ),
             (
                 '2018-03-06 16:00:00',
@@ -79,14 +90,14 @@ class TestJobScheduler(unittest.TestCase):
                     'every': [1, 'minute'],
                     'at': {'second': 0},
                 },
-                '2018-03-06 16:01:00+08:00'
+                '2018-03-06 08:01:00+00:00'
             ),
             (
                 '2018-03-06 16:00:00',
                 {
                     'every': [50, 'second'],
                 },
-                '2018-03-06 16:00:50+08:00'
+                '2018-03-06 08:00:50+00:00'
             ),
             (
                 '2018-03-06 16:00:00',
@@ -94,7 +105,7 @@ class TestJobScheduler(unittest.TestCase):
                     'every': [3, 'month'],
                     'at': {'day': 30, 'hour': 13, 'minute': 23, 'second': 33},
                 },
-                '2018-06-30 13:23:33+08:00'
+                local_time_tostr('2018-06-30 13:23:33', tz='utc'),
             ),
             (
                 '2018-06-30 14:23:55',
@@ -104,7 +115,7 @@ class TestJobScheduler(unittest.TestCase):
                 },
                 # not 2018-09-30, because we assume every month is 31 days,
                 # so add 3 * 31 days to 2018-06-30 is not 2018-09-30.
-                '2018-10-30 13:23:33+08:00'
+                local_time_tostr('2018-10-30 13:23:33', tz='utc'),
             ),
             (
                 '2018-06-30 13:23:33',
@@ -112,7 +123,7 @@ class TestJobScheduler(unittest.TestCase):
                     'every': [3, 'week'],
                     'at': {'hour': 13, 'minute': 23, 'second': 33},
                 },
-                '2018-07-21 13:23:33+08:00'
+                local_time_tostr('2018-07-21 13:23:33', tz='utc'),
             ),
             (
                 '2018-03-06 15:10:02',
@@ -121,7 +132,7 @@ class TestJobScheduler(unittest.TestCase):
                     'at': {'hour': 12, 'minute': 0, 'second': 0},
                     'timezone': 'utc',
                 },
-                '2018-03-07 20:00:00+08:00'
+                '2018-03-07 12:00:00+00:00',
             ),
             (
                 '2018-03-06 15:10:02',
@@ -130,7 +141,7 @@ class TestJobScheduler(unittest.TestCase):
                     'at': {'hour': 12, 'minute': 0, 'second': 0},
                     'timezone': 'Asia/Shanghai'
                 },
-                '2018-03-07 12:00:00+08:00'
+                '2018-03-07 04:00:00+00:00'
             ),
             (
                 '2018-03-06 15:10:02',
@@ -144,17 +155,20 @@ class TestJobScheduler(unittest.TestCase):
                 # 2018-03-07 15:10:02, but at 'US/Pacific', it is
                 # 2018-03-06 23:10:02, need fire at
                 # 2018-03-06 02:00:00, that is 2018-03-06 18:00:00+08:00
-                '2018-03-06 18:00:00+08:00'
+                '2018-03-06 10:00:00+00:00'
             ),
         )
 
-        for last_fire, conf, expected_next_fire in cases:
-            last_fire_date = timeutil.parse(last_fire, 'mysql')
-            last_fire_ts = time.mktime(last_fire_date.timetuple())
+        for c in cases:
+
+            last_fire, conf, expected_next_fire = c
+
+            # last_fire is Asia/Shanghai time
+            last_fire_ts = timeutil.parse_to_ts(last_fire, 'mysql') - 3600*8
 
             next_fire_time = jobscheduler.get_next_fire_time(conf, last_fire_ts)
 
-            self.assertEqual(expected_next_fire, next_fire_time['string'])
+            self.assertEqual(expected_next_fire, next_fire_time.tostr(tz="utc"))
 
     def test_exception(self):
         cases = (
