@@ -110,7 +110,7 @@ class TestIostat(unittest.TestCase):
             rst = fsutil.iostat('/dev/sda1')
             dd(rst)
 
-            self.assertAlmostEqual(100, rst['ioutil'], delta=30)
+            self.assertAlmostEqual(100, rst['ioutil'], delta=40)
             self.assertGreaterEqual(t.spent(), 1.0)
 
         sess['running'] = False
