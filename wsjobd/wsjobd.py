@@ -305,7 +305,7 @@ class JobdWebSocketApplication(WebSocketApplication):
         if progress_key is None:
             lam = lambda r: r
         else:
-            lam = lambda r: r[progress_key]
+            lam = lambda r: r.get(progress_key)
 
         threadutil.start_thread(target=progress_sender,
                                 args=(job, channel, interval, lam),
