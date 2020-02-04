@@ -27,6 +27,7 @@ jobs:
                   awssign
                   cacheable
                   cachepool
+                  cgrouparch
                   csvutil
                   daemonize
                   dictutil
