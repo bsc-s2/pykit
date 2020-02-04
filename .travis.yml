@@ -44,6 +44,7 @@ jobs:
                   mime
                   modutil
                   net
+                  p3json
                   portlock
                   priorityqueue
                   proc
