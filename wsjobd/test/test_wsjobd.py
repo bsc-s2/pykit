@@ -302,9 +302,12 @@ class TestWsjobd(unittest.TestCase):
         self.ws.send(utfjson.dump(job_desc))
 
         # wait for test_job_echo.run to fillin resp['result']
-        time.sleep(0.1)
+        for _ in range(3):
+            resp = utfjson.load(self.ws.recv())
+            if 'result' in resp:
+                break
+            time.sleep(0.1)
 
-        resp = utfjson.load(self.ws.recv())
         self.assertEqual('foo', resp['result'])
 
         time.sleep(0.2)
@@ -320,7 +323,11 @@ class TestWsjobd(unittest.TestCase):
         ws2.send(utfjson.dump(job_desc))
 
         # wait for test_job_echo.run to fillin resp['result']
-        time.sleep(0.1)
+        for _ in range(3):
+            resp = utfjson.load(self.ws.recv())
+            if 'result' in resp:
+                break
+            time.sleep(0.1)
 
         resp = utfjson.load(ws2.recv())
         ws2.close()
