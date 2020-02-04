@@ -3,7 +3,7 @@
 allpkgs="$(find . -mindepth 2 -maxdepth 2 -name "__init__.py" | awk -F/ '{print $2}')"
 
 for pkg in $allpkgs; do
-    { echo "$@" | grep -q "$pkg"; } || echo "Not tested: $pkg"
+    { echo "$@" | grep -q "\b$pkg\b"; } || echo "Not tested: $pkg"
 done
 
 for pkg in "$@"; do
