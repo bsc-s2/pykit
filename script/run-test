@@ -17,6 +17,6 @@ for pkg in "$@"; do
         -c                         \
         -s                         \
         --failfast                 \
-        "$pkg"                     \
+        "pykit.$pkg"               \
         || exit 1
 done
