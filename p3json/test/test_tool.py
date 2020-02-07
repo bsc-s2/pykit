@@ -91,19 +91,19 @@ class TestTool(unittest.TestCase):
 
     def test_infile_stdout(self):
         infile = self._create_infile()
-        rc, out, err = assert_python_ok('-m', 'pykit.p3json.tool', infile)
+        rc, out, err = assert_python_ok('-m', 'pykit.p3json.tool', infile, PYTHONPATH=os.environ.get('PYTHONPATH'))
         self._assert_expected(out, linemode=True)
         self.assertEqual(err, b'')
 
         # "-" for stdout
-        rc, out, err = assert_python_ok('-m', 'pykit.p3json.tool', infile, '-')
+        rc, out, err = assert_python_ok('-m', 'pykit.p3json.tool', infile, '-', PYTHONPATH=os.environ.get('PYTHONPATH'))
         self._assert_expected(out, linemode=True)
         self.assertEqual(err, b'')
 
     def test_infile_outfile(self):
         infile = self._create_infile()
         outfile = test_support.TESTFN + '.out'
-        rc, out, err = assert_python_ok('-m', 'pykit.p3json.tool', infile, outfile)
+        rc, out, err = assert_python_ok('-m', 'pykit.p3json.tool', infile, outfile, PYTHONPATH=os.environ.get('PYTHONPATH'))
         self.addCleanup(os.remove, outfile)
         with open(outfile, "r") as fp:
             self._assert_expected(fp.read())
@@ -114,7 +114,7 @@ class TestTool(unittest.TestCase):
 
         infile = self._create_infile()
         outfile = infile
-        rc, out, err = assert_python_ok('-m', 'pykit.p3json.tool', infile, outfile)
+        rc, out, err = assert_python_ok('-m', 'pykit.p3json.tool', infile, outfile, PYTHONPATH=os.environ.get('PYTHONPATH'))
         with open(outfile, "r") as fp:
             self._assert_expected(fp.read())
 
