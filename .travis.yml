@@ -55,6 +55,7 @@ jobs:
                   strutil
                   threadutil
                   timeutil
+                  utfjson
                   utfyaml
                   wsjobd
 
