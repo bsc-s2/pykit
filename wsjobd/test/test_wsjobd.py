@@ -61,6 +61,15 @@ class TestWsjobd(unittest.TestCase):
     def get_random_ident(self):
         return 'random_ident_%d' % random.randint(10000, 99999)
 
+    def _wait_for_result(self, ws):
+        # wait for test_job_echo.run to fillin resp['result']
+        for _ in range(3):
+            resp = utfjson.load(ws.recv())
+            if 'result' in resp:
+                break
+            time.sleep(0.1)
+        return resp
+
     def test_invalid_jobdesc(self):
         cases = (
             ('foo', 'not json'),
@@ -89,7 +98,7 @@ class TestWsjobd(unittest.TestCase):
 
         self.ws.send(utfjson.dump(job_desc))
 
-        resp = utfjson.load(self.ws.recv())
+        resp = self._wait_for_result(self.ws)
         dd(resp)
         self.assertEqual('foo', resp['result'], 'test get result')
 
@@ -301,13 +310,7 @@ class TestWsjobd(unittest.TestCase):
 
         self.ws.send(utfjson.dump(job_desc))
 
-        # wait for test_job_echo.run to fillin resp['result']
-        for _ in range(3):
-            resp = utfjson.load(self.ws.recv())
-            if 'result' in resp:
-                break
-            time.sleep(0.1)
-
+        resp = self._wait_for_result(self.ws)
         self.assertEqual('foo', resp['result'])
 
         time.sleep(0.2)
@@ -322,14 +325,7 @@ class TestWsjobd(unittest.TestCase):
         ws2 = self._create_client()
         ws2.send(utfjson.dump(job_desc))
 
-        # wait for test_job_echo.run to fillin resp['result']
-        for _ in range(3):
-            resp = utfjson.load(self.ws.recv())
-            if 'result' in resp:
-                break
-            time.sleep(0.1)
-
-        resp = utfjson.load(ws2.recv())
+        resp = self._wait_for_result(ws2)
         ws2.close()
         # old job with the same ident has exit, it will create a new one
         self.assertEqual('bar', resp['result'])
