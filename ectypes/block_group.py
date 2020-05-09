@@ -442,13 +442,17 @@ class BlockGroup(FixedKeysDict):
 
         return blk
 
-    def get_idc_blocks(self, idc_idx, is_del=None):
+    def get_idc_blocks(self, idc_idx, is_del=None, types=None):
         blks = []
 
         for idx in sorted(self['blocks'].keys()):
             blk = self['blocks'][idx]
 
             idx = BlockIndex(idx)
+            typ = self.get_block_type(idx)
+
+            if types is not None and typ not in types:
+                continue
 
             if idx.i != idc_idx:
                 continue
@@ -459,6 +463,10 @@ class BlockGroup(FixedKeysDict):
             blks.append(blk)
 
         return blks
+
+    def get_idc_blocks_no_replica(self, idc_idx, is_del=None):
+        types = ['d0', 'dp', 'x0', 'xp']
+        return self.get_idc_blocks(idc_idx, is_del=is_del, types=types)
 
     def get_d0_idcs(self):
         cross_idc = self["config"]["cross_idc"]
@@ -477,9 +485,13 @@ class BlockGroup(FixedKeysDict):
         else:
             return "x0"
 
-    def get_idc_block_ids(self, idc_idx, is_del=None):
-        blks = self.get_idc_blocks(idc_idx, is_del=is_del)
+    def get_idc_block_ids(self, idc_idx, is_del=None, types=None):
+        blks = self.get_idc_blocks(idc_idx, is_del=is_del, types=types)
         return [BlockID(b['block_id']) for b in blks]
+
+    def get_idc_block_ids_no_replica(self, idc_idx, is_del=None):
+        types = ['d0', 'dp', 'x0', 'xp']
+        return self.get_idc_block_ids(idc_idx, is_del=is_del, types=types)
 
     @classmethod
     def is_data(cls, block_id):
