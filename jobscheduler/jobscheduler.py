@@ -34,33 +34,24 @@ SECOND = {
 }
 
 
-class Timestamp(object):
-    def __init__(self, ts=None, tz=None):
-        if ts is None:
-            ts = time.time()
-        if tz is None:
-            tz = tzlocal.get_localzone()
-
-        self.ts = ts
-        self.tz = tz
-
-    def tostr(self, tz=None):
-        if tz is None:
-            tz = tzlocal.get_localzone()
-        if isinstance(tz, str):
-            tz = pytz.timezone(tz)
-        dt = datetime.datetime.fromtimestamp(self.ts, tz)
-        return str(dt)
-
-    def __str__(self):
-        return self.tostr(tz=self.tz)
-
-    def __repr__(self):
-        return self.__str__()
-
-
 def get_time_info(ts=None, tz=None):
-    return Timestamp(ts=ts, tz=tz)
+    if ts is None:
+        ts = time.time()
+
+    if tz is None:
+        tz = tzlocal.get_localzone()
+
+    if isinstance(tz, str):
+        tz = pytz.timezone(tz)
+
+    dt = datetime.datetime.fromtimestamp(ts, tz)
+
+    time_info = {
+        'ts': ts,
+        'string': str(dt),
+    }
+
+    return time_info
 
 
 def get_next_fire_time(conf, last_fire_ts):
@@ -216,28 +207,28 @@ class JobScheduler(object):
                 self.fire(curr_time, job_name, job_conf, job_status)
 
                 job_status['next_fire_time'] = get_next_fire_time(
-                    job_conf, curr_time.ts)
+                    job_conf, curr_time['ts'])
 
             else:
                 n, unit = job_conf['every']
                 interval = n * SECOND[unit]
 
                 next_fire_time = get_next_fire_time(
-                    job_conf, curr_time.ts - interval)
+                    job_conf, curr_time['ts'] - interval)
 
-                if next_fire_time.ts < curr_time:
+                if next_fire_time['ts'] < curr_time['ts']:
                     next_fire_time = get_next_fire_time(
-                        job_conf, curr_time.ts)
+                        job_conf, curr_time['ts'])
 
                 job_status['next_fire_time'] = next_fire_time
 
-        if curr_time >= job_status['next_fire_time'].ts:
+        if curr_time['ts'] >= job_status['next_fire_time']['ts']:
             job_status['fire_time'] = curr_time
 
             self.fire(curr_time, job_name, job_conf, job_status)
 
             job_status['next_fire_time'] = get_next_fire_time(
-                job_conf, job_status['next_fire_time'].ts)
+                job_conf, job_status['next_fire_time']['ts'])
 
     def _schedule(self, curr_time):
         for job_name, job_conf in self.jobs.iteritems():
@@ -279,7 +270,7 @@ class JobScheduler(object):
             end_time = time.time()
 
             logger.info('scheduled at: %s, time used: %f' %
-                        (repr(curr_time), end_time - curr_time.ts))
+                        (repr(curr_time), end_time - curr_time['ts']))
 
             to_sleep = 60 - (end_time % 60) + 1
             time.sleep(to_sleep)

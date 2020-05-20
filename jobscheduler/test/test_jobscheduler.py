@@ -167,8 +167,9 @@ class TestJobScheduler(unittest.TestCase):
             last_fire_ts = timeutil.parse_to_ts(last_fire, 'mysql') - 3600*8
 
             next_fire_time = jobscheduler.get_next_fire_time(conf, last_fire_ts)
-
-            self.assertEqual(expected_next_fire, next_fire_time.tostr(tz="utc"))
+            dt = datetime.datetime.fromtimestamp(
+                next_fire_time['ts'], pytz.timezone('utc'))
+            self.assertEqual(expected_next_fire, str(dt))
 
     def test_exception(self):
         cases = (
