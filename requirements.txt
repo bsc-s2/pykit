@@ -58,7 +58,7 @@ PyYAML==4.2b4
 
 # MySQLdb
 MySQL-python==1.2.5
-objgraph==3.4.1
+objgraph==3.5.0
 
 # geventwebsocket
 gevent-websocket==0.10.1
