@@ -10,7 +10,7 @@ isort
 
 # fsutil
 # wsjobd
-psutil==5.6.7
+psutil==5.7.3
 
 
 # net
