@@ -1,4 +1,3 @@
-
 # index is started from 1.
 #
 #          1
@@ -15,7 +14,7 @@
 # - The 3rd significant bit indicate it is on left(0) or right(1) level-2 sub-heap.
 # - ...
 
-primitive_types = (type(None), int, long, bool, basestring, tuple, float, complex)
+primitive_types = (type(None), int, bool, str, tuple, float, complex)
 
 
 class HeapError(Exception):
@@ -275,7 +274,6 @@ class RefHeap(object):
 
 
 def index_level(idx):
-
     # root is at level 0
 
     lvl = 0

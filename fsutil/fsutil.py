@@ -128,7 +128,7 @@ def get_path_inode_usage(path):
 
 
 def makedirs(*paths, **kwargs):
-    mode = kwargs.get('mode', 0755)
+    mode = kwargs.get('mode', 0o755)
     uid = kwargs.get('uid') or config.uid
     gid = kwargs.get('gid') or config.gid
 

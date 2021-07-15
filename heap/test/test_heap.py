@@ -43,7 +43,7 @@ class TestRefHeap(unittest.TestCase):
 
         cases = (
                 ([], 0),
-                ([None, 3, 1, None], 0),
+                ([3, 1], 0),
                 ([1, 1, 2], 0),
                 (['a'], 0),
                 (['a', 'c', 'b'], 0),

@@ -36,7 +36,7 @@ class InvalidIP4Number(Exception):
 
 def is_ip4(ip):
 
-    if type(ip) not in types.StringTypes:
+    if isinstance(ip, (str, bytes)):
         return False
 
     ip = ip.split('.')
@@ -115,11 +115,11 @@ def get_host_ip4(iface_prefix=None, exclude_prefix=None):
     if iface_prefix is None:
         iface_prefix = ['']
 
-    if type(iface_prefix) in types.StringTypes:
+    if isinstance(iface_prefix, (str, bytes)):
         iface_prefix = [iface_prefix]
 
     if exclude_prefix is not None:
-        if type(exclude_prefix) in types.StringTypes:
+        if isinstance(exclude_prefix, (str, bytes)):
             exclude_prefix = [exclude_prefix]
 
     ips = []
@@ -264,7 +264,7 @@ def ip_to_num(ip_str):
 
 def num_to_ip(ip_num):
 
-    if isinstance(ip_num, bool) or not isinstance(ip_num, (int, long)):
+    if isinstance(ip_num, bool) or not isinstance(ip_num, int):
         raise InvalidIP4Number('The type of IP4 number should be int or long :{t}'.format(t=type(ip_num)))
     if ip_num > 0xffffffff or ip_num < 0:
         raise InvalidIP4Number('IP4 number should be between 0 and 0xffffffff :{s}'.format(s=ip_num))
@@ -277,10 +277,10 @@ if __name__ == "__main__":
     args = sys.argv[1:]
 
     if args[0] == 'ip':
-        print yaml.dump(get_host_ip4(), default_flow_style=False)
+        print(yaml.dump(get_host_ip4(), default_flow_style=False))
 
     elif args[0] == 'device':
-        print yaml.dump(get_host_devices(), default_flow_style=False)
+        print(yaml.dump(get_host_devices(), default_flow_style=False))
 
     else:
         raise ValueError('invalid command line arguments', args)

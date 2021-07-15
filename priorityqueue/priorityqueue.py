@@ -1,11 +1,11 @@
-import Queue
+import queue
 import threading
 
 from pykit import heap
 
 default_priority = 10.0
 
-Empty = Queue.Empty
+Empty = queue.Empty
 
 
 class Producer(object):
@@ -24,7 +24,7 @@ class Producer(object):
 
         with self.iterable_lock:
             try:
-                val = self.iterable.next()
+                val = next(self.iterable)
                 self.stat['get'] += 1
                 self.consume()
                 return val

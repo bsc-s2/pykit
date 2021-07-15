@@ -59,29 +59,29 @@ class TestConsumedQueue(unittest.TestCase):
 
         # 0 0.1
         b.get()
-        self.assertTrue(a < b,  'b consumed 1')
-        self.assertFalse(b < a,  'b consumed 1')
+        self.assertTrue(a < b, 'b consumed 1')
+        self.assertFalse(b < a, 'b consumed 1')
 
         # 1 0.1
         a.get()
         self.assertFalse(a < b, 'a consumed 1')
-        self.assertTrue(b < a,  'a consumed 1')
+        self.assertTrue(b < a, 'a consumed 1')
 
         # 1 0.2
         b.get()
-        self.assertFalse(a < b,  'a b consumed 1')
-        self.assertTrue(b < a,  'a b consumed 1')
+        self.assertFalse(a < b, 'a b consumed 1')
+        self.assertTrue(b < a, 'a b consumed 1')
 
         # 1 1
         for _ in range(8):
             b.get()
-        self.assertFalse(a < b,  'a b consumed 1')
-        self.assertTrue(b < a,  'a consume 1 b consumed 10')
+        self.assertFalse(a < b, 'a b consumed 1')
+        self.assertTrue(b < a, 'a consume 1 b consumed 10')
 
         # 1 1.1
         b.get()
-        self.assertTrue(a < b,  'a b consumed 1')
-        self.assertFalse(b < a,  'a b consumed 1')
+        self.assertTrue(a < b, 'a b consumed 1')
+        self.assertFalse(b < a, 'a b consumed 1')
 
 
 class TestPriorityQueue(unittest.TestCase):
