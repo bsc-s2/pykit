@@ -1,3 +1,4 @@
+import copy
 import logging
 import sys
 import threading
@@ -35,16 +36,17 @@ class WorkerGroup(object):
     def __init__(self, index, worker, n_thread,
                  input_queue,
                  dispatcher,
-                 probe, keep_order):
+                 probe, keep_order,
+                 partial_order):
 
         self.index = index
         self.worker = worker
         self.n_thread = n_thread
-        self.input_queue = input_queue
-        self.output_queue = _make_q()
         self.dispatcher = dispatcher
         self.probe = probe
         self.keep_order = keep_order
+        self.partial_order = partial_order
+        self.exec_cache = {}
 
         self.threads = {}
 
@@ -61,6 +63,15 @@ class WorkerGroup(object):
         # protect reading/writing worker_group info
         self.worker_group_lock = threading.RLock()
 
+        if self.partial_order:
+            self.buffer_queue = input_queue
+            self.input_queue = _make_q()
+            self.output_queue = _make_q(0, partial_order)
+        else:
+            self.buffer_queue = None
+            self.input_queue = input_queue
+            self.output_queue = _make_q()
+
         # dispatcher mode implies keep_order
         if self.dispatcher is not None or self.keep_order:
             need_coordinator = True
@@ -76,15 +87,16 @@ class WorkerGroup(object):
             # Protect input.get() and ouput.put(), only used by non-dispatcher
             # mode
             self.keep_order_lock = threading.RLock()
-
-            self.coordinator_thread = start_thread(self._coordinate)
         else:
             self.queue_of_output_q = None
+
+        if need_coordinator or self.partial_order:
+            self.coordinator_thread = start_thread(self._coordinate)
 
         # `dispatcher` is a user-defined function to distribute args to workers.
         # It accepts the same args passed to worker and returns a number to
         # indicate which worker to used.
-        if self.dispatcher is not None:
+        if self.dispatcher is not None and not self.partial_order:
             self.dispatch_queues = []
             for i in range(self.n_thread):
                 self.dispatch_queues.append({
@@ -157,6 +169,9 @@ class WorkerGroup(object):
                 with self.probe['probe_lock']:
                     self.probe['out'] += 1
 
+            if self.partial_order and args[0] in self.exec_cache:
+                del self.exec_cache[args[0]]
+
             # If rst is an iterator, it procures more than one args to next job.
             # In order to be accurate, we only count an iterator as one.
 
@@ -202,15 +217,28 @@ class WorkerGroup(object):
     def _coordinate(self):
 
         while self.running:
+            if not self.partial_order:
+                outq = self.queue_of_output_q.get()
+                if outq is Finish:
+                    return
 
-            outq = self.queue_of_output_q.get()
-            if outq is Finish:
-                return
+                _put_rst(self.output_queue, outq.get())
 
-            _put_rst(self.output_queue, outq.get())
+            else:
+                now = time.time()
+                for key in self.exec_cache.keys():
+                    if now - self.exec_cache[key] > 60 * 2:
+                        del self.exec_cache[key]
+                exec_cache = copy.copy(self.exec_cache)
+                for args in self.buffer_queue.get(exec_cache):
+                    if args is Finish:
+                        return
+                    self.exec_cache[args[0]] = time.time()
+                    _put_rst(self.input_queue, args)
+
+                time.sleep(0.01)
 
     def _dispatch(self):
-
         while self.running:
 
             args = self.input_queue.get()
@@ -226,18 +254,21 @@ class WorkerGroup(object):
             self.queue_of_output_q.put(outq)
             inq.put(args)
 
-
 class JobManager(object):
 
-    def __init__(self, workers, queue_size=1024, probe=None, keep_order=False):
+    def __init__(self, workers, queue_size=1024, probe=None, keep_order=False, partial_order=False):
 
         if probe is None:
             probe = {}
 
+        if keep_order and partial_order:
+            raise JobWorkerError('only one of keep_order and partial_order can be set to true')
+
         self.workers = workers
-        self.head_queue = _make_q(queue_size)
+        self.head_queue = _make_q(queue_size, partial_order)
         self.probe = probe
         self.keep_order = keep_order
+        self.partial_order = partial_order
 
         self.worker_groups = []
 
@@ -266,11 +297,12 @@ class JobManager(object):
             worker, n, dispatcher = worker
 
             wg = WorkerGroup(i, worker, n, inq,
-                             dispatcher,
-                             self.probe, self.keep_order)
+                                 dispatcher,
+                                 self.probe, self.keep_order, self.partial_order)
 
             self.worker_groups.append(wg)
             inq = wg.output_queue
+            # print(inq)
 
     def set_thread_num(self, worker, n):
 
@@ -349,6 +381,11 @@ class JobManager(object):
                 wg.exiting = True
                 ths = wg.threads.values()
 
+            if wg.partial_order:
+                for th in ths:
+                    wg.buffer_queue.put(Finish)
+                wg.coordinator_thread.join(endtime - time.time())
+
             if wg.dispatcher is None:
                 # put nr = len(threads) Finish
                 for th in ths:
@@ -375,9 +412,47 @@ class JobManager(object):
         return stat(self.probe)
 
 
-def run(input_it, workers, keep_order=False, timeout=None, probe=None):
+class PartialOrderQueue(object):
 
-    mgr = JobManager(workers, probe=probe, keep_order=keep_order)
+    def __init__(self):
+        self.buffer = []
+        self.lock = threading.Lock()
+
+    def put(self, args):
+
+        if args is None:
+            return
+
+        if not Finish and (type(args) not in [tuple, list] or len(args) == 0):
+            raise Exception('element type must be tuple or list and not empty')
+
+        with self.lock:
+            self.buffer.append(args)
+
+    def get(self, exec_cache):
+        ret = []
+        selected = []
+        with self.lock:
+            for args in self.buffer:
+                if args is Finish:
+                    if len(self.buffer) == 1:
+                        ret.append(args)
+                else:
+                    key = args[0]
+                    if key not in selected and key not in exec_cache:
+                        selected.append(key)
+                        ret.append(args)
+
+            for args in ret:
+                self.buffer.remove(args)
+
+        for args in ret:
+            yield args
+
+
+def run(input_it, workers, keep_order=False, partial_order=False, timeout=None, probe=None):
+
+    mgr = JobManager(workers, probe=probe, keep_order=keep_order, partial_order=partial_order)
 
     try:
         for args in input_it:
@@ -385,7 +460,6 @@ def run(input_it, workers, keep_order=False, timeout=None, probe=None):
 
     finally:
         mgr.join(timeout=timeout)
-
 
 def stat(probe):
 
@@ -446,8 +520,11 @@ def _put_non_empty(q, val):
         q.put(val)
 
 
-def _make_q(n=1024):
-    return Queue.Queue(n)
+def _make_q(n=1024, partial_order=False):
+    if partial_order:
+        return PartialOrderQueue()
+    else:
+        return Queue.Queue(n)
 
 
 def start_thread(exec_func, *args):
