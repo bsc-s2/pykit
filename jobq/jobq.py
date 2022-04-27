@@ -46,7 +46,7 @@ class WorkerGroup(object):
         self.probe = probe
         self.keep_order = keep_order
         self.partial_order = partial_order
-        self.exec_cache = {}
+        self.in_working = {}
 
         self.threads = {}
 
@@ -63,20 +63,23 @@ class WorkerGroup(object):
         # protect reading/writing worker_group info
         self.worker_group_lock = threading.RLock()
 
+        need_handle_buffer = False
+        need_coordinator = False
         if self.partial_order:
+            need_handle_buffer = True
+        # dispatcher mode implies keep_order
+        elif self.dispatcher is not None or self.keep_order:
+            need_coordinator = True
+
+        if need_handle_buffer:
             self.buffer_queue = input_queue
             self.input_queue = _make_q()
-            self.output_queue = _make_q(0, partial_order)
+            self.output_queue = _make_q(1024, partial_order)
+            self.dispatcher = None
         else:
             self.buffer_queue = None
             self.input_queue = input_queue
             self.output_queue = _make_q()
-
-        # dispatcher mode implies keep_order
-        if self.dispatcher is not None or self.keep_order:
-            need_coordinator = True
-        else:
-            need_coordinator = False
 
         # Coordinator guarantees worker-group level first-in first-out, by put
         # output-queue into a queue-of-output-queue.
@@ -90,13 +93,16 @@ class WorkerGroup(object):
         else:
             self.queue_of_output_q = None
 
-        if need_coordinator or self.partial_order:
+        if need_coordinator:
             self.coordinator_thread = start_thread(self._coordinate)
+        elif need_handle_buffer:
+            self.buffer_lock = threading.RLock()
+            self.buffer_thread = start_thread(self._handle_buffer)
 
         # `dispatcher` is a user-defined function to distribute args to workers.
         # It accepts the same args passed to worker and returns a number to
         # indicate which worker to used.
-        if self.dispatcher is not None and not self.partial_order:
+        if self.dispatcher is not None:
             self.dispatch_queues = []
             for i in range(self.n_thread):
                 self.dispatch_queues.append({
@@ -169,8 +175,11 @@ class WorkerGroup(object):
                 with self.probe['probe_lock']:
                     self.probe['out'] += 1
 
-            if self.partial_order and args[0] in self.exec_cache:
-                del self.exec_cache[args[0]]
+            if self.partial_order:
+                k = str(args[0])
+                with self.buffer_lock:
+                    if k in self.in_working:
+                        del self.in_working[k]
 
             # If rst is an iterator, it procures more than one args to next job.
             # In order to be accurate, we only count an iterator as one.
@@ -217,26 +226,12 @@ class WorkerGroup(object):
     def _coordinate(self):
 
         while self.running:
-            if not self.partial_order:
-                outq = self.queue_of_output_q.get()
-                if outq is Finish:
-                    return
 
-                _put_rst(self.output_queue, outq.get())
+            outq = self.queue_of_output_q.get()
+            if outq is Finish:
+                return
 
-            else:
-                now = time.time()
-                for key in self.exec_cache.keys():
-                    if now - self.exec_cache[key] > 60 * 2:
-                        del self.exec_cache[key]
-                exec_cache = copy.copy(self.exec_cache)
-                for args in self.buffer_queue.get(exec_cache):
-                    if args is Finish:
-                        return
-                    self.exec_cache[args[0]] = time.time()
-                    _put_rst(self.input_queue, args)
-
-                time.sleep(0.01)
+            _put_rst(self.output_queue, outq.get())
 
     def _dispatch(self):
         while self.running:
@@ -253,6 +248,24 @@ class WorkerGroup(object):
 
             self.queue_of_output_q.put(outq)
             inq.put(args)
+
+    def _handle_buffer(self):
+
+        while self.running:
+            now = time.time()
+            with self.buffer_lock:
+                for k in self.in_working.keys():
+                    if now - self.in_working[k] > 60 * 2:
+                        del self.in_working[k]
+            exclude = copy.copy(self.in_working)
+            args = self.buffer_queue.get(exclude=exclude)
+            if args is Finish:
+                return
+            elif args is None:
+                time.sleep(0.001)
+            else:
+                self.in_working[str(args[0])] = time.time()
+                _put_rst(self.input_queue, args)
 
 class JobManager(object):
 
@@ -297,12 +310,11 @@ class JobManager(object):
             worker, n, dispatcher = worker
 
             wg = WorkerGroup(i, worker, n, inq,
-                                 dispatcher,
-                                 self.probe, self.keep_order, self.partial_order)
+                             dispatcher,
+                             self.probe, self.keep_order, self.partial_order)
 
             self.worker_groups.append(wg)
             inq = wg.output_queue
-            # print(inq)
 
     def set_thread_num(self, worker, n):
 
@@ -384,7 +396,7 @@ class JobManager(object):
             if wg.partial_order:
                 for th in ths:
                     wg.buffer_queue.put(Finish)
-                wg.coordinator_thread.join(endtime - time.time())
+                wg.buffer_thread.join(endtime - time.time())
 
             if wg.dispatcher is None:
                 # put nr = len(threads) Finish
@@ -414,41 +426,84 @@ class JobManager(object):
 
 class PartialOrderQueue(object):
 
-    def __init__(self):
-        self.buffer = []
-        self.lock = threading.Lock()
+    def __init__(self, maxsize):
+        self.maxsize = maxsize
+        self.queue = []
+        self.mutex = threading.Lock()
+        self.not_empty = threading.Condition(self.mutex)
+        self.not_full = threading.Condition(self.mutex)
 
-    def put(self, args):
-
-        if args is None:
-            return
-
-        if not Finish and (type(args) not in [tuple, list] or len(args) == 0):
+    def put(self, item, block=True, timeout=None):
+        if item not in [Finish, None] and (type(item) not in [tuple, list] or len(item) == 0):
             raise Exception('element type must be tuple or list and not empty')
 
-        with self.lock:
-            self.buffer.append(args)
-
-    def get(self, exec_cache):
-        ret = []
-        selected = []
-        with self.lock:
-            for args in self.buffer:
-                if args is Finish:
-                    if len(self.buffer) == 1:
-                        ret.append(args)
+        with self.not_full:
+            if self.maxsize > 0:
+                if not block:
+                    if self._qsize() >= self.maxsize:
+                        raise Queue.Full
+                elif timeout is None:
+                    while self._qsize() >= self.maxsize:
+                        self.not_full.wait()
+                elif timeout < 0:
+                    raise ValueError("'timeout' must be a non-negative number")
                 else:
-                    key = args[0]
-                    if key not in selected and key not in exec_cache:
-                        selected.append(key)
-                        ret.append(args)
+                    endtime = time.monotonic() + timeout
+                    while self._qsize() >= self.maxsize:
+                        remaining = endtime - time.monotonic()
+                        if remaining <= 0.0:
+                            raise Queue.Full
+                        self.not_full.wait(remaining)
+            self._put(item)
+            self.not_empty.notify()
 
-            for args in ret:
-                self.buffer.remove(args)
+    def get(self, block=True, timeout=None, exclude=None):
+        with self.not_empty:
+            if not block:
+                if not self._qsize():
+                    raise Queue.Empty
+            elif timeout is None:
+                while not self._qsize():
+                    self.not_empty.wait()
+            elif timeout < 0:
+                raise ValueError("'timeout' must be a non-negative number")
+            else:
+                endtime = time.monotonic() + timeout
+                while not self._qsize():
+                    remaining = endtime - time.monotonic()
+                    if remaining <= 0.0:
+                        raise Queue.Empty
+                    self.not_empty.wait(remaining)
+            item = self._get(exclude)
+            if item is not None:
+                self.not_full.notify()
+            return item
 
-        for args in ret:
-            yield args
+    def _qsize(self):
+        return len(self.queue)
 
+    def _put(self, item):
+        self.queue.append(item)
+
+    def _get(self, exclude):
+        item = None
+        index = None
+        for i, v in enumerate(self.queue):
+            if v is Finish:
+                if i == 0:
+                    index, item = i, v
+                    break
+            elif v is None:
+                index, item = i, v
+                break
+            else:
+                key = str(v[0])
+                if not exclude or key not in exclude:
+                    index, item = i, v
+                    break
+        if index is not None:
+            del self.queue[index]
+        return item
 
 def run(input_it, workers, keep_order=False, partial_order=False, timeout=None, probe=None):
 
@@ -460,6 +515,7 @@ def run(input_it, workers, keep_order=False, partial_order=False, timeout=None, 
 
     finally:
         mgr.join(timeout=timeout)
+
 
 def stat(probe):
 
@@ -522,7 +578,7 @@ def _put_non_empty(q, val):
 
 def _make_q(n=1024, partial_order=False):
     if partial_order:
-        return PartialOrderQueue()
+        return PartialOrderQueue(n)
     else:
         return Queue.Queue(n)
 
