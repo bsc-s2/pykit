@@ -1,4 +1,3 @@
-import copy
 import logging
 import sys
 import threading
@@ -180,6 +179,7 @@ class WorkerGroup(object):
                 with self.buffer_lock:
                     if k in self.in_working:
                         del self.in_working[k]
+                        self.buffer_queue.not_match.set()
 
             # If rst is an iterator, it procures more than one args to next job.
             # In order to be accurate, we only count an iterator as one.
@@ -234,6 +234,7 @@ class WorkerGroup(object):
             _put_rst(self.output_queue, outq.get())
 
     def _dispatch(self):
+
         while self.running:
 
             args = self.input_queue.get()
@@ -251,20 +252,27 @@ class WorkerGroup(object):
 
     def _handle_buffer(self):
 
+        def check_expired():
+            while self.running:
+                now = time.time()
+                with self.buffer_lock:
+                    for k in self.in_working.keys():
+                        if now - self.in_working[k] > 60 * 2:
+                            del self.in_working[k]
+                            self.buffer_queue.not_match.set()
+                time.sleep(0.1)
+
+        start_thread(check_expired)
+
         while self.running:
-            now = time.time()
-            with self.buffer_lock:
-                for k in self.in_working.keys():
-                    if now - self.in_working[k] > 60 * 2:
-                        del self.in_working[k]
-            exclude = copy.copy(self.in_working)
-            args = self.buffer_queue.get(exclude=exclude)
+            args = self.buffer_queue.get(exclude=self.in_working)
             if args is Finish:
                 return
             elif args is None:
-                time.sleep(0.001)
+                self.buffer_queue.not_match.wait()
             else:
-                self.in_working[str(args[0])] = time.time()
+                with self.buffer_lock:
+                    self.in_working[str(args[0])] = time.time()
                 _put_rst(self.input_queue, args)
 
 class JobManager(object):
@@ -432,6 +440,7 @@ class PartialOrderQueue(object):
         self.mutex = threading.Lock()
         self.not_empty = threading.Condition(self.mutex)
         self.not_full = threading.Condition(self.mutex)
+        self.not_match = threading.Event()
 
     def put(self, item, block=True, timeout=None):
         if item not in [Finish, None] and (type(item) not in [tuple, list] or len(item) == 0):
@@ -456,6 +465,7 @@ class PartialOrderQueue(object):
                         self.not_full.wait(remaining)
             self._put(item)
             self.not_empty.notify()
+            self.not_match.set()
 
     def get(self, block=True, timeout=None, exclude=None):
         with self.not_empty:
@@ -477,6 +487,8 @@ class PartialOrderQueue(object):
             item = self._get(exclude)
             if item is not None:
                 self.not_full.notify()
+            else:
+                self.not_match.clear()
             return item
 
     def _qsize(self):
