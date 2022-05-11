@@ -36,7 +36,8 @@ class WorkerGroup(object):
                  input_queue,
                  dispatcher,
                  probe, keep_order,
-                 partial_order):
+                 partial_order,
+                 expire):
 
         self.index = index
         self.worker = worker
@@ -45,6 +46,7 @@ class WorkerGroup(object):
         self.probe = probe
         self.keep_order = keep_order
         self.partial_order = partial_order
+        self.expire = expire
         self.in_working = {}
 
         self.threads = {}
@@ -257,7 +259,7 @@ class WorkerGroup(object):
                 now = time.time()
                 with self.buffer_lock:
                     for k in self.in_working.keys():
-                        if now - self.in_working[k] > 60 * 2:
+                        if now - self.in_working[k] > self.expire:
                             del self.in_working[k]
                             self.buffer_queue.not_match.set()
                 time.sleep(0.1)
@@ -277,7 +279,7 @@ class WorkerGroup(object):
 
 class JobManager(object):
 
-    def __init__(self, workers, queue_size=1024, probe=None, keep_order=False, partial_order=False):
+    def __init__(self, workers, queue_size=1024, expire=3000, probe=None, keep_order=False, partial_order=False):
 
         if probe is None:
             probe = {}
@@ -290,6 +292,7 @@ class JobManager(object):
         self.probe = probe
         self.keep_order = keep_order
         self.partial_order = partial_order
+        self.expire = expire
 
         self.worker_groups = []
 
@@ -319,7 +322,8 @@ class JobManager(object):
 
             wg = WorkerGroup(i, worker, n, inq,
                              dispatcher,
-                             self.probe, self.keep_order, self.partial_order)
+                             self.probe, self.keep_order, self.partial_order,
+                             self.expire)
 
             self.worker_groups.append(wg)
             inq = wg.output_queue
