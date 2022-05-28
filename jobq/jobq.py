@@ -22,6 +22,10 @@ class Finish(object):
     pass
 
 
+class NotMatch(object):
+    pass
+
+
 class JobWorkerError(Exception):
     pass
 
@@ -176,17 +180,17 @@ class WorkerGroup(object):
                 with self.probe['probe_lock']:
                     self.probe['out'] += 1
 
-            if self.partial_order:
+            # If rst is an iterator, it procures more than one args to next job.
+            # In order to be accurate, we only count an iterator as one.
+
+            _put_rst(output_q, rst)
+
+            if self.partial_order and args is not None:
                 k = str(args[0])
                 with self.buffer_lock:
                     if k in self.in_working:
                         del self.in_working[k]
                         self.buffer_queue.not_match.set()
-
-            # If rst is an iterator, it procures more than one args to next job.
-            # In order to be accurate, we only count an iterator as one.
-
-            _put_rst(output_q, rst)
 
     def _exec_in_order(self, input_q, output_q, thread_index):
 
@@ -270,16 +274,22 @@ class WorkerGroup(object):
             args = self.buffer_queue.get(exclude=self.in_working)
             if args is Finish:
                 return
-            elif args is None:
+            elif args is NotMatch:
                 self.buffer_queue.not_match.wait()
+                self.buffer_queue.not_match.clear()
             else:
-                with self.buffer_lock:
-                    self.in_working[str(args[0])] = time.time()
+                if args is not None:
+                    with self.buffer_lock:
+                        self.in_working[str(args[0])] = time.time()
+
                 _put_rst(self.input_queue, args)
 
 class JobManager(object):
 
-    def __init__(self, workers, queue_size=1024, expire=3000, probe=None, keep_order=False, partial_order=False):
+    def __init__(self, workers, queue_size=1024, expire=None, probe=None, keep_order=False, partial_order=False):
+
+        if expire is None:
+            expire = 60 * 5
 
         if probe is None:
             probe = {}
@@ -489,10 +499,8 @@ class PartialOrderQueue(object):
                         raise Queue.Empty
                     self.not_empty.wait(remaining)
             item = self._get(exclude)
-            if item is not None:
+            if item is not NotMatch:
                 self.not_full.notify()
-            else:
-                self.not_match.clear()
             return item
 
     def _qsize(self):
@@ -502,8 +510,10 @@ class PartialOrderQueue(object):
         self.queue.append(item)
 
     def _get(self, exclude):
-        item = None
+        item = NotMatch
         index = None
+        selected = {}
+
         for i, v in enumerate(self.queue):
             if v is Finish:
                 if i == 0:
@@ -514,9 +524,13 @@ class PartialOrderQueue(object):
                 break
             else:
                 key = str(v[0])
+                if key in selected:
+                    continue
                 if not exclude or key not in exclude:
                     index, item = i, v
                     break
+                selected[key] = True
+
         if index is not None:
             del self.queue[index]
         return item
