@@ -3,6 +3,7 @@ import sys
 import threading
 import time
 import types
+from collections import deque
 
 from pykit import threadutil
 
@@ -68,21 +69,21 @@ class WorkerGroup(object):
         # protect reading/writing worker_group info
         self.worker_group_lock = threading.RLock()
 
-        need_handle_buffer = False
+        need_coordinator_partial = False
         need_coordinator = False
         if self.partial_order:
-            need_handle_buffer = True
+            need_coordinator_partial = True
         # dispatcher mode implies keep_order
         elif self.dispatcher is not None or self.keep_order:
             need_coordinator = True
 
-        if need_handle_buffer:
-            self.buffer_queue = input_queue
+        if need_coordinator_partial:
+            self.partial_queue = input_queue
             self.input_queue = _make_q()
             self.output_queue = _make_q(1024, partial_order)
             self.dispatcher = None
         else:
-            self.buffer_queue = None
+            self.partial_queue = None
             self.input_queue = input_queue
             self.output_queue = _make_q()
 
@@ -100,9 +101,9 @@ class WorkerGroup(object):
 
         if need_coordinator:
             self.coordinator_thread = start_thread(self._coordinate)
-        elif need_handle_buffer:
-            self.buffer_lock = threading.RLock()
-            self.buffer_thread = start_thread(self._handle_buffer)
+        elif need_coordinator_partial:
+            self.partial_order_lock = threading.RLock()
+            self.coordinator_partial_thread = start_thread(self._coordinate_partial)
 
         # `dispatcher` is a user-defined function to distribute args to workers.
         # It accepts the same args passed to worker and returns a number to
@@ -187,10 +188,10 @@ class WorkerGroup(object):
 
             if self.partial_order and args is not None:
                 k = str(args[0])
-                with self.buffer_lock:
+                with self.partial_order_lock:
                     if k in self.in_working:
                         del self.in_working[k]
-                        self.buffer_queue.not_match.set()
+                        self.partial_queue.not_match.set()
 
     def _exec_in_order(self, input_q, output_q, thread_index):
 
@@ -256,30 +257,30 @@ class WorkerGroup(object):
             self.queue_of_output_q.put(outq)
             inq.put(args)
 
-    def _handle_buffer(self):
+    def _coordinate_partial(self):
 
         def check_expired():
             while self.running:
                 now = time.time()
-                with self.buffer_lock:
+                with self.partial_order_lock:
                     for k in self.in_working.keys():
                         if now - self.in_working[k] > self.expire:
                             del self.in_working[k]
-                            self.buffer_queue.not_match.set()
+                            self.partial_queue.not_match.set()
                 time.sleep(0.1)
 
         start_thread(check_expired)
 
         while self.running:
-            args = self.buffer_queue.get(exclude=self.in_working)
+            args = self.partial_queue.get(exclude=self.in_working)
             if args is Finish:
                 return
             elif args is NotMatch:
-                self.buffer_queue.not_match.wait()
-                self.buffer_queue.not_match.clear()
+                self.partial_queue.not_match.wait()
+                self.partial_queue.not_match.clear()
             else:
                 if args is not None:
-                    with self.buffer_lock:
+                    with self.partial_order_lock:
                         self.in_working[str(args[0])] = time.time()
 
                 _put_rst(self.input_queue, args)
@@ -417,8 +418,8 @@ class JobManager(object):
 
             if wg.partial_order:
                 for th in ths:
-                    wg.buffer_queue.put(Finish)
-                wg.buffer_thread.join(endtime - time.time())
+                    wg.partial_queue.put(Finish)
+                wg.coordinator_partial_thread.join(endtime - time.time())
 
             if wg.dispatcher is None:
                 # put nr = len(threads) Finish
@@ -450,7 +451,7 @@ class PartialOrderQueue(object):
 
     def __init__(self, maxsize):
         self.maxsize = maxsize
-        self.queue = []
+        self._init(maxsize)
         self.mutex = threading.Lock()
         self.not_empty = threading.Condition(self.mutex)
         self.not_full = threading.Condition(self.mutex)
@@ -503,6 +504,9 @@ class PartialOrderQueue(object):
                 self.not_full.notify()
             return item
 
+    def _init(self, maxsize):
+        self.queue = deque()
+
     def _qsize(self):
         return len(self.queue)
 
@@ -534,6 +538,7 @@ class PartialOrderQueue(object):
         if index is not None:
             del self.queue[index]
         return item
+
 
 def run(input_it, workers, keep_order=False, partial_order=False, timeout=None, probe=None):
 
