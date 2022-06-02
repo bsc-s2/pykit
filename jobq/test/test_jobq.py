@@ -36,9 +36,25 @@ def sleep_5(args):
     return args
 
 
+def is_partial_order(rst):
+    cache = {}
+
+    for item in rst:
+        k = item[0]
+        if k not in cache:
+            cache[k] = item
+
+        last = cache[k]
+        if last[1] > item[1]:
+            return False
+        cache[k] = item
+
+    return True
+
+
 class TestProbe(unittest.TestCase):
 
-    def _start_jobq_in_thread(self, n_items, n_worker, keep_order=False):
+    def _start_jobq_in_thread(self, items, n_worker, keep_order=False, partial_order=False):
 
         def _sleep_1(args):
             time.sleep(0.1)
@@ -48,11 +64,12 @@ class TestProbe(unittest.TestCase):
             return args
 
         probe = {}
-        th = threading.Thread(target=lambda: jobq.run(range(n_items),
+        th = threading.Thread(target=lambda: jobq.run(items,
                                                       [(_sleep_1, n_worker),
                                                        _nothing],
                                                       probe=probe,
                                                       keep_order=keep_order,
+                                                      partial_order=partial_order,
                                                       ))
         th.daemon = True
         th.start()
@@ -67,13 +84,12 @@ class TestProbe(unittest.TestCase):
                 (0.2,  0, 'all done'),
         )
 
-        th, probe = self._start_jobq_in_thread(3, 1)
+        th, probe = self._start_jobq_in_thread(range(3), 1)
 
         for sleep_time, doing, case_mes in cases:
 
             time.sleep(sleep_time)
             stat = jobq.stat(probe)
-
             self.assertEqual(doing, stat['doing'], case_mes)
 
             # qsize() is not reliable. do not test the value of it.
@@ -100,7 +116,7 @@ class TestProbe(unittest.TestCase):
                 (0.4,  0, 'all done'),
         )
 
-        th, probe = self._start_jobq_in_thread(10, 3)
+        th, probe = self._start_jobq_in_thread(range(10), 3)
 
         for sleep_time, doing, case_mes in cases:
 
@@ -124,10 +140,32 @@ class TestProbe(unittest.TestCase):
                 (0.4,  0, 'all done'),
         )
 
-        th, probe = self._start_jobq_in_thread(10, 3, keep_order=True)
+        th, probe = self._start_jobq_in_thread(range(10), 3, keep_order=True)
 
         for sleep_time, doing, case_mes in cases:
 
+            time.sleep(sleep_time)
+            stat = jobq.stat(probe)
+
+            self.assertEqual(doing, stat['doing'], case_mes)
+
+        # use the last stat
+
+        workers = stat['workers']
+        self.assertEqual(2, len(workers))
+
+        th.join()
+
+    def test_probe_3_thread_partial_order(self):
+        cases = (
+            (0.05, 3, '_sleep_1 is working on 1st 3 items'),
+            (0.1, 3, '_sleep_1 is working on 2nd 3 items'),
+            (0.4, 0, 'all done'),
+        )
+
+        th, probe = self._start_jobq_in_thread(([i, 0] for i in range(10)), 3, partial_order=True)
+
+        for sleep_time, doing, case_mes in cases:
             time.sleep(sleep_time)
             stat = jobq.stat(probe)
 
@@ -262,6 +300,37 @@ class TestTimeout(unittest.TestCase):
         time.sleep(0.2)
         self.assertEqual([0, 1], sleep_got)
         self.assertEqual([0], rst)
+
+
+class TestExpire(unittest.TestCase):
+
+    def test_expire(self):
+
+        def _sleep_1(args):
+            sleep_got.append(args)
+            time.sleep(0.5)
+            return args
+
+        def collect(args):
+            rst.append(args)
+
+        rst = []
+        sleep_got = []
+
+        jm = jobq.JobManager([(_sleep_1, 3), collect], expire=0.2, partial_order=True)
+
+        n = 6
+        for i in range(n):
+            jm.put((i % 2, i))
+
+        time.sleep(0.1)
+        self.assertEqual(set([(0, 0), (1, 1)]), set(sleep_got))
+
+        time.sleep(0.3)
+        self.assertEqual(3, len(sleep_got))
+
+        jm.join()
+        self.assertEqual(set([(i % 2, i) for i in range(n)]), set(rst))
 
 
 class TestJobManager(unittest.TestCase):
@@ -434,6 +503,42 @@ class TestJobManager(unittest.TestCase):
         for th in ths:
             th.join()
 
+    def test_set_thread_num_partial_order(self):
+
+        def _pass(args):
+            return args
+
+        rst = []
+
+        jm = jobq.JobManager([_pass, rst.append], partial_order=True)
+
+        setter = {'running': True}
+
+        def _change_thread_nr():
+            while setter['running']:
+                jm.set_thread_num(_pass, random.randint(1, 4))
+                time.sleep(0.5)
+
+        ths = []
+        for ii in range(3):
+            th = threadutil.start_daemon_thread(_change_thread_nr)
+            ths.append(th)
+
+        n = 10240
+        for i in range(n):
+            jm.put([i % 2, i])
+
+        jm.join()
+
+        self.assertEqual(n, len(rst))
+
+        self.assertTrue(is_partial_order(rst))
+
+        setter['running'] = False
+
+        for th in ths:
+            th.join()
+
 
 class TestJobQ(unittest.TestCase):
 
@@ -506,6 +611,36 @@ class TestJobQ(unittest.TestCase):
             jobq.run(inp, workers + [collect], keep_order=True)
             self.assertEqual(out, rst)
 
+        def add_list(args):
+            args[1] += 1
+            return args
+
+        def multi2_list(args):
+            args[1] *= 2
+            return args
+
+        def multi2_list_sleep(args):
+            time.sleep(0.02)
+            args[1] *= 2
+            return args
+
+        cases = (
+                (list([i % 2, i] for i in range(100)), [add_list, (multi2_list_sleep, 10)],
+                 list([i % 2, (i + 1) * 2] for i in range(100))
+                 ),
+                (list([i % 50, i] for i in range(1024 * 10)), [add_list, (multi2_list, 10)],
+                 list([i % 50, (i + 1) * 2] for i in range(1024 * 10))
+                 ),
+        )
+        for inp, workers, out in cases:
+            rst = []
+            jobq.run(inp, workers + [collect], partial_order=True)
+            self.assertTrue(is_partial_order(rst))
+
+            out.sort()
+            rst.sort()
+            self.assertEqual(out, rst)
+
     def test_generator(self):
 
         def gen(args):
@@ -514,6 +649,7 @@ class TestJobQ(unittest.TestCase):
                 time.sleep(0.1)
 
         def collect(args):
+            time.sleep(random.uniform(0.005, 0.02))
             rst.append(args)
 
         rst = []
@@ -527,6 +663,17 @@ class TestJobQ(unittest.TestCase):
                          "generator should get all")
 
         self.assertEqual(9, len(rst), 'nr of elts')
+
+        def _gen(args):
+            k = args[0]
+            for i in range(3):
+                yield (k, i)
+
+        rst = []
+        jobq.run([(k, 0) for k in range(3)], [(_gen, 3), (collect, 3)], partial_order=True)
+        self.assertEqual(set([(k, v) for k in range(3) for v in range(3)]), set(rst),
+                         "generator should get all")
+        self.assertTrue(is_partial_order(rst))
 
 
 class TestDefaultTimeout(unittest.TestCase):
