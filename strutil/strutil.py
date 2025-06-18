@@ -8,6 +8,7 @@ import re
 import string
 import types
 
+import unicodedata
 import subprocess32
 
 from .colored_string import ColoredString
@@ -399,6 +400,23 @@ def _get_colors(colors, col_n):
     return colors
 
 
+def _display_width(text):
+    width = 0
+    for ch in text:
+        if unicodedata.east_asian_width(ch) in ('F', 'W'):
+            width += 2
+        else:
+            width += 1
+    return width
+
+
+def _display_ljust(text, width):
+    text = utf8unicode(text)
+    cur_width = _display_width(text)
+    padding = width - cur_width
+    return text + u' ' * padding
+
+
 def format_table(rows,
                  keys=None,
                  colors=None,
@@ -452,7 +470,7 @@ def format_table(rows,
 
         lns.append(ln)
 
-    def get_max_width(cols): return max([len(utf8str(c[0]))
+    def get_max_width(cols): return max([_display_width(utf8unicode(c[0]))
                                          for c in cols] + [0])
 
     max_widths = [get_max_width(cols) for cols in zip(*lns)]
@@ -466,7 +484,7 @@ def format_table(rows,
             color = colors[i]
             w = max_widths[i]
 
-            ln.append([ColoredString(x.ljust(w), color)
+            ln.append([ColoredString(_display_ljust(x, w), color)
                        if x is not None else row_sep * w
                        for x in row[i]])
 
@@ -499,6 +517,13 @@ def utf8str(s):
         return s.encode('utf8')
     else:
         return str(s)
+
+
+def utf8unicode(s):
+    if type(s) == type(''):
+        return s.decode('utf8')
+    else:
+        return unicode(s)
 
 
 def common_prefix(a, *others, **options):

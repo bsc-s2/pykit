@@ -25,6 +25,8 @@ class ColoredString(object):
             vs = ''.join([x[0] for x in v.elts])
             self.elts = [(vs, color)]
         else:
+            if isinstance(v, unicode):
+                v = v.encode('utf-8')
             self.elts = [(str(v), color)]
 
         self._prompt = prompt
