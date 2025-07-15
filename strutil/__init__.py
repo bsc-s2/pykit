@@ -9,6 +9,7 @@ from .strutil import (
 
     struct_repr,
     format_table,
+    format_table_align,
     filter_invisible_chars,
     utf8str,
 )
@@ -24,6 +25,7 @@ from .colored_string import (
     red,
     white,
     yellow,
+    gray,
 
     optimal,
     normal,
@@ -63,6 +65,7 @@ __all__ = [
     'red',
     'white',
     'yellow',
+    'gray',
 
     'optimal',
     'normal',

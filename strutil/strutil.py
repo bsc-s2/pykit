@@ -256,26 +256,28 @@ def format_line(items, sep=' ', aligns=''):
 
 def struct_repr(data, key=None):
     '''
-    Render a data to a multi-line structural(yaml-like) representation.
+    Render a data to a multi-line structural (yaml-like) representation.
 
+    Example:
         a = {
-                1: 3,
-                'x': {1:4, 2:5},
-                'l': [1, 2, 3],
+            1: 3,
+            'x': {1: 4, 2: 5},
+            'x2': {"xx1": 4, "xx2": 5},
+            'l': [1, 2, 3],
         }
         for l in struct_repr(a):
             print l
 
     Output:
-
-        1 : 3
-        l : - 1
-            - 2
-            - 3
-        x : 1 : 4
-            2 : 5
+        1   : 3
+        l   : - 1
+              - 2
+              - 3
+        x   : 1   : 4
+              2   : 5
+        x2  : xx1 : 4
+              xx2 : 5
     '''
-
     if type(data) in listtype:
 
         if len(data) == 0:
@@ -353,6 +355,77 @@ def struct_repr(data, key=None):
         data = filter_invisible_chars(data)
         return [utf8str(data)]
 
+def struct_repr_align(data, key=None):
+    aligns = {}
+    _struct_align(data, aligns, level=0)
+    return _struct_repr_align(data, aligns, 0, key=key)
+
+
+def _struct_align(data, aligns, level=0):
+    aligns[level] = aligns.get(level, 0)
+
+    if type(data) in listtype:
+        for elt in data:
+            _struct_align(elt, aligns, level=level + 1)
+    elif type(data) == types.DictType:
+        for k, v in data.items():
+            _struct_align(v, aligns, level=level + 1)
+            aligns[level] = max(aligns.get(level, 0), len(utf8str(k)))
+    else:
+        data = filter_invisible_chars(data)
+        aligns[level] = max(aligns.get(level, 0), len(utf8str(data)))
+
+
+def _struct_repr_align(data, aligns, level, key=None):
+    if type(data) in listtype:
+        if len(data) == 0:
+            return ['[]']
+
+        max_width = aligns[level]
+        elt_lines = []
+        for elt in data:
+            sublines = _struct_repr_align(elt, aligns, level+1, key=key)
+            elt_lines.append(sublines)
+
+        lines = []
+        for sublines in elt_lines:
+            lines.append('- ' + sublines[0].ljust(max_width))
+
+            for l in sublines[1:]:
+                lines.append('  ' + l.ljust(max_width))
+
+        return lines
+
+    elif type(data) == types.DictType:
+        if len(data) == 0:
+            return ['{}']
+
+        max_k_width = aligns[level]
+        max_v_width = aligns[level+1]
+
+        kvs = []
+
+        for k, v in data.items():
+            k = utf8str(k)
+            sublines = _struct_repr_align(v, aligns, level+1, key=key)
+            kvs.append((k, sublines))
+
+        kvs.sort(key=key)
+
+        lines = []
+        for k, sublines in kvs:
+            lines.append(k.rjust(max_k_width) + ' : ' +
+                         sublines[0].ljust(max_v_width))
+
+            for l in sublines[1:]:
+                lines.append(' '.rjust(max_k_width) +
+                             '   ' + l.ljust(max_v_width))
+
+        return lines
+
+    else:
+        data = filter_invisible_chars(data)
+        return [utf8str(data)]
 
 def _get_key_and_headers(keys, rows):
 
@@ -399,6 +472,14 @@ def _get_colors(colors, col_n):
 
     return colors
 
+def format_table_align(rows,
+                 keys=None,
+                 colors=None,
+                 sep=' | ',
+                 row_sep=None):
+
+    return _format_table(rows, keys, colors, sep, row_sep,
+                 struct_repr_func=struct_repr_align)
 
 def _display_width(text):
     width = 0
@@ -422,6 +503,15 @@ def format_table(rows,
                  colors=None,
                  sep=' | ',
                  row_sep=None):
+
+    return _format_table(rows, keys, colors, sep, row_sep)
+
+def _format_table(rows,
+                 keys=None,
+                 colors=None,
+                 sep=' | ',
+                 row_sep=None,
+                 struct_repr_func=struct_repr):
 
     keys, column_headers = _get_key_and_headers(keys, rows)
     colors = _get_colors(colors, len(keys))
@@ -456,17 +546,17 @@ def format_table(rows,
 
         if type(row) == types.DictType:
 
-            ln = [struct_repr(row.get(k, ''))
+            ln = [struct_repr_func(row.get(k, ''))
                   for k in keys]
 
         elif type(row) in listtype:
 
-            ln = [struct_repr(row[int(k)])
+            ln = [struct_repr_func(row[int(k)])
                   if len(row) > int(k) else ''
                   for k in keys]
 
         else:
-            ln = [struct_repr(row)]
+            ln = [struct_repr_func(row)]
 
         lns.append(ln)
 

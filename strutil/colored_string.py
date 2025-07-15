@@ -228,6 +228,7 @@ _named_colors = {
     'red': 196,
     'purple': 128,
     'white': 255,
+    'gray': 244,
 }
 
 
