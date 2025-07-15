@@ -4,9 +4,9 @@
 
 # tool kits
 pyflakes
-autopep8
+autopep8==1.5.7
 autoflake
-isort
+isort==4.3.21
 
 # fsutil
 # wsjobd
@@ -51,6 +51,7 @@ kazoo==2.6.1
 # for building dependency graph
 snakefood
 
+greenlet==1.1.2
 gevent==1.4.0
 redis==2.10.6
 # previous 3.11 has a security issue, which is fixed in at least 4.2b1
