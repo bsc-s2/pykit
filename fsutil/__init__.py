@@ -17,6 +17,7 @@ from .fsutil import (
     makedirs,
     read_file,
     remove,
+    append_file,
     write_file,
 )
 

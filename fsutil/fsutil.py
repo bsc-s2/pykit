@@ -226,6 +226,20 @@ def _write_file(path, fcont, uid=None, gid=None, fsync=True):
         os.chown(path, uid, gid)
 
 
+def append_file(path, fcont, uid=None, gid=None, fsync=True):
+
+    uid = uid or config.uid
+    gid = gid or config.gid
+
+    with open(path, 'a') as f:
+        f.write(fcont)
+        f.flush()
+        if fsync:
+            os.fsync(f.fileno())
+
+    if uid is not None and gid is not None:
+        os.chown(path, uid, gid)
+
 def remove(path, ignore_errors=False, onerror=None):
 
     if onerror is None:
